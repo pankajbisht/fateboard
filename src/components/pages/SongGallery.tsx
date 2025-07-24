@@ -1,9 +1,10 @@
-import { GaleryTemplate } from "../templates/GaleryTemplate.tsx";
+import { GalleryTemplate } from "../templates/GalleryTemplate.tsx";
 import { SongInCardList } from "../organisms/SongInCardList.tsx";
 import { useState } from "react";
 import { ToggleButton } from "../atoms/ToggleButton.tsx";
 import { Container } from "../organisms/Container.tsx";
-import {SongInList} from "../organisms/SongInList.tsx";
+import { SongInList } from "../organisms/SongInList.tsx";
+import { SearchInput } from "../molecules/SearchInput.tsx";
 
 export const SongGallery = () => {
     const [isOn, setIsOn] = useState(false);
@@ -22,17 +23,18 @@ export const SongGallery = () => {
     ]);
 
     return <>
-        <GaleryTemplate>
+        <GalleryTemplate>
             <Container>
-                <div className="flex justify-end py-4 px-2">
+                <div className="flex justify-between items-center py-4 px-2">
+                    <SearchInput />
                     <ToggleButton on={isOn} onClick={() => setIsOn(!isOn)} />
                 </div>
 
-                {   isOn ?
+                {   !isOn ?
                     <SongInCardList data={cards}/> :
                     <SongInList data={cards}/>
                 }
             </Container>
-        </GaleryTemplate>
+        </GalleryTemplate>
     </>
 }
