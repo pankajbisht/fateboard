@@ -1,0 +1,517 @@
+{
+  "artists": [
+    {
+      "id": 1,
+      "name": "Arijit Singh",
+      "bio": "Popular Indian playback singer."
+    },
+    {
+      "id": 2,
+      "name": "Taylor Swift",
+      "bio": "American singer-songwriter."
+    },
+    {
+      "id": 3,
+      "name": "Ed Sheeran",
+      "bio": "English singer-songwriter."
+    },
+    {
+      "id": 4,
+      "name": "Shreya Ghoshal",
+      "bio": "Renowned Indian playback singer."
+    },
+    {
+        "id": 5,
+        "name": "Dua Lipa",
+        "bio": "English-Albanian singer and songwriter."
+    },
+    {
+        "id": 6,
+        "name": "Atif Aslam",
+        "bio": "Pakistani singer and actor."
+    },
+    {
+        "id": 7,
+        "name": "Adele",
+        "bio": "English singer and songwriter."
+    }
+  ],
+  "albums": [
+      {
+          "id": 1,
+          "title": "Soulful Melodies",
+          "artistId": 1,
+          "releaseYear": 2022,
+          "cover": "https://picsum.photos/seed/song1/300/300"
+      },
+      {
+          "id": 2,
+          "title": "1989",
+          "artistId": 2,
+          "releaseYear": 2014,
+          "cover": "https://picsum.photos/seed/song2/300/300"
+      },
+      {
+          "id": 3,
+          "title": "Divide",
+          "artistId": 3,
+          "releaseYear": 2017,
+          "cover": "https://picsum.photos/seed/song3/300/300"
+      },
+      {
+          "id": 4,
+          "title": "Humnava",
+          "artistId": 4,
+          "releaseYear": 2021,
+          "cover": "https://picsum.photos/seed/song4/300/300"
+      },
+      {
+          "id": 5,
+          "title": "Future Nostalgia",
+          "artistId": 5,
+          "releaseYear": 2020,
+          "cover": "https://picsum.photos/seed/song5/300/300"
+      },
+      {
+          "id": 6,
+          "title": "Doorie",
+          "artistId": 6,
+          "releaseYear": 2006,
+          "cover": "https://picsum.photos/seed/song6/300/300"
+      },
+      {
+          "id": 7,
+          "title": "25",
+          "artistId": 7,
+          "releaseYear": 2015,
+          "cover": "https://picsum.photos/seed/song7/300/300"
+      }
+  ],
+  "songs": [
+      {
+          "id": 1,
+          "title": "Photograph",
+          "artistId": 1,
+          "albumId": 1,
+          "duration": "3:13",
+          "genre": "Rock",
+          "releaseYear": 2010,
+          "coverImage": "https://picsum.photos/seed/song1/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3",
+          "isFavorite": false,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Photograph'...",
+          "tags": [
+              "romantic"
+          ]
+      },
+      {
+          "id": 2,
+          "title": "Someone Like You",
+          "artistId": 2,
+          "albumId": 2,
+          "duration": "3:40",
+          "genre": "Ballad",
+          "releaseYear": 2019,
+          "coverImage": "https://picsum.photos/seed/song2/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3",
+          "isFavorite": false,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'Someone Like You'...",
+          "tags": [
+              "emotional"
+          ]
+      },
+      {
+          "id": 3,
+          "title": "Shape of You",
+          "artistId": 3,
+          "albumId": 3,
+          "duration": "3:35",
+          "genre": "Hindi Pop",
+          "releaseYear": 2019,
+          "coverImage": "https://picsum.photos/seed/song3/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3",
+          "isFavorite": false,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Shape of You'...",
+          "tags": [
+              "bollywood"
+          ]
+      },
+      {
+          "id": 4,
+          "title": "Kesariya",
+          "artistId": 4,
+          "albumId": 4,
+          "duration": "3:50",
+          "genre": "Punjabi",
+          "releaseYear": 2020,
+          "coverImage": "https://picsum.photos/seed/song4/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3",
+          "isFavorite": true,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Kesariya'...",
+          "tags": [
+              "pop"
+          ]
+      },
+      {
+          "id": 5,
+          "title": "Levitating",
+          "artistId": 5,
+          "albumId": 5,
+          "duration": "3:48",
+          "genre": "Rock",
+          "releaseYear": 2017,
+          "coverImage": "https://picsum.photos/seed/song4/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3",
+          "isFavorite": true,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'Levitating'...",
+          "tags": [
+              "dance"
+          ]
+      },
+      {
+          "id": 6,
+          "title": "Stay",
+          "artistId": 6,
+          "albumId": 6,
+          "duration": "3:57",
+          "genre": "Ballad",
+          "releaseYear": 2024,
+          "coverImage": "https://picsum.photos/seed/song6/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3",
+          "isFavorite": false,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Stay'...",
+          "tags": [
+              "bollywood"
+          ]
+      },
+      {
+          "id": 7,
+          "title": "Let Me Down Slowly",
+          "artistId": 7,
+          "albumId": 7,
+          "duration": "3:15",
+          "genre": "Romantic",
+          "releaseYear": 2010,
+          "coverImage": "https://picsum.photos/seed/song7/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3",
+          "isFavorite": false,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'Let Me Down Slowly'...",
+          "tags": [
+              "pop"
+          ]
+      },
+      {
+          "id": 8,
+          "title": "Tu Hi Yaar Mera",
+          "artistId": 1,
+          "albumId": 1,
+          "duration": "3:58",
+          "genre": "Ballad",
+          "releaseYear": 2016,
+          "coverImage": "https://picsum.photos/seed/song8/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3",
+          "isFavorite": false,
+          "language": "English",
+          "lyricsSnippet": "Sample lyrics from 'Tu Hi Yaar Mera'...",
+          "tags": [
+              "love"
+          ]
+      },
+      {
+          "id": 9,
+          "title": "Calm Down",
+          "artistId": 2,
+          "albumId": 2,
+          "duration": "3:49",
+          "genre": "Romantic",
+          "releaseYear": 2020,
+          "coverImage": "https://picsum.photos/seed/song9/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3",
+          "isFavorite": true,
+          "language": "English",
+          "lyricsSnippet": "Sample lyrics from 'Calm Down'...",
+          "tags": [
+              "love"
+          ]
+      },
+      {
+          "id": 10,
+          "title": "Apna Bana Le",
+          "artistId": 3,
+          "albumId": 3,
+          "duration": "3:49",
+          "genre": "Dance",
+          "releaseYear": 2019,
+          "coverImage": "https://picsum.photos/seed/song10/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3",
+          "isFavorite": false,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Apna Bana Le'...",
+          "tags": [
+              "bollywood"
+          ]
+      },
+      {
+          "id": 11,
+          "title": "Love Me Like You Do",
+          "artistId": 4,
+          "albumId": 4,
+          "duration": "3:19",
+          "genre": "Punjabi",
+          "releaseYear": 2022,
+          "coverImage": "https://picsum.photos/seed/song11/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3",
+          "isFavorite": false,
+          "language": "English",
+          "lyricsSnippet": "Sample lyrics from 'Love Me Like You Do'...",
+          "tags": [
+              "emotional"
+          ]
+      },
+      {
+          "id": 12,
+          "title": "Senorita",
+          "artistId": 5,
+          "albumId": 5,
+          "duration": "3:43",
+          "genre": "Hindi Pop",
+          "releaseYear": 2015,
+          "coverImage": "https://picsum.photos/seed/song12/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3",
+          "isFavorite": true,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Senorita'...",
+          "tags": [
+              "romantic"
+          ]
+      },
+      {
+          "id": 13,
+          "title": "Tum Mile",
+          "artistId": 6,
+          "albumId": 6,
+          "duration": "3:30",
+          "genre": "Pop",
+          "releaseYear": 2020,
+          "coverImage": "https://picsum.photos/seed/song13/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3",
+          "isFavorite": true,
+          "language": "English",
+          "lyricsSnippet": "Sample lyrics from 'Tum Mile'...",
+          "tags": [
+              "love"
+          ]
+      },
+      {
+          "id": 14,
+          "title": "Girls Like You",
+          "artistId": 7,
+          "albumId": 7,
+          "duration": "3:49",
+          "genre": "Rock",
+          "releaseYear": 2018,
+          "coverImage": "https://picsum.photos/seed/song14/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3",
+          "isFavorite": true,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'Girls Like You'...",
+          "tags": [
+              "love"
+          ]
+      },
+      {
+          "id": 15,
+          "title": "On My Way",
+          "artistId": 1,
+          "albumId": 1,
+          "duration": "3:42",
+          "genre": "Soul",
+          "releaseYear": 2012,
+          "coverImage": "https://picsum.photos/seed/song15/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3",
+          "isFavorite": false,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'On My Way'...",
+          "tags": [
+              "romantic"
+          ]
+      },
+      {
+          "id": 16,
+          "title": "Raataan Lambiyan",
+          "artistId": 2,
+          "albumId": 2,
+          "duration": "3:16",
+          "genre": "Soul",
+          "releaseYear": 2015,
+          "coverImage": "https://picsum.photos/seed/song16/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3",
+          "isFavorite": false,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'Raataan Lambiyan'...",
+          "tags": [
+              "love"
+          ]
+      },
+      {
+          "id": 17,
+          "title": "Shivers",
+          "artistId": 3,
+          "albumId": 3,
+          "duration": "3:47",
+          "genre": "Romantic",
+          "releaseYear": 2023,
+          "coverImage": "https://picsum.photos/seed/song17/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3",
+          "isFavorite": false,
+          "language": "English",
+          "lyricsSnippet": "Sample lyrics from 'Shivers'...",
+          "tags": [
+              "bollywood"
+          ]
+      },
+      {
+          "id": 18,
+          "title": "All of Me",
+          "artistId": 4,
+          "albumId": 4,
+          "duration": "3:26",
+          "genre": "Romantic",
+          "releaseYear": 2014,
+          "coverImage": "https://picsum.photos/seed/song18/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-18.mp3",
+          "isFavorite": false,
+          "language": "English",
+          "lyricsSnippet": "Sample lyrics from 'All of Me'...",
+          "tags": [
+              "love"
+          ]
+      },
+      {
+          "id": 19,
+          "title": "Channa Mereya",
+          "artistId": 5,
+          "albumId": 5,
+          "duration": "3:43",
+          "genre": "Punjabi",
+          "releaseYear": 2023,
+          "coverImage": "https://picsum.photos/seed/song19/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-19.mp3",
+          "isFavorite": false,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'Channa Mereya'...",
+          "tags": [
+              "english"
+          ]
+      },
+      {
+          "id": 20,
+          "title": "Believer",
+          "artistId": 6,
+          "albumId": 6,
+          "duration": "3:15",
+          "genre": "Soul",
+          "releaseYear": 2018,
+          "coverImage": "https://picsum.photos/seed/song20/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-20.mp3",
+          "isFavorite": true,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Believer'...",
+          "tags": [
+              "emotional"
+          ]
+      },
+      {
+          "id": 21,
+          "title": "Tera Ban Jaunga",
+          "artistId": 7,
+          "albumId": 7,
+          "duration": "3:20",
+          "genre": "Rock",
+          "releaseYear": 2018,
+          "coverImage": "https://picsum.photos/seed/song21/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-21.mp3",
+          "isFavorite": false,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Tera Ban Jaunga'...",
+          "tags": [
+              "dance"
+          ]
+      },
+      {
+          "id": 22,
+          "title": "Dance Monkey",
+          "artistId": 1,
+          "albumId": 1,
+          "duration": "3:58",
+          "genre": "Ballad",
+          "releaseYear": 2022,
+          "coverImage": "https://picsum.photos/seed/song21/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-22.mp3",
+          "isFavorite": false,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'Dance Monkey'...",
+          "tags": [
+              "pop"
+          ]
+      },
+      {
+          "id": 23,
+          "title": "Tu Jaane Na",
+          "artistId": 2,
+          "albumId": 2,
+          "duration": "3:42",
+          "genre": "Rock",
+          "releaseYear": 2010,
+          "coverImage": "https://picsum.photos/seed/song23/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-23.mp3",
+          "isFavorite": false,
+          "language": "English",
+          "lyricsSnippet": "Sample lyrics from 'Tu Jaane Na'...",
+          "tags": [
+              "pop"
+          ]
+      },
+      {
+          "id": 24,
+          "title": "Blank Space",
+          "artistId": 3,
+          "albumId": 3,
+          "duration": "3:49",
+          "genre": "Ballad",
+          "releaseYear": 2013,
+          "coverImage": "https://picsum.photos/seed/song24/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-24.mp3",
+          "isFavorite": false,
+          "language": "Punjabi",
+          "lyricsSnippet": "Sample lyrics from 'Blank Space'...",
+          "tags": [
+              "dance"
+          ]
+      },
+      {
+          "id": 25,
+          "title": "Easy On Me",
+          "artistId": 4,
+          "albumId": 4,
+          "duration": "3:36",
+          "genre": "Soul",
+          "releaseYear": 2023,
+          "coverImage": "https://picsum.photos/seed/song25/300/300",
+          "songUrl": "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-25.mp3",
+          "isFavorite": false,
+          "language": "Hindi",
+          "lyricsSnippet": "Sample lyrics from 'Easy On Me'...",
+          "tags": [
+              "emotional"
+          ]
+      }
+  ]
+}

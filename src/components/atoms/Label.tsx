@@ -1,5 +1,5 @@
-export const Label = ({ label, onChange, text }) => {
+export const Label = ({ text }) => {
     return <>
-        <h1>{text}</h1>
+        <h1 className="py-2">{text}</h1>
     </>
 }

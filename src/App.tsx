@@ -1,8 +1,15 @@
-import React, { useState } from "react";
-import { SongGallery } from './components/pages/SongGallery.tsx';
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import EditorPage from "./components/pages/EditorPage.tsx";
 
 function App() {
-  return <SongGallery />
+  return <>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<EditorPage />}>
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  </>
 }
 
 export default App

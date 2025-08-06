@@ -1,7 +1,7 @@
 import clsx from 'clsx';
 
 export const Button = (props) => {
-    const { size='md', variant='primary', onClick, children } = props;
+    const { size='md', variant='primary', onClick, children, className="", disabled=false } = props;
 
     const sizes = {
         sm: "px-3 py-1 text-sm",
@@ -14,8 +14,12 @@ export const Button = (props) => {
         danger: "bg-rose-500 hover:bg-rose-600"
     };
 
+    const disabledStyle = "bg-gray-200 text-gray-500 cursor-not-allowed"
 
-    return <button className={clsx("text-white rounded-lg", sizes[size], variants[variant])} onClick={onClick}>
+    return <button
+            disabled={disabled}
+            className={clsx("text-white rounded-lg", className, sizes[size], disabled ? disabledStyle : variants[variant] )}
+            onClick={onClick}>
         { children }
     </button>
 }

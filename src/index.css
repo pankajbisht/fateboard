@@ -1,23 +1,58 @@
-.ticka {
-    color: red;
-    background: green;
-    padding: 10px;
-    border-radius: 4px;
+/* === 🎨 Color Palette === */
+/*.bg-primary    { background-color: #1DB954; }*/
+/*.bg-secondary  { background-color: #8A63D2; }*/
+/*.bg-accent     { background-color: #3DA9FC; }*/
+/*.bg-dark       { background-color: #121212; }*/
+/*.bg-dark-alt   { background-color: #0F172A; }*/
+
+/*.text-primary   { color: #1DB954; }*/
+/*.text-secondary { color: #8A63D2; }*/
+/*.text-light     { color: #EAEAEA; }*/
+
+/*!* === 🌈 Gradients === *!*/
+/*.bg-gradient-primary {*/
+/*  background-image: linear-gradient(135deg, #1DB954, #3DA9FC);*/
+/*}*/
+
+/*.bg-gradient-secondary {*/
+/*  background-image: linear-gradient(135deg, #8A63D2, #3DA9FC);*/
+/*}*/
+
+/*.bg-gradient-dark {*/
+/*  background-image: linear-gradient(to bottom, #0F172A, #121212);*/
+/*}*/
+
+/*.bg-glass {*/
+/*  background: rgba(18, 18, 18, 0.6);*/
+/*  backdrop-filter: blur(8px);*/
+/*}*/
+
+/*!* Optional for transitions and hover *!*/
+/*.btn {*/
+/*  @apply px-4 py-2 rounded text-white font-semibold transition;*/
+/*}*/
+/*.btn-primary:hover {*/
+/*  background-color: #17a44c;*/
+/*}*/
+/*.btn-accent:hover {*/
+/*  background-color: #2d91e2;*/
+/*}
+ */
+
+.bg-primary {
+  background: #121212;
+  color: #EAEAEA;
 }
 
-.green {
-    color: green;
-    background: skyblue;
+.bg-dark {
+    background: #0F172A;
+    color: #A0A0A0;
 }
 
-.yellow {
-    color: yellow;
-    background: skyblue;
-}
-
-.bdr {
-    border: 1px solid red;
-    border-radius: 10px;
-    margin: 10px;
-    padding: 20px;
-}
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }

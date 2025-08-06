@@ -1,13 +1,13 @@
 import { forwardRef } from "react";
 
-export const Input = forwardRef(({ value, onChange, placeholder }, ref) => {
+export const Input = forwardRef(({ type="text", value, onChange, placeholder }, ref) => {
 
     return <input
-        type="text"
+        type={type}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="bg-white border p-2 rounded-lg w-full pl-10"
+        className="w-full border rounded-full p-2 pl-10"
         ref={ref}
     />
 });
