@@ -5,7 +5,7 @@ function App() {
   return <>
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<EditorPage />}>
+        <Route path="/fate" element={<EditorPage />}>
         </Route>
       </Routes>
     </BrowserRouter>
