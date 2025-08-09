@@ -10,12 +10,14 @@
     "build:no-check": "vite build",
     "lint": "eslint .",
     "preview": "vite preview --host 0.0.0.0",
-    "server": "json-server --watch db.json --port 4000"
+    "server": "json-server --watch db.json --port 4000",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
     "@tanstack/react-router": "^1.129.8",
     "clsx": "^2.1.1",
     "fabric": "^6.7.1",
+    "gh-pages": "^6.3.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.7.1"
