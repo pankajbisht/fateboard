@@ -241,7 +241,7 @@ const handleTransformChange = (property, value) => {
         </button>
       </div>
 
-      {['move', 'transform', 'crop'].map((section) => (
+      {['move', 'transform'].map((section) => (
         <div key={section}>
           <h1
             className={clsx(
@@ -263,7 +263,7 @@ const handleTransformChange = (property, value) => {
           </h1>
 
           {activeSection === section &&
-            (section === 'transform' ? (
+            (section === 'transform' && (
                 <TransformControls
                   width={width}
                   height={height}
@@ -273,9 +273,9 @@ const handleTransformChange = (property, value) => {
                   left={left}
                   onChange={handleTransformChange}
                 />                
-            ) : (
-              <p className="text-stone-700">{section} options here</p>
-            ))}
+            )
+          
+            )}
         </div>
       ))}
     </aside>

@@ -108,6 +108,18 @@ const updateLayers = useCallback(() => {
       fill: '#FF0000', name: 'Rectangle'
     }));
 
+  const addEllipse = () => {
+    const ellipse = new fabric.Ellipse({
+      top: 50,
+      left: 50,
+      rx: 70,
+      ry: 20,
+      fill: '#FF0000',
+      name: 'Ellips'
+    });
+    canvas.add(ellipse);
+  };
+
   const addCircle = () =>
     canvas?.add(new fabric.Circle({
       top: 50, left: 200, radius: 50,
@@ -344,6 +356,7 @@ const deleteObject = () => {
           onAddRectangle={addRectangle}
           onAddCircle={addCircle}
           onAddText={addText}
+          onAddEllipse={addEllipse}
           onTogglePanel={() => setIsExpanded(!isExpanded)}
           isPanelOpen={isExpanded}
         />
