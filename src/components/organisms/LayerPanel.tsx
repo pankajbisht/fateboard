@@ -1,8 +1,10 @@
 import React from 'react';
 import {Button} from "../atoms/Button.tsx";
+import clsx from "clsx";
 
 const LayerPanel = ({
   layers,
+  selectedSection,
   onBringForward,
   onSendBackward,
   onBringToFront,
@@ -17,7 +19,7 @@ const LayerPanel = ({
   onUngroup
 }) => {
 
-console.log(layers);
+//console.log(layers);
 
   return (
     <aside className="fixed top-2 right-2 bg-stone-100 rounded-md shadow-lg w-72 z-50">
@@ -39,7 +41,7 @@ console.log(layers);
         {layers.map((layer, index) => (
           <li
             key={layer.id}
-            className="flex items-center justify-between p-2 hover:bg-stone-200 cursor-drag"
+            className={clsx('flex items-center justify-between p-2 hover:bg-stone-200 cursor-drag', selectedSection === layer.id && 'bg-blue-200')}
           >
             {/* Editable Layer Name */}
 

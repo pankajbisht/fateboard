@@ -5,14 +5,28 @@ import PrimarySidebar from '../organisms/PrimarySidebar';
 import PropertiesPanel from '../organisms/PropertiesPanel';
 import CanvasBoard from '../organisms/CanvasBoard';
 import LayerPanel from '../organisms/LayerPanel';
+import useFabricClipboardHistory from "../../hooks/useFabricClipboardHistory.ts";
 
 const EditorPage = () => {
   const canvasRef = useRef(null);
+//  const clipboardRef = useRef(null);
+  const fabricRef = useRef(null); // fabric.Canvas instance
   const [canvas, setCanvas] = useState(null);
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeSection, setActiveSection] = useState('move');
   const [transformValues, setTransformValues] = useState({});
   const [layers, setLayers] = useState([]);
+  const [selectedSection, setSelectedSection] = useState({})
+
+  const {
+    trackMousePosition,
+    saveHistory,
+    copyObject,
+    cutObject,
+    pasteObject,
+    undo,
+    redo
+  } = useFabricClipboardHistory();
 
   /** Get objects top-most first */
   const getObjects = useCallback(() => {
@@ -44,12 +58,17 @@ const updateLayers = useCallback(() => {
   if (!canvas) return;
 
   const seen = new Set();
+  const activeObject = canvas.getActiveObject(); // <-- Get currently selected object
+  const activeId = activeObject?.id || null;
+
+
   const objects = getObjects().map(obj => {
     if (!obj.id || seen.has(obj.id)) {
       obj.id = generateId();
     }
     seen.add(obj.id);
 
+    console.log(obj.id, seen);
     return {
       id: obj.id,
       name: obj.name || obj.type,
@@ -57,27 +76,64 @@ const updateLayers = useCallback(() => {
       visible: obj.visible !== false,
       locked: obj.locked || false,
       opacity: obj.opacity ?? 1,
+      isSelected: true
     };
   });
+
+  setSelectedSection(activeId);
 
   setLayers(objects);
 }, [canvas, getObjects]);
 
-  /** Initialize Fabric Canvas */
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    const initCanvas = new fabric.Canvas(canvasRef.current, {
-      width: 794,
-      height: 500,
-      preserveObjectStacking: true, // Important for layer ordering
-    });
 
-    initCanvas.backgroundColor = '#FFF';
-    initCanvas.renderAll();
-    setCanvas(initCanvas);
 
-    return () => initCanvas.dispose();
-  }, []);
+/** Initialize Fabric Canvas */
+useEffect(() => {
+  if (!canvasRef.current) return;
+
+  const initCanvas = new fabric.Canvas(canvasRef.current, {
+    width: 794,
+    height: 500,
+    preserveObjectStacking: true,
+  });
+
+  fabricRef.current = initCanvas;
+  initCanvas.backgroundColor = "#FFF";
+  initCanvas.renderAll();
+
+  // Optional: remove this if you only use fabricRef
+  setCanvas(initCanvas);
+  saveHistory(initCanvas);
+
+  initCanvas.on("mouse:move", trackMousePosition(initCanvas));
+
+  const handleKeyDown = (e) => {
+    const isMac = navigator.platform.toUpperCase().includes("MAC");
+    const key = e.key.toLowerCase();
+    const cmd = isMac ? e.metaKey : e.ctrlKey;
+    const currentCanvas = fabricRef.current;
+
+    if (!currentCanvas) return;
+
+    if (cmd && key === "c") { e.preventDefault(); copyObject(currentCanvas); }
+    if (cmd && key === "x") { e.preventDefault(); cutObject(currentCanvas); }
+    if (cmd && key === "v") { e.preventDefault(); pasteObject(currentCanvas); }
+    if (cmd && key === "z" && !e.shiftKey) { e.preventDefault(); undo(currentCanvas); }
+    if (cmd && (key === "y" || (key === "z" && e.shiftKey))) { e.preventDefault(); redo(currentCanvas); }
+  };
+
+  document.addEventListener("keydown", handleKeyDown, true);
+
+  return () => {
+    document.removeEventListener("keydown", handleKeyDown, true);
+    initCanvas.dispose();
+  };
+}, []); // run once
+
+
+
+  // Keyboard listener
+
 
   /** Attach event listeners after canvas is ready */
   useEffect(() => {
@@ -100,6 +156,8 @@ const updateLayers = useCallback(() => {
       canvas.off('selection:updated', handleUpdate);
     };
   }, [canvas, updateLayers]);
+
+
 
   /** Object creation */
   const addRectangle = () =>
@@ -337,18 +395,6 @@ const deleteObject = () => {
   };
 
 
-
-
-
-
-
-
-
-
-
-
-
-
   return (
     <EditorTemplate
       sidebar={
@@ -376,6 +422,7 @@ const deleteObject = () => {
       layers={
         <LayerPanel
           layers={layers}
+          selectedSection={selectedSection}
           onBringForward={bringForward}
           onSendBackward={sendBackward}
           onBringToFront={bringToFront}
