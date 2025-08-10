@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" role="img" aria-label="FATE logo">
+  <defs>
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22a7ff"/>
+      <stop offset="100%" stop-color="#0a60d6"/>
+    </linearGradient>
+    <style>
+      .g-fill { fill: url(#grad); }
+      .frame { stroke: url(#grad); stroke-width: 12; fill: none; stroke-linecap:round; }
+      .play { fill: #ffffff; }
+    </style>
+  </defs>
+
+  <!-- Frame corners -->
+  <path class="frame" d="M32 32 h112" />
+  <path class="frame" d="M32 32 v112" />
+  <path class="frame" d="M768 368 h-112" />
+  <path class="frame" d="M768 368 v-112" />
+
+  <!-- F -->
+  <g transform="translate(60,60)">
+    <path class="g-fill" d="M0 0 H60 V240 H0 Z M80 0 H200 V50 H80 Z M80 100 H160 V150 H80 Z"/>
+  </g>
+
+  <!-- A -->
+  <g transform="translate(250,40)">
+    <!-- Symmetrical A -->
+    <path class="g-fill" d="M80 0 L0 240 H40 L80 120 L120 240 H160 L80 0 Z"/>
+
+    <!-- Cutout play button -->
+    <polygon style="fill:lime;stroke:purple;stroke-width:3" class="play" points="70,140 70,160 88,150"/>
+  </g>  
+
+  <!-- T -->
+  <g transform="translate(460,50)">
+    <rect class="g-fill" x="0" y="0" width="200" height="40" rx="8"/>
+    <rect class="g-fill" x="90" y="40" width="40" height="200"/>
+  </g>
+
+  <!-- E -->
+  <g transform="translate(680,90)">
+    <!-- Top bar -->
+    <rect class="g-fill" x="0" y="0" width="120" height="30" rx="6"/>
+    <!-- Middle bar shorter for style -->
+    <rect class="g-fill" x="0" y="64" width="80" height="30" rx="6"/>
+    <!-- Bottom bar -->
+    <rect class="g-fill" x="0" y="128" width="120" height="30" rx="6"/>
+  </g>
+</svg>
