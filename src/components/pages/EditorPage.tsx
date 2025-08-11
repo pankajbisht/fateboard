@@ -6,6 +6,7 @@ import PropertiesPanel from '../organisms/PropertiesPanel';
 import CanvasBoard from '../organisms/CanvasBoard';
 import LayerPanel from '../organisms/LayerPanel';
 import useFabricClipboardHistory from "../../hooks/useFabricClipboardHistory.ts";
+import colors from 'tailwindcss/colors';
 
 const EditorPage = () => {
   const canvasRef = useRef(null);
@@ -17,6 +18,7 @@ const EditorPage = () => {
   const [transformValues, setTransformValues] = useState({});
   const [layers, setLayers] = useState([]);
   const [selectedSection, setSelectedSection] = useState({})
+console.log(colors.red);
 
   const {
     trackMousePosition,
@@ -25,7 +27,8 @@ const EditorPage = () => {
     cutObject,
     pasteObject,
     undo,
-    redo
+    redo,
+    deleteSelectedLayers
   } = useFabricClipboardHistory();
 
   /** Get objects top-most first */
@@ -120,6 +123,7 @@ useEffect(() => {
     if (cmd && key === "v") { e.preventDefault(); pasteObject(currentCanvas); }
     if (cmd && key === "z" && !e.shiftKey) { e.preventDefault(); undo(currentCanvas); }
     if (cmd && (key === "y" || (key === "z" && e.shiftKey))) { e.preventDefault(); redo(currentCanvas); }
+    if (cmd && (key === "delete" || key === "backspace")) { e.preventDefault(); deleteSelectedLayers(); }
   };
 
   document.addEventListener("keydown", handleKeyDown, true);
@@ -163,7 +167,7 @@ useEffect(() => {
   const addRectangle = () =>
     canvas?.add(new fabric.Rect({
       top: 50, left: 50, width: 100, height: 100,
-      fill: '#FF0000', name: 'Rectangle'
+      fill: colors.red[500], name: 'Rectangle'
     }));
 
   const addEllipse = () => {
@@ -172,7 +176,7 @@ useEffect(() => {
       left: 50,
       rx: 70,
       ry: 20,
-      fill: '#FF0000',
+      fill: colors.red[500],
       name: 'Ellips'
     });
     canvas.add(ellipse);
@@ -181,7 +185,7 @@ useEffect(() => {
   const addCircle = () =>
     canvas?.add(new fabric.Circle({
       top: 50, left: 200, radius: 50,
-      fill: '#00FF00', name: 'Circle'
+      fill: colors.red[500], name: 'Circle'
     }));
 
   const addText = () =>
@@ -252,9 +256,42 @@ useEffect(() => {
 
 
   const deleteLayer = (index) => {
+    console.log(index);
     const obj = getObjects()[index];
     if (obj) { canvas.remove(obj); updateLayers(); }
   };
+
+//const deleteLayer = (index = null) => {
+//
+//  console.log(canvas.getActiveObjects())
+
+//  const currentCanvas = fabricRef.current;
+//  if (!currentCanvas) return; // safeguard
+//
+//  const objects = getObjects(); // or currentCanvas.getObjects()
+//  let target = null;
+//
+//  if (index !== null) {
+//    // Delete by index from layer panel
+//    target = objects[index];
+//  } else {
+//    // Delete active object from keyboard
+//    target = currentCanvas.getActiveObject();
+//  }
+//
+//  if (target) {
+//    // Save state before deleting
+//    historyRef.current.push(JSON.stringify(currentCanvas));
+//    redoStackRef.current.length = 0; // Clear redo on new action
+//
+//    currentCanvas.remove(target);
+//    currentCanvas.discardActiveObject();
+//    currentCanvas.renderAll();
+//    updateLayers();
+//  }
+//};
+
+
 
 /** Duplicate */
 const duplicateLayer = index => {

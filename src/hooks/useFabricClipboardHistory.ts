@@ -129,6 +129,21 @@ export default function useFabricClipboardHistory() {
 //    });
   }, [saveHistory]);
 
+  const deleteSelectedLayers = useCallback((canvas) => {
+    if (!canvas) return;
+
+    const activeObjects = canvas.getActiveObjects();
+    if (activeObjects.length === 0) return;
+
+    saveHistory(canvas); // Save state before deletion
+
+    activeObjects.forEach((obj) => canvas.remove(obj));
+    canvas.discardActiveObject();
+    canvas.renderAll();
+  }, [saveHistory]);
+
+
+
   return {
     trackMousePosition,
     saveHistory,
@@ -136,6 +151,7 @@ export default function useFabricClipboardHistory() {
     cutObject,
     pasteObject,
     undo,
-    redo
+    redo,
+    deleteSelectedLayers
   };
 }

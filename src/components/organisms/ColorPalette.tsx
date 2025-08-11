@@ -1,31 +1,33 @@
 import { useEffect, useState } from "react";
+import tailwindcolors from 'tailwindcss/colors';
+
 
 export default function ColorPalette({ canvas }) {
   const colors = [
-    "#FF0000", // Red
-    "#00FF00", // Green
-    "#0000FF", // Blue
-    "#FFFF00", // Yellow
-    "#FF00FF", // Magenta
-    "#00FFFF", // Cyan
-    "#000000", // Black
-    "#FFFFFF"  // White
+    tailwindcolors.red[500], // Red
+    tailwindcolors.green[500], // Green
+    tailwindcolors.blue[500], // Blue
+    tailwindcolors.yellow[500], // Yellow
+    tailwindcolors.fuchsia[500], // Magenta
+    tailwindcolors.cyan[500], // Cyan
+    tailwindcolors.black, // Black
+    tailwindcolors.white, // Black
   ];
 
   const [selectedColor, setSelectedColor] = useState(colors[0]);
-  const [customColor, setCustomColor] = useState("#000000");
+  const [customColor, setCustomColor] = useState(tailwindcolors.black);
   const [selectedObject, setSelectedObject] = useState(null);
 
   // Update selected object state when selection changes
   const updateSelectedObject = (object) => {
     if (!object) {
       setSelectedObject(null);
-      setSelectedColor("#000000");
+      setSelectedColor(tailwindcolors.black);
       return;
     }
 
     setSelectedObject(object);
-    setSelectedColor(object.fill || "#000000");
+    setSelectedColor(object.fill || tailwindcolors.black);
   };
 
   // Listen to Fabric.js events

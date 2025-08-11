@@ -19,7 +19,7 @@ const LayerPanel = ({
   onUngroup
 }) => {
 
-//console.log(layers);
+console.log(layers);
 
   return (
     <aside className="fixed top-2 right-2 bg-stone-100 rounded-md shadow-lg w-72 z-50">
@@ -34,6 +34,10 @@ const LayerPanel = ({
         <button  className="cursor-pointer h-8 w-8 hover:bg-stone-200"  onClick={onUngroup}>
           <i className="fa-solid fa-object-ungroup"></i>
         </button>
+
+        {/*<button  className="cursor-pointer h-8 w-8 hover:bg-stone-200"  onClick={onSendToBack}>*/}
+        {/*  <i className="fa-regular fa-send-backward"></i>*/}
+        {/*</button>*/}
       </div>
 
       {/* Layer List */}
@@ -79,6 +83,22 @@ const LayerPanel = ({
                 <i className="fa-solid fa-trash"></i>
               </button>
             </div>
+
+            <div className="flex flex-row items-center">
+
+              <button className="cursor-pointer h-8 w-8"  onClick={() => onBringForward(index)}>
+                 <i className="fa-solid fa-bring-front"></i>
+              </button>
+            </div>
+
+            <div className="flex flex-row items-center">
+
+              <button className="cursor-pointer h-8 w-8"  onClick={() => onSendToBack(index)}>
+                 <i className="fa-regular fa-send-backward"></i>
+              </button>
+            </div>
+
+
 
             {/* Controls */}
             {/*<div className="flex items-center gap-1 text-xs">*/}
