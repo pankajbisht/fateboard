@@ -7,6 +7,8 @@ import CanvasBoard from '../organisms/CanvasBoard';
 import LayerPanel from '../organisms/LayerPanel';
 import useFabricClipboardHistory from "../../hooks/useFabricClipboardHistory.ts";
 import colors from 'tailwindcss/colors';
+import db from "opendb-store";
+
 
 const EditorPage = () => {
   const canvasRef = useRef(null);
@@ -96,13 +98,23 @@ useEffect(() => {
 
   const initCanvas = new fabric.Canvas(canvasRef.current, {
     width: 794,
-    height: 500,
+    height: 700,
     preserveObjectStacking: true,
   });
 
   fabricRef.current = initCanvas;
   initCanvas.backgroundColor = "#FFF";
-  initCanvas.renderAll();
+
+
+  const saved = db.local.get("drawJson");
+  console.log(saved);
+  if (saved) {
+    initCanvas.loadFromJSON(saved).then((canvas) => canvas.requestRenderAll());
+  }
+
+
+
+ initCanvas.renderAll();
 
   // Optional: remove this if you only use fabricRef
   setCanvas(initCanvas);
