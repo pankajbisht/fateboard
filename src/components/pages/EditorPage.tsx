@@ -98,7 +98,7 @@ useEffect(() => {
 
   const initCanvas = new fabric.Canvas(canvasRef.current, {
     width: 794,
-    height: 700,
+    height: 600,
     preserveObjectStacking: true,
   });
 
