@@ -3,7 +3,7 @@ import EditorPage from "./components/pages/EditorPage.tsx";
 
 function App() {
   return <>
-    <BrowserRouter>
+    <BrowserRouter basename="/">
       <Routes>
         <Route path="/" element={<EditorPage />}>
         </Route>
