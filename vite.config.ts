@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 
 // https://vite.dev/config/
-export default defineConfig({
-  base: "/",
+export default defineConfig(({ mode }) => ({
+  base: mode === 'gh-pages' ? '/fate/' : '/',
   plugins: [react(), tailwindcss()],
-})
+}))
