@@ -1,4 +1,5 @@
-// store/slices/layersSlice.ts
+import { Group } from "fabric";
+
 export const createLayersSlice = (set, get) => ({
   layers: [],
   setLayers: (layers) => set({ layers }),
@@ -25,17 +26,45 @@ export const createLayersSlice = (set, get) => ({
     set({ layers });
   },
 
-  removeLayer: (id) => {
-    const layers = get().layers.filter(layer => {
-      if (layer.id === id && layer.object) {
-        get().canvas.remove(layer.object);
-      }
-      return layer.id !== id;
-    });
-    set({ layers });
-    get().canvas?.requestRenderAll();
-  },
+//  removeLayer: (id) => {
+//    const layers = get().layers.filter(layer => {
+//      if (layer.id === id && layer.object) {
+//        get().canvas.remove(layer.object);
+//      }
+//      return layer.id !== id;
+//    });
+//    set({ layers });
+//    get().canvas?.requestRenderAll();
+//  },
 
+//removeLayer: () => {
+//  const activeObject = get().canvas.getActiveObject();
+//  if (!activeObject) return;
+//
+//  const layers = get().layers.filter(layer => layer.object !== activeObject);
+//  set({ layers });
+//
+//  get().canvas.remove(activeObject);
+//  get().canvas.requestRenderAll();
+//},
+
+removeLayer: () => {
+  const canvas = get().canvas;
+  if (!canvas) return;
+
+  // Get selected objects (multi or single)
+  const activeObjects = canvas.getActiveObjects(); // always returns array
+  if (!activeObjects || activeObjects.length === 0) return;
+
+  // Remove selected objects from layers
+  const layers = get().layers.filter(layer => !activeObjects.includes(layer.object));
+  set({ layers });
+
+  // Remove from canvas
+  activeObjects.forEach(obj => canvas.remove(obj));
+  canvas.discardActiveObject(); // clear selection
+  canvas.requestRenderAll();
+},
 
   toggleVisibility: (id) => {
     const layers = get().layers.map(layer => {
@@ -96,27 +125,149 @@ export const createLayersSlice = (set, get) => ({
     set({ layers });
   },
 
-  bringLayerForward: (id) => {
-    const layer = get().layers.find(l => l.id === id);
-    if (layer?.object) {
-      get().canvas.bringToFront(layer.object); // canvas method
-      get().canvas.requestRenderAll();
-    }
+
+//  bringLayersToFront: () => {
+//    const canvas = get().canvas;
+//    if (!canvas) return;
+//
+//    const activeObjects = canvas.getActiveObjects();
+//    if (!activeObjects.length) return;
+//
+//    // Sort objects by their current position in the stack (lowest index first)
+//    const sortedObjects = activeObjects.sort((a, b) =>
+//      canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b)
+//    );
+//
+//    // Move each object one step forward
+//    sortedObjects.forEach(obj => {
+//      canvas.bringObjectForward(obj);
+//    });
+//
+//    // Re-render the canvas
+//    canvas.renderAll();
+//  },
+//
+//
+//  sendLayersToBack: () => {
+//    const canvas = get().canvas;
+//    if (!canvas) return;
+//
+//    const activeObjects = canvas.getActiveObjects();
+//    if (!activeObjects.length) return;
+//
+//    // Sort objects by their current position in the stack (highest index first)
+//    // This preserves relative order when moving backward
+//    const sortedObjects = activeObjects.sort((a, b) =>
+//      canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a)
+//    );
+//
+//    sortedObjects.forEach(obj => {
+//      canvas.sendObjectBackwards(obj);
+//    });
+//
+//    // Re-render the canvas
+////    canvas.requestRenderAll();
+//    canvas.renderAll();
+//  },
+
+  bringForward: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObjects = canvas.getActiveObjects();
+    if (!activeObjects.length) return;
+
+    const sortedObjects = activeObjects.sort(
+      (a, b) => canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b)
+    );
+
+    sortedObjects.forEach(obj => canvas.bringObjectForward(obj));
+    canvas.requestRenderAll();
   },
 
-  sendLayerBackward: (id) => {
-    const layer = get().layers.find(l => l.id === id);
-    if (layer?.object && layer.object.sendBackwards) {
-      layer.object.sendBackwards();
-      get().canvas?.requestRenderAll();
-    }
+  sendBackward: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObjects = canvas.getActiveObjects();
+    if (!activeObjects.length) return;
+
+    const sortedObjects = activeObjects.sort(
+      (a, b) => canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a)
+    );
+
+    sortedObjects.forEach(obj => canvas.sendObjectBackwards(obj));
+    canvas.requestRenderAll();
   },
 
+  bringToFront: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObjects = canvas.getActiveObjects();
+    if (!activeObjects.length) return;
+
+    const sortedObjects = activeObjects.sort(
+      (a, b) => canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b)
+    );
+
+    sortedObjects.forEach(obj => canvas.bringToFront(obj));
+    canvas.requestRenderAll();
+  },
+
+  sendToBack: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObjects = canvas.getActiveObjects();
+    if (!activeObjects.length) return;
+
+    const sortedObjects = activeObjects.sort(
+      (a, b) => canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a)
+    );
+
+    sortedObjects.forEach(obj => canvas.sendToBack(obj));
+    canvas.requestRenderAll();
+  },
+
+
+  deleteObject: () => {
+      const canvas = get().canvas;
+      if (!canvas) return;
+      const activeObjects = canvas.getActiveObjects();
+      if (!activeObjects) return;
+
+      activeObjects.forEach((obj) => canvas.remove(obj));
+      canvas.discardActiveObject();
+      canvas.requestRenderAll();
+  },
+
+  groupLayers: (ids) => {
+     const canvas = get().canvas;
+     if (!canvas) return;
+
+     const objects = canvas.getActiveObjects();
+     get().deleteObject();
+     const group = new Group(objects);
+     canvas.add(group);
+     canvas.requestRenderAll();
+  },
+
+  ungroupSelected: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const object = canvas.getActiveObject() as Group;
+    if (!object) return;
+    canvas.remove(object);
+    canvas.add(...object.removeAll());
+    canvas.requestRenderAll();
+ },
 
 
 
   // Group selected layers
-  groupLayers: (ids) => {
+  groupLayers1: (ids) => {
     const state = get();
     const newGroupId = "group-" + Date.now();
     const groupLayer = {
@@ -136,7 +287,7 @@ export const createLayersSlice = (set, get) => ({
   },
 
   // Ungroup selected group layers
-  ungroupLayers: (ids) => {
+  ungroupLayers1: (ids) => {
     const state = get();
     const updatedLayers = state.layers.map(l => {
       if (ids.includes(l.id) && l.children?.length) return null; // remove group

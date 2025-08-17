@@ -16,6 +16,7 @@ export function CanvasBoard() {
       width: 800,
       height: 500,
       backgroundColor: "#fff",
+      preserveObjectStacking: false
     });
 
     const saved = db.local.get("drawJson");

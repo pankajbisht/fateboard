@@ -42,6 +42,50 @@ export const rightPanelConfig = [
         position: "right",
         component: (props) => <TransformPanel {...props} />
     },
+    {
+        id: "group",
+        icon: "fa-solid fa-solid fa-object-group",
+        position: "right",
+        component: null
+    },
+    {
+        id: "ungroup",
+        icon: "fa-solid fa-solid fa-object-ungroup",
+        position: "right",
+        component: null
+    },
+    {
+        id: "delete",
+        icon: "fa-solid fa-trash",
+        position: "right",
+        component: null
+    },
+    {
+        id: "forward",
+        icon: "fa-solid fa-angle-up",
+        position: "right",
+        component: null
+    },
+//    {
+//        id: "forwards",
+//        icon: "fa-solid fa-angles-up",
+//        position: "right",
+//        component: null
+//    },
+    {
+        id: "backward",
+        icon: "fa-solid fa-angle-down",
+        position: "right",
+        component: null
+    },
+//    {
+//        id: "backwards",
+//        icon: "fa-solid fa-angles-down",
+//        position: "right",
+//        component: null
+//    },
+
+
 //    {
 //        id: "layers",
 //        icon: "fa-solid fa-layer-group",

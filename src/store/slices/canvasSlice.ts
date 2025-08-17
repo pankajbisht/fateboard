@@ -30,25 +30,25 @@ export const createCanvasSlice = (set, get) => ({
     canvasInstance.on("selection:created", (e) => {
         const obj = e.selected?.[0] || null;
         console.log("Selection created:", obj?.type);
-        set({ selectedObject: obj });
+//        set({ selectedObject: obj });
       });
 
       canvasInstance.on("selection:updated", (e) => {
         const obj = e.selected?.[0] || null;
         console.log("Selection updated:", obj?.type);
-        set({ selectedObject: obj });
+//        set({ selectedObject: obj });
       });
 
       canvasInstance.on("selection:cleared", () => {
         console.log("Selection cleared");
-        set({ selectedObject: null });
+//        set({ selectedObject: null });
       });
 
       // ✅ NEW: also listen to object:modified (when text edited, resized, moved)
       canvasInstance.on("object:modified", (e) => {
         const obj = e.target || null;
         console.log("Object modified:", obj?.type);
-        set({ selectedObject: obj });
+//        set({ selectedObject: obj });
       });
 
   },
@@ -250,22 +250,23 @@ export const createCanvasSlice = (set, get) => ({
     canvas.setActiveObject(shape);
     canvas.renderAll();
     get().pushState();
+    get().addLayer(shape, shapeType);
 
     // Add layer to your layers slice
-      const layers = get().layers || [];
-      set({
-        layers: [
-          ...layers,
-          {
-              id: shape.toObject().id || Date.now(),
-              type: shapeType,
-              object: shape,
-              name: shapeType,
-              visible: true,
-              locked: false
-            },
-          ],
-        });
+//      const layers = get().layers || [];
+//      set({
+//        layers: [
+//          ...layers,
+//          {
+//              id: shape.toObject().id || Date.now(),
+//              type: shapeType,
+//              object: shape,
+//              name: shapeType,
+//              visible: true,
+//              locked: false
+//            },
+//          ],
+//        });
   },
 
   pushState: () => {
