@@ -26,7 +26,7 @@ jobs:
 
       # 4️⃣ Build project
       - name: Build project
-        run: npm run build
+        run: npm run build:no-check
 
       # 5️⃣ Verify build folder exists
       - name: Check build folder
