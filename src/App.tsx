@@ -1,15 +1,5 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import EditorPage from "./components/pages/EditorPage.tsx";
+import { RootRouter } from "./rootRouter";
 
-function App() {
-  return <>
-    <BrowserRouter basename="/">
-      <Routes>
-        <Route path="/" element={<EditorPage />}>
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  </>
+export default function App() {
+  return <RootRouter />;
 }
-
-export default App

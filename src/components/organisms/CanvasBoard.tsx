@@ -1,42 +1,66 @@
-import ZoomDropdown from "../molecules/ZoomDropdown.tsx";
-import BorderControls from "./BorderControls.tsx";
-import ColorPalette from "./ColorPalette.tsx";
+import { useEffect, useRef } from "react";
 import db from "opendb-store";
+import * as fabric from "fabric";
+import { useStore } from "../../store/store.ts";
+import { FloatingTextToolbar } from "./FloatingTextToolbar.tsx";
 
-const CanvasBoard = ({ canvasRef, canvas }) => {
-    
-    const handleClick = () => {
-        const savedState = canvas.toJSON(); // get JSON of canvas
-        console.log(savedState);
-        db.local.set('drawJson', savedState);
+export function CanvasBoard() {
+  const canvasRef = useRef(null);
+  const setCanvas = useStore((s) => s.setCanvas);
+  const saveState = useStore((s) => s.saveState);
+  const selectedObject = useStore((s) => s.selectedObject);
+  const canvas = useStore((s) => s.canvas);
+
+  useEffect(() => {
+    const canvasInstance = new fabric.Canvas(canvasRef.current, {
+      width: 800,
+      height: 500,
+      backgroundColor: "#fff",
+    });
+
+    const saved = db.local.get("drawJson");
+    if (saved) {
+      canvasInstance.loadFromJSON(saved, () => {
+        canvasInstance.requestRenderAll();
+      });
     }
 
-    const clearClick = () => {
-        db.local.clear();              // clear your local DB/localStorage/etc.
-        canvas.clear();                 // remove all objects AND background
-        canvas.backgroundColor = "#FFF"; // optional: reset background
-        canvas.requestRenderAll();      // schedule re-render
-      };
-      
+    setCanvas(canvasInstance);
 
-    return <>
-        <div className="flex fixed left-0 bottom-0 right-0 px-2 pb-2 justify-between items-center">
-            <BorderControls canvas={canvas}/>
+    const saveOnChange = () => {
+      saveState();
+      db.local.set("drawJson", canvasInstance.toJSON());
+    };
 
-            <ColorPalette canvas={canvas}/>
+    canvasInstance.on("object:added", saveOnChange);
+    canvasInstance.on("object:modified", saveOnChange);
+    canvasInstance.on("object:removed", saveOnChange);
 
-            <button onClick={handleClick} className="cursor-pointer">
-                <i className="fa-solid fa-floppy-disk"></i>
-            </button>
+    return () => {
+      canvasInstance.off("object:added", saveOnChange);
+      canvasInstance.off("object:modified", saveOnChange);
+      canvasInstance.off("object:removed", saveOnChange);
+      canvasInstance.dispose();
+    };
+  }, [setCanvas, saveState]);
 
-            <button onClick={clearClick} className="cursor-pointer">
-                <i className="fa-solid fa-square-xmark"></i>
-            </button>
+  return (
+    <main className="bg-white shadow-lg relative">
+      <canvas ref={canvasRef} />
 
-            <ZoomDropdown canvas={canvas} />
-        </div>
-        <canvas ref={canvasRef} className="z-10" />
-    </>
-};
+      {selectedObject?.type === "textbox" && canvas && (
+        <FloatingTextToolbar
+          target={selectedObject}
+          canvas={canvas}
+          onChange={(style) => {
+            if (selectedObject) {
+              selectedObject.set(style);
+              canvas.requestRenderAll();
+            }
+          }}
+        />
+      )}
+    </main>
+  );
+}
 
-  export default CanvasBoard;

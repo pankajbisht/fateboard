@@ -1,36 +1,33 @@
 import { useEffect, useState } from "react";
-import tailwindcolors from 'tailwindcss/colors';
+import tailwindcolors from "tailwindcss/colors";
+import { ColorButton } from "../atoms/ColorButton";
 
-
-export default function ColorPalette({ canvas }) {
+export const ColorPalette = ({ canvas }) => {
   const colors = [
-    tailwindcolors.red[500], // Red
-    tailwindcolors.green[500], // Green
-    tailwindcolors.blue[500], // Blue
-    tailwindcolors.yellow[500], // Yellow
-    tailwindcolors.fuchsia[500], // Magenta
-    tailwindcolors.cyan[500], // Cyan
-    tailwindcolors.black, // Black
-    tailwindcolors.white, // Black
+    tailwindcolors.red[500],
+    tailwindcolors.green[500],
+    tailwindcolors.blue[500],
+    tailwindcolors.yellow[500],
+    tailwindcolors.fuchsia[500],
+    tailwindcolors.cyan[500],
+    tailwindcolors.black,
+    tailwindcolors.white,
   ];
 
   const [selectedColor, setSelectedColor] = useState(colors[0]);
-  const [customColor, setCustomColor] = useState(tailwindcolors.black);
+  const [customColor, setCustomColor] = useState("#000000");
   const [selectedObject, setSelectedObject] = useState(null);
 
-  // Update selected object state when selection changes
   const updateSelectedObject = (object) => {
     if (!object) {
       setSelectedObject(null);
-      setSelectedColor(tailwindcolors.black);
+      setSelectedColor("#000000");
       return;
     }
-
     setSelectedObject(object);
-    setSelectedColor(object.fill || tailwindcolors.black);
+    setSelectedColor(object.fill || "#000000");
   };
 
-  // Listen to Fabric.js events
   useEffect(() => {
     if (!canvas) return;
 
@@ -52,7 +49,6 @@ export default function ColorPalette({ canvas }) {
     };
   }, [canvas]);
 
-  // Apply selected color to the active object
   useEffect(() => {
     if (selectedObject && canvas) {
       selectedObject.set("fill", selectedColor);
@@ -61,36 +57,30 @@ export default function ColorPalette({ canvas }) {
   }, [selectedColor, selectedObject, canvas]);
 
   return (
-    <div>
-      <ul className="flex gap-2 items-center">
-        {colors.map((color) => (
-          <li
-            key={color}
-            className={`w-8 h-8 rounded-full cursor-pointer border-2 ${
-              selectedColor === color ? "border-gray-700" : "border-transparent"
-            }`}
-            style={{ backgroundColor: color }}
-            onClick={() => setSelectedColor(color)}
-          />
-        ))}
+    <div className="flex items-center gap-1">
+      {colors.map((color) => (
+        <ColorButton
+          key={color}
+          color={color}
+          isSelected={selectedColor === color}
+          onClick={() => setSelectedColor(color)}
+        />
+      ))}
 
-        <li>
-          <input
-            type="color"
-            className={`w-8 h-8 rounded-full cursor-pointer align-middle ${
-              selectedColor === customColor
-                ? "border-2 border-gray-700"
-                : "border-2 border-transparent"
-            }`}
-            value={customColor}
-            onChange={(e) => {
-              const pickedColor = e.target.value;
-              setCustomColor(pickedColor);
-              setSelectedColor(pickedColor);
-            }}
-          />
-        </li>
-      </ul>
+      {/* Custom color */}
+      <input
+        type="color"
+        className="w-6 h-6 rounded-full border-2 cursor-pointer p-0"
+        value={customColor}
+        onChange={(e) => {
+          const picked = e.target.value;
+          setCustomColor(picked);
+          setSelectedColor(picked);
+        }}
+        style={{
+          borderColor: selectedColor === customColor ? "#374151" : "transparent",
+        }}
+      />
     </div>
   );
-}
+};

@@ -227,7 +227,7 @@ const handleTransformChange = (property, value) => {
   return (
     <aside
       className={clsx(
-        'fixed top-2 left-16 bg-stone-100 p-4 rounded-md shadow-lg w-64 transition-transform duration-300 z-50',
+        'fixed top-20 left-16 bg-stone-100 p-4 rounded-md shadow-lg w-64 transition-transform duration-300 z-50',
         isExpanded ? 'translate-x-0 pointer-events-auto' : '-translate-x-80 pointer-events-none'
       )}
     >

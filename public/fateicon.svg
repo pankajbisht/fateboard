@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <!-- Gradient -->
+    <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22a7ff"/>
+      <stop offset="100%" stop-color="#0a60d6"/>
+      <animate attributeName="x1" values="0;1;0" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="1;0;1" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Circle -->
+  <circle cx="100" cy="100" r="95" fill="#e0f0ff" stroke="url(#grad)" stroke-width="8"/>
+
+  <!-- Letter F perfectly centered like flex justify-center items-center -->
+  <text x="52%" y="55%"
+        text-anchor="middle" dominant-baseline="middle"
+        font-size="100" font-family="Arial, sans-serif" font-weight="bold"
+        fill="url(#grad)">
+    F
+    <animateTransform attributeName="transform"
+                      type="rotate"
+                      values="0 100 100; 15 100 100; -15 100 100; 0 100 100"
+                      dur="8s"
+                      repeatCount="indefinite"/>
+  </text>
+
+  <!-- Extra rectangles orbiting -->
+  <rect x="90" y="10" width="20" height="10" fill="url(#grad)" opacity="0.4">
+    <animateTransform attributeName="transform"
+                      type="rotate"
+                      from="0 100 100" to="360 100 100"
+                      dur="10s" repeatCount="indefinite"/>
+  </rect>
+
+  <rect x="170" y="95" width="15" height="10" fill="url(#grad)" opacity="0.3">
+    <animateTransform attributeName="transform"
+                      type="rotate"
+                      from="360 100 100" to="0 100 100"
+                      dur="12s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Orange dot (pencil trail) -->
+  <circle cx="100" cy="60" r="4" fill="#ff7f0e">
+    <animateTransform attributeName="transform"
+                      type="rotate"
+                      from="0 100 100" to="360 100 100"
+                      dur="6s" repeatCount="indefinite"/>
+  </circle>
+</svg>

@@ -2,16 +2,17 @@ import { ReactNode } from 'react';
 
 interface IconButtonProps {
   icon: ReactNode;
+  title?: string;
   onClick?: () => void;
   active?: boolean;
 }
-
-export function IconButton({ icon, onClick, active }: IconButtonProps) {
+export function IconButton({ icon, title, onClick, active }: IconButtonProps) {
   return (
     <button
+      title={title}
       onClick={onClick}
-      className={`p-3 flex items-center justify-center rounded-xl transition
-        ${active ? 'bg-blue-500 text-white' : 'text-gray-600 hover:bg-gray-200'}`}
+      className={`flex items-center justify-center cursor-pointer transition h-8 w-8 p-2
+        ${active ? 'bg-blue-500 text-white hover:bg-blue-600' : 'hover:bg-stone-200'}`}
     >
       {icon}
     </button>
