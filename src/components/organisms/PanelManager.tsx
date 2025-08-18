@@ -14,7 +14,7 @@ export function PanelManager({ config, toolbarPosition = "left" }) {
     const tool = config.find((t) => t.id === id);
 
     // For momentary tools like delete, just flash active state
-    const momentaryTools = ["group", "ungroup", "delete", "forward", "backward", "undo", "redo"];
+    const momentaryTools = ["group", "ungroup", "delete", "forward", "backward", "undo", "redo", "lock"];
     if (momentaryTools.includes(id)) {
       setActivePanel(id); // briefly show active
       setTimeout(() => setActivePanel(null), 400); // deselect after 150ms
@@ -40,6 +40,7 @@ export function PanelManager({ config, toolbarPosition = "left" }) {
     if (id === "backward") useStore.getState().sendBackward();
     if (id === "forwards") useStore.getState().bringToFront();
     if (id === "backwards") useStore.getState().sendToBack();
+    if (id === "lock") useStore.getState().toggleActiveObjectLock();
   };
 
   const closePanel = () => setActivePanel(null);

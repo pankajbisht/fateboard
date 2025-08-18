@@ -111,19 +111,71 @@ removeLayer: () => {
     });
   },  
 
-  toggleLayerLock: (id) => {
+  toggleLayerLock: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return;
+
     const layers = get().layers.map(layer => {
-      if (layer.id === id) {
-        layer.locked = !layer.locked;
-        if (layer.object) {
-          layer.object.selectable = !layer.locked;
-          layer.object.evented = !layer.locked;
-        }
+      if (layer.object === activeObject) {
+        const locked = !layer.locked;
+
+        // Update fabric object directly
+        activeObject.selectable = !locked;
+        activeObject.evented = !locked;
+
+        return { ...layer, locked };
       }
       return layer;
     });
+
+    console.log(get().layers);
+
     set({ layers });
   },
+
+  isActiveObjectLocked: () => {
+    const obj = get().selectedObject;
+    return obj?._locked === true;
+  },
+
+
+  toggleActiveObjectLock: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return;
+
+    const locked = !activeObject._locked;
+
+    if (locked) {
+      // Lock but keep selectable
+      activeObject.lockMovementX = true;
+      activeObject.lockMovementY = true;
+      activeObject.lockScalingX = true;
+      activeObject.lockScalingY = true;
+      activeObject.lockRotation = true;
+      activeObject.hasControls = false;   // hide resize/rotate handles
+      activeObject._locked = true;
+    } else {
+      // Unlock
+      activeObject.lockMovementX = false;
+      activeObject.lockMovementY = false;
+      activeObject.lockScalingX = false;
+      activeObject.lockScalingY = false;
+      activeObject.lockRotation = false;
+      activeObject.hasControls = true;
+      activeObject._locked = false;
+    }
+
+    canvas.renderAll();
+  },
+
+
+
 
 
 //  bringLayersToFront: () => {

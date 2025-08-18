@@ -61,6 +61,12 @@ export const rightPanelConfig = [
         component: null
     },
     {
+        id: "lock",
+        icon: "fa-solid fa-lock",
+        position: "right",
+        component: null
+    },
+    {
         id: "forward",
         icon: "fa-solid fa-angle-up",
         position: "right",
@@ -92,4 +98,5 @@ export const rightPanelConfig = [
 //        position: "right",
 //        component: (props) => <LayerPanel {...props} />
 //    },
+
 ];

@@ -10,15 +10,8 @@ export function BorderControls({
   setBorderWidth,
   borderColor,
   setBorderColor,
+  styleOptions
 }) {
-  const styleOptions = [
-    { value: "solid", label: "Solid" },
-    { value: "dashed", label: "Dashed" },
-    { value: "dotted", label: "Dotted" },
-    { value: "double", label: "Double" },
-    { value: "groove", label: "Groove" },
-  ];
-
   return (
     <div className="flex items-center gap-2">
       <Dropdown

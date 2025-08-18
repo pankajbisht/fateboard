@@ -30,29 +30,109 @@ export const createCanvasSlice = (set, get) => ({
     canvasInstance.on("selection:created", (e) => {
         const obj = e.selected?.[0] || null;
         console.log("Selection created:", obj?.type);
-//        set({ selectedObject: obj });
+        set({ selectedObject: obj });
+        get().syncFromObject(obj);
+
       });
 
       canvasInstance.on("selection:updated", (e) => {
         const obj = e.selected?.[0] || null;
         console.log("Selection updated:", obj?.type);
-//        set({ selectedObject: obj });
+        set({ selectedObject: obj });
+        get().syncFromObject(obj);
+
       });
 
       canvasInstance.on("selection:cleared", () => {
         console.log("Selection cleared");
-//        set({ selectedObject: null });
+        set({ selectedObject: null });
+        get().syncFromObject(null);
+
       });
 
       // ✅ NEW: also listen to object:modified (when text edited, resized, moved)
       canvasInstance.on("object:modified", (e) => {
         const obj = e.target || null;
         console.log("Object modified:", obj?.type);
-//        set({ selectedObject: obj });
+        set({ selectedObject: obj });
+        get().syncFromObject(obj);
       });
 
   },
 
+  syncFromObject: (obj) => {
+    if (!obj) return;
+    set({
+      fill: obj.fill || "#ffffff",
+      stroke: obj.stroke || "#111827",
+      strokeWidth: obj.strokeWidth || 2,
+      strokeStyle: obj.strokeDashArray
+        ? obj.strokeDashArray[0] === 10
+          ? "dashed"
+          : "dotted"
+        : "solid",
+    });
+  },
+
+  // Default styles
+  fill: "#ffffff",
+  stroke: "#111827",
+  strokeWidth: 2,
+  strokeStyle: "solid",
+
+  styleOptions: [
+    { value: "solid", label: "Solid" },
+    { value: "dashed", label: "Dashed" },
+    { value: "dotted", label: "Dotted" },
+    { value: "double", label: "Double" },
+    { value: "groove", label: "Groove" },
+  ],
+
+  // Actions (apply to active objects + update store)
+  setFill: (color) => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObjects = canvas.getActiveObjects();
+    activeObjects.forEach((obj) => obj.set({ fill: color }));
+    canvas.requestRenderAll();
+    set({ fill: color });
+  },
+
+  setStroke: (color) => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObjects = canvas.getActiveObjects();
+    activeObjects.forEach((obj) => obj.set({ stroke: color }));
+    canvas.requestRenderAll();
+    set({ stroke: color });
+  },
+
+  setStrokeWidth: (width) => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObjects = canvas.getActiveObjects();
+    activeObjects.forEach((obj) => obj.set({ strokeWidth: width }));
+    canvas.requestRenderAll();
+    set({ strokeWidth: width });
+  },
+
+  setStrokeStyle: (style) => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+
+    const activeObjects = canvas.getActiveObjects();
+    activeObjects.forEach((obj) => {
+      if (style === "dashed") obj.set({ strokeDashArray: [10, 5] });
+      else if (style === "dotted") obj.set({ strokeDashArray: [2, 5] });
+      else obj.set({ strokeDashArray: null }); // solid, double, groove (you can customize)
+    });
+    canvas.requestRenderAll();
+    set({ strokeStyle: style });
+  },
   // =========================
   // Freehand draw settings
   // =========================

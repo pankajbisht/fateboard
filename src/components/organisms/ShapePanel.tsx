@@ -1,11 +1,25 @@
 import { useState } from "react";
 import { useShapeFactory } from "../../hooks/useShapeFactory";
 import { PanelHeader } from "../molecules/PanelHeader.tsx";
+import { useStore } from "../../store/store";
+
 
 export function ShapePanel({ closePanel }) {
-  const [fill, setFill] = useState("#ffffff");
-  const [stroke, setStroke] = useState("#111827");
-  const [strokeWidth, setStrokeWidth] = useState(2);
+//  const [fill, setFill] = useState("#ffffff");
+//  const [stroke, setStroke] = useState("#111827");
+//  const [strokeWidth, setStrokeWidth] = useState(2);
+
+const {
+  fill,
+  stroke,
+  strokeWidth,
+  strokeStyle,
+  styleOptions,
+  setFill,
+  setStroke,
+  setStrokeWidth,
+  setStrokeStyle,
+} = useStore();
 
   const { shapesList, add, enableLineDrawing, disableLineDrawing } = useShapeFactory();
 
