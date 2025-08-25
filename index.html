@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/fateicon.svg" type="image/svg+xml">
     <title>Online Whiteboard | Fateboard</title>
     <meta name="description" content="Interactive web-based whiteboard for collaboration." />
     <meta name="keywords" content="whiteboard, online drawing, collaboration, sketch" />
@@ -13,13 +14,36 @@
     <meta property="og:title" content="My Whiteboard App" />
     <meta property="og:description" content="Draw, collaborate, and share ideas online." />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="/og-fateicon.png" />
+    <meta property="og:image" content="/fateicon.svg" />
     <meta property="og:url" content="https://www.fateboard.com/" />
+
+    <link rel="canonical" href="https://www.fateboard.com/" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
 
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css"
     />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Online Whiteboard",
+        "operatingSystem": "Web",
+        "applicationCategory": "Productivity",
+        "offers": {
+          "@type": "Offer",
+          "price": "0"
+        },
+        "url": "https://www.fateboard.com/",
+        "description": "Free online whiteboard for math notes, brainstorming, and real-time collaboration."
+      }
+    </script>
 
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_ID%"></script>
