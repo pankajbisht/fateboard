@@ -7,6 +7,13 @@ import {Fullscreen} from "./FullScreen.tsx";
 
 export const Header = () => {
     const canvas = useStore((s) => s.canvas);
+    const setPageFormat = useStore((s) => s.setPageFormat);
+    const pageFormat = useStore((s) => s.pageFormat);
+    const setOrientation = useStore((s) => s.setOrientation);
+    const orientation = useStore((s) => s.orientation);
+
+
+
 
     const handleClick = () => {
         const savedState = canvas.toJSON();
@@ -21,29 +28,53 @@ export const Header = () => {
       };
 
 
-    return <header className="fixed top-0 left-0 right-0 bg-stone-100 flex flex-row justify-between items-center">
-        <div className="flex items-center justify-between w-full mx-2">
+    return <header className="fixed top-0 left-0 right-0 bg-stone-100 flex flex-row justify-between items-center z-50">
+        <div className="flex flex-col w-full">
+            <div className="flex items-center justify-between w-full shadow-sm  px-2">
 
-            <img src="./fate.svg" className="h-10 cursor-pointer"/>
+                <img src="./fate.svg" className="h-10 cursor-pointer"/>
 
-            <div className="flex gap-4 p-2">
-                <ZoomDropdown canvas={canvas} />
+                <div className="flex gap-4 p-2">
 
-                <DownloadMenu canvas={canvas} />
+                    <select
+                        value={orientation}
+                        onChange={(e) => setOrientation(e.target.value as any)}
+                      >
+                        <option value="portrait">Portrait</option>
+                        <option value="landscape">Landscape</option>
+                      </select>
 
-                {/*<Fullscreen canvas={canvas} />*/}
+                    <select
+                        value={pageFormat}
+                        onChange={(e) => setPageFormat(e.target.value as any)}
+                      >
+                        <option value="Freehand">Freehand</option>
+                        <option value="A4">A4</option>
+                        <option value="Letter">Letter</option>
+                        <option value="Legal">Legal</option>
+                      </select>
 
-                <IconButton
-                    icon={<i className="fa-solid fa-floppy-disk text-lg"></i>}
-                    onClick={handleClick}
-                    title="Save Board" />
+                    <ZoomDropdown canvas={canvas} />
 
-                <IconButton
-                    icon={<i className="fa-solid fa-square-xmark text-lg"></i>}
-                    onClick={clearClick}
-                    title="Clear Board" />
+                    <DownloadMenu canvas={canvas} />
+
+                    {/*<Fullscreen canvas={canvas} />*/}
+
+                    <IconButton
+                        icon={<i className="fa-solid fa-floppy-disk text-lg"></i>}
+                        onClick={handleClick}
+                        title="Save Board" />
+
+                    <IconButton
+                        icon={<i className="fa-solid fa-plus text-lg"></i>}
+                        onClick={clearClick}
+                        title="Clear Board" />
+                </div>
+
             </div>
-
+            {/*<div className="p-2">*/}
+            {/*    hi*/}
+            {/*</div>*/}
         </div>
     </header>
 }

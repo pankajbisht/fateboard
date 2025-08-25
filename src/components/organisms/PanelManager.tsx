@@ -4,52 +4,107 @@ import { Panel } from "./Panel";
 import { useState } from "react";
 import { useStore } from "../../store/store";
 
+// 🔹 Centralized handlers
+const toolHandlers = (store, deleteLayer) => ({
+  select: () => store.setActiveTool("select"),
+  pan: () => store.setActiveTool("pan"),
+  draw: () => store.setActiveTool("draw"),
+  shapes: () => {}, // panel only, no direct action
+  text: () => store.addText({}),
+  delete: () => deleteLayer(),
+  undo: () => store.undo(),
+  redo: () => store.redo(),
+  group: () => store.groupLayers(),
+  ungroup: () => store.ungroupSelected(),
+  forward: () => store.bringForward(),
+  backward: () => store.sendBackward(),
+  forwards: () => store.bringToFront(),
+  backwards: () => store.sendToBack(),
+  lock: () => store.toggleActiveObjectLock(),
+  fullscreen: () => store.toggleFullscreen(),
+  zoomIn: () => store.zoomIn(),
+  zoomOut: () => store.zoomOut(),
+  zoomFit: () => store.zoomFit(),
+  copy: () => store.copy(),
+  paste: () => store.paste(),
+});
+
+// 🔹 Utility for calculating panel position
+const calcPanelPosition = (tool, event, toolbarPosition) => {
+  if (!tool?.component) return null;
+  const rect = event.currentTarget.getBoundingClientRect();
+  const panelSize = tool.panelSize || { width: 288, height: 300 };
+  return getPanelPosition(toolbarPosition, rect, panelSize);
+};
+
 export function PanelManager({ config, toolbarPosition = "left" }) {
   const [activePanel, setActivePanel] = useState(null);
   const [panelPos, setPanelPos] = useState(null);
 
-  const deleteLayer = useStore((s) => s.removeLayer);
+  const store = useStore();
+  const deleteLayer = store.removeLayer;
+  const handlers = toolHandlers(store, deleteLayer);
 
   const handleToolClick = (id, event) => {
     const tool = config.find((t) => t.id === id);
+    if (!tool) return;
 
-    // For momentary tools like delete, just flash active state
-    const momentaryTools = ["group", "ungroup", "delete", "forward", "backward", "undo", "redo", "lock"];
-    if (momentaryTools.includes(id)) {
-      setActivePanel(id); // briefly show active
-      setTimeout(() => setActivePanel(null), 400); // deselect after 150ms
-    } else {
-      // toggle panel normally
-      setActivePanel((prev) => (prev === id ? null : id));
-      if (tool && tool.component) {
-        const rect = event.currentTarget.getBoundingClientRect();
-        const panelSize = tool.panelSize || { width: 288, height: 300 };
-        setPanelPos(getPanelPosition(toolbarPosition, rect, panelSize));
-      }
+    // 🟢 1. Momentary tools
+    if (tool.type === "momentary") {
+      store.setActiveTool(id);
+      setTimeout(() => store.setActiveTool(null), 400);
+      handlers[id]?.();
+      return;
     }
 
-    // Tool actions
-    if (id === "delete") deleteLayer();
-    if (id === "undo") useStore.getState().undo();
-    if (id === "redo") useStore.getState().redo();
-    if (id === "draw") useStore.getState().setDrawingMode(true);
-    if (id === "text") useStore.getState().addText({ text: "Msg" });
-    if (id === "group") useStore.getState().groupLayers();
-    if (id === "ungroup") useStore.getState().ungroupSelected();
-    if (id === "forward") useStore.getState().bringForward();
-    if (id === "backward") useStore.getState().sendBackward();
-    if (id === "forwards") useStore.getState().bringToFront();
-    if (id === "backwards") useStore.getState().sendToBack();
-    if (id === "lock") useStore.getState().toggleActiveObjectLock();
+    // 🟢 2. Exclusive tools
+    if (tool.type === "exclusive") {
+      if (store.activeTool === id) {
+        // Toggle off → go back to select
+        store.setActiveTool("select");
+        setActivePanel(null);
+      } else {
+        store.setActiveTool(id);
+        setActivePanel(null); // exclusive tools don’t need floating panels
+        handlers[id]?.();
+      }
+      return;
+    }
+
+    // 🟢 3. Panel tools
+    if (tool.type === "panel") {
+      const isOpen = activePanel === id;
+      if (isOpen) {
+        // Close panel → fallback to select
+        setActivePanel(null);
+        store.setActiveTool("select");
+      } else {
+        // Open panel → also mark tool as active
+        setActivePanel(id);
+        setPanelPos(calcPanelPosition(tool, event, toolbarPosition));
+        store.setActiveTool(id);
+        handlers[id]?.();
+      }
+      return;
+    }
   };
 
-  const closePanel = () => setActivePanel(null);
+  const closePanel = (id) => {
+    const tool = config.find((t) => t.id === id);
+    if (!tool) return;
+
+    setActivePanel(null);
+    console.log(tool)
+    if (tool.id === "draw") return;
+
+    store.setActiveTool("select");
+  };
 
   return (
     <>
       <Toolbar
         tools={config}
-        activeTool={activePanel}
+        activeTool={store.activeTool} // ✅ single source of truth
         onToolClick={handleToolClick}
         position={toolbarPosition}
       />
@@ -65,7 +120,7 @@ export function PanelManager({ config, toolbarPosition = "left" }) {
               from={toolbarPosition}
             >
               {typeof tool.component === "function" ? (
-                <tool.component closePanel={closePanel} />
+                <tool.component closePanel={() => closePanel(tool.id)} />
               ) : (
                 tool.component
               )}
@@ -75,4 +130,3 @@ export function PanelManager({ config, toolbarPosition = "left" }) {
     </>
   );
 }
-

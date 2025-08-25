@@ -6,51 +6,48 @@ import { PanelHeader } from "../molecules/PanelHeader.tsx";
 export function DrawPanel({ closePanel }: { closePanel: () => void }) {
   const canvas = useStore((s) => s.canvas);
   const isDrawing = useStore((s) => s.isDrawing);
-  const setDrawingMode = useStore((s) => s.setDrawingMode);
   const brushColor = useStore((s) => s.brushColor);
   const setBrushColor = useStore((s) => s.setBrushColor);
   const brushWidth = useStore((s) => s.brushWidth);
   const setBrushWidth = useStore((s) => s.setBrushWidth);
   const brushType = useStore((s) => s.brushType);
-  const setBrushType = useStore((s) => s.setBrushType);
   const setBrush = useStore((s) => s.setBrush);
-  const undo = useStore((s) => s.undo);
 
   // Attach path:created listener once
-  useEffect(() => {
-    if (!canvas) return;
-    const handlePathCreated = () => useStore.getState().pushState();
-    canvas.on("path:created", handlePathCreated);
-
-    return () => canvas.off("path:created", handlePathCreated);
-  }, [canvas]);
-
-  // Update freeDrawingBrush whenever settings change
-  useEffect(() => {
-    if (!canvas) return;
-
-    if (isDrawing) {
-      let brush;
-
-      switch (brushType) {
-        case "Circle":
-          brush = new fabric.CircleBrush(canvas);
-          break;
-        case "Spray":
-          brush = new fabric.SprayBrush(canvas);
-          break;
-        default:
-          brush = new fabric.PencilBrush(canvas);
-      }
-
-      brush.color = brushColor;
-      brush.width = brushWidth;
-      canvas.freeDrawingBrush = brush;
-      canvas.isDrawingMode = true;
-    } else {
-      canvas.isDrawingMode = false;
-    }
-  }, [canvas, isDrawing, brushColor, brushWidth, brushType]);
+//  useEffect(() => {
+//    if (!canvas) return;
+//    const handlePathCreated = () => useStore.getState().pushState();
+//    canvas.on("path:created", handlePathCreated);
+//
+//    return () => canvas.off("path:created", handlePathCreated);
+//  }, [canvas]);
+//
+//  // Update freeDrawingBrush whenever settings change
+//  useEffect(() => {
+//    if (!canvas) return;
+//
+//    if (isDrawing) {
+//      let brush;
+//
+//      switch (brushType) {
+//        case "Circle":
+//          brush = new fabric.CircleBrush(canvas);
+//          break;
+//        case "Spray":
+//          brush = new fabric.SprayBrush(canvas);
+//          break;
+//        default:
+//          brush = new fabric.PencilBrush(canvas);
+//      }
+//
+//      brush.color = brushColor;
+//      brush.width = brushWidth;
+//      canvas.freeDrawingBrush = brush;
+//      canvas.isDrawingMode = true;
+//    } else {
+//      canvas.isDrawingMode = false;
+//    }
+//  }, [canvas, isDrawing, brushColor, brushWidth, brushType]);
 
   return (
     <div className="bg-gray-100 w-64">

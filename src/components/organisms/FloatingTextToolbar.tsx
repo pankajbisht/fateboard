@@ -11,16 +11,20 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
 
   const commonFonts = [
     "Arial",
-    "Helvetica",
-    "Verdana",
-    "Tahoma",
-    "Trebuchet MS",
-    "Times New Roman",
-    "Georgia",
-    "Palatino",
-    "Courier New",
+    "Bubblegum Sans",
+    "Comic Neue",
     "Consolas",
+    "Courier New",
+    "Fredoka One",
+    "Georgia",
+    "Helvetica",
     "Monaco",
+    "Palatino",
+    "Patrick Hand",
+    "Tahoma",
+    "Times New Roman",
+    "Trebuchet MS",
+    "Verdana",
   ];
 
   // Sync toolbar state whenever target changes

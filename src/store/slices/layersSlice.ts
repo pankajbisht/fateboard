@@ -1,4 +1,4 @@
-import { Group } from "fabric";
+import { Group, ActiveSelection } from "fabric";
 
 export const createLayersSlice = (set, get) => ({
   layers: [],
@@ -411,4 +411,47 @@ removeLayer: () => {
       set({ layers: updated });
     }
   },
+
+  clipboard: null,
+
+  copy: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+
+    const activeObject = canvas.getActiveObject();
+    if (!activeObject) return;
+
+    activeObject.clone().then((cloned) => {
+      set({ clipboard: cloned });
+    });
+  },
+
+  paste: async () => {
+    const canvas = get().canvas;
+    const clipboard = get().clipboard;
+    if (!canvas || !clipboard) return;
+
+    const clonedObj = await clipboard.clone();
+    canvas.discardActiveObject();
+
+    clonedObj.set({
+      left: clonedObj.left + 10,
+      top: clonedObj.top + 10,
+      evented: true,
+    });
+
+    if (clonedObj.type === "activeSelection") {
+      clonedObj.canvas = canvas;
+      clonedObj.forEachObject((obj) => canvas.add(obj));
+      clonedObj.setCoords();
+    } else {
+      canvas.add(clonedObj);
+    }
+
+    set({ clipboard: clonedObj }); // update offset for next paste
+
+    canvas.setActiveObject(clonedObj);
+    canvas.requestRenderAll();
+  },
+
 });

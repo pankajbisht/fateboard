@@ -5,59 +5,168 @@ export const createCanvasSlice = (set, get) => ({
   // Canvas
   // =========================
   canvas: null,
+  activeTool: "select", // "select", "pan", "draw"
+  isPanning: false,
+  isDrawingMode: false,
+  freeDrawingBrush: null,
+  activePanel: null,
   selectedObject: null,
-  setCanvas: (canvasInstance) => {
-    set({ canvas: canvasInstance });
-    if (!canvasInstance) return;
+
+  setCanvas: (canvas) => {
+    set({ canvas: canvas });
+    if (!canvas) return;
 
     // Set default background
-    if (!canvasInstance.backgroundColor) {
-      canvasInstance.backgroundColor = "#fff";
-      canvasInstance.requestRenderAll();
-    }
+//    if (!canvas.backgroundColor) {
+//      canvas.backgroundColor = "#fff";
+//      canvas.requestRenderAll();
+//    }
 
     // Enable freehand drawing (off by default)
-    canvasInstance.isDrawingMode = false;
-    canvasInstance.freeDrawingBrush = new fabric.PencilBrush(canvasInstance);
-    canvasInstance.freeDrawingBrush.color = "#000";
-    canvasInstance.freeDrawingBrush.width = 2;
+    canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+    canvas.freeDrawingBrush.color = "#000";
+    canvas.freeDrawingBrush.width = 2;
 
-    // Push state after each freehand stroke
-    canvasInstance.on("path:created", () => {
+    get().enablePan();
+
+    // Freehand push state
+    canvas.on("path:created", () => {
       get().pushState();
     });
 
-    canvasInstance.on("selection:created", (e) => {
-        const obj = e.selected?.[0] || null;
-        console.log("Selection created:", obj?.type);
-        set({ selectedObject: obj });
+    // Selection created
+    canvas.on("selection:created", (e) => {
+      const obj = e.selected?.[0] || null;
+      console.log("Selection created:", obj?.type);
+      set({ selectedObject: obj });
+      get().syncFromObject(obj);
+    });
+
+    // Selection updated
+    canvas.on("selection:updated", (e) => {
+      const obj = e.selected?.[0] || null;
+      console.log("Selection updated:", obj?.type);
+      set({ selectedObject: obj });
+      get().syncFromObject(obj);
+    });
+
+    // Selection cleared
+    canvas.on("selection:cleared", () => {
+      console.log("Selection cleared");
+      set({ selectedObject: null });
+      get().syncFromObject(null);
+    });
+
+    // Object modified (resize, move, rotate, etc.)
+    canvas.on("object:modified", (e) => {
+      const obj = e.target || null;
+      console.log("Object modified:", obj?.type);
+      set({ selectedObject: obj });
+      get().syncFromObject(obj);
+    });
+
+    // Before transform (dragging/resizing starts) → hide toolbar
+    canvas.on("before:transform", (e) => {
+      const obj = e.target || null;
+      if (obj?.type === "textbox") {
+        set({ showTextToolbar: false });
+      }
+      console.log("Before transform:", obj?.type);
+    });
+
+    // After transform (dragging/resizing ends) → show again
+    canvas.on("after:transform", (e) => {
+      const obj = e.target || null;
+      if (obj?.type === "textbox") {
+        set({ showTextToolbar: true, selectedObject: obj });
         get().syncFromObject(obj);
+      }
+      console.log("After transform:", obj?.type);
+    });
 
-      });
+    // While scaling (keep hidden)
+    canvas.on("object:scaling", (e) => {
+      const obj = e.target || null;
+      if (obj?.type === "textbox") {
+        set({ selectedObject: false });
+      }
+      console.log("Scaling:", obj?.type);
+    });
 
-      canvasInstance.on("selection:updated", (e) => {
-        const obj = e.selected?.[0] || null;
-        console.log("Selection updated:", obj?.type);
-        set({ selectedObject: obj });
-        get().syncFromObject(obj);
+  },
 
-      });
+  setSelectedObject: () => {
+    set({ selectedObject: false });
+  },
+  setActiveTool: (tool) => {
+    const canvas = get().canvas;
+    if (!canvas) return;
+    set({ activeTool: tool });
 
-      canvasInstance.on("selection:cleared", () => {
-        console.log("Selection cleared");
-        set({ selectedObject: null });
-        get().syncFromObject(null);
+    switch (tool) {
+      case "pan":
+        canvas.isDrawingMode = false;
+        canvas.defaultCursor = "grab";
+        canvas.selection = false;
+        canvas.skipTargetFind = true;
+        break;
+      case "draw":
+        console.log('here');
+        canvas.isDrawingMode = true;
+        canvas.freeDrawingBrush.color = "#000"; // optional
+        break;
+      case "select":
+      default:
+        canvas.isDrawingMode = false;
+        canvas.defaultCursor = "default";
+        canvas.selection = true;
+        canvas.skipTargetFind = false;
+        break;
+    }
 
-      });
+    canvas.requestRenderAll();
+  },
 
-      // ✅ NEW: also listen to object:modified (when text edited, resized, moved)
-      canvasInstance.on("object:modified", (e) => {
-        const obj = e.target || null;
-        console.log("Object modified:", obj?.type);
-        set({ selectedObject: obj });
-        get().syncFromObject(obj);
-      });
+  enablePan: () => {
+    const canvas = get().canvas;
+    if (!canvas) return;
 
+    console.log("Pan tool enabled");
+    // Wheel zoom to pointer
+    canvas.on("mouse:wheel", (opt) => {
+      const e = opt.e;
+      let zoom = canvas.getZoom();
+      const zoomFactor = Math.pow(0.999, e.deltaY);
+      zoom *= zoomFactor;
+      zoom = Math.min(Math.max(zoom, 0.1), 5);
+      const pt = new fabric.Point(e.offsetX, e.offsetY);
+      canvas.zoomToPoint(pt, zoom);
+      e.preventDefault();
+      e.stopPropagation();
+    });
+
+    // Pan handlers (active only when tool === 'pan')
+    canvas.on("mouse:down", () => {
+      if (get().activeTool === "pan") {
+        set({ isPanning: true });
+        canvas.setCursor("grabbing");
+        canvas.requestRenderAll();
+      }
+    });
+
+    canvas.on("mouse:move", (opt) => {
+      if (!get().isPanning) return;
+      const e = opt.e;
+      canvas.relativePan(new fabric.Point(e.movementX, e.movementY));
+      canvas.requestRenderAll();
+    });
+
+    canvas.on("mouse:up", () => {
+      if (!get().isPanning) return;
+      set({ isPanning: false });
+      canvas.setCursor("grab");
+      canvas.requestRenderAll();
+    });
   },
 
   syncFromObject: (obj) => {
@@ -133,6 +242,7 @@ export const createCanvasSlice = (set, get) => ({
     canvas.requestRenderAll();
     set({ strokeStyle: style });
   },
+
   // =========================
   // Freehand draw settings
   // =========================
@@ -214,9 +324,10 @@ export const createCanvasSlice = (set, get) => ({
   undoStack: [],
   redoStack: [],
 
-  setActiveTool: (tool) => {
+  setActiveTool1: (tool) => {
     const canvas = get().canvas;
     if (!canvas) return;
+    alert('her')
 
     // clear old listeners
     canvas.off("mouse:down");
@@ -266,7 +377,21 @@ export const createCanvasSlice = (set, get) => ({
     const canvas = get().canvas;
     if (!canvas) return;
 
-    const defaultPosition = { top: 50, left: 50, selection: true };
+    // ✅ Quarter position instead of fixed 100,100
+    const { pageWidth, pageHeight, scale } = get();
+    // quarter position relative to scaled page
+    const x = (pageWidth / 4) * scale;
+    const y = (pageHeight / 2) * scale;
+
+    const defaultPosition = {
+      left: x,
+      top: y,
+      originX: "center",   // keep center so shape aligns properly
+      originY: "center",
+      selection: true,
+      hasControls: true,
+    };
+
     options = { ...defaultPosition, ...options };
 
     let shape;
@@ -331,23 +456,9 @@ export const createCanvasSlice = (set, get) => ({
     canvas.renderAll();
     get().pushState();
     get().addLayer(shape, shapeType);
-
-    // Add layer to your layers slice
-//      const layers = get().layers || [];
-//      set({
-//        layers: [
-//          ...layers,
-//          {
-//              id: shape.toObject().id || Date.now(),
-//              type: shapeType,
-//              object: shape,
-//              name: shapeType,
-//              visible: true,
-//              locked: false
-//            },
-//          ],
-//        });
   },
+
+
 
   pushState: () => {
     const canvas = get().canvas;
@@ -360,15 +471,15 @@ export const createCanvasSlice = (set, get) => ({
   },
 
   saveState: () => {
-      const { canvas, undoStack } = get();
-      if (!canvas) return;
+    const { canvas, undoStack } = get();
+    if (!canvas) return;
 
-      const json = canvas.toJSON();
-      set({
-        undoStack: [...undoStack, json],
-        redoStack: [], // clear redo when new state is created
-      });
-    },
+    const json = canvas.toJSON();
+    set({
+      undoStack: [...undoStack, json],
+      redoStack: [], // clear redo when new state is created
+    });
+  },
 
   undo: () => {
     const { undoStack, canvas } = get();
@@ -409,71 +520,81 @@ export const createCanvasSlice = (set, get) => ({
   // =========================
   // Text
   // =========================
-//  addText: (textObj) => {
-//    const canvas = get().canvas;
-//    if (!canvas) return;
-//
-//    const {
-//      text,
-//      fontSize = 16,
-//      bold = false,
-//      italic = false,
-//      underline = false,
-//      fill = "black",
-//    } = textObj;
-//
-//    const fabricText = new fabric.Textbox(text, {
-//      left: 100,
-//      top: 100,
-//      fontSize,
-//      fontWeight: bold ? "bold" : "normal",
-//      fontStyle: italic ? "italic" : "normal",
-//      underline,
-//      fill,
-//      selection: true,
-//    });
-//
-//    canvas.add(fabricText);
-//    canvas.setActiveObject(fabricText);
-//    canvas.renderAll();
-//    get().pushState();
-//  },
-addText: (textObj) => {
+  addText: (textObj) => {
     const canvas = get().canvas;
     if (!canvas) return;
 
     const {
-      text = "Enter text", // default placeholder
-      fontSize = 16,
+      text = "Enter text",             // placeholder text
+      fontSize = 36,
       bold = false,
       italic = false,
       underline = false,
-      fill = "black",
+      fontFamily = "Bubblegum Sans",
+      width = 300,
+      textColor = "#000000",           // ✅ normal text color
+      placeholderColor = "#9ca3af"     // ✅ lighter gray for placeholder
     } = textObj;
 
+    const { pageWidth, pageHeight, scale } = get();
+    // quarter position relative to scaled page
+    const x = (pageWidth / 4) * scale;
+    const y = (pageHeight / 2) * scale;
+
+
     const fabricText = new fabric.Textbox(text, {
-      left: 100,
-      top: 100,
+      left: x,
+      top: y,
+      originX: "center",
+      originY: "center",
       fontSize,
       fontWeight: bold ? "bold" : "normal",
       fontStyle: italic ? "italic" : "normal",
       underline,
-      fill,
-      editable: true,       // ✅ allow typing
-      objectCaching: false, // ✅ smoother text editing
+      fill: placeholderColor,          // ✅ start with placeholder color
+      fontFamily,
+      width,
+      editable: true,
+      objectCaching: false,
+      padding: 6,
+      splitByGrapheme: true,
+    });
+
+    let isPlaceholder = true;
+
+    // ✅ When user enters editing mode
+    fabricText.on("editing:entered", () => {
+      if (isPlaceholder) {
+        fabricText.selectAll();        // highlight placeholder text
+        fabricText.set("fill", textColor); // ✅ use normal text color
+        canvas.renderAll();
+      }
+    });
+
+    // ✅ When user exits editing mode
+    fabricText.on("editing:exited", () => {
+      if (!fabricText.text.trim()) {
+        fabricText.text = text;             // restore placeholder
+        fabricText.set("fill", placeholderColor); // ✅ reset to placeholder color
+        isPlaceholder = true;
+      } else {
+        isPlaceholder = false;
+        fabricText.set("fill", textColor);  // ✅ keep normal text color
+      }
+      canvas.renderAll();
     });
 
     canvas.add(fabricText);
     canvas.setActiveObject(fabricText);
 
-    // ✅ Enter editing mode immediately so user can type
+    // ✅ Enter editing immediately
     fabricText.enterEditing();
     fabricText.hiddenTextarea?.focus();
+    fabricText.selectAll();
 
-    canvas.renderAll();
     get().pushState();
+    canvas.renderAll();
   },
-
 
   updateTextStyle: (styles) => {
     const canvas = get().canvas;
