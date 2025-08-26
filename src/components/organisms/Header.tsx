@@ -3,8 +3,8 @@ import ZoomDropdown from "../molecules/ZoomDropdown.tsx";
 import { IconButton } from "../atoms/IconButton.tsx";
 import { useStore } from "../../store/store.ts";
 import DownloadMenu from "./DownloadMenu.tsx";
-import {Fullscreen} from "./FullScreen.tsx";
-
+import { Fullscreen } from "./FullScreen.tsx";
+import { Link } from 'react-router-dom';
 export const Header = () => {
     const canvas = useStore((s) => s.canvas);
     const setPageFormat = useStore((s) => s.setPageFormat);
@@ -32,7 +32,8 @@ export const Header = () => {
         <div className="flex flex-col w-full">
             <div className="flex items-center justify-between w-full shadow-sm  px-2">
 
-                <img src="./fate.svg" className="h-10 cursor-pointer"/>
+                <img src="./fate.svg" alt="FateBoard Icon" className="h-10 cursor-pointer hidden md:block"/>
+                <img src="./fateicon.svg" alt="FateBoard Icon" className="h-8 mx-2 cursor-pointer md:hidden"/>
 
                 <div className="flex gap-4 p-2">
 
@@ -69,6 +70,10 @@ export const Header = () => {
                         icon={<i className="fa-solid fa-plus text-lg"></i>}
                         onClick={clearClick}
                         title="Clear Board" />
+
+                    <Link to="/setting"><IconButton icon={<i className="fa-solid fa-gear"></i> }
+                        onClick={() => console.log('done')}
+                        title="Setting" /></Link>
                 </div>
 
             </div>

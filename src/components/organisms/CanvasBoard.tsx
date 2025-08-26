@@ -6,54 +6,71 @@ import { FloatingTextToolbar } from "./FloatingTextToolbar.tsx";
 
 export function CanvasBoard() {
   const canvasRef = useRef(null);
-  const setCanvas = useStore((s) => s.setCanvas);
-  const saveState = useStore((s) => s.saveState);
-  const selectedObject = useStore((s) => s.selectedObject);
-  const canvas = useStore((s) => s.canvas);
-  const applyPageSize = useStore((s) => s.applyPageSize);
-  const pageFormat = useStore((s) => s.pageFormat);
-  const orientation = useStore((s) => s.orientation);
-  const setPageFormat = useStore((s) => s.setPageFormat);
-  const setActiveTool = useStore(s => s.setActiveTool);
-
-
+  const { init, selectedObject, canvas } = useStore();
 
   useEffect(() => {
-    const canvasInstance = new fabric.Canvas(canvasRef.current, {
-      width: 800,
-      height: 500,
-      backgroundColor: "#fff",
-      preserveObjectStacking: false
-    });
-
-    const saved = db.local.get("drawJson");
-    if (saved) {
-      canvasInstance.loadFromJSON(saved, () => {
-        canvasInstance.requestRenderAll();
-      });
+    if (canvasRef.current) {
+      init(canvasRef.current);
     }
 
-    setCanvas(canvasInstance);
-    applyPageSize(pageFormat, orientation);
-    setPageFormat("freehand");
-//    setActivePanel("select")
-//    setActiveTool("select")
-    const saveOnChange = () => {
-      saveState();
-      db.local.set("drawJson", canvasInstance.toJSON());
-    };
-
-    canvasInstance.on("object:added", saveOnChange);
-    canvasInstance.on("object:modified", saveOnChange);
-    canvasInstance.on("object:removed", saveOnChange);
-
     return () => {
-      canvasInstance.off("object:added", saveOnChange);
-      canvasInstance.off("object:modified", saveOnChange);
-      canvasInstance.off("object:removed", saveOnChange);
-      canvasInstance.dispose();
-    };
-  }, [setCanvas, saveState]);
+      if (canvas) {
+          canvas.dispose();
+      }
+    }
+  }, [init]);
+
+
+//  const setCanvas = useStore((s) => s.setCanvas);
+//  const saveState = useStore((s) => s.saveState);
+//  const selectedObject = useStore((s) => s.selectedObject);
+//  const canvas = useStore((s) => s.canvas);
+//  const applyPageSize = useStore((s) => s.applyPageSize);
+//  const pageFormat = useStore((s) => s.pageFormat);
+//  const orientation = useStore((s) => s.orientation);
+//  const setPageFormat = useStore((s) => s.setPageFormat);
+//  const setActiveTool = useStore(s => s.setActiveTool);
+
+
+
+//  useEffect(() => {
+//    const canvasInstance = new fabric.Canvas(canvasRef.current, {
+//      width: 800,
+//      height: 500,
+//      backgroundColor: "#fff",
+//      preserveObjectStacking: false
+//    });
+//
+//    const saved = db.local.get("drawJson");
+//    if (saved) {
+//      canvasInstance.loadFromJSON(saved, () => {
+//        canvasInstance.requestRenderAll();
+//      });
+//    }
+//
+//    setCanvas(canvasInstance);
+////    setPageFormat("Freehand", "landscape")
+//
+////    applyPageSize(pageFormat, orientation);
+////    setPageFormat("freehand");
+////    setActivePanel("select")
+////    setActiveTool("select")
+//    const saveOnChange = () => {
+//      saveState();
+//      db.local.set("drawJson", canvasInstance.toJSON());
+//    };
+//
+//    canvasInstance.on("object:added", saveOnChange);
+//    canvasInstance.on("object:modified", saveOnChange);
+//    canvasInstance.on("object:removed", saveOnChange);
+//
+//    return () => {
+//      canvasInstance.off("object:added", saveOnChange);
+//      canvasInstance.off("object:modified", saveOnChange);
+//      canvasInstance.off("object:removed", saveOnChange);
+//      canvasInstance.dispose();
+//    };
+//  }, [setCanvas, saveState]);
 
   return (
     <main className="bg-white shadow-lg relative">

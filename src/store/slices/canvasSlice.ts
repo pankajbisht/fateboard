@@ -12,88 +12,88 @@ export const createCanvasSlice = (set, get) => ({
   activePanel: null,
   selectedObject: null,
 
+  init: (el) => {
+    if (get().canvas) return;
+
+    const canvas = new fabric.Canvas(el, {
+      width: 800,
+      height: 500,
+      backgroundColor: "#fff",
+      preserveObjectStacking: false,
+    });
+
+    set({ canvas });
+    get().enablePan();
+    get().setPageFormat("Freehand", "landscape");
+  },
+
   setCanvas: (canvas) => {
-    set({ canvas: canvas });
+    set({ canvas });
     if (!canvas) return;
 
-    // Set default background
-//    if (!canvas.backgroundColor) {
-//      canvas.backgroundColor = "#fff";
-//      canvas.requestRenderAll();
-//    }
-
-    // Enable freehand drawing (off by default)
+    // Freehand setup
     canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
     canvas.freeDrawingBrush.color = "#000";
     canvas.freeDrawingBrush.width = 2;
 
     get().enablePan();
+    get().setPageFormat("Freehand", "landscape");
 
     // Freehand push state
-    canvas.on("path:created", () => {
-      get().pushState();
+    canvas.on("path:created", () => get().pushState());
+
+    // Object added
+    canvas.on("object:added", (e) => {
+      const obj = e.target || null;
+      if (obj) {
+        set({ selectedObject: obj });
+        get().syncFromObject(obj);
+      }
     });
 
-    // Selection created
+    // Selection events
     canvas.on("selection:created", (e) => {
       const obj = e.selected?.[0] || null;
-      console.log("Selection created:", obj?.type);
       set({ selectedObject: obj });
       get().syncFromObject(obj);
     });
 
-    // Selection updated
     canvas.on("selection:updated", (e) => {
       const obj = e.selected?.[0] || null;
-      console.log("Selection updated:", obj?.type);
       set({ selectedObject: obj });
       get().syncFromObject(obj);
     });
 
-    // Selection cleared
     canvas.on("selection:cleared", () => {
-      console.log("Selection cleared");
       set({ selectedObject: null });
       get().syncFromObject(null);
     });
 
-    // Object modified (resize, move, rotate, etc.)
+    // Modified
     canvas.on("object:modified", (e) => {
       const obj = e.target || null;
-      console.log("Object modified:", obj?.type);
       set({ selectedObject: obj });
       get().syncFromObject(obj);
     });
 
-    // Before transform (dragging/resizing starts) → hide toolbar
+    // Transform lifecycle
     canvas.on("before:transform", (e) => {
-      const obj = e.target || null;
-      if (obj?.type === "textbox") {
-        set({ showTextToolbar: false });
-      }
-      console.log("Before transform:", obj?.type);
+      if (e.target?.type === "textbox") set({ showTextToolbar: false });
     });
 
-    // After transform (dragging/resizing ends) → show again
+    canvas.on("object:scaling", (e) => {
+      console.log("Scaling:", e.target?.type);
+    });
+
     canvas.on("after:transform", (e) => {
       const obj = e.target || null;
       if (obj?.type === "textbox") {
         set({ showTextToolbar: true, selectedObject: obj });
         get().syncFromObject(obj);
       }
-      console.log("After transform:", obj?.type);
     });
-
-    // While scaling (keep hidden)
-    canvas.on("object:scaling", (e) => {
-      const obj = e.target || null;
-      if (obj?.type === "textbox") {
-        set({ selectedObject: false });
-      }
-      console.log("Scaling:", obj?.type);
-    });
-
   },
+
 
   setSelectedObject: () => {
     set({ selectedObject: false });

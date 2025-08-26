@@ -7,7 +7,7 @@ const PAGE_SIZES = {
 };
 
 export const createPageSlice = (set, get) => ({
-  pageFormat: "A4",
+  pageFormat: "Freehand",
   orientation: "landscape",
   zoom: 1,
   scale: 1,
