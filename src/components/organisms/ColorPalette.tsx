@@ -10,13 +10,13 @@ export const ColorPalette = ({ canvas }) => {
     tailwindcolors.yellow[500],
     tailwindcolors.fuchsia[500],
     tailwindcolors.cyan[500],
-    tailwindcolors.black,
     tailwindcolors.white,
   ];
 
   const [selectedColor, setSelectedColor] = useState(colors[0]);
   const [customColor, setCustomColor] = useState("#000000");
   const [selectedObject, setSelectedObject] = useState(null);
+  const [show, setShow] = useState(false);
 
   const updateSelectedObject = (object) => {
     if (!object) {
@@ -57,30 +57,43 @@ export const ColorPalette = ({ canvas }) => {
   }, [selectedColor, selectedObject, canvas]);
 
   return (
-    <div className="flex items-center gap-1">
-      {colors.map((color) => (
-        <ColorButton
-          key={color}
-          color={color}
-          isSelected={selectedColor === color}
-          onClick={() => setSelectedColor(color)}
-        />
-      ))}
+    <div className="flex items-center justify-end gap-1">
+      {/* Color palette (shown only when show = true) */}
+      {show && (
+        <div className="flex items-center gap-1 rounded">
+          {colors.map((color) => (
+            <ColorButton
+              key={color}
+              color={color}
+              isSelected={selectedColor === color}
+              onClick={() => setSelectedColor(color)}
+            />
+          ))}
 
-      {/* Custom color */}
-      <input
-        type="color"
-        className="w-6 h-6 rounded-full border-2 cursor-pointer p-0"
-        value={customColor}
-        onChange={(e) => {
-          const picked = e.target.value;
-          setCustomColor(picked);
-          setSelectedColor(picked);
-        }}
-        style={{
-          borderColor: selectedColor === customColor ? "#374151" : "transparent",
-        }}
-      />
+          {/* Custom color */}
+          <input
+            type="color"
+            className="w-6 h-6 rounded-full border-2 cursor-pointer p-0"
+            value={customColor}
+            onChange={(e) => {
+              const picked = e.target.value;
+              setCustomColor(picked);
+              setSelectedColor(picked);
+            }}
+            style={{
+              borderColor:
+                selectedColor === customColor ? "#374151" : "transparent",
+            }}
+          />
+        </div>
+      )}
+
+      {/* Toggle button (always visible) */}
+      <button onClick={() => setShow((prev) => !prev)}
+        className={`rounded-full flex items-center justify-center cursor-pointer transition h-8 w-8 p-2
+        ${show ? 'bg-blue-500 text-white hover:bg-blue-600' : 'hover:bg-stone-200'}`}>
+        <i className="fa-solid fa-palette"></i>
+      </button>
     </div>
   );
 };

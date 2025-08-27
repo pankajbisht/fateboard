@@ -5,6 +5,53 @@ import { useStore } from "../../store/store.ts";
 import DownloadMenu from "./DownloadMenu.tsx";
 import { Fullscreen } from "./FullScreen.tsx";
 import { Link } from 'react-router-dom';
+
+import { useState, useRef, useEffect } from "react";
+
+export function DropdownMenu({ trigger, children }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  // close when clicked outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (ref.current && !ref.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative inline-block" ref={ref}>
+      {/*<button onClick={() => setOpen(!open)}>{trigger}</button>*/}
+
+      <IconButton
+          icon={<i className="fa-solid fa-ellipsis-vertical cursor-pointer"></i>}
+          onClick={() => setOpen(!open)}
+          title="Clear Board" />
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-40 rounded-lg bg-white shadow-lg ring-1 ring-black/10 dark:bg-gray-800 dark:text-gray-100">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function DropdownMenuItem({ children, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
+    >
+      {children}
+    </button>
+  );
+}
+
 export const Header = () => {
     const canvas = useStore((s) => s.canvas);
     const setPageFormat = useStore((s) => s.setPageFormat);
@@ -37,43 +84,62 @@ export const Header = () => {
 
                 <div className="flex gap-4 p-2">
 
-                    <select
-                        value={orientation}
-                        onChange={(e) => setOrientation(e.target.value as any)}
-                      >
-                        <option value="portrait">Portrait</option>
-                        <option value="landscape">Landscape</option>
-                      </select>
+                    {/*<select*/}
+                    {/*    value={orientation}*/}
+                    {/*    onChange={(e) => setOrientation(e.target.value as any)}*/}
+                    {/*  >*/}
+                    {/*    <option value="portrait">Portrait</option>*/}
+                    {/*    <option value="landscape">Landscape</option>*/}
+                    {/*  </select>*/}
 
-                    <select
-                        value={pageFormat}
-                        onChange={(e) => setPageFormat(e.target.value as any)}
-                      >
-                        <option value="Freehand">Freehand</option>
-                        <option value="A4">A4</option>
-                        <option value="Letter">Letter</option>
-                        <option value="Legal">Legal</option>
-                      </select>
+                    {/*<select*/}
+                    {/*    value={pageFormat}*/}
+                    {/*    onChange={(e) => setPageFormat(e.target.value as any)}*/}
+                    {/*  >*/}
+                    {/*    <option value="Freehand">Freehand</option>*/}
+                    {/*    <option value="A4">A4</option>*/}
+                    {/*    <option value="Letter">Letter</option>*/}
+                    {/*    <option value="Legal">Legal</option>*/}
+                    {/*  </select>*/}
 
-                    <ZoomDropdown canvas={canvas} />
+                    {/*<ZoomDropdown canvas={canvas} />*/}
 
-                    <DownloadMenu canvas={canvas} />
 
                     {/*<Fullscreen canvas={canvas} />*/}
 
-                    <IconButton
-                        icon={<i className="fa-solid fa-floppy-disk text-lg"></i>}
-                        onClick={handleClick}
-                        title="Save Board" />
+                    {/*<IconButton*/}
+                    {/*    icon={<i className="fa-solid fa-floppy-disk text-lg"></i>}*/}
+                    {/*    onClick={handleClick}*/}
+                    {/*    title="Save Board" />*/}
+
+
+
+                    {/*<Link to="/setting"><IconButton icon={<i className="fa-solid fa-gear"></i> }*/}
+                    {/*    onClick={() => console.log('done')}*/}
+                    {/*    title="Setting" /></Link>*/}
+
+                    {/*<IconButton icon={<i className="fa-solid fa-ellipsis-vertical"></i>}*/}
+                    {/*            />*/}
+
+
+                    <DownloadMenu canvas={canvas} />
 
                     <IconButton
                         icon={<i className="fa-solid fa-plus text-lg"></i>}
                         onClick={clearClick}
                         title="Clear Board" />
 
-                    <Link to="/setting"><IconButton icon={<i className="fa-solid fa-gear"></i> }
-                        onClick={() => console.log('done')}
-                        title="Setting" /></Link>
+                    <div>
+                        <DropdownMenu
+                          trigger={<i className="fa-solid fa-ellipsis-vertical cursor-pointer" />}
+                        >
+                          <DropdownMenuItem onClick={clearClick}>Create</DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleClick}>
+                            Save
+                          </DropdownMenuItem>
+                          <DropdownMenuItem><Link to="/setting">Settings</Link></DropdownMenuItem>
+                        </DropdownMenu>
+                    </div>
                 </div>
 
             </div>

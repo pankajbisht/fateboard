@@ -4,6 +4,7 @@ export const createUISlice = (set, get) => ({
 //    activeTool: "select", // "select", "pan", "draw"
 //    isPanning: false,
     toolbarPosition: 'left',
+    isFullScreen: false,
 
     setToolbarPosition: (pos) => set({ toolbarPosition: pos }),
     toggleFullscreen: () => {
@@ -11,8 +12,10 @@ export const createUISlice = (set, get) => ({
 
         if (!document.fullscreenElement) {
           elem.requestFullscreen?.();
+          set({ isFullScreen: true });
         } else {
           document.exitFullscreen?.();
+          set({ isFullScreen: false });
         }
     },
 
