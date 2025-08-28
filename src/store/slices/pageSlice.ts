@@ -41,7 +41,7 @@ export const createPageSlice = (set, get) => ({
       canvas.calcOffset();
       canvas.renderAll();
       set({ scale: 1, pageWidth: canvas.getWidth(), pageHeight: canvas.getHeight() });
-      get().drawBackground();    // 🔹 redraw background for new size
+//      get().drawBackground();    // 🔹 redraw background for new size
       return;
     }
 

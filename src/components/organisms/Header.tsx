@@ -58,6 +58,9 @@ export const Header = () => {
     const pageFormat = useStore((s) => s.pageFormat);
     const setOrientation = useStore((s) => s.setOrientation);
     const orientation = useStore((s) => s.orientation);
+    const toggleGrid = useStore((s) => s.toggleGrid);
+    const [show, setShow] = useState(false);
+
 
 
 
@@ -124,10 +127,18 @@ export const Header = () => {
 
                     <DownloadMenu canvas={canvas} />
 
+
+                    <IconButton
+                        active={show}
+                        icon={<i className="fa-solid fa-table-cells text-lg"></i>}
+                        onClick={() => {setShow(!show); toggleGrid()}}
+                        title="Grid View" />
+
                     <IconButton
                         icon={<i className="fa-solid fa-plus text-lg"></i>}
                         onClick={clearClick}
                         title="Clear Board" />
+
 
                     <div>
                         <DropdownMenu

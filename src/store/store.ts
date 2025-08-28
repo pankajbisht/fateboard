@@ -14,6 +14,6 @@ export const useStore = create(
     ...createLayersSlice(set, get),
     ...createPageSlice(set, get),
     ...createBackgroundSlice(set, get),
-    ...createNotebookSlice(set, get)
+//    ...createNotebookSlice(set, get)
   }))
 );
