@@ -1,4 +1,4 @@
-name: CI/CD Deploy
+name: Deploy FateBoard
 
 on:
   push:
@@ -28,22 +28,9 @@ jobs:
       - name: Build project
         run: npm run build:no-check
 
-      # 5️⃣ Verify build folder exists
-      - name: Check build folder
-        run: ls -la dist
-
-      # 6️⃣ Setup Git user
-      - name: Setup Git
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-
       # 7️⃣ Deploy to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GH_PAGES_TOKEN }}
           publish_dir: dist
-          publish_branch: gh-pages       # Target branch for deployment
-          force_orphan: true             # Avoid conflicts with existing branch
-          keep_files: false              # Remove old files before publishing
