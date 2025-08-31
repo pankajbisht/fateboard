@@ -1,6 +1,6 @@
 {
   "name": "fateboard",
-  "homepage": "https://www.fateboard.com/",
+  "homepage": "https://www.fateboard.com",
   "private": true,
   "version": "0.0.0",
   "type": "module",
