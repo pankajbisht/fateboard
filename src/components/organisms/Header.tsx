@@ -1,48 +1,49 @@
-import db from "opendb-store";
-import ZoomDropdown from "../molecules/ZoomDropdown.tsx";
-import { IconButton } from "../atoms/IconButton.tsx";
-import { useStore } from "../../store/store.ts";
+import React, { useState, useRef, useEffect } from "react";
+import { useStore } from "../../store";
+import { useNavigate } from "react-router-dom";
+import { ShapeToolsHeader } from "./ShapeToolsHeader.tsx";
 import DownloadMenu from "./DownloadMenu.tsx";
-import { Fullscreen } from "./FullScreen.tsx";
-import { Link } from 'react-router-dom';
+import {IconButton} from "../atoms/IconButton.tsx";
+import {TextToolsHeader} from "./TextToolsHeader.tsx";
 
-import { useState, useRef, useEffect } from "react";
+export function Header() {
+  const navigate = useNavigate();
+  const canvas = useStore((s) => s.canvas);
+  const toggleGrid = useStore((s) => s.toggleGrid);
+  const clearBoard = useStore((s) => s.clearBoard);
+  const [show, setShow] = useState(false);
+  const fileInputRef = useRef(null);
+  const { selectedObject } = useStore();
 
-export function DropdownMenu({ trigger, children }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
 
-  // close when clicked outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (ref.current && !ref.current.contains(event.target)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  // -------------------- DropdownMenu --------------------
+  const DropdownMenu = ({ trigger, children }) => {
+    const [open, setOpen] = useState(false);
+    const ref = useRef(null);
 
-  return (
-    <div className="relative inline-block" ref={ref}>
-      {/*<button onClick={() => setOpen(!open)}>{trigger}</button>*/}
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (ref.current && !ref.current.contains(event.target)) {
+          setOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
-      <IconButton
-          icon={<i className="fa-solid fa-ellipsis-vertical cursor-pointer"></i>}
-          onClick={() => setOpen(!open)}
-          title="Clear Board" />
+    return (
+      <div className="relative inline-block" ref={ref}>
+        <button onClick={() => setOpen(!open)}>{trigger}</button>
+        {open && (
+          <div className="absolute right-0 mt-2 w-40 rounded-lg bg-white shadow-lg ring-1 ring-black/10 dark:bg-gray-800 dark:text-gray-100">
+            {children}
+          </div>
+        )}
+      </div>
+    );
+  };
 
-      {open && (
-        <div className="absolute right-0 mt-2 w-40 rounded-lg bg-white shadow-lg ring-1 ring-black/10 dark:bg-gray-800 dark:text-gray-100">
-          {children}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function DropdownMenuItem({ children, onClick }) {
-  return (
+  const DropdownMenuItem = ({ children, onClick }) => (
     <button
       onClick={onClick}
       className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -50,113 +51,114 @@ export function DropdownMenuItem({ children, onClick }) {
       {children}
     </button>
   );
-}
 
-export const Header = () => {
-    const canvas = useStore((s) => s.canvas);
-    const setPageFormat = useStore((s) => s.setPageFormat);
-    const pageFormat = useStore((s) => s.pageFormat);
-    const setOrientation = useStore((s) => s.setOrientation);
-    const orientation = useStore((s) => s.orientation);
-    const toggleGrid = useStore((s) => s.toggleGrid);
-    const [show, setShow] = useState(false);
+  // -------------------- Save / Load --------------------
+  // -------------------- Save / Load --------------------
+const handleDownload = () => {
+    if (!canvas) return;
+    const json = JSON.stringify(canvas.toJSON(['backgroundColor', 'customId']));
+    const blob = new Blob([json], { type: "application/json" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "drawing.fateboard"; // <-- changed extension here
+    link.click();
+    URL.revokeObjectURL(link.href);
+  };
 
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
 
+  const handleUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !canvas) return;
 
-
-    const handleClick = () => {
-        const savedState = canvas.toJSON();
-        db.local.set('drawJson', savedState);
-    }
-
-    const clearClick = () => {
-        db.local.clear();
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const json = ev.target.result;
+        const data = JSON.parse(json);
         canvas.clear();
-        canvas.backgroundColor = "#FFF";
-        canvas.requestRenderAll();
-      };
+        canvas.loadFromJSON(data, () => {
+          canvas.requestRenderAll();
+        });
+      } catch (err) {
+        console.error("Failed to load canvas:", err);
+      }
+    };
+    reader.readAsText(file);
+  };
 
+  return (
+    <header className="fixed top-0 left-0 right-0 bg-stone-100 flex flex-row justify-between items-center z-50">
+      <div className="flex flex-col w-full">
+        <div className="flex items-center justify-between w-full shadow-sm px-2">
+          <img src="./fate.svg" alt="FateBoard Icon" className="h-10 cursor-pointer hidden md:block" />
+          <img src="./fateicon.svg" alt="FateBoard Icon" className="h-8 mx-2 cursor-pointer md:hidden" />
 
-    return <header className="fixed top-0 left-0 right-0 bg-stone-100 flex flex-row justify-between items-center z-50">
-        <div className="flex flex-col w-full">
-            <div className="flex items-center justify-between w-full shadow-sm  px-2">
+          <div className="flex gap-4 p-2">
+            {/* <IconButton
+              icon={<i className="fa-solid fa-download text-lg"></i>}
+              onClick={handleDownload}
+              title="Download Drawing" /> */}
 
-                <img src="./fate.svg" alt="FateBoard Icon" className="h-10 cursor-pointer hidden md:block"/>
-                <img src="./fateicon.svg" alt="FateBoard Icon" className="h-8 mx-2 cursor-pointer md:hidden"/>
+            {/* <IconButton
+              icon={<i className="fa-solid fa-upload text-lg"></i>}
+              onClick={handleUploadClick}
+              title="Download Drawing" /> */}
 
-                <div className="flex gap-4 p-2">
+            {/* <IconButton
+              icon={<i className="fa-solid fa-upload text-lg"></i>}
+              onClick={handleUploadClick}
+              title="Download Drawing" /> */}
 
-                    {/*<select*/}
-                    {/*    value={orientation}*/}
-                    {/*    onChange={(e) => setOrientation(e.target.value as any)}*/}
-                    {/*  >*/}
-                    {/*    <option value="portrait">Portrait</option>*/}
-                    {/*    <option value="landscape">Landscape</option>*/}
-                    {/*  </select>*/}
+            <input
+              type="file"
+              accept=".fateboard"
+              ref={fileInputRef}
+              className="hidden"
+              onChange={handleUpload}
+            />
 
-                    {/*<select*/}
-                    {/*    value={pageFormat}*/}
-                    {/*    onChange={(e) => setPageFormat(e.target.value as any)}*/}
-                    {/*  >*/}
-                    {/*    <option value="Freehand">Freehand</option>*/}
-                    {/*    <option value="A4">A4</option>*/}
-                    {/*    <option value="Letter">Letter</option>*/}
-                    {/*    <option value="Legal">Legal</option>*/}
-                    {/*  </select>*/}
+            {/* Grid Toggle */}
+            <IconButton
+              active={show}
+              icon={<i className="fa-solid fa-table-cells"></i>}
+              onClick={() => { setShow(!show); toggleGrid(); }}
+              title="Grid View" />
 
-                    {/*<ZoomDropdown canvas={canvas} />*/}
+            {/*<DownloadMenu canvas={canvas} />*/}
 
+            {/* Clear Board */}
+            <IconButton
+              icon={<img src="/edit.svg" alt="New Draw" height="16" />}
+              onClick={clearBoard}
+              title="Grid View" />
 
-                    {/*<Fullscreen canvas={canvas} />*/}
-
-                    {/*<IconButton*/}
-                    {/*    icon={<i className="fa-solid fa-floppy-disk text-lg"></i>}*/}
-                    {/*    onClick={handleClick}*/}
-                    {/*    title="Save Board" />*/}
-
-
-
-                    {/*<Link to="/setting"><IconButton icon={<i className="fa-solid fa-gear"></i> }*/}
-                    {/*    onClick={() => console.log('done')}*/}
-                    {/*    title="Setting" /></Link>*/}
-
-                    {/*<IconButton icon={<i className="fa-solid fa-ellipsis-vertical"></i>}*/}
-                    {/*            />*/}
-
-
-                    <DownloadMenu canvas={canvas} />
-
-
-                    <IconButton
-                        active={show}
-                        icon={<i className="fa-solid fa-table-cells text-lg"></i>}
-                        onClick={() => {setShow(!show); toggleGrid()}}
-                        title="Grid View" />
-
-                    <IconButton
-                        icon={<i className="fa-solid fa-plus text-lg"></i>}
-                        onClick={clearClick}
-                        title="Clear Board" />
-
-
-                    <div>
-                        <DropdownMenu
-                          trigger={<i className="fa-solid fa-ellipsis-vertical cursor-pointer" />}
-                        >
-                          <DropdownMenuItem onClick={clearClick}>Create</DropdownMenuItem>
-                          <DropdownMenuItem onClick={handleClick}>
-                            Save
-                          </DropdownMenuItem>
-                          <DropdownMenuItem><Link to="/setting">Settings</Link></DropdownMenuItem>
-                        </DropdownMenu>
-                    </div>
-                </div>
-
+            {/* Dropdown Menu */}
+            <div className="flex items-center justify-center cursor-pointer hover:bg-stone-200 h-8 w-8">
+              <DropdownMenu trigger={<i className="fa-solid fa-ellipsis-vertical cursor-pointer"></i>}>
+                <DropdownMenuItem onClick={clearBoard}>Create</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleDownload}>Save</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleUploadClick}>Load</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/command-palette")}>Command Palette</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/setting")}>Settings</DropdownMenuItem>
+              </DropdownMenu>
             </div>
-            {/*<div className="p-2">*/}
-            {/*    hi*/}
-            {/*</div>*/}
+
+
+          </div>
         </div>
+
+        {/* {
+          selectedObject === "textbox" ?? <TextToolsHeader />
+        } */}
+
+        {/* {
+          selectedObject === "shape" ?? <ShapeToolsHeader />
+        } */}
+      </div>
     </header>
+  );
 }

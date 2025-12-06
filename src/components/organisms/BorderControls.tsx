@@ -1,11 +1,9 @@
-// molecules/BorderControl.jsx
+import { useStore } from "@store";
 import { Dropdown } from "../atoms/Dropdown";
 import { ColorPicker } from "../atoms/ColorPicker";
 import { NumberInput } from "../atoms/NumberInput";
 import { useState } from "react";
 import {IconButton} from "../atoms/IconButton.tsx";
-import { useStore } from "../../store/store";
-
 
 export function BorderControls({
   borderStyle,
@@ -14,7 +12,7 @@ export function BorderControls({
   setBorderWidth,
   borderColor,
   setBorderColor,
-  styleOptions
+  strokeStyleList
 }) {
   const [show, setShow] = useState(false);
   const toggleFullscreen = useStore(state => state.toggleFullscreen);
@@ -40,7 +38,7 @@ export function BorderControls({
       {show && (
         <>
           <Dropdown
-            options={styleOptions}
+            options={strokeStyleList}
             value={borderStyle}
             onChange={setBorderStyle}
             preview={

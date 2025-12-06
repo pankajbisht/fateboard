@@ -354,7 +354,7 @@
 
 import React, { useState, useRef } from "react";
 import clsx from "clsx";
-import { useStore } from "../../store/store";
+import { useStore } from "../../store";
 import { PanelHeader } from "../molecules/PanelHeader";
 
 // Tooltip icon button

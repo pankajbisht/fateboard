@@ -26,7 +26,7 @@
 
 import clsx from "clsx";
 import { useEffect, useState } from "react";
-import { useStore } from "../../store/store.ts";
+import { useStore } from "../../store";
 
 export function Toolbar({ tools, activeTool, onToolClick, position }) {
   const isLocked = useStore((state) => state.isActiveObjectLocked());

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useStore } from "../../store/store.ts";
+import { useStore } from "../../store";
 import {PanelHeader} from "../molecules/PanelHeader.tsx";
 
 export function TransformPanel({ closePanel }) {

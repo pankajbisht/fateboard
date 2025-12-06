@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import tailwindcolors from "tailwindcss/colors";
 import { ColorButton } from "../atoms/ColorButton";
 
-export const ColorPalette = ({ canvas }) => {
+export const ColorPalette = ({ canvas, isToolbar, setIsToolbar }) => {
   const colors = [
     tailwindcolors.red[500],
     tailwindcolors.green[500],
@@ -94,6 +94,18 @@ export const ColorPalette = ({ canvas }) => {
         ${show ? 'bg-blue-500 text-white hover:bg-blue-600' : 'hover:bg-stone-200'}`}>
         <i className="fa-solid fa-palette"></i>
       </button>
+
+      <button
+        onClick={() => setIsToolbar((prev) => !prev)}
+        className={`rounded-full flex items-center justify-center cursor-pointer transition h-8 w-8 p-2
+          ${isToolbar ? 'bg-blue-500 text-white hover:bg-blue-600' : 'hover:bg-stone-200'}`}
+      >
+        <i
+          className={`fa-solid ${isToolbar ? 'fa-angle-up' : 'fa-angle-down'}`}
+        ></i>
+      </button>
+            
+
     </div>
   );
 };

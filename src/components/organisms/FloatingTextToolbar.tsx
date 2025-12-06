@@ -1,41 +1,48 @@
 import { useState, useRef, useLayoutEffect, useEffect } from "react";
+import { useStore } from "@store";
+import { Select } from "../atoms/Select.tsx";
+import { ToggleGroup } from "../molecules/ToggleGroup.tsx";
+import { NumberInput } from "../atoms/NumberInput.tsx";
 export function FloatingTextToolbar({ target, canvas, onChange }) {
-  const [fontSize, setFontSize] = useState(16);
-  const [color, setColor] = useState("#000000");
-  const [bold, setBold] = useState(false);
-  const [italic, setItalic] = useState(false);
-  const [underline, setUnderline] = useState(false);
-  const [fontFamily, setFontFamily] = useState("Arial");
+  const fontSize = useStore(state => state.fontSize);
+  const setFontSize = useStore(state => state.setFontSize);
 
+  const color = useStore(state => state.color);
+  const setColor = useStore(state => state.setColor);
+
+  const fontFamily = useStore(state => state.fontFamily);
+  const setFontFamily = useStore(state => state.setFontFamily);
+
+  const isBold = useStore(state => state.isBold);
+  const setIsBold = useStore(state => state.setIsBold);
+
+  const isItalic = useStore(state => state.isItalic);
+  const setIsItalic = useStore(state => state.setIsItalic);
+
+  const isUnderline = useStore(state => state.isUnderline);
+  const setIsUnderline = useStore(state => state.setIsUnderline);
+
+
+  const fonts = useStore(s => s.fonts);
   const toolbarRef = useRef(null);
-
-  const commonFonts = [
-    "Arial",
-    "Bubblegum Sans",
-    "Comic Neue",
-    "Consolas",
-    "Courier New",
-    "Fredoka One",
-    "Georgia",
-    "Helvetica",
-    "Monaco",
-    "Palatino",
-    "Patrick Hand",
-    "Tahoma",
-    "Times New Roman",
-    "Trebuchet MS",
-    "Verdana",
-  ];
 
   // Sync toolbar state whenever target changes
   useEffect(() => {
     if (!target) return;
     setFontSize(target.fontSize || 16);
     setColor(target.fill || "#000000");
-    setBold(target.fontWeight === "bold");
-    setItalic(target.fontStyle === "italic");
-    setUnderline(!!target.underline);
-    setFontFamily(target.fontFamily || "Arial");
+
+    console.log((target));
+
+    setIsBold(target.fontWeight === "bold");
+//    setIsItalic(target.fontWeight === "bold");
+//    setIsBold(target.fontWeight === "bold");
+
+
+//    setBold(target.fontWeight === "bold");
+//    setItalic(target.fontStyle === "italic");
+//    setUnderline(!!target.underline);
+//    setFontFamily(target.fontFamily || "Arial");
   }, [target]);
 
   // Positioning toolbar below text object
@@ -130,65 +137,104 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
       </label>
 
       {/* Font Selector */}
-      <select
-        value={fontFamily}
-        onChange={(e) => {
-          const val = e.target.value;
-          setFontFamily(val);
-          onChange?.({ fontFamily: val });
+      {/*<select*/}
+      {/*  value={fontFamily}*/}
+      {/*  onChange={(e) => {*/}
+      {/*    const val = e.target.value;*/}
+      {/*    setFontFamily(val);*/}
+      {/*    onChange?.({ fontFamily: val });*/}
+      {/*  }}*/}
+      {/*  className="border rounded-md px-1 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"*/}
+      {/*>*/}
+      {/*  {fonts.map((font) => (*/}
+      {/*    <option key={font} value={font} style={{ fontFamily: font }}>*/}
+      {/*      {font}*/}
+      {/*    </option>*/}
+      {/*  ))}*/}
+      {/*</select>*/}
+
+      <Select
+        onChange={(fontFamily) => {
+          console.log(fontFamily);
+          setFontFamily(fontFamily);
+          onChange?.({ fontFamily: fontFamily });
         }}
-        className="border rounded-md px-1 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-      >
-        {commonFonts.map((font) => (
-          <option key={font} value={font} style={{ fontFamily: font }}>
-            {font}
-          </option>
-        ))}
-      </select>
+        options={fonts} value={fontFamily} />
 
       {/* Font Size */}
-      <input
-        type="number"
+      {/*<input*/}
+      {/*  type="number"*/}
+      {/*  value={fontSize}*/}
+      {/*  onChange={(e) => {*/}
+      {/*    const val = Number(e.target.value);*/}
+      {/*    setFontSize(val);*/}
+      {/*    onChange?.({ fontSize: val });*/}
+      {/*  }}*/}
+      {/*  className="w-12 border rounded-md px-1 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"*/}
+      {/*/>*/}
+
+      <NumberInput
         value={fontSize}
-        onChange={(e) => {
-          const val = Number(e.target.value);
+        onChange={(fontSize) => {
+          const val = parseInt(fontSize, 10);
           setFontSize(val);
           onChange?.({ fontSize: val });
         }}
-        className="w-12 border rounded-md px-1 py-0.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-      />
+       />
 
       {/* Styles */}
-      <button
-        className={styleButton(bold)}
-        onClick={() => {
-          const newVal = !bold;
-          setBold(newVal);
-          onChange?.({ fontWeight: newVal ? "bold" : "normal" });
+
+      <ToggleGroup
+        options={[
+          { key: "bold", icon: "fa-solid fa-bold" },
+          { key: "italic", icon: "fa-solid fa-italic" },
+          { key: "underline", icon: "fa-solid fa-underline" },
+        ]}
+        onChange={(formats) => {
+            console.log("formats:", formats)
+            const { bold, italic, underline } = formats;
+
+            setIsBold(bold);
+            setIsItalic(italic);
+            setIsUnderline(underline);
+            onChange?.({
+              fontWeight: bold ? "bold" : "normal",
+              fontStyle: italic ? "italic" : "normal",
+              underline: underline
+            });
         }}
-      >
-        <span className="font-bold">B</span>
-      </button>
-      <button
-        className={styleButton(italic)}
-        onClick={() => {
-          const newVal = !italic;
-          setItalic(newVal);
-          onChange?.({ fontStyle: newVal ? "italic" : "normal" });
-        }}
-      >
-        <span className="italic">I</span>
-      </button>
-      <button
-        className={styleButton(underline)}
-        onClick={() => {
-          const newVal = !underline;
-          setUnderline(newVal);
-          onChange?.({ underline: newVal });
-        }}
-      >
-        <span className="underline">U</span>
-      </button>
+      />
+
+      {/*<button*/}
+      {/*  className={styleButton(bold)}*/}
+      {/*  onClick={() => {*/}
+      {/*    const newVal = !bold;*/}
+      {/*    setBold(newVal);*/}
+      {/*    onChange?.({ fontWeight: newVal ? "bold" : "normal" });*/}
+      {/*  }}*/}
+      {/*>*/}
+      {/*  <span className="font-bold">B</span>*/}
+      {/*</button>*/}
+      {/*<button*/}
+      {/*  className={styleButton(italic)}*/}
+      {/*  onClick={() => {*/}
+      {/*    const newVal = !italic;*/}
+      {/*    setItalic(newVal);*/}
+      {/*    onChange?.({ fontStyle: newVal ? "italic" : "normal" });*/}
+      {/*  }}*/}
+      {/*>*/}
+      {/*  <span className="italic">I</span>*/}
+      {/*</button>*/}
+      {/*<button*/}
+      {/*  className={styleButton(underline)}*/}
+      {/*  onClick={() => {*/}
+      {/*    const newVal = !underline;*/}
+      {/*    setUnderline(newVal);*/}
+      {/*    onChange?.({ underline: newVal });*/}
+      {/*  }}*/}
+      {/*>*/}
+      {/*  <span className="underline">U</span>*/}
+      {/*</button>*/}
     </div>
   );
 }

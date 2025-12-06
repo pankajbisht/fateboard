@@ -39,6 +39,20 @@ export const leftPanelConfig = [
     position: "left",
     component: null,
   },
+  // {
+  //   id: "undo",
+  //   type: "momentary", // adds text immediately, no panel
+  //   icon: "fa-solid fa-undo",
+  //   position: "left",
+  //   component: null,
+  // },
+  // {
+  //   id: "redo",
+  //   type: "momentary", // adds text immediately, no panel
+  //   icon: "fa-solid fa-redo",
+  //   position: "left",
+  //   component: null,
+  // },
 ];
 
 export const rightPanelConfig = [
@@ -49,48 +63,48 @@ export const rightPanelConfig = [
     position: "right",
     component: (props) => <TransformPanel {...props} />,
   },
-  {
-    id: "group",
-    type: "momentary",
-    icon: "fa-solid fa-object-group",
-    position: "right",
-    component: null,
-  },
-  {
-    id: "ungroup",
-    type: "momentary",
-    icon: "fa-solid fa-object-ungroup",
-    position: "right",
-    component: null,
-  },
-  {
-    id: "delete",
-    type: "momentary",
-    icon: "fa-solid fa-trash",
-    position: "right",
-    component: null,
-  },
-  {
-    id: "lock",
-    type: "momentary",
-    icon: "fa-solid fa-lock",
-    position: "right",
-    component: null,
-  },
-  {
-    id: "forward",
-    type: "momentary",
-    icon: "fa-solid fa-angle-up",
-    position: "right",
-    component: null,
-  },
-  {
-    id: "backward",
-    type: "momentary",
-    icon: "fa-solid fa-angle-down",
-    position: "right",
-    component: null,
-  },
+//  {
+//    id: "group",
+//    type: "momentary",
+//    icon: "fa-solid fa-object-group",
+//    position: "right",
+//    component: null,
+//  },
+//  {
+//    id: "ungroup",
+//    type: "momentary",
+//    icon: "fa-solid fa-object-ungroup",
+//    position: "right",
+//    component: null,
+//  },
+//  {
+//    id: "delete",
+//    type: "momentary",
+//    icon: "fa-solid fa-trash",
+//    position: "right",
+//    component: null,
+//  },
+//  {
+//    id: "lock",
+//    type: "momentary",
+//    icon: "fa-solid fa-lock",
+//    position: "right",
+//    component: null,
+//  },
+//  {
+//    id: "forward",
+//    type: "momentary",
+//    icon: "fa-solid fa-angle-up",
+//    position: "right",
+//    component: null,
+//  },
+//  {
+//    id: "backward",
+//    type: "momentary",
+//    icon: "fa-solid fa-angle-down",
+//    position: "right",
+//    component: null,
+//  },
 //  {
 //    id: "fullscreen",
 //    type: "momentary",
@@ -101,6 +115,8 @@ export const rightPanelConfig = [
 //  { id: "zoomIn", type: "momentary", icon: "fa-solid fa-magnifying-glass-plus", position: "right" },
 //  { id: "zoomOut", type: "momentary", icon: "fa-solid fa-magnifying-glass-minus", position: "right" },
 //  { id: "zoomFit", type: "momentary", icon: "fa-solid fa-expand", position: "right" },
-  { id: "copy", type: "momentary", icon: "fa-solid fa-copy", position: "right" },
-  { id: "paste", type: "momentary", icon: "fa-solid fa-paste", position: "right" },
+//  { id: "copy", type: "momentary", icon: "fa-solid fa-copy", position: "right" },
+//  { id: "paste", type: "momentary", icon: "fa-solid fa-paste", position: "right" },
+  { id: "duplicate", type: "momentary", icon: "fa-solid fa-clone", position: "right" },
+
 ];

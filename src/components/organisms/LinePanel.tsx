@@ -1,4 +1,4 @@
-import { useStore } from "../../store/store.ts";
+import { useStore } from "../../store";
 
 export function LinePanel({ closePanel }) {
     const lineStroke = useStore((s) => s.lineStroke);

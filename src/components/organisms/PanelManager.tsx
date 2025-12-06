@@ -1,8 +1,8 @@
-import { getPanelPosition } from "../../utils/getPanelPosition";
+import { getPanelPosition } from "../../lib/utils/getPanelPosition";
 import { Toolbar } from "./Toolbar";
 import { Panel } from "./Panel";
 import { useState } from "react";
-import { useStore } from "../../store/store";
+import { useStore } from "../../store";
 
 // 🔹 Centralized handlers
 const toolHandlers = (store, deleteLayer) => ({
@@ -27,6 +27,7 @@ const toolHandlers = (store, deleteLayer) => ({
   zoomFit: () => store.zoomFit(),
   copy: () => store.copy(),
   paste: () => store.paste(),
+  duplicate: () => store.duplicate()
 });
 
 // 🔹 Utility for calculating panel position
@@ -90,6 +91,9 @@ export function PanelManager({ config, toolbarPosition = "left" }) {
   };
 
   const closePanel = (id) => {
+
+    console.log(id);
+
     const tool = config.find((t) => t.id === id);
     if (!tool) return;
 
