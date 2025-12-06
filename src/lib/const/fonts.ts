@@ -1,0 +1,17 @@
+export const FONTS = [
+    "Arial",
+    "Bubblegum Sans",
+    "Comic Neue",
+    "Consolas",
+    "Courier New",
+    "Fredoka One",
+    "Georgia",
+    "Helvetica",
+    "Monaco",
+    "Palatino",
+    "Patrick Hand",
+    "Tahoma",
+    "Times New Roman",
+    "Trebuchet MS",
+    "Verdana",
+];
