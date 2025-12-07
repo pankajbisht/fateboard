@@ -33,8 +33,7 @@ export function CanvasBoard() {
           target={selectedObject}
           canvas={canvas}
           onChange={(style) => {
-
-            console.log(style);
+           console.log("style..", style);
 
             if (selectedObject) {
               selectedObject.set(style);

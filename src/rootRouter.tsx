@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import EditorPage from "./components/pages/EditorPage";
-import NotFound from "./components/pages/NotFoundPage.tsx";
-import EditorSettingPage from "./components/pages/EditorSettingPage.tsx";
-import CommandPalette from "./components/pages/CommandPalette.tsx";
+import EditorPage from "./components/pages/Editor/Editor.tsx";
+import NotFound from "./components/pages/NotFound/NotFoundPage.tsx";
+import EditorSettingPage from "./components/pages/Setting/EditorSettingPage.tsx";
+import CommandPalette from "./components/pages/Command/CommandPalette.tsx";
 
 export function RootRouter() {
   return (

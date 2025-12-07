@@ -1,9 +1,5 @@
 import { useStore } from "@store";
-import {ToggleGroup} from "../molecules/ToggleGroup.tsx";
-
-/* ------------------------
-   Reusable Components
------------------------- */
+import { ToggleGroup } from "../molecules/ToggleGroup.tsx";
 
 const round = (val) => Math.round(val);
 
@@ -115,7 +111,6 @@ export const ShapeToolsHeader = () => {
   const removeLayer = useStore((s) => s.removeLayer);
 
 
-
   const handleButton = (key, value) => {
 
       if (key === "group") {
@@ -141,19 +136,17 @@ export const ShapeToolsHeader = () => {
 
 
   return (
-    <div className="p-2 overflow-x-auto shadow-sm bg-white">
+    <div className="px-5 py-2 overflow-x-auto shadow-sm bg-white">
       <div className="flex items-center justify-between whitespace-nowrap text-sm">
 
-        {/* --- Left: Transform controls --- */}
         <div className="flex items-center gap-4">
-          {/* Position & Size */}
           <div className="flex items-center gap-2">
             {transformFields.map((field) => (
               <TransformInput
                 key={field.key}
                 label={field.label}
                 value={transform[field.key]}
-                disabled={!hasSelection}
+                // disabled={!hasSelection}
                 onChange={(val) => setTransform(field.key, val)}
               />
             ))}

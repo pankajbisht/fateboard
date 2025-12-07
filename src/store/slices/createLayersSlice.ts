@@ -109,7 +109,7 @@ export const createLayersSlice = (set, get) => ({
         ],
       });
     });
-  },  
+  },
 
   toggleLayerLock: () => {
     const canvas = get().canvas;
@@ -438,6 +438,7 @@ export const createLayersSlice = (set, get) => ({
       left: clonedObj.left + 10,
       top: clonedObj.top + 10,
       evented: true,
+      customType: "shape"
     });
 
     if (clonedObj.type === "activeSelection") {

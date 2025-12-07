@@ -107,7 +107,7 @@ export const TextToolsHeader = () => {
   }, [canvas]);
 
   return (
-      <div className="flex flex-wrap gap-3 items-center p-3 border-b bg-white shadow-sm rounded-b-lg text-sm">
+      <div className="px-5 py-2 flex flex-wrap gap-3 items-center bg-white shadow-sm text-sm">
 
       <label className="text-xs">BG</label>
       <ColorPicker
@@ -184,10 +184,6 @@ export const TextToolsHeader = () => {
            updateText({ textAlign: textAlign });
          }}
        />
-
-
-
-      {/* Alignment */}
 
       {/* Text + Stroke Colors */}
       <div className="flex items-center gap-2">

@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+import type { ReactNode } from "react";
 
 interface IconButtonProps {
   icon: ReactNode;
@@ -6,6 +6,7 @@ interface IconButtonProps {
   onClick?: () => void;
   active?: boolean;
 }
+
 export function IconButton({ icon, title, onClick, active }: IconButtonProps) {
   return (
     <button

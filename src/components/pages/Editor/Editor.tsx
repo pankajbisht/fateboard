@@ -1,9 +1,10 @@
-import EditorTemplate from '../templates/EditorTemplate';
-import { CanvasBoard } from '../organisms/CanvasBoard';
-import { Header } from "../organisms/Header.tsx";
-import { PanelManager } from "../organisms/PanelManager.tsx";
-import { Footer } from "../organisms/Footer.tsx";
-import { leftPanelConfig, rightPanelConfig } from "../config/panelConfig.tsx";
+import EditorTemplate from '../../templates/EditorTemplate.tsx';
+import { CanvasBoard } from '../../organisms/CanvasBoard.tsx';
+import { Header } from "../../organisms/Header.tsx";
+import { PanelManager } from "../../organisms/PanelManager.tsx";
+import { Footer } from "../../organisms/Footer.tsx";
+import { leftPanelConfig, rightPanelConfig } from "../../config/panelConfig.tsx";
+
 const EditorPage = () => {
   return <div>
     <EditorTemplate
@@ -16,4 +17,5 @@ const EditorPage = () => {
     />
   </div>
 }
+
 export default EditorPage;

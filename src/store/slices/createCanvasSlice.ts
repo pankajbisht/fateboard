@@ -1,11 +1,9 @@
 import * as fabric from "fabric";
-import db from 'opendb-store';
-import { A4, LANDSCAPE, DEFAULT } from "@lib/const/editor.ts";
+import db from "opendb-store";
+import { A4, FREEHAND } from "@lib/const/editor.ts";
+import { LANDSCAPE } from "../../lib/const/editor";
 
 export const createCanvasSlice = (set, get) => ({
-  // =========================
-  // Canvas
-  // =========================
   canvas: null,
   activeTool: "select", // "select", "pan", "draw"
   isPanning: false,
@@ -15,7 +13,7 @@ export const createCanvasSlice = (set, get) => ({
   selectedObject: "textbox",
   showTextToolbar: true,
 
-  init: (el) => {
+  init: async (el) => {
     if (get().canvas) return;
 
     const canvas = new fabric.Canvas(el, {
@@ -23,15 +21,25 @@ export const createCanvasSlice = (set, get) => ({
       preserveObjectStacking: false,
     });
 
-    get().saveState();
+    get().saveState(); // undo/redo
     set({ canvas });
-    get().setPageFormat(A4, LANDSCAPE);
+    get().setPageFormat(FREEHAND, LANDSCAPE);
     get().enablePan();
     get().setBrush();
 
-    canvas.on("selection:created", (e) => get().setToolbar(e.target));
-    canvas.on("selection:updated", (e) => get().setToolbar(e.target));
-    canvas.on("mouse:down", (e) => get().setToolbar(e.target));
+    const onChangeSelection = (e) => {
+      const obj = e.target;
+
+      get().setToolbar(e);
+      get().updateFromFabric(obj);
+    };
+
+    canvas.on("selection:created", (e) => onChangeSelection(e));
+    canvas.on("selection:updated", (e) => onChangeSelection(e));
+    canvas.on("selection:cleared", () => get().clearToolbar());
+    canvas.on("mouse:down", (e) => onChangeSelection(e));
+
+    canvas.on("object:modified", (e) => onChangeSelection(e));
   },
 
   init1: async (el) => {
@@ -43,17 +51,17 @@ export const createCanvasSlice = (set, get) => ({
     });
 
     // --- Load persisted state ---
-//    const saved = db.local.get("drawJson");
-//    if (saved) {
-//      set({ _isRestoring: true });
-//      canvas.loadFromJSON(saved, () => {
-//        canvas.getObjects().forEach(obj => obj.setCoords());
-//        canvas.renderAll();
-//        set({ _isRestoring: false });
-//      });
-//    } else {
-      get().saveState(); // only if nothing is saved
-//    }
+    //    const saved = db.local.get("drawJson");
+    //    if (saved) {
+    //      set({ _isRestoring: true });
+    //      canvas.loadFromJSON(saved, () => {
+    //        canvas.getObjects().forEach(obj => obj.setCoords());
+    //        canvas.renderAll();
+    //        set({ _isRestoring: false });
+    //      });
+    //    } else {
+    get().saveState(); // only if nothing is saved
+    //    }
 
     set({ canvas });
     get().enablePan();
@@ -81,7 +89,7 @@ export const createCanvasSlice = (set, get) => ({
       } else {
         set({
           selectedObject: "shape",
-        })
+        });
       }
     };
 
@@ -95,8 +103,8 @@ export const createCanvasSlice = (set, get) => ({
 
     // --- Handlers ---
     const handlers = {
-//      "object:added": (e) => updateObjectState(e.target),
-//      "object:modified": (e) => updateObjectState(e.target),
+      //      "object:added": (e) => updateObjectState(e.target),
+      //      "object:modified": (e) => updateObjectState(e.target),
       "object:removed": (e) => updateObjectState(e.target),
 
       "selection:created": (e) => setToolbar(e.target),
@@ -105,45 +113,41 @@ export const createCanvasSlice = (set, get) => ({
 
       "mouse:down": (e) => setToolbar(e.target),
 
-//      "text:editing:entered": (e) => setToolbar(e.target, true),
-//      "text:editing:exited": () => set({ isEditingText: false }),
+      //      "text:editing:entered": (e) => setToolbar(e.target, true),
+      //      "text:editing:exited": () => set({ isEditingText: false }),
 
       // ✅ hide toolbar during move/scale
-//      "before:transform": (e) => {
-//        if (e.target?.type === "textbox") clearToolbar();
-//      },
-//      "object:moving": (e) => {
-//        if (e.target?.type === "textbox") clearToolbar();
-//      },
-//      "object:scaling": (e) => {
-//        if (e.target?.type === "textbox") clearToolbar();
-//      },
-//
-//      // ✅ restore toolbar & save after move/scale
-//      "after:transform": (e) => {
-//        if (e.target?.type === "textbox") setToolbar(e.target);
-//        e.target?.setCoords(); // 🔑 recalc
-//        updateObjectState(e.target);
-//      },
-        "path:created": (e) => {
-          const path = e.path; // the drawn stroke
-          console.log("New path created:", path);
+      //      "before:transform": (e) => {
+      //        if (e.target?.type === "textbox") clearToolbar();
+      //      },
+      //      "object:moving": (e) => {
+      //        if (e.target?.type === "textbox") clearToolbar();
+      //      },
+      //      "object:scaling": (e) => {
+      //        if (e.target?.type === "textbox") clearToolbar();
+      //      },
+      //
+      //      // ✅ restore toolbar & save after move/scale
+      //      "after:transform": (e) => {
+      //        if (e.target?.type === "textbox") setToolbar(e.target);
+      //        e.target?.setCoords(); // 🔑 recalc
+      //        updateObjectState(e.target);
+      //      },
+      "path:created": (e) => {
+        const path = e.path; // the drawn stroke
+        console.log("New path created:", path);
 
-
-          // Save to history stack
-          get().updateFromFabric(path);
-          get().saveState();
-        }
+        // Save to history stack
+        get().updateFromFabric(path);
+        get().saveState();
+      },
     };
 
     // --- Attach Events Dynamically ---
     Object.entries(handlers).forEach(([event, handler]) => {
       canvas.on(event, handler);
     });
-
-
   },
-
 
   setCanvas: (canvas) => {
     set({ canvas });
@@ -212,10 +216,10 @@ export const createCanvasSlice = (set, get) => ({
     });
   },
 
-
   setSelectedObject: () => {
     set({ selectedObject: false });
   },
+
   setActiveTool: (tool) => {
     const canvas = get().canvas;
     if (!canvas) return;
@@ -229,7 +233,7 @@ export const createCanvasSlice = (set, get) => ({
         canvas.skipTargetFind = true;
         break;
       case "draw":
-        console.log('here');
+        console.log("here");
         canvas.isDrawingMode = true;
         canvas.freeDrawingBrush.color = "#000"; // optional
         break;
@@ -301,7 +305,6 @@ export const createCanvasSlice = (set, get) => ({
     });
   },
 
-
   updateTextStyle: (styles) => {
     const canvas = get().canvas;
     const obj = get().selectedObject;
@@ -328,14 +331,19 @@ export const createCanvasSlice = (set, get) => ({
     canvas.backgroundColor = "#FFF";
     canvas.requestRenderAll();
   },
+
   clearToolbar: () => {
+    console.log("Clear");
     set({
       selectedObject: null,
       showTextToolbar: false,
       isEditingText: false,
     });
   },
-  setToolbar: (obj, isEditing = false) => {
+
+  setToolbar: (e, isEditing = false) => {
+    let obj = e.target;
+
     if (obj?.type === "textbox") {
       set({
         selectedObject: obj,
@@ -343,10 +351,14 @@ export const createCanvasSlice = (set, get) => ({
         isEditingText: isEditing,
       });
       get().syncFromObject(obj);
-    } else {
+    } else if (obj?.customType === "shape" || e?.selected?.length > 0 || obj?.type == "group" || obj?.type == "activeselection") {
       set({
         selectedObject: "shape",
-      })
+      });
+    } else {
+      set({
+        selectedObject: null,
+      });
     }
-  }
+  },
 });

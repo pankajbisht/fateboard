@@ -1,3 +1,12 @@
+type EditorTemplateProps = {
+    header?: React.ReactNode;
+    leftSidebar?: React.ReactNode;
+    undoRedoSidebar?: React.ReactNode;
+    canvasBoard: React.ReactNode;
+    rightSidebar?: React.ReactNode;
+    footer?: React.ReactNode;
+}
+
 const EditorTemplate = ({
     header,
     leftSidebar,
@@ -5,7 +14,7 @@ const EditorTemplate = ({
     canvasBoard,
     rightSidebar,
     footer
-  }) => {
+  }: EditorTemplateProps) => {
     return (
       <div className="flex flex-col w-full h-screen bg-stone-300">
 

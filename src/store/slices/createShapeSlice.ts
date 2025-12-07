@@ -17,6 +17,7 @@ export const createShapeSlice = (set, get) => ({
           originY: "center",
           selection: true,
           hasControls: true,
+          customType: "shape"
         };
 
         options = { ...defaultPosition, ...options };

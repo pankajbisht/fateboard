@@ -1,5 +1,3 @@
-import * as fabric from "fabric";
-
 export const createTransformSlice = (set, get) => ({
   transform: {
     x: 0,
@@ -11,10 +9,10 @@ export const createTransformSlice = (set, get) => ({
     flipY: false,
   },
   hasSelection: false,
-
   _isSyncing: false, // avoid circular updates
 
   updateFromFabric: (obj) => {
+
     if (!obj) {
       set({ hasSelection: false }); // disable inputs
       return;
@@ -56,7 +54,6 @@ export const createTransformSlice = (set, get) => ({
     }
   },
 
-  // ✅ Sync Fabric object FROM store
   updateFabricFromStore: () => {
     const { transform, canvas } = get();
     const obj = canvas?.getActiveObject();
@@ -87,7 +84,6 @@ export const createTransformSlice = (set, get) => ({
     set({ _isSyncing: false });
   },
 
-  // ✅ Set any property in transform
   setTransform: (key, value) => {
     console.log(key, value)
     set((state) => ({
