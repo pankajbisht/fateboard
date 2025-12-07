@@ -104,8 +104,9 @@ export const TextToolsHeader = () => {
   }, [canvas]);
 
   return (
-    <div className="px-5 py-2 flex flex-wrap gap-3 items-center bg-white shadow-sm text-sm">
-      <ColorPicker
+    <div className="px-5 py-2 flex flex-wrap gap-3 overflow-x-auto items-center bg-white shadow-sm text-sm">
+      <div className="flex items-center justify-between whitespace-nowrap text-sm gap-4">
+        <ColorPicker
         label="BG"
         value={bgColor}
         onChange={(bgColor) => {
@@ -255,6 +256,7 @@ export const TextToolsHeader = () => {
           }}
         />
       )}
+    </div>
     </div>
   );
 };
