@@ -19,7 +19,7 @@ export const Footer = () => {
   } = useStore();
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 bg-stone-100 p-2 overflow-y-scroll flex flex-col">
+    <footer className="border-t border-gray-200 fixed bottom-0 left-0 right-0 bg-stone-100 p-2 overflow-y-scroll flex flex-col">
       {/* {isToolbar && (
         <div className="mx-2 flex justify-center overflow-y-scroll">
           <button

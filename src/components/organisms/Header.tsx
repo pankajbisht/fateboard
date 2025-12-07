@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useStore } from "../../store";
 import { useNavigate } from "react-router-dom";
 import { ShapeToolsHeader } from "./ShapeToolsHeader.tsx";
@@ -6,7 +6,6 @@ import { IconButton } from "../atoms/IconButton.tsx";
 import Brand from "../atoms/Brand.tsx";
 import { TextToolsHeader } from "./TextToolsHeader.tsx";
 import DropdownMenu, { DropdownMenuItem } from "../portals/DropdownMenu.tsx";
-import Portal from "../portals/index.tsx";
 
 export function Header() {
   const navigate = useNavigate();

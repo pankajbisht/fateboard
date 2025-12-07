@@ -1,11 +1,19 @@
-export function ColorPicker({ value, onChange, className = "" }) {
-
+export function ColorPicker({ label, value, onChange, className = "" }) {
   return (
-    <input
-      type="color"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-6 h-6 cursor-pointer rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
+    <label className="inline-flex items-center gap-1.5 text-[11px] text-gray-600">
+      <span className="font-medium">{label}:</span>
+
+      <div
+        className="w-5 h-5 rounded-full p-[2px] border border-gray-200 shadow-sm"
+        style={{ backgroundColor: value }}
+      >
+        <input
+          type="color"
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          className={`w-full h-full rounded-full opacity-0 cursor-pointer ${className}`}
+        />
+      </div>
+    </label>
   );
 }

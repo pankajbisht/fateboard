@@ -32,15 +32,15 @@ export function Toolbar({ tools, activeTool, onToolClick, position }) {
   const isLocked = useStore((state) => state.isActiveObjectLocked());
 
   const positionClasses = {
-    left: "fixed top-1/2 left-0 -translate-y-1/2 flex-col",
-    right: "fixed top-1/2 right-0 -translate-y-1/2 flex-col",
+    left: "fixed top-1/2 left-2 -translate-y-1/2 flex-col",
+    right: "fixed top-1/2 right-2 -translate-y-1/2 flex-col",
     top: "fixed top-0 left-1/2 -translate-x-1/2 flex-row",
     bottom: "fixed bottom-0 left-1/2 -translate-x-1/2 flex-row",
   };
 
   return (
     <div
-      className={`flex justify-center items-center bg-white shadow rounded-md gap-2 z-50 p-2 ${positionClasses[position]}`}
+      className={`flex justify-center items-center bg-white border border-stone-200 shadow rounded-md gap-2 z-50 p-2 ${positionClasses[position]}`}
     >
       {tools.map((tool) => {
         // 🔑 if it's the lock tool, override the icon dynamically

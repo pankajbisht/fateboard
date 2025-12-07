@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 
 export const ToggleGroup = ({ options, value = {}, onChange, single = false }) => {
   const [state, setState] = useState(value);
@@ -6,31 +7,54 @@ export const ToggleGroup = ({ options, value = {}, onChange, single = false }) =
   const toggle = (key) => {
     let updated;
     if (single) {
-      // single-select (radio style)
-      updated = Object.fromEntries(options.map(o => [o.key, o.key === key]));
+      updated = Object.fromEntries(
+        options.map((o) => [o.key, o.key === key])
+      );
     } else {
-      // multi-select (toggle style)
       updated = { ...state, [key]: !state[key] };
     }
+
     setState(updated);
     onChange?.(updated);
   };
 
   return (
-    <div className="inline-flex rounded-md border border-gray-300 bg-white shadow-sm overflow-hidden">
-      {options.map(({ key, icon, label }) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => toggle(key)}
-          className={`px-3 py-2 text-sm flex items-center gap-2 ${
-            state[key] ? "bg-blue-500 text-white" : "text-gray-700 hover:bg-gray-100"
-          }`}
-        >
-          {icon && <i className={icon}></i>}
-          {label && <span>{label}</span>}
-        </button>
-      ))}
+    <div
+      className="
+        inline-flex overflow-hidden
+        rounded-lg
+        border border-gray-200
+        bg-white
+        shadow-[0_1px_2px_rgba(0,0,0,0.03)]
+      "
+    >
+      {options.map(({ key, icon, label }) => {
+        const isActive = state[key];
+
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => toggle(key)}
+            className={`
+              flex items-center gap-1.5
+              px-2.5 py-1.5
+              text-[11px] font-medium
+              transition-colors
+              border-r border-gray-100 last:border-r-0
+
+              ${
+                isActive
+                  ? "bg-gray-900 text-white"
+                  : "text-gray-600 hover:bg-gray-50"
+              }
+            `}
+          >
+            {icon && <i className={`${icon} text-[11px]`}></i>}
+            {label && <span>{label}</span>}
+          </button>
+        );
+      })}
     </div>
   );
 };

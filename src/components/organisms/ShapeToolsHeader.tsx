@@ -1,5 +1,6 @@
 import { useStore } from "@store";
 import { ToggleGroup } from "../molecules/ToggleGroup.tsx";
+import LabeledInput from "../atoms/LabeledInput.tsx";
 
 const round = (val) => Math.round(val);
 
@@ -19,23 +20,18 @@ const TransformInput = ({ label, value, disabled, onChange }) => {
     onChange(num);
   };
 
+  const onKeyDownHandler = (e) => {
+    if (e.key === "." || e.key === "e") e.preventDefault();
+  };
+
   return (
-    <label className="flex items-center gap-1">
-      {label}:
-      <input
-        type="number"
-        step="1"
-        min={0} // ⬅️ optional, prevents negatives if you don’t want them
-        className="border rounded p-1 w-22 text-left"
-        value={value ?? 0}
-        disabled={disabled}
-        onChange={handleChange}
-        onKeyDown={(e) => {
-          // Prevent typing "." or "e" in number input
-          if (e.key === "." || e.key === "e") e.preventDefault();
-        }}
-      />
-    </label>
+    <LabeledInput
+      label={label}
+      value={value ?? 0}
+      onChange={handleChange}
+      disabled={disabled}
+      onKeyDown={onKeyDownHandler}
+    />
   );
 };
 
@@ -81,19 +77,34 @@ const layerButtons = [
 const alignButtons = [
   // Horizontal alignment
   { title: "Align Left", icon: "align-left", key: "align-left" },
-  { title: "Align Center (Horizontally)", icon: "align-center", key: "align-hcenter" },
+  {
+    title: "Align Center (Horizontally)",
+    icon: "align-center",
+    key: "align-hcenter",
+  },
   { title: "Align Right", icon: "align-right", key: "align-right" },
 
   // Vertical alignment
   { title: "Align Top", icon: "align-up", key: "align-top" },
-  { title: "Align Middle (Vertically)", icon: "align-middle", key: "align-vcenter" },
+  {
+    title: "Align Middle (Vertically)",
+    icon: "align-middle",
+    key: "align-vcenter",
+  },
   { title: "Align Bottom", icon: "align-down", key: "align-bottom" },
 
   // Distribute horizontally / vertically
-  { title: "Distribute Horizontally", icon: "grip-lines-horizontal", key: "distribute-h" },
-  { title: "Distribute Vertically", icon: "grip-lines-vertical", key: "distribute-v" },
+  {
+    title: "Distribute Horizontally",
+    icon: "grip-lines-horizontal",
+    key: "distribute-h",
+  },
+  {
+    title: "Distribute Vertically",
+    icon: "grip-lines-vertical",
+    key: "distribute-v",
+  },
 ];
-
 
 /* ------------------------
    Main Header
@@ -110,35 +121,31 @@ export const ShapeToolsHeader = () => {
   const hasSelection = useStore((s) => s.hasSelection);
   const removeLayer = useStore((s) => s.removeLayer);
 
-
   const handleButton = (key, value) => {
-
-      if (key === "group") {
-        groupLayers();
-      } else if (key === "ungroup") {
-        ungroupSelected()
-      } else if (key === "sendtoback") {
-        bringForward();
-      } else if (key === "bringtofront") {
-        sendBackward();
-      } else if (key === "lock") {
-        toggleActiveObjectLock();
-      } else if (key === "unlock") {
-        toggleActiveObjectLock();
-      } else if (key === "delete") {
-        removeLayer();
-      }
-  }
+    if (key === "group") {
+      groupLayers();
+    } else if (key === "ungroup") {
+      ungroupSelected();
+    } else if (key === "sendtoback") {
+      bringForward();
+    } else if (key === "bringtofront") {
+      sendBackward();
+    } else if (key === "lock") {
+      toggleActiveObjectLock();
+    } else if (key === "unlock") {
+      toggleActiveObjectLock();
+    } else if (key === "delete") {
+      removeLayer();
+    }
+  };
 
   const handleAlginmentAndDistributeButton = (key, value) => {
-        alignObjects(key);
-  }
-
+    alignObjects(key);
+  };
 
   return (
     <div className="px-5 py-2 overflow-x-auto shadow-sm bg-white">
       <div className="flex items-center justify-between whitespace-nowrap text-sm">
-
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             {transformFields.map((field) => (
@@ -167,10 +174,10 @@ export const ShapeToolsHeader = () => {
           {/*  ))}*/}
           {/*</div>*/}
 
-        {/*  const flipButtons = [*/}
-        {/*  { title: "Flip X", icon: "arrows-left-right", key: "flipX" },*/}
-        {/*  { title: "Flip Y", icon: "arrows-up-down", key: "flipY" },*/}
-        {/*];*/}
+          {/*  const flipButtons = [*/}
+          {/*  { title: "Flip X", icon: "arrows-left-right", key: "flipX" },*/}
+          {/*  { title: "Flip Y", icon: "arrows-up-down", key: "flipY" },*/}
+          {/*];*/}
 
           <ToggleGroup
             single={false}
@@ -182,9 +189,8 @@ export const ShapeToolsHeader = () => {
               const { flipX, flipY } = formats;
 
               for (const [key, value] of Object.entries(formats)) {
-                  setTransform(key, value);
+                setTransform(key, value);
               }
-
             }}
           />
         </div>
@@ -205,19 +211,18 @@ export const ShapeToolsHeader = () => {
           {/*  )}*/}
           {/*</div>*/}
 
-
-        {/*  const layerButtons = [*/}
-        {/*  { title: "Group", icon: "object-group", key: "group" },*/}
-        {/*  { title: "Ungroup", icon: "object-ungroup", key: "ungroup" },*/}
-        {/*  { divider: true },*/}
-        {/*  { title: "Lock", icon: "lock", key: "lock" },*/}
-        {/*  { title: "Unlock", icon: "unlock", key: "unlock" },*/}
-        {/*  { divider: true },*/}
-        {/*  { title: "Send to Back", icon: "arrow-down", key: "sendtoback" },*/}
-        {/*  { title: "Bring to Front", icon: "arrow-up", key: "bringtofront" },*/}
-        {/*  { divider: true },*/}
-        {/*  { title: "Delete", icon: "trash", key: "delete" },*/}
-        {/*];*/}
+          {/*  const layerButtons = [*/}
+          {/*  { title: "Group", icon: "object-group", key: "group" },*/}
+          {/*  { title: "Ungroup", icon: "object-ungroup", key: "ungroup" },*/}
+          {/*  { divider: true },*/}
+          {/*  { title: "Lock", icon: "lock", key: "lock" },*/}
+          {/*  { title: "Unlock", icon: "unlock", key: "unlock" },*/}
+          {/*  { divider: true },*/}
+          {/*  { title: "Send to Back", icon: "arrow-down", key: "sendtoback" },*/}
+          {/*  { title: "Bring to Front", icon: "arrow-up", key: "bringtofront" },*/}
+          {/*  { divider: true },*/}
+          {/*  { title: "Delete", icon: "trash", key: "delete" },*/}
+          {/*];*/}
 
           <ToggleGroup
             single={true}
@@ -226,12 +231,12 @@ export const ShapeToolsHeader = () => {
               { key: "ungroup", icon: "fa-solid fa-object-ungroup" },
             ]}
             onChange={(formats) => {
-
               const { group, ungroup } = formats;
 
-              const active = Object.entries(formats).find(([_, value]) => value);
-              console.log("align:", active)
-
+              const active = Object.entries(formats).find(
+                ([_, value]) => value
+              );
+              console.log("align:", active);
 
               if (active) {
                 const [key, value] = active;
@@ -242,7 +247,6 @@ export const ShapeToolsHeader = () => {
 
           <div className="border-l h-6 border-gray-300" />
 
-
           <ToggleGroup
             single
             options={[
@@ -250,8 +254,7 @@ export const ShapeToolsHeader = () => {
               { key: "flipY", icon: "fa-solid fa-unlock" },
             ]}
             onChange={(formats) => {
-
-              console.log("align:", formats)
+              console.log("align:", formats);
               const { left, center, right, justify } = formats;
               let textAlign = "align-left"; // default fallback
 
@@ -263,7 +266,6 @@ export const ShapeToolsHeader = () => {
             }}
           />
 
-
           <ToggleGroup
             single
             options={[
@@ -271,8 +273,7 @@ export const ShapeToolsHeader = () => {
               { key: "bringtofront", icon: "fa-solid fa-arrow-up" },
             ]}
             onChange={(formats) => {
-
-              console.log("align:", formats)
+              console.log("align:", formats);
               const { left, center, right, justify } = formats;
               let textAlign = "align-left"; // default fallback
 
@@ -295,7 +296,6 @@ export const ShapeToolsHeader = () => {
           {/*  ))}*/}
           {/*</div>*/}
 
-
           <ToggleGroup
             single
             options={[
@@ -305,8 +305,7 @@ export const ShapeToolsHeader = () => {
               { key: "justify", icon: "fa-solid fa-align-justify" },
             ]}
             onChange={(formats) => {
-
-              console.log("align:", formats)
+              console.log("align:", formats);
               const { left, center, right, justify } = formats;
               let textAlign = "align-left"; // default fallback
 
@@ -334,11 +333,8 @@ export const ShapeToolsHeader = () => {
               { key: "middle", icon: "fa-solid fa-align-center -rotate-90" },
               { key: "bottom", icon: "fa-solid fa-align-right rotate-90" },
             ]}
-
-
             onChange={(formats) => {
-
-              console.log("align:", formats)
+              console.log("align:", formats);
               const { left, center, right, justify } = formats;
               let textAlign = "align-left"; // default fallback
 
@@ -354,17 +350,16 @@ export const ShapeToolsHeader = () => {
           {/*{ title: "Distribute Horizontally", icon: "grip-lines-horizontal", key: "distribute-h" },*/}
           {/*{ title: "Distribute Vertically", icon: "grip-lines-vertical", key: "distribute-v" },*/}
 
-
           <ToggleGroup
             options={[
               { key: "distribute-h", icon: "fa-solid fa-align-left rotate-90" },
-              { key: "distribute-v", icon: "fa-solid fa-align-center -rotate-90" },
+              {
+                key: "distribute-v",
+                icon: "fa-solid fa-align-center -rotate-90",
+              },
             ]}
-
-
             onChange={(formats) => {
-
-              console.log("align:", formats)
+              console.log("align:", formats);
               const { left, center, right, justify } = formats;
               let textAlign = "align-left"; // default fallback
 
@@ -375,7 +370,6 @@ export const ShapeToolsHeader = () => {
               handleAlginmentAndDistributeButton(textAlign, formats);
             }}
           />
-
         </div>
       </div>
     </div>

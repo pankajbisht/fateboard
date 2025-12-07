@@ -2,6 +2,7 @@ import * as fabric from "fabric";
 import db from "opendb-store";
 import { A4, FREEHAND } from "@lib/const/editor.ts";
 import { LANDSCAPE } from "../../lib/const/editor";
+import { fateboardCanvasConfig } from "../../components/config/fateboard.config";
 
 export const createCanvasSlice = (set, get) => ({
   canvas: null,
@@ -17,7 +18,7 @@ export const createCanvasSlice = (set, get) => ({
     if (get().canvas) return;
 
     const canvas = new fabric.Canvas(el, {
-      backgroundColor: "#fff",
+      backgroundColor: fateboardCanvasConfig.bg,
       preserveObjectStacking: false,
     });
 

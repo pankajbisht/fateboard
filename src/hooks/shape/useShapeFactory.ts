@@ -23,6 +23,19 @@ export const shapesList = [
       stroke: "black",
     },
   },
+  // {
+  //     type: "capsule",
+  //     icon: "fa-solid fa-capsules",
+  //     defaultProps: {
+  //         with: 120,
+  //         height: 50,
+  //         rx: 30,
+  //         ry: 30,
+  //         fill: "white",
+  //         strock: "black",
+  //         strokeWidth: 2
+  //     }
+  // },
   {
     type: "triangle",
     icon: "fas fa-play rotate-270",
@@ -200,4 +213,3 @@ export const useShapeFactory = () => {
 
   return { shapesList, add, enableLineDrawing, disableLineDrawing };
 };
-

@@ -12,7 +12,7 @@ export function Panel({ isOpen, position, from = "left", children }) {
         left: `${position.left}px`,
       }}
       className={clsx(
-        "bg-stone-100 rounded-md shadow-lg w-70 p-4 z-50 transform -translate-y-1/2 transition-all duration-300 ease-out",
+        "bg-stone-100 border border-stone-200 rounded-md shadow-lg w-70 p-4 z-50 transform -translate-y-1/2 transition-all duration-300 ease-out",
         isOpen
           ? "opacity-100 translate-x-0 pointer-events-auto"
           : from === "left"

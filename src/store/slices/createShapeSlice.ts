@@ -33,6 +33,10 @@ export const createShapeSlice = (set, get) => ({
             shape = new fabric.Circle({ radius: 48, fill: "transparent", stroke: "black", ...options });
             break;
 
+          case "capsule":
+              shape = new fabric.Rect({ radius: 48, fill: "transparent", stroke: "black", ...options });
+              break;
+
           case "ellipse":
             shape = new fabric.Ellipse({ rx: 70, ry: 45, fill: "transparent", stroke: "black", ...options });
             break;
