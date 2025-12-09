@@ -77,13 +77,13 @@ export const rightPanelConfig = [
    position: "right",
    component: null,
  },
-//  {
-//    id: "delete",
-//    type: "momentary",
-//    icon: "fa-solid fa-trash",
-//    position: "right",
-//    component: null,
-//  },
+ {
+   id: "delete",
+   type: "momentary",
+   icon: "fa-solid fa-trash",
+   position: "right",
+   component: null,
+ },
 //  {
 //    id: "lock",
 //    type: "momentary",
