@@ -24,7 +24,7 @@ export const createBrushSlice = (set, get) => ({
         const brush = brushFactory[type] ? brushFactory[type]() : brushFactory["pencil"]();
         const color = options?.color ?? get().color;
         const width = options?.width ?? get().width;
-        const cursor = options.cursor ?? "url('/pencil.svg') 2 30, crosshair";
+        const cursor = options.cursor ?? "url('/pencil.svg') 0 32, crosshair";
 
         brush.color = color;
         brush.width = width;

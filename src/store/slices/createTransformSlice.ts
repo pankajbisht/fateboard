@@ -1,3 +1,5 @@
+import * as fabric from 'fabric'
+
 export const createTransformSlice = (set, get) => ({
   transform: {
     x: 0,
@@ -54,6 +56,55 @@ export const createTransformSlice = (set, get) => ({
     }
   },
 
+  updateFabricFromStore1: () => {
+    const { transform, canvas } = get();
+    const obj = canvas?.getActiveObject();
+    if (!obj) return;
+
+    set({ _isSyncing: true });
+
+    // --- 1. Normalize origin for stable math
+    obj.set({
+      originX: "center",
+      originY: "center",
+      objectCaching: false
+    });
+
+    // --- 2. Base dimensions
+    const baseWidth  = obj._originalWidth  || obj.width  || 1;
+    const baseHeight = obj._originalHeight || obj.height || 1;
+
+    // Store original size once
+    if (!obj._originalWidth) {
+      obj._originalWidth  = baseWidth;
+      obj._originalHeight = baseHeight;
+    }
+
+    // --- 3. Safe scale calculation
+    const scaleX = transform.width  / baseWidth;
+    const scaleY = transform.height / baseHeight;
+
+    // --- 4. Apply transform
+    obj.set({
+      angle: transform.rotation || 0,
+      scaleX: transform.flipX ? -Math.abs(scaleX) : Math.abs(scaleX),
+      scaleY: transform.flipY ? -Math.abs(scaleY) : Math.abs(scaleY),
+    });
+
+    // --- 5. Position using absolute left/top
+    obj.setPositionByOrigin(
+      new fabric.Point(transform.x, transform.y),
+      "center",
+      "center"
+    );
+
+    obj.setCoords();
+    canvas.requestRenderAll();
+
+    set({ _isSyncing: false });
+  },
+
+
   updateFabricFromStore: () => {
     const { transform, canvas } = get();
     const obj = canvas?.getActiveObject();
@@ -61,28 +112,83 @@ export const createTransformSlice = (set, get) => ({
 
     set({ _isSyncing: true });
 
-    // ✅ Base scales from object’s natural dimensions
-    const baseScaleX = (obj.width || 1) > 0 ? transform.width / (obj.width || 1) : 1;
-    const baseScaleY = (obj.height || 1) > 0 ? transform.height / (obj.height || 1) : 1;
-
+    // 1. Change Origin to Center
+    // This ensures rotation and scaling happen from the middle, not the corner
     obj.set({
-      left: transform.x,
-      top: transform.y,
+      originX: "center",
+      originY: "center",
+      objectCaching: true,
+    });
+
+    // 2. Apply properties
+    // With origin set to center, 'left' and 'top' now represent the CENTER coordinates
+    obj.set({
+      left: transform.x,       // X is now the Center X
+      top: transform.y,        // Y is now the Center Y
       angle: transform.rotation,
       width: transform.width,
       height: transform.height,
-      // ✅ flip logic: negative scale if flipped
-      scaleX: transform.flipX ? -Math.abs(baseScaleX) : Math.abs(baseScaleX),
-      scaleY: transform.flipY ? -Math.abs(baseScaleY) : Math.abs(baseScaleY),
+      flipX: transform.flipX,
+      flipY: transform.flipY,
     });
-
-    console.log('great');
 
     obj.setCoords();
     canvas.requestRenderAll();
 
     set({ _isSyncing: false });
   },
+
+
+
+
+
+
+  // updateFabricFromStore: () => {
+  //   const { transform, canvas } = get();
+  //   const obj = canvas?.getActiveObject();
+  //   if (!obj) return;
+
+  //   set({ _isSyncing: true });
+
+  //   // ✅ Base scales from object’s natural dimensions
+  //   // const baseScaleX = (obj.width || 1) > 0 ? transform.width / (obj.width || 1) : 1;
+  //   // const baseScaleY = (obj.height || 1) > 0 ? transform.height / (obj.height || 1) : 1;
+
+  //   // obj.set({
+  //   //   left: transform.x,
+  //   //   top: transform.y,
+  //   //   angle: transform.rotation,
+  //   //   width: transform.width,
+  //   //   height: transform.height,
+  //   //   // ✅ flip logic: negative scale if flipped
+  //   //   scaleX: transform.flipX ? -Math.abs(baseScaleX) : Math.abs(baseScaleX),
+  //   //   scaleY: transform.flipY ? -Math.abs(baseScaleY) : Math.abs(baseScaleY),
+  //   // });
+
+  //   const baseWidth = obj.width || 1;
+  //   const baseHeight = obj.height || 1;
+
+  //   const scaleX = transform.width / baseWidth;
+  //     const scaleY = transform.height / baseHeight;
+
+  //   obj.set({
+  //     left: transform.x,
+  //     top: transform.y,
+  //     angle: transform.rotation,
+  //     scaleX: scaleX,
+  //     scaleY: scaleY,
+  //     flipX: transform.flipX,
+  //     flipY: transform.flipY
+  //   });
+
+
+  //   console.log('great');
+
+  //   obj.setCoords();
+  //   canvas.requestRenderAll();
+
+  //   set({ _isSyncing: false });
+  // },
 
   setTransform: (key, value) => {
     console.log(key, value)

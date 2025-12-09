@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useStore } from "../../store";
-import {PanelHeader} from "../molecules/PanelHeader.tsx";
+import { PanelHeader } from "../molecules/PanelHeader.tsx";
+import LabeledInput from "../atoms/LabeledInput.tsx";
 
 export function TransformPanel({ closePanel }) {
   const canvas = useStore((s) => s.canvas);
   const [selectedObject, setSelectedObject] = useState(null);
+
   const [props, setProps] = useState({
     left: 0,
     top: 0,
@@ -13,62 +15,77 @@ export function TransformPanel({ closePanel }) {
     angle: 0,
   });
 
+  // ✅ Single source of truth for object → state sync
+  const syncFromObject = useCallback(() => {
+    if (!canvas) return;
+
+    const obj = canvas.getActiveObject();
+    setSelectedObject(obj);
+
+    if (!obj) return;
+
+    setProps({
+      left: Math.round(obj.left || 0),
+      top: Math.round(obj.top || 0),
+      width: Math.round((obj.width || 0) * (obj.scaleX || 1)),
+      height: Math.round((obj.height || 0) * (obj.scaleY || 1)),
+      angle: Math.round(obj.angle || 0),
+    });
+  }, [canvas]);
+
+  // ✅ Live preview while dragging/scaling/rotating
+  const syncLive = useCallback(() => {
+    if (!canvas) return;
+
+    const obj = canvas.getActiveObject();
+    if (!obj) return;
+
+    setProps({
+      left: Math.round(obj.left || 0),
+      top: Math.round(obj.top || 0),
+      width: Math.round((obj.width || 0) * (obj.scaleX || 1)),
+      height: Math.round((obj.height || 0) * (obj.scaleY || 1)),
+      angle: Math.round(obj.angle || 0),
+    });
+  }, [canvas]);
+
   useEffect(() => {
     if (!canvas) return;
 
-    const updateSelected = () => {
-      const obj = canvas.getActiveObject();
-      setSelectedObject(obj);
+    // Bind events
+    canvas.on("selection:created", syncFromObject);
+    canvas.on("selection:updated", syncFromObject);
+    canvas.on("selection:cleared", syncFromObject);
+    canvas.on("object:moving", syncLive);
+    canvas.on("object:scaling", syncLive);
+    canvas.on("object:rotating", syncLive);
 
-      if (obj) {
-        setProps({
-          left: obj.left || 0,
-          top: obj.top || 0,
-          width: (obj.width || 0) * (obj.scaleX || 1),
-          height: (obj.height || 0) * (obj.scaleY || 1),
-          angle: obj.angle || 0,
-        });
-      }
-    };
-
-    const updatePropsLive = () => {
-      const obj = canvas.getActiveObject();
-      if (!obj) return;
-      setProps({
-        left: obj.left || 0,
-        top: obj.top || 0,
-        width: (obj.width || 0) * (obj.scaleX || 1),
-        height: (obj.height || 0) * (obj.scaleY || 1),
-        angle: obj.angle || 0,
-      });
-    };
-
-    canvas.on("selection:created", updateSelected);
-    canvas.on("selection:updated", updateSelected);
-    canvas.on("selection:cleared", updateSelected);
-    canvas.on("object:moving", updatePropsLive);
-    canvas.on("object:scaling", updatePropsLive);
-    canvas.on("object:rotating", updatePropsLive);
-
-    updateSelected();
+    // Initial sync
+    syncFromObject();
 
     return () => {
-      canvas.off("selection:created", updateSelected);
-      canvas.off("selection:updated", updateSelected);
-      canvas.off("selection:cleared", updateSelected);
-      canvas.off("object:moving", updatePropsLive);
-      canvas.off("object:scaling", updatePropsLive);
-      canvas.off("object:rotating", updatePropsLive);
+      canvas.off("selection:created", syncFromObject);
+      canvas.off("selection:updated", syncFromObject);
+      canvas.off("selection:cleared", syncFromObject);
+      canvas.off("object:moving", syncLive);
+      canvas.off("object:scaling", syncLive);
+      canvas.off("object:rotating", syncLive);
     };
-  }, [canvas]);
+  }, [canvas, syncFromObject, syncLive]);
 
-  const updateProperty = (prop, value) => {
+  // ✅ Single method for applying changes
+  const updateProperty = (prop: string, rawValue: number) => {
     if (!selectedObject || !canvas) return;
+    if (isNaN(rawValue)) return;
+
+    let value = rawValue;
 
     if (prop === "width") {
-      selectedObject.scaleX = value / (selectedObject.width || 1);
+      const base = selectedObject.width || 1;
+      selectedObject.scaleX = value / base;
     } else if (prop === "height") {
-      selectedObject.scaleY = value / (selectedObject.height || 1);
+      const base = selectedObject.height || 1;
+      selectedObject.scaleY = value / base;
     } else {
       selectedObject.set(prop, value);
     }
@@ -78,61 +95,47 @@ export function TransformPanel({ closePanel }) {
   };
 
   return (
-    <div className="w-64 space-y-4 rounded">
+    <div className="w-64 space-y-3 rounded-md p-3">
       <PanelHeader title="Transform" onClose={closePanel} />
 
-      {/* Message if nothing selected */}
+      {/* Empty state */}
       {!selectedObject && (
-        <div className="text-gray-500 text-sm mb-2">No object selected</div>
+        <div className="text-gray-400 text-xs">No object selected</div>
       )}
 
       {/* Position */}
-      <div className="flex gap-2">
-        {["left", "top"].map((key, i) => (
-          <div key={i} className="flex flex-col">
-            <label className="text-sm">{key.toUpperCase()}</label>
-            <input
-              type="number"
-              value={props[key]}
-              disabled={!selectedObject}
-              onChange={(e) =>
-                updateProperty(key, parseFloat(e.target.value))
-              }
-              className="border rounded p-1 w-full disabled:bg-gray-100 disabled:text-gray-400"
-            />
-          </div>
+      <div className="flex gap-4">
+        {(["left", "top"] as const).map((key) => (
+          <LabeledInput
+            key={key}
+            label={key === "left" ? "X" : "Y"}
+            value={props[key]}
+            disabled={!selectedObject}
+            onChange={(val) => updateProperty(key, val)}
+          />
         ))}
       </div>
 
       {/* Size */}
-      <div className="flex gap-2">
-        {["width", "height"].map((key, i) => (
-          <div key={i} className="flex flex-col">
-            <label className="text-sm">{key.charAt(0).toUpperCase() + key.slice(1)}</label>
-            <input
-              type="number"
-              value={props[key]}
-              disabled={!selectedObject}
-              onChange={(e) =>
-                updateProperty(key, parseFloat(e.target.value))
-              }
-              className="border rounded p-1 w-full disabled:bg-gray-100 disabled:text-gray-400"
-            />
-          </div>
+      <div className="flex gap-4">
+        {(["width", "height"] as const).map((key) => (
+          <LabeledInput
+            key={key}
+            label={key === "width" ? "W" : "H"}
+            value={props[key]}
+            disabled={!selectedObject}
+            onChange={(val) => updateProperty(key, val)}
+          />
         ))}
       </div>
 
       {/* Rotation */}
-      <div className="flex flex-col">
-        <label className="text-sm">Rotation</label>
-        <input
-          type="number"
-          value={props.angle}
-          disabled={!selectedObject}
-          onChange={(e) => updateProperty("angle", parseFloat(e.target.value))}
-          className="border rounded p-1 w-full disabled:bg-gray-100 disabled:text-gray-400"
-        />
-      </div>
+      <LabeledInput
+        label="R"
+        value={props.angle}
+        disabled={!selectedObject}
+        onChange={(val) => updateProperty("angle", val)}
+      />
     </div>
   );
 }

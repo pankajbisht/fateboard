@@ -5,8 +5,9 @@ import LabeledInput from "../atoms/LabeledInput.tsx";
 const round = (val) => Math.round(val);
 
 const TransformInput = ({ label, value, disabled, onChange }) => {
+
   const handleChange = (e) => {
-    let raw = e.target.value;
+    const raw = e; // e.target.value
 
     // Ensure empty input doesn't force NaN
     if (raw === "") {
@@ -153,7 +154,7 @@ export const ShapeToolsHeader = () => {
                 key={field.key}
                 label={field.label}
                 value={transform[field.key]}
-                // disabled={!hasSelection}
+                disabled={!hasSelection}
                 onChange={(val) => setTransform(field.key, val)}
               />
             ))}
