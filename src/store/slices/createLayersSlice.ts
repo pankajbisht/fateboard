@@ -3,7 +3,7 @@ import * as fabric from "fabric";
 export const createLayersSlice = (set, get) => ({
   layers: [],
   setLayers: (layers) => set({ layers }),
-//  addLayer: (layer) => set((state) => ({ layers: [...state.layers, layer] })),
+  //  addLayer: (layer) => set((state) => ({ layers: [...state.layers, layer] })),
 
   addLayer: (shape, shapeType) => {
     const layers = get().layers || [];
@@ -11,42 +11,48 @@ export const createLayersSlice = (set, get) => ({
     set({
       layers: [
         ...layers,
-        { id, type: shapeType, object: shape, name: shapeType, visible: true, locked: false }
-      ]
+        {
+          id,
+          type: shapeType,
+          object: shape,
+          name: shapeType,
+          visible: true,
+          locked: false,
+        },
+      ],
     });
     get().canvas?.requestRenderAll();
   },
 
-
   renameLayer: (id, name) => {
-    const layers = get().layers.map(layer => {
+    const layers = get().layers.map((layer) => {
       if (layer.id === id) layer.name = name;
       return layer;
     });
     set({ layers });
   },
 
-//  removeLayer: (id) => {
-//    const layers = get().layers.filter(layer => {
-//      if (layer.id === id && layer.object) {
-//        get().canvas.remove(layer.object);
-//      }
-//      return layer.id !== id;
-//    });
-//    set({ layers });
-//    get().canvas?.requestRenderAll();
-//  },
+  //  removeLayer: (id) => {
+  //    const layers = get().layers.filter(layer => {
+  //      if (layer.id === id && layer.object) {
+  //        get().canvas.remove(layer.object);
+  //      }
+  //      return layer.id !== id;
+  //    });
+  //    set({ layers });
+  //    get().canvas?.requestRenderAll();
+  //  },
 
-//removeLayer: () => {
-//  const activeObject = get().canvas.getActiveObject();
-//  if (!activeObject) return;
-//
-//  const layers = get().layers.filter(layer => layer.object !== activeObject);
-//  set({ layers });
-//
-//  get().canvas.remove(activeObject);
-//  get().canvas.requestRenderAll();
-//},
+  //removeLayer: () => {
+  //  const activeObject = get().canvas.getActiveObject();
+  //  if (!activeObject) return;
+  //
+  //  const layers = get().layers.filter(layer => layer.object !== activeObject);
+  //  set({ layers });
+  //
+  //  get().canvas.remove(activeObject);
+  //  get().canvas.requestRenderAll();
+  //},
 
   removeLayer: () => {
     const canvas = get().canvas;
@@ -57,17 +63,19 @@ export const createLayersSlice = (set, get) => ({
     if (!activeObjects || activeObjects.length === 0) return;
 
     // Remove selected objects from layers
-    const layers = get().layers.filter(layer => !activeObjects.includes(layer.object));
+    const layers = get().layers.filter(
+      (layer) => !activeObjects.includes(layer.object)
+    );
     set({ layers });
 
     // Remove from canvas
-    activeObjects.forEach(obj => canvas.remove(obj));
+    activeObjects.forEach((obj) => canvas.remove(obj));
     canvas.discardActiveObject(); // clear selection
     canvas.requestRenderAll();
-},
+  },
 
   toggleVisibility: (id) => {
-    const layers = get().layers.map(layer => {
+    const layers = get().layers.map((layer) => {
       if (layer.id === id) {
         layer.visible = !layer.visible;
         if (layer.object) layer.object.visible = layer.visible;
@@ -79,7 +87,7 @@ export const createLayersSlice = (set, get) => ({
   },
 
   duplicateLayer: (id) => {
-    const layer = get().layers.find(l => l.id === id);
+    const layer = get().layers.find((l) => l.id === id);
     if (!layer?.object) return;
 
     layer.object.clone((clone) => {
@@ -118,7 +126,7 @@ export const createLayersSlice = (set, get) => ({
     const activeObject = canvas.getActiveObject();
     if (!activeObject) return;
 
-    const layers = get().layers.map(layer => {
+    const layers = get().layers.map((layer) => {
       if (layer.object === activeObject) {
         const locked = !layer.locked;
 
@@ -141,7 +149,6 @@ export const createLayersSlice = (set, get) => ({
     return obj?._locked === true;
   },
 
-
   toggleActiveObjectLock: () => {
     const canvas = get().canvas;
     if (!canvas) return;
@@ -158,7 +165,7 @@ export const createLayersSlice = (set, get) => ({
       activeObject.lockScalingX = true;
       activeObject.lockScalingY = true;
       activeObject.lockRotation = true;
-      activeObject.hasControls = false;   // hide resize/rotate handles
+      activeObject.hasControls = false; // hide resize/rotate handles
       activeObject._locked = true;
     } else {
       // Unlock
@@ -174,53 +181,49 @@ export const createLayersSlice = (set, get) => ({
     canvas.renderAll();
   },
 
-
-
-
-
-//  bringLayersToFront: () => {
-//    const canvas = get().canvas;
-//    if (!canvas) return;
-//
-//    const activeObjects = canvas.getActiveObjects();
-//    if (!activeObjects.length) return;
-//
-//    // Sort objects by their current position in the stack (lowest index first)
-//    const sortedObjects = activeObjects.sort((a, b) =>
-//      canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b)
-//    );
-//
-//    // Move each object one step forward
-//    sortedObjects.forEach(obj => {
-//      canvas.bringObjectForward(obj);
-//    });
-//
-//    // Re-render the canvas
-//    canvas.renderAll();
-//  },
-//
-//
-//  sendLayersToBack: () => {
-//    const canvas = get().canvas;
-//    if (!canvas) return;
-//
-//    const activeObjects = canvas.getActiveObjects();
-//    if (!activeObjects.length) return;
-//
-//    // Sort objects by their current position in the stack (highest index first)
-//    // This preserves relative order when moving backward
-//    const sortedObjects = activeObjects.sort((a, b) =>
-//      canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a)
-//    );
-//
-//    sortedObjects.forEach(obj => {
-//      canvas.sendObjectBackwards(obj);
-//    });
-//
-//    // Re-render the canvas
-////    canvas.requestRenderAll();
-//    canvas.renderAll();
-//  },
+  //  bringLayersToFront: () => {
+  //    const canvas = get().canvas;
+  //    if (!canvas) return;
+  //
+  //    const activeObjects = canvas.getActiveObjects();
+  //    if (!activeObjects.length) return;
+  //
+  //    // Sort objects by their current position in the stack (lowest index first)
+  //    const sortedObjects = activeObjects.sort((a, b) =>
+  //      canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b)
+  //    );
+  //
+  //    // Move each object one step forward
+  //    sortedObjects.forEach(obj => {
+  //      canvas.bringObjectForward(obj);
+  //    });
+  //
+  //    // Re-render the canvas
+  //    canvas.renderAll();
+  //  },
+  //
+  //
+  //  sendLayersToBack: () => {
+  //    const canvas = get().canvas;
+  //    if (!canvas) return;
+  //
+  //    const activeObjects = canvas.getActiveObjects();
+  //    if (!activeObjects.length) return;
+  //
+  //    // Sort objects by their current position in the stack (highest index first)
+  //    // This preserves relative order when moving backward
+  //    const sortedObjects = activeObjects.sort((a, b) =>
+  //      canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a)
+  //    );
+  //
+  //    sortedObjects.forEach(obj => {
+  //      canvas.sendObjectBackwards(obj);
+  //    });
+  //
+  //    // Re-render the canvas
+  ////    canvas.requestRenderAll();
+  //    canvas.renderAll();
+  //  },
 
   bringForward: () => {
     const canvas = get().canvas;
@@ -233,7 +236,7 @@ export const createLayersSlice = (set, get) => ({
       (a, b) => canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b)
     );
 
-    sortedObjects.forEach(obj => canvas.bringObjectForward(obj));
+    sortedObjects.forEach((obj) => canvas.bringObjectForward(obj));
     canvas.requestRenderAll();
   },
 
@@ -248,7 +251,7 @@ export const createLayersSlice = (set, get) => ({
       (a, b) => canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a)
     );
 
-    sortedObjects.forEach(obj => canvas.sendObjectBackwards(obj));
+    sortedObjects.forEach((obj) => canvas.sendObjectBackwards(obj));
     canvas.requestRenderAll();
   },
 
@@ -263,7 +266,7 @@ export const createLayersSlice = (set, get) => ({
       (a, b) => canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b)
     );
 
-    sortedObjects.forEach(obj => canvas.bringToFront(obj));
+    sortedObjects.forEach((obj) => canvas.bringToFront(obj));
     canvas.requestRenderAll();
   },
 
@@ -278,31 +281,30 @@ export const createLayersSlice = (set, get) => ({
       (a, b) => canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a)
     );
 
-    sortedObjects.forEach(obj => canvas.sendToBack(obj));
+    sortedObjects.forEach((obj) => canvas.sendToBack(obj));
     canvas.requestRenderAll();
   },
 
-
   deleteObject: () => {
-      const canvas = get().canvas;
-      if (!canvas) return;
-      const activeObjects = canvas.getActiveObjects();
-      if (!activeObjects) return;
+    const canvas = get().canvas;
+    if (!canvas) return;
+    const activeObjects = canvas.getActiveObjects();
+    if (!activeObjects) return;
 
-      activeObjects.forEach((obj) => canvas.remove(obj));
-      canvas.discardActiveObject();
-      canvas.requestRenderAll();
+    activeObjects.forEach((obj) => canvas.remove(obj));
+    canvas.discardActiveObject();
+    canvas.requestRenderAll();
   },
 
   groupLayers: (ids) => {
-     const canvas = get().canvas;
-     if (!canvas) return;
+    const canvas = get().canvas;
+    if (!canvas) return;
 
-     const objects = canvas.getActiveObjects();
-     get().deleteObject();
-     const group = new Group(objects);
-     canvas.add(group);
-     canvas.requestRenderAll();
+    const objects = canvas.getActiveObjects();
+    get().deleteObject();
+    const group = new Group(objects);
+    canvas.add(group);
+    canvas.requestRenderAll();
   },
 
   ungroupSelected: () => {
@@ -314,9 +316,7 @@ export const createLayersSlice = (set, get) => ({
     canvas.remove(object);
     canvas.add(...object.removeAll());
     canvas.requestRenderAll();
- },
-
-
+  },
 
   // Group selected layers
   groupLayers1: (ids) => {
@@ -330,7 +330,7 @@ export const createLayersSlice = (set, get) => ({
       parentId: null,
     };
 
-    const updatedLayers = state.layers.map(l => {
+    const updatedLayers = state.layers.map((l) => {
       if (ids.includes(l.id)) return { ...l, parentId: newGroupId };
       return l;
     });
@@ -341,11 +341,13 @@ export const createLayersSlice = (set, get) => ({
   // Ungroup selected group layers
   ungroupLayers1: (ids) => {
     const state = get();
-    const updatedLayers = state.layers.map(l => {
-      if (ids.includes(l.id) && l.children?.length) return null; // remove group
-      if (ids.includes(l.parentId)) return { ...l, parentId: null }; // lift children
-      return l;
-    }).filter(Boolean);
+    const updatedLayers = state.layers
+      .map((l) => {
+        if (ids.includes(l.id) && l.children?.length) return null; // remove group
+        if (ids.includes(l.parentId)) return { ...l, parentId: null }; // lift children
+        return l;
+      })
+      .filter(Boolean);
     set({ layers: updatedLayers });
   },
 
@@ -353,11 +355,11 @@ export const createLayersSlice = (set, get) => ({
   alignLayers: (type, ids) => {
     const state = get();
     if (!ids.length) return;
-    const selected = state.layers.filter(l => ids.includes(l.id));
+    const selected = state.layers.filter((l) => ids.includes(l.id));
     let reference;
     switch (type) {
       case "left":
-        reference = Math.min(...selected.map(l => l.x || 0));
+        reference = Math.min(...selected.map((l) => l.x || 0));
         break;
       case "center":
         reference = Math.round(
@@ -365,13 +367,15 @@ export const createLayersSlice = (set, get) => ({
         );
         break;
       case "right":
-        reference = Math.max(...selected.map(l => (l.x || 0) + (l.width || 0)));
+        reference = Math.max(
+          ...selected.map((l) => (l.x || 0) + (l.width || 0))
+        );
         break;
       default:
         return;
     }
 
-    const aligned = state.layers.map(l =>
+    const aligned = state.layers.map((l) =>
       ids.includes(l.id)
         ? { ...l, x: type === "right" ? reference - (l.width || 0) : reference }
         : l
@@ -382,7 +386,7 @@ export const createLayersSlice = (set, get) => ({
   // Distribute selected layers
   distributeLayers: (direction, ids) => {
     const state = get();
-    const selected = state.layers.filter(l => ids.includes(l.id));
+    const selected = state.layers.filter((l) => ids.includes(l.id));
     if (selected.length < 3) return; // nothing to distribute
 
     if (direction === "horizontal") {
@@ -390,8 +394,8 @@ export const createLayersSlice = (set, get) => ({
       const minX = sorted[0].x || 0;
       const maxX = sorted[sorted.length - 1].x || 0;
       const gap = (maxX - minX) / (sorted.length - 1);
-      const updated = state.layers.map(l => {
-        const idx = sorted.findIndex(s => s.id === l.id);
+      const updated = state.layers.map((l) => {
+        const idx = sorted.findIndex((s) => s.id === l.id);
         if (idx >= 0) return { ...l, x: minX + gap * idx };
         return l;
       });
@@ -403,8 +407,8 @@ export const createLayersSlice = (set, get) => ({
       const minY = sorted[0].y || 0;
       const maxY = sorted[sorted.length - 1].y || 0;
       const gap = (maxY - minY) / (sorted.length - 1);
-      const updated = state.layers.map(l => {
-        const idx = sorted.findIndex(s => s.id === l.id);
+      const updated = state.layers.map((l) => {
+        const idx = sorted.findIndex((s) => s.id === l.id);
         if (idx >= 0) return { ...l, y: minY + gap * idx };
         return l;
       });
@@ -438,7 +442,7 @@ export const createLayersSlice = (set, get) => ({
       left: clonedObj.left + 10,
       top: clonedObj.top + 10,
       evented: true,
-      customType: "shape"
+      customType: "shape",
     });
 
     if (clonedObj.type === "activeSelection") {
@@ -503,7 +507,9 @@ export const createLayersSlice = (set, get) => ({
     const boundsLeft = Math.min(...rects.map((r) => r.box.left));
     const boundsRight = Math.max(...rects.map((r) => r.box.left + r.box.width));
     const boundsTop = Math.min(...rects.map((r) => r.box.top));
-    const boundsBottom = Math.max(...rects.map((r) => r.box.top + r.box.height));
+    const boundsBottom = Math.max(
+      ...rects.map((r) => r.box.top + r.box.height)
+    );
 
     const widthTotal = boundsRight - boundsLeft;
     const heightTotal = boundsBottom - boundsTop;
@@ -518,6 +524,8 @@ export const createLayersSlice = (set, get) => ({
       const delta = desiredBoxTop - r.box.top;
       r.o.set({ top: r.o.top + delta });
     };
+
+    console.log("key..", key);
 
     switch (key) {
       // HORIZONTAL
@@ -567,7 +575,9 @@ export const createLayersSlice = (set, get) => ({
         const sorted = [...rects].sort((a, b) => a.box.left - b.box.left);
         if (sorted.length < 3) break; // need at least 3 to distribute evenly
         const firstCenter = sorted[0].box.left + sorted[0].box.width / 2;
-        const lastCenter = sorted[sorted.length - 1].box.left + sorted[sorted.length - 1].box.width / 2;
+        const lastCenter =
+          sorted[sorted.length - 1].box.left +
+          sorted[sorted.length - 1].box.width / 2;
         const step = (lastCenter - firstCenter) / (sorted.length - 1);
 
         sorted.forEach((r, i) => {
@@ -582,7 +592,9 @@ export const createLayersSlice = (set, get) => ({
         const sorted = [...rects].sort((a, b) => a.box.top - b.box.top);
         if (sorted.length < 3) break;
         const firstCenter = sorted[0].box.top + sorted[0].box.height / 2;
-        const lastCenter = sorted[sorted.length - 1].box.top + sorted[sorted.length - 1].box.height / 2;
+        const lastCenter =
+          sorted[sorted.length - 1].box.top +
+          sorted[sorted.length - 1].box.height / 2;
         const step = (lastCenter - firstCenter) / (sorted.length - 1);
 
         sorted.forEach((r, i) => {
@@ -602,7 +614,6 @@ export const createLayersSlice = (set, get) => ({
     canvas.requestRenderAll();
   },
 
-
   // ✅ Distribute selected objects evenly (horizontal or vertical)
   distributeObjects: (direction) => {
     const { canvas } = get();
@@ -621,7 +632,10 @@ export const createLayersSlice = (set, get) => ({
     const last = objects[objects.length - 1];
 
     if (direction === "horizontal") {
-      const totalSpace = (last.left - first.left) - (first.getScaledWidth() + last.getScaledWidth()) / 2;
+      const totalSpace =
+        last.left -
+        first.left -
+        (first.getScaledWidth() + last.getScaledWidth()) / 2;
       const gap = totalSpace / (objects.length - 1);
 
       objects.forEach((obj, i) => {
@@ -633,7 +647,10 @@ export const createLayersSlice = (set, get) => ({
         }
       });
     } else {
-      const totalSpace = (last.top - first.top) - (first.getScaledHeight() + last.getScaledHeight()) / 2;
+      const totalSpace =
+        last.top -
+        first.top -
+        (first.getScaledHeight() + last.getScaledHeight()) / 2;
       const gap = totalSpace / (objects.length - 1);
 
       objects.forEach((obj, i) => {

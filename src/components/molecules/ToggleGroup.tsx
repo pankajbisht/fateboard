@@ -1,15 +1,18 @@
-
 import { useState, useEffect } from "react";
+import { Tooltip } from "./Tooltip";
 
-export const ToggleGroup = ({ options, value = {}, onChange, single = false }) => {
+export const ToggleGroup = ({
+  options,
+  value = {},
+  onChange,
+  single = false,
+}) => {
   const [state, setState] = useState(value);
 
   const toggle = (key) => {
     let updated;
     if (single) {
-      updated = Object.fromEntries(
-        options.map((o) => [o.key, o.key === key])
-      );
+      updated = Object.fromEntries(options.map((o) => [o.key, o.key === key]));
     } else {
       updated = { ...state, [key]: !state[key] };
     }
@@ -28,15 +31,16 @@ export const ToggleGroup = ({ options, value = {}, onChange, single = false }) =
         shadow-[0_1px_2px_rgba(0,0,0,0.03)]
       "
     >
-      {options.map(({ key, icon, label }) => {
+      {options.map(({ key, icon, label, tooltip }) => {
         const isActive = state[key];
 
         return (
-          <button
-            key={key}
-            type="button"
-            onClick={() => toggle(key)}
-            className={`
+          <Tooltip key={key} content={tooltip} position="bottom">
+            <button
+              key={key}
+              type="button"
+              onClick={() => toggle(key)}
+              className={`
               flex items-center gap-1.5
               px-2.5 py-1.5
               text-[11px] font-medium
@@ -49,10 +53,11 @@ export const ToggleGroup = ({ options, value = {}, onChange, single = false }) =
                   : "text-gray-600 hover:bg-gray-50"
               }
             `}
-          >
-            {icon && <i className={`${icon} text-[11px]`}></i>}
-            {label && <span>{label}</span>}
-          </button>
+            >
+              {icon && <i className={`${icon} text-[11px]`}></i>}
+              {label && <span>{label}</span>}
+            </button>
+          </Tooltip>
         );
       })}
     </div>

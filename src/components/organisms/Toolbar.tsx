@@ -27,6 +27,7 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { useStore } from "../../store";
+import { Tooltip } from "../molecules/Tooltip";
 
 export function Toolbar({ tools, activeTool, onToolClick, position }) {
   const isLocked = useStore((state) => state.isActiveObjectLocked());
@@ -52,6 +53,7 @@ export function Toolbar({ tools, activeTool, onToolClick, position }) {
             : tool.icon;
 
         return (
+            <Tooltip key={tool.id} content={tool.tooltip} position={tool.position}>
           <button
             key={tool.id}
             onClick={(e) => onToolClick(tool.id, e)}
@@ -64,6 +66,7 @@ export function Toolbar({ tools, activeTool, onToolClick, position }) {
           >
             <i className={iconClass}></i>
           </button>
+            </Tooltip>
         );
       })}
     </div>

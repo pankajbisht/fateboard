@@ -9,6 +9,7 @@ export const leftPanelConfig = [
     icon: "fa-solid fa-location-arrow rotate-280",
     position: "left",
     component: null,
+    tooltip: "Selector Tool"
   },
   {
     id: "pan",
@@ -16,6 +17,7 @@ export const leftPanelConfig = [
     icon: "fa-solid fa-hand",
     position: "left",
     component: null,
+    tooltip: "Hand Tool"
   },
   {
     id: "draw",
@@ -24,6 +26,7 @@ export const leftPanelConfig = [
     position: "left",
     component: DrawPanel,
     panelSize: { width: 300, height: 250 },
+    tooltip: "Pencil Tool"
   },
   {
     id: "shapes",
@@ -31,6 +34,7 @@ export const leftPanelConfig = [
     icon: "fa-solid fa-shapes",
     position: "left",
     component: (props) => <ShapePanel {...props} panelId="shapes" />,
+    tooltip: "Shape Builder Tool"
   },
   {
     id: "text",
@@ -38,6 +42,7 @@ export const leftPanelConfig = [
     icon: "fa-solid fa-font",
     position: "left",
     component: null,
+    tooltip: "Text Tool"
   },
   // {
   //   id: "undo",
@@ -62,6 +67,7 @@ export const rightPanelConfig = [
     icon: "fa fa-vector-square",
     position: "right",
     component: (props) => <TransformPanel {...props} />,
+    tooltip: "Transformation Tool"
   },
  {
    id: "group",
@@ -69,6 +75,7 @@ export const rightPanelConfig = [
    icon: "fa-solid fa-object-group",
    position: "right",
    component: null,
+   tooltip: "Group"
  },
  {
    id: "ungroup",
@@ -76,6 +83,7 @@ export const rightPanelConfig = [
    icon: "fa-solid fa-object-ungroup",
    position: "right",
    component: null,
+   tooltip: "Ungroup"
  },
  {
    id: "delete",
@@ -83,6 +91,7 @@ export const rightPanelConfig = [
    icon: "fa-solid fa-trash",
    position: "right",
    component: null,
+   tooltip: "Delete"
  },
 //  {
 //    id: "lock",
@@ -117,6 +126,6 @@ export const rightPanelConfig = [
 //  { id: "zoomFit", type: "momentary", icon: "fa-solid fa-expand", position: "right" },
 //  { id: "copy", type: "momentary", icon: "fa-solid fa-copy", position: "right" },
 //  { id: "paste", type: "momentary", icon: "fa-solid fa-paste", position: "right" },
-  { id: "duplicate", type: "momentary", icon: "fa-solid fa-clone", position: "right" },
+  { id: "duplicate", type: "momentary", icon: "fa-solid fa-clone", position: "right", tooltip: "Duplicate" },
 
 ];

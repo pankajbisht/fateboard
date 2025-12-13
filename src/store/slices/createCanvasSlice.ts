@@ -1,7 +1,7 @@
 import * as fabric from "fabric";
 import db from "opendb-store";
 import { A4, FREEHAND } from "@lib/const/editor.ts";
-import { LANDSCAPE } from "../../lib/const/editor";
+import { DEFAULT, LANDSCAPE, PAGE_SIZES, PORTRAIT } from "../../lib/const/editor";
 import { fateboardCanvasConfig } from "../../components/config/fateboard.config";
 
 export const createCanvasSlice = (set, get) => ({
@@ -66,7 +66,7 @@ export const createCanvasSlice = (set, get) => ({
 
     set({ canvas });
     get().enablePan();
-    get().setPageFormat(A4, LANDSCAPE);
+    get().setPageFormat(A4, DEFAULT);
     get().setBrush();
 
     // --- Utilities ---
@@ -352,7 +352,12 @@ export const createCanvasSlice = (set, get) => ({
         isEditingText: isEditing,
       });
       get().syncFromObject(obj);
-    } else if (obj?.customType === "shape" || e?.selected?.length > 0 || obj?.type == "group" || obj?.type == "activeselection") {
+    } else if (
+      obj?.customType === "shape" ||
+      e?.selected?.length > 0 ||
+      obj?.type == "group" ||
+      obj?.type == "activeselection"
+    ) {
       set({
         selectedObject: "shape",
       });

@@ -1,18 +1,11 @@
-const PAGE_SIZES = {
-  Default: { w: 1024, h: 600 },
-  Freehand: { w: 1920, h: 1080 },
-  A4: { w: 794, h: 1123 },
-  A5: { w: 794, h: 1123 },
-  Letter: { w: 816, h: 1056 },
-  Legal: { w: 816, h: 1344 },
-};
+import { PAGE_SIZES } from "../../lib/const/editor";
 
 export const createPageSlice = (set, get) => ({
   pageFormat: "Freehand",
   orientation: "landscape",
   zoom: 1,
   scale: 1,
-  setPageFormat: (format, orientation = "landscape") => {
+  setPageFormat: (format, orientation = "portrait") => {
     set({ pageFormat: format, orientation });
     get().applyPageSize(format, orientation);
   },
@@ -25,10 +18,13 @@ export const createPageSlice = (set, get) => ({
     if (!canvas) return;
     canvas.setZoom(zoom);
     set({ zoom });
-    get().drawBackground();      // 🔹 keep background in sync on zoom changes
+    get().drawBackground(); // 🔹 keep background in sync on zoom changes
     canvas.renderAll();
   },
-  applyPageSize: (format = get().pageFormat, orientation = get().orientation) => {
+  applyPageSize: (
+    format = get().pageFormat,
+    orientation = get().orientation
+  ) => {
     const canvas = get().canvas;
     if (!canvas) return;
 
@@ -41,10 +37,16 @@ export const createPageSlice = (set, get) => ({
       canvas.setZoom(1);
       canvas.calcOffset();
       canvas.renderAll();
-      set({ scale: 1, pageWidth: canvas.getWidth(), pageHeight: canvas.getHeight() });
-//      get().drawBackground();    // 🔹 redraw background for new size
+      set({
+        scale: 1,
+        pageWidth: canvas.getWidth(),
+        pageHeight: canvas.getHeight(),
+      });
+      //      get().drawBackground();    // 🔹 redraw background for new size
       return;
     }
+
+    console.log(format)
 
     // Paper mode
     const { w, h } = PAGE_SIZES[format];
@@ -61,6 +63,6 @@ export const createPageSlice = (set, get) => ({
     canvas.renderAll();
 
     set({ scale, pageWidth: width, pageHeight: height });
-    get().drawBackground();      // 🔹 redraw background for new size/scale
+    get().drawBackground(); // 🔹 redraw background for new size/scale
   },
-})
+});

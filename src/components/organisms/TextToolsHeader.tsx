@@ -145,9 +145,9 @@ export const TextToolsHeader = () => {
 
       <ToggleGroup
         options={[
-          { key: "bold", icon: "fa-solid fa-bold" },
-          { key: "italic", icon: "fa-solid fa-italic" },
-          { key: "underline", icon: "fa-solid fa-underline" },
+          { key: "bold", icon: "fa-solid fa-bold", tooltip: "Bold" },
+          { key: "italic", icon: "fa-solid fa-italic", tooltip: "Italic" },
+          { key: "underline", icon: "fa-solid fa-underline", tooltip: "Underline" },
         ]}
         onChange={(formats) => {
           console.log("formats:", formats);
@@ -166,10 +166,10 @@ export const TextToolsHeader = () => {
       <ToggleGroup
         single
         options={[
-          { key: "left", icon: "fa-solid fa-align-left" },
-          { key: "center", icon: "fa-solid fa-align-center" },
-          { key: "right", icon: "fa-solid fa-align-right" },
-          { key: "justify", icon: "fa-solid fa-align-justify" },
+          { key: "left", icon: "fa-solid fa-align-left", tooltip: "Left Align" },
+          { key: "center", icon: "fa-solid fa-align-center", tooltip: "Center Align" },
+          { key: "right", icon: "fa-solid fa-align-right", tooltip: "Right Align" },
+          { key: "justify", icon: "fa-solid fa-align-justify", tooltip: "Justify" },
         ]}
         onChange={(formats) => {
           console.log("align:", formats);

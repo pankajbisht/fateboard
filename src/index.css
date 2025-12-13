@@ -32,3 +32,13 @@ input[type="color"]::-webkit-color-swatch {
   border: none;
   border-radius: 50%;
 }
+
+
+@keyframes tooltip-min {
+  from { opacity: 1; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-tooltip-min {
+  animation: tooltip-min 5000ms ease-out;
+}

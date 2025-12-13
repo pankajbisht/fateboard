@@ -1,4 +1,10 @@
-import * as fabric from 'fabric'
+import * as fabric from "fabric";
+
+function getVisualAngle(rotation, flipX, flipY) {
+  if (flipX && !flipY) return -rotation;
+  if (!flipX && flipY) return 180 - rotation;
+  return rotation;
+}
 
 export const createTransformSlice = (set, get) => ({
   transform: {
@@ -14,6 +20,7 @@ export const createTransformSlice = (set, get) => ({
   _isSyncing: false, // avoid circular updates
 
   updateFromFabric: (obj) => {
+    console.log(obj);
 
     if (!obj) {
       set({ hasSelection: false }); // disable inputs
@@ -28,12 +35,10 @@ export const createTransformSlice = (set, get) => ({
       x: round(obj.left),
       y: round(obj.top),
       width: round(
-        obj.getScaledWidth?.() ??
-          (obj.width || 0) * (obj.scaleX || 1)
+        obj.getScaledWidth?.() ?? (obj.width || 0) * (obj.scaleX || 1)
       ),
       height: round(
-        obj.getScaledHeight?.() ??
-          (obj.height || 0) * (obj.scaleY || 1)
+        obj.getScaledHeight?.() ?? (obj.height || 0) * (obj.scaleY || 1)
       ),
       rotation: round(obj.angle || 0),
       flipX: obj.scaleX < 0,
@@ -67,21 +72,21 @@ export const createTransformSlice = (set, get) => ({
     obj.set({
       originX: "center",
       originY: "center",
-      objectCaching: false
+      objectCaching: false,
     });
 
     // --- 2. Base dimensions
-    const baseWidth  = obj._originalWidth  || obj.width  || 1;
+    const baseWidth = obj._originalWidth || obj.width || 1;
     const baseHeight = obj._originalHeight || obj.height || 1;
 
     // Store original size once
     if (!obj._originalWidth) {
-      obj._originalWidth  = baseWidth;
+      obj._originalWidth = baseWidth;
       obj._originalHeight = baseHeight;
     }
 
     // --- 3. Safe scale calculation
-    const scaleX = transform.width  / baseWidth;
+    const scaleX = transform.width / baseWidth;
     const scaleY = transform.height / baseHeight;
 
     // --- 4. Apply transform
@@ -104,32 +109,36 @@ export const createTransformSlice = (set, get) => ({
     set({ _isSyncing: false });
   },
 
-
   updateFabricFromStore: () => {
     const { transform, canvas } = get();
     const obj = canvas?.getActiveObject();
-    if (!obj) return;
+
+    if (!obj || get()._isSyncing) return;
 
     set({ _isSyncing: true });
 
-    // 1. Change Origin to Center
-    // This ensures rotation and scaling happen from the middle, not the corner
+    const cx = Number(transform.x) || 0;
+    const cy = Number(transform.y) || 0;
+    const width = Math.max(1, Number(transform.width) || 1);
+    const height = Math.max(1, Number(transform.height) || 1);
+
+    const rotation = Number(transform.rotation) || 0;
+    const flipX = Boolean(transform.flipX);
+    const flipY = Boolean(transform.flipY);
+
+    // ✅ Apply flip math ONLY here
+    const visualAngle = getVisualAngle(rotation, flipX, flipY);
+
     obj.set({
       originX: "center",
       originY: "center",
-      objectCaching: true,
-    });
-
-    // 2. Apply properties
-    // With origin set to center, 'left' and 'top' now represent the CENTER coordinates
-    obj.set({
-      left: transform.x,       // X is now the Center X
-      top: transform.y,        // Y is now the Center Y
-      angle: transform.rotation,
-      width: transform.width,
-      height: transform.height,
-      flipX: transform.flipX,
-      flipY: transform.flipY,
+      left: cx,
+      top: cy,
+      width,
+      height,
+      angle: visualAngle,
+      flipX,
+      flipY,
     });
 
     obj.setCoords();
@@ -138,67 +147,63 @@ export const createTransformSlice = (set, get) => ({
     set({ _isSyncing: false });
   },
 
+  updateFabricFromStore11: () => {
+    const { transform, canvas } = get();
+    const obj = canvas?.getActiveObject();
+    if (!obj || get()._isSyncing) return;
 
+    set({ _isSyncing: true });
 
+    const x = Number(transform.x) || 0;
+    const y = Number(transform.y) || 0;
+    const width = Number(transform.width) || 1;
+    const height = Number(transform.height) || 1;
 
+    let angle = Number(transform.rotation) || 0;
+    const flipX = Boolean(transform.flipX);
+    const flipY = Boolean(transform.flipY);
 
+    // --------------------------------
+    // 🔑 FIX: Adjust angle due to flip
+    // --------------------------------
+    if (flipX && !flipY) {
+      angle = -angle;
+    } else if (!flipX && flipY) {
+      angle = 180 - angle;
+    }
+    // flipX && flipY → angle unchanged
 
-  // updateFabricFromStore: () => {
-  //   const { transform, canvas } = get();
-  //   const obj = canvas?.getActiveObject();
-  //   if (!obj) return;
+    // --------------------------------
+    // Preserve visual center
+    // --------------------------------
+    const center = obj.getCenterPoint();
 
-  //   set({ _isSyncing: true });
+    obj.set({
+      originX: "center",
+      originY: "center",
+      left: center.x,
+      top: center.y,
+      width,
+      height,
+      angle,
+      flipX,
+      flipY,
+    });
 
-  //   // ✅ Base scales from object’s natural dimensions
-  //   // const baseScaleX = (obj.width || 1) > 0 ? transform.width / (obj.width || 1) : 1;
-  //   // const baseScaleY = (obj.height || 1) > 0 ? transform.height / (obj.height || 1) : 1;
+    obj.setCoords();
+    // canvas.requestRenderAll();
+    canvas.renderAll();
 
-  //   // obj.set({
-  //   //   left: transform.x,
-  //   //   top: transform.y,
-  //   //   angle: transform.rotation,
-  //   //   width: transform.width,
-  //   //   height: transform.height,
-  //   //   // ✅ flip logic: negative scale if flipped
-  //   //   scaleX: transform.flipX ? -Math.abs(baseScaleX) : Math.abs(baseScaleX),
-  //   //   scaleY: transform.flipY ? -Math.abs(baseScaleY) : Math.abs(baseScaleY),
-  //   // });
-
-  //   const baseWidth = obj.width || 1;
-  //   const baseHeight = obj.height || 1;
-
-  //   const scaleX = transform.width / baseWidth;
-  //     const scaleY = transform.height / baseHeight;
-
-  //   obj.set({
-  //     left: transform.x,
-  //     top: transform.y,
-  //     angle: transform.rotation,
-  //     scaleX: scaleX,
-  //     scaleY: scaleY,
-  //     flipX: transform.flipX,
-  //     flipY: transform.flipY
-  //   });
-
-
-  //   console.log('great');
-
-  //   obj.setCoords();
-  //   canvas.requestRenderAll();
-
-  //   set({ _isSyncing: false });
-  // },
+    set({ _isSyncing: false });
+  },
 
   setTransform: (key, value) => {
-    console.log(key, value)
     set((state) => ({
       transform: { ...state.transform, [key]: value },
     }));
     requestAnimationFrame(() => get().updateFabricFromStore());
   },
 
-  // ✅ Flip X
   flipX: () => {
     set((state) => ({
       transform: { ...state.transform, flipX: !state.transform.flipX },
@@ -206,7 +211,6 @@ export const createTransformSlice = (set, get) => ({
     requestAnimationFrame(() => get().updateFabricFromStore());
   },
 
-  // ✅ Flip Y
   flipY: () => {
     set((state) => ({
       transform: { ...state.transform, flipY: !state.transform.flipY },

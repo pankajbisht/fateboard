@@ -6,6 +6,7 @@ import { IconButton } from "../atoms/IconButton.tsx";
 import Brand from "../atoms/Brand.tsx";
 import { TextToolsHeader } from "./TextToolsHeader.tsx";
 import DropdownMenu, { DropdownMenuItem } from "../portals/DropdownMenu.tsx";
+import { Tooltip } from "../molecules/Tooltip.tsx";
 
 export function Header() {
   const navigate = useNavigate();
@@ -72,22 +73,26 @@ export function Header() {
               onChange={handleUpload}
             />
 
-            <IconButton
-              active={show}
-              icon={<i className="fa-solid fa-table-cells"></i>}
-              onClick={() => {
-                setShow(!show);
-                toggleGrid();
-              }}
-              title="Grid View"
-            />
+            <Tooltip position="bottom" content="Grid View">
+              <IconButton
+                active={show}
+                icon={<i className="fa-solid fa-table-cells"></i>}
+                onClick={() => {
+                  setShow(!show);
+                  toggleGrid();
+                }}
+                title="Grid View"
+              />
+            </Tooltip>
 
             {/* Clear Board */}
-            <IconButton
-              icon={<img src="/edit.svg" alt="New Draw" height="16" />}
-              onClick={clearBoard}
-              title="Grid View"
-            />
+            <Tooltip position="bottom" content="Create New Board">
+              <IconButton
+                icon={<img src="/edit.svg" alt="New Draw" height="16" />}
+                onClick={clearBoard}
+                title="Grid View"
+              />
+            </Tooltip>
 
             <div className="flex items-center justify-center cursor-pointer hover:bg-stone-200 h-8 w-8 rounded-sm">
               <DropdownMenu
@@ -115,7 +120,9 @@ export function Header() {
 
         {selectedObject === "shape" && <ShapeToolsHeader />}
 
-        {selectedObject && selectedObject?.type === "textbox" && <TextToolsHeader />}
+        {selectedObject && selectedObject?.type === "textbox" && (
+          <TextToolsHeader />
+        )}
       </div>
     </header>
   );
