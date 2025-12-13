@@ -1,0 +1,13 @@
+<svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Left half -->
+  <path d="M10 5L4 19H10V5Z" fill="#4A90E2" />
+
+  <!-- Right half -->
+  <path d="M14 5L20 19H14V5Z" fill="#1C1C1C" />
+
+  <!-- Divider line -->
+  <line x1="12" y1="3" x2="12" y2="21" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-dasharray="4 2" />
+
+  <!-- Optional highlight -->
+  <circle cx="12" cy="12" r="0.5" fill="#888" />
+</svg>
