@@ -6,6 +6,17 @@ function getVisualAngle(rotation, flipX, flipY) {
   return rotation;
 }
 
+// function getDisplayedAngle(obj) {
+//   let angle = obj.angle;
+
+//   if (obj.flipX ^ obj.flipY) {
+//     angle = -angle;
+//   }
+
+//   return normalizeAngle(angle);
+// }
+
+
 export const createTransformSlice = (set, get) => ({
   transform: {
     x: 0,
@@ -15,6 +26,9 @@ export const createTransformSlice = (set, get) => ({
     rotation: 0,
     flipX: false,
     flipY: false,
+    originX: "center",
+    centerY: "center",
+    id: "c"
   },
   hasSelection: false,
   _isSyncing: false, // avoid circular updates
@@ -130,8 +144,6 @@ export const createTransformSlice = (set, get) => ({
     const visualAngle = getVisualAngle(rotation, flipX, flipY);
 
     obj.set({
-      originX: "center",
-      originY: "center",
       left: cx,
       top: cy,
       width,
@@ -217,4 +229,15 @@ export const createTransformSlice = (set, get) => ({
     }));
     requestAnimationFrame(() => get().updateFabricFromStore());
   },
+  setOrigin: (origin) => {
+      set((state) => ({
+        transform: {
+            ...state.transform,
+            originX: origin.originX,
+            originY: origin.originY,
+            id: origin.id
+        },
+      }));
+      requestAnimationFrame(() => get().updateFabricFromStore());
+  }
 });
