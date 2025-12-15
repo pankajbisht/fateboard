@@ -4,6 +4,42 @@ import { A4, FREEHAND } from "@lib/const/editor.ts";
 import { DEFAULT, LANDSCAPE, PAGE_SIZES, PORTRAIT } from "../../lib/const/editor";
 import { fateboardCanvasConfig } from "../../components/config/fateboard.config";
 
+function enterTextEdit(group, text) {
+  const canvas = group.canvas;
+  const center = group.getCenterPoint();
+
+  // Normalize text scale
+  text.scaleX *= group.scaleX;
+  text.scaleY *= group.scaleY;
+
+  // Reset group scale temporarily
+  group.scaleX = 1;
+  group.scaleY = 1;
+
+  // Remove text from group
+  group.remove(text);
+
+  text.set({
+    left: center.x,
+    top: center.y,
+    angle: group.angle,
+    flipX: group.flipX,
+    flipY: group.flipY,
+    originX: "center",
+    originY: "center",
+  });
+
+  canvas.remove(group);
+  canvas.add(text);
+  canvas.setActiveObject(text);
+
+  text.enterEditing();
+  text.selectAll();
+  text.setCoords();
+  canvas.requestRenderAll();
+}
+
+
 export const createCanvasSlice = (set, get) => ({
   canvas: null,
   activeTool: "select", // "select", "pan", "draw"
@@ -39,6 +75,81 @@ export const createCanvasSlice = (set, get) => ({
     canvas.on("selection:updated", (e) => onChangeSelection(e));
     canvas.on("selection:cleared", () => get().clearToolbar());
     canvas.on("mouse:down", (e) => onChangeSelection(e));
+
+    // canvas.on("mouse:dblclick", e => {
+    //     console.log(e.target.type)
+    //   if (e.target?.type === "textbox") {
+    //     e.target.enterEditing();
+    //     e.target.selectAll();
+    //   }
+    // });
+    //
+    canvas.on("mouse:dblclick", (e) => {
+      const group = e.target;
+      if (!group || group.type !== "group" || !group.__text) return;
+
+        console.log(group.__text);
+
+      enterTextEdit(group, group.__text);
+
+      group.__text.on("changed", function () {
+        const group = this.__group;
+        if (!group) return;
+
+        const box = group.__box;
+        if (!box) return;
+
+        const padding = 20; // optional padding around text
+
+        // Resize background width
+        box.width = Math.max(this.width + padding, box.width);
+
+        // Resize background height
+        box.height = Math.max(this.height + padding, box.height);
+
+        group.setCoords();
+        canvas.requestRenderAll();
+      });
+
+      group.__text.on("editing:exited", function () {
+        const canvas = this.canvas;
+        const group = this.__group;
+        if (!group) return;
+
+        const center = this.getCenterPoint();
+
+        // Reset text scale
+        this.scaleX /= group.scaleX || 1;
+        this.scaleY /= group.scaleY || 1;
+
+        // Add text back
+        group.add(this);
+
+        // Restore transform
+        group.set({
+          left: center.x,
+          top: center.y,
+          angle: this.angle,
+          flipX: this.flipX,
+          flipY: this.flipY,
+          scaleX: 1,
+          scaleY: 1,
+        });
+
+        canvas.remove(this);
+        canvas.add(group);
+        canvas.setActiveObject(group);
+
+        group.setCoords();
+        canvas.requestRenderAll();
+      });
+
+
+
+
+    });
+
+
 
     canvas.on("object:modified", (e) => onChangeSelection(e));
   },

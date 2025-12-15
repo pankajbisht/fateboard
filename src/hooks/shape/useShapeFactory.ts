@@ -23,19 +23,16 @@ export const shapesList = [
       stroke: "black",
     },
   },
-  // {
-  //     type: "capsule",
-  //     icon: "fa-solid fa-capsules",
-  //     defaultProps: {
-  //         with: 120,
-  //         height: 50,
-  //         rx: 30,
-  //         ry: 30,
-  //         fill: "white",
-  //         strock: "black",
-  //         strokeWidth: 2
-  //     }
-  // },
+  {
+    type: "paper",
+    icon: "fa-solid fa-square-pen",
+    defaultProps: {
+      with: 120,
+      height: 80,
+      fill: "transparent",
+      strock: "black",
+    },
+  },
   {
     type: "triangle",
     icon: "fas fa-play rotate-270",
@@ -135,12 +132,10 @@ export const shapesList = [
   },
 ];
 
-
-
 export const useShapeFactory = () => {
   const canvas = useStore((state) => state.canvas);
   const addShape = useStore((state) => state.addShape);
-  const setActiveTool = useStore(state => state.setActiveTool);
+  const setActiveTool = useStore((state) => state.setActiveTool);
 
   /** Add predefined shape */
   const add = (type, options = {}) => {

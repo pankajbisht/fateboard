@@ -39,6 +39,17 @@ input[type="color"]::-webkit-color-swatch {
   to { opacity: 1; transform: translateY(0); }
 }
 
-.animate-tooltip-min {
-  animation: tooltip-min 5000ms ease-out;
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-tooltip {
+  animation: tooltip-in 1s ease-in-out;
 }

@@ -1,14 +1,29 @@
 import { useEffect, useRef, useState } from "react";
 import { IconButton } from "../atoms/IconButton";
 
-export const DropdownMenuItem = ({ children, onClick }) => (
-  <button
-    onClick={onClick}
-    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700"
-  >
-    {children}
-  </button>
-);
+export const DropdownMenuItem = ({
+  children,
+  onClick,
+  position = "middle", // "top" | "middle" | "bottom"
+}) => {
+  const roundedClass =
+    position === "top"
+      ? "hover:rounded-t-lg"
+      : position === "bottom"
+      ? "hover:rounded-b-lg"
+      : "";
+
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-4 py-2 text-sm hover:bg-stone-200 hover:text-stone-900
+        ${roundedClass}`}
+    >
+      {children}
+    </button>
+  );
+};
+
 
 const DropdownMenu = ({ trigger, children }) => {
   const [open, setOpen] = useState(false);
@@ -35,7 +50,7 @@ const DropdownMenu = ({ trigger, children }) => {
       />
 
       {open && (
-        <div className="z-1000 absolute right-0 mt-2 w-40 rounded-lg bg-white shadow-lg ring-1 ring-black/10 dark:bg-gray-800 dark:text-gray-100">
+        <div className="z-1000 absolute right-0 mt-2 w-40 rounded-lg bg-white shadow-lg ring-1 ring-black/10 bg-white text-gray-500">
           {children}
         </div>
       )}

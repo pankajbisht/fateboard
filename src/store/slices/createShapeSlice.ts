@@ -123,6 +123,33 @@ export const createShapeSlice = (set, get) => ({
         shape = get().createArrowShape({ ...options }); // requires helper function
         break;
 
+      case "paper":
+        const box = new fabric.Rect({
+          width: 300,
+          height: 80,
+          fill: "#FFFFFF",
+          originX: "center",
+          originY: "center",
+          stroke: 1,
+          fontFamily: "Bubblegum Sans",
+        });
+
+        const text = new fabric.Textbox("Type to enter text", {
+          fontSize: 20,
+          width: 200,
+          textAlign: "center",
+          originX: "center",
+          originY: "center",
+          fontFamily: "Bubblegum Sans",
+        });
+
+        shape = new fabric.Group([box, text], options);
+        shape.__text = text;
+        shape.__box = box;
+        text.__group = shape;
+
+        break;
+
       default:
         console.warn("Shape not supported:", shapeType);
         return;

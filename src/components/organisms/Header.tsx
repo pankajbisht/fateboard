@@ -34,6 +34,46 @@ export function Header() {
     fileInputRef.current?.click();
   };
 
+  const downloadSelectedSVG = (canvas) => {
+      if (!canvas) return;
+    const obj = canvas.getActiveObject();
+    if (!obj) return alert("Select something first");
+
+    const svg = obj.toSVG();
+
+    const blob = new Blob([svg], { type: "image/svg+xml" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "selection.svg";
+    a.click();
+
+    URL.revokeObjectURL(url);
+  }
+
+
+  const downloadSVG = (canvas, fileName = "whiteboard.svg") => {
+    if (!canvas) return;
+
+    const svg = canvas.toSVG();
+
+    const blob = new Blob([svg], {
+      type: "image/svg+xml;charset=utf-8",
+    });
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+
   const handleUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file || !canvas) return;
@@ -76,7 +116,7 @@ export function Header() {
             <Tooltip position="bottom" content="Grid View">
               <IconButton
                 active={show}
-                icon={<i className="fa-solid fa-table-cells"></i>}
+                icon={<i className="fa-solid fa-table-cells-large"></i>}
                 onClick={() => {
                   setShow(!show);
                   toggleGrid();
@@ -100,17 +140,25 @@ export function Header() {
                   <i className="fa-solid fa-ellipsis-vertical cursor-pointer"></i>
                 }
               >
-                <DropdownMenuItem onClick={clearBoard}>Create</DropdownMenuItem>
+                <DropdownMenuItem position="top" onClick={clearBoard}>Create</DropdownMenuItem>
                 <DropdownMenuItem onClick={handleDownload}>
                   Save
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => downloadSVG(canvas)}>
+                    Download Svg
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => downloadSelectedSVG(canvas)}>
+                    Download Selected
+                </DropdownMenuItem>
+
                 <DropdownMenuItem onClick={handleUploadClick}>
                   Load
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => navigate("/command-palette")}>
                   Command Palette
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/setting")}>
+                <DropdownMenuItem position="bottom" onClick={() => navigate("/setting")}>
                   Settings
                 </DropdownMenuItem>
               </DropdownMenu>

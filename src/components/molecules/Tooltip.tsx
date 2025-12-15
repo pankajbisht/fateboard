@@ -97,6 +97,7 @@ export const Tooltip = ({ content, position = "top", children }) => {
               left: coords.left,
             }}
             className="
+              animate-tooltip
               z-[9999]
               rounded-md
               bg-white

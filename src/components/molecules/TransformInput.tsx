@@ -1,6 +1,7 @@
 import LabeledInput from "../atoms/LabeledInput";
 
 export const TransformInput = ({ label, value, disabled, onChange }) => {
+    console.log(label, value, disabled, onChange)
   const handleChange = (e) => {
     const raw = e; // e.target.value
 
@@ -13,7 +14,7 @@ export const TransformInput = ({ label, value, disabled, onChange }) => {
     let num = parseInt(raw, 10);
     if (isNaN(num)) num = 0;
 
-    onChange(num);
+    onChange(num == 0 ? "" : num );
   };
 
   const onKeyDownHandler = (e) => {
