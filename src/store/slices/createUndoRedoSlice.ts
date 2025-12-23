@@ -19,7 +19,7 @@ export const createUndoRedoSlice = (set, get) => ({
       redoStack: [], // clear redo on new change
     });
 
-    console.log("Save UndoStack:", get().undoStack, "RedoStack:", get().redoStack);
+    // console.log("Save UndoStack:", get().undoStack, "RedoStack:", get().redoStack);
   },
 
   // -------------------------------

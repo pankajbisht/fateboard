@@ -61,38 +61,38 @@ export const leftPanelConfig = [
 ];
 
 export const rightPanelConfig = [
-  {
-    id: "transform",
-    type: "panel",
-    icon: "fa fa-vector-square",
-    position: "right",
-    component: (props) => <TransformPanel {...props} />,
-    tooltip: "Transformation Tool"
-  },
- {
-   id: "group",
-   type: "momentary",
-   icon: "fa-solid fa-object-group",
-   position: "right",
-   component: null,
-   tooltip: "Group"
- },
- {
-   id: "ungroup",
-   type: "momentary",
-   icon: "fa-solid fa-object-ungroup",
-   position: "right",
-   component: null,
-   tooltip: "Ungroup"
- },
- {
-   id: "delete",
-   type: "momentary",
-   icon: "fa-solid fa-trash",
-   position: "right",
-   component: null,
-   tooltip: "Delete"
- },
+  // {
+  //   id: "transform",
+  //   type: "panel",
+  //   icon: "fa fa-vector-square",
+  //   position: "right",
+  //   component: (props) => <TransformPanel {...props} />,
+  //   tooltip: "Transformation Tool"
+  // },
+ // {
+ //   id: "group",
+ //   type: "momentary",
+ //   icon: "fa-solid fa-object-group",
+ //   position: "right",
+ //   component: null,
+ //   tooltip: "Group"
+ // },
+ // {
+ //   id: "ungroup",
+ //   type: "momentary",
+ //   icon: "fa-solid fa-object-ungroup",
+ //   position: "right",
+ //   component: null,
+ //   tooltip: "Ungroup"
+ // },
+ // {
+ //   id: "delete",
+ //   type: "momentary",
+ //   icon: "fa-solid fa-trash",
+ //   position: "right",
+ //   component: null,
+ //   tooltip: "Delete"
+ // },
 //  {
 //    id: "lock",
 //    type: "momentary",
@@ -126,6 +126,6 @@ export const rightPanelConfig = [
 //  { id: "zoomFit", type: "momentary", icon: "fa-solid fa-expand", position: "right" },
 //  { id: "copy", type: "momentary", icon: "fa-solid fa-copy", position: "right" },
 //  { id: "paste", type: "momentary", icon: "fa-solid fa-paste", position: "right" },
-  { id: "duplicate", type: "momentary", icon: "fa-solid fa-clone", position: "right", tooltip: "Duplicate" },
+  // { id: "duplicate", type: "momentary", icon: "fa-solid fa-clone", position: "right", tooltip: "Duplicate" },
 
 ];

@@ -80,6 +80,7 @@ export const Tooltip = ({ content, position = "top", children }) => {
         className="inline-flex"
         onMouseEnter={show}
         onMouseLeave={hide}
+        onClick={hide}
         onFocus={show}
         onBlur={hide}
         tabIndex={0}

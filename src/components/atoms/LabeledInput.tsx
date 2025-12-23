@@ -2,6 +2,7 @@ type LabeledInputProps = {
   label: string;
   value?: number;
   min?: number;
+  max?: number;
   step?: number;
   onChange?: (value: number) => void;
   onKeyDown?: (e) => void;
@@ -13,6 +14,7 @@ const LabeledInput = ({
   label,
   value = 0,
   min = 0,
+  max = 100,
   step = 1,
   onChange,
   onKeyDown,
@@ -27,6 +29,7 @@ const LabeledInput = ({
         <input
           type="number"
           min={min}
+          max={max}
           step={step}
           value={value}
           disabled={disabled}

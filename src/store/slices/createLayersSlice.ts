@@ -665,4 +665,14 @@ export const createLayersSlice = (set, get) => ({
 
     canvas.requestRenderAll();
   },
+  canPaste() {
+      return !!this.clipboard;
+    },
+
+    isGroupSelected() {
+      const obj = get().canvas?.getActiveObject();
+      if (!obj) return false;
+
+      return obj.type === "group" || Array.isArray(obj._objects);
+    },
 });

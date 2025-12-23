@@ -32,8 +32,6 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
     setFontSize(target.fontSize || 16);
     setColor(target.fill || "#000000");
 
-    console.log(target);
-
     setIsBold(target.fontWeight === "bold");
     //    setIsItalic(target.fontWeight === "bold");
     //    setIsBold(target.fontWeight === "bold");

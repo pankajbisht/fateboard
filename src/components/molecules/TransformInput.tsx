@@ -1,7 +1,6 @@
 import LabeledInput from "../atoms/LabeledInput";
 
-export const TransformInput = ({ label, value, disabled, onChange }) => {
-    console.log(label, value, disabled, onChange)
+export const TransformInput = ({ label, value, disabled, onChange, max }) => {
   const handleChange = (e) => {
     const raw = e; // e.target.value
 
@@ -28,6 +27,7 @@ export const TransformInput = ({ label, value, disabled, onChange }) => {
       onChange={handleChange}
       disabled={disabled}
       onKeyDown={onKeyDownHandler}
+      max={max}
     />
   );
 };

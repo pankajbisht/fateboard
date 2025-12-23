@@ -40,6 +40,8 @@ export function Card({ className, ...props }) {
     { id: 2, name: "Open Settings", mac: "⌘,", win: "Ctrl+," },
     { id: 3, name: "Copy", mac: "⌘C", win: "Ctrl+C" },
     { id: 4, name: "Paste", mac: "⌘V", win: "Ctrl+V" },
+    { id: 5, name: "Group", mac: "⌘G", win: "Ctrl+G" },
+    { id: 6, name: "Ungroup", mac: "⌘⇧U", win: "Ctrl+Shift+U" },
   ];
 
   export default function CommandPalette() {

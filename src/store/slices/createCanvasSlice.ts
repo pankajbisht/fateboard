@@ -3,6 +3,7 @@ import db from "opendb-store";
 import { A4, FREEHAND } from "@lib/const/editor.ts";
 import { DEFAULT, LANDSCAPE, PAGE_SIZES, PORTRAIT } from "../../lib/const/editor";
 import { fateboardCanvasConfig } from "../../components/config/fateboard.config";
+import { MultiStopGradientTool } from "../../lib/utils/GradientTool";
 
 function enterTextEdit(group, text) {
   const canvas = group.canvas;
@@ -49,32 +50,52 @@ export const createCanvasSlice = (set, get) => ({
   activePanel: null,
   selectedObject: "textbox",
   showTextToolbar: true,
+  hasActiveShape: false,
+  geditor: null,
 
-  init: async (el) => {
-    if (get().canvas) return;
+  hasMultipleSelection: () => {
+    const canvas = get().canvas;
+    if (!canvas) return false;
+    return canvas.getActiveObjects().length > 1;
+  },
 
-    const canvas = new fabric.Canvas(el, {
-      backgroundColor: fateboardCanvasConfig.bg,
-      preserveObjectStacking: false,
-    });
 
-    get().saveState(); // undo/redo
-    set({ canvas });
-    get().setPageFormat(FREEHAND, LANDSCAPE);
-    get().enablePan();
-    get().setBrush();
 
-    const onChangeSelection = (e) => {
-      const obj = e.target;
+    init: async (el) => {
+        if (get().canvas) return;
 
-      get().setToolbar(e);
-      get().updateFromFabric(obj);
-    };
+        const canvas = new fabric.Canvas(el, {
+            backgroundColor: fateboardCanvasConfig.bg,
+            preserveObjectStacking: false,
+        });
 
-    canvas.on("selection:created", (e) => onChangeSelection(e));
-    canvas.on("selection:updated", (e) => onChangeSelection(e));
-    canvas.on("selection:cleared", () => get().clearToolbar());
-    canvas.on("mouse:down", (e) => onChangeSelection(e));
+
+        get().saveState(); // undo/redo
+        set({ canvas });
+        get().setPageFormat(FREEHAND, LANDSCAPE);
+        get().enablePan();
+        get().setBrush();
+
+        const editor = new MultiStopGradientTool(canvas, () => get().fill);
+        set({ geditor: editor })
+
+        const onChangeSelection = (e) => {
+            const obj = e.target;
+
+            set({ hasActiveShape: !!obj })
+            get().setToolbar(e);
+            get().updateFromFabric(obj);
+            // if (obj) editor.attach(obj);
+            // get().setBackgroundColor()
+        };
+
+        canvas.on("selection:created", (e) => onChangeSelection(e));
+        canvas.on("selection:updated", (e) => onChangeSelection(e));
+        canvas.on("selection:cleared", () => {
+            get().clearToolbar()
+        });
+
+        canvas.on("mouse:down", (e) => onChangeSelection(e));
 
     // canvas.on("mouse:dblclick", e => {
     //     console.log(e.target.type)
@@ -107,6 +128,7 @@ export const createCanvasSlice = (set, get) => ({
         // Resize background height
         box.height = Math.max(this.height + padding, box.height);
 
+            (window as any).gradientEditor = editor;
         group.setCoords();
         canvas.requestRenderAll();
       });
@@ -445,11 +467,11 @@ export const createCanvasSlice = (set, get) => ({
   },
 
   clearToolbar: () => {
-    console.log("Clear");
     set({
       selectedObject: null,
       showTextToolbar: false,
       isEditingText: false,
+      hasActiveShape: false,
     });
   },
 

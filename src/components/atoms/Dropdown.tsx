@@ -5,6 +5,7 @@ export function Dropdown({
   className = "",
   label,
   preview,
+  disabled
 }) {
   return (
     <div className={`flex items-center gap-1 ${className}`}>
@@ -14,7 +15,8 @@ export function Dropdown({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="p-1 text-xs border rounded cursor-pointer"
+        disabled={disabled}
+        className="p-1 text-xs border border-gray-300 rounded cursor-pointer"
       >
         {options.map((opt) => (
           <option key={opt.value} value={opt.value}>

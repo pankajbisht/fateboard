@@ -1,19 +1,27 @@
-import type { ReactNode } from "react";
+import type { ReactNode, ButtonHTMLAttributes } from "react";
 
-interface IconButtonProps {
+interface IconButtonProps
+  extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon: ReactNode;
-  title?: string;
-  onClick?: () => void;
   active?: boolean;
 }
 
-export function IconButton({ icon, title, onClick, active }: IconButtonProps) {
+export function IconButton({
+  icon,
+  active,
+  className,
+  ...rest
+}: IconButtonProps) {
   return (
     <button
-      title={title}
-      onClick={onClick}
-      className={`flex items-center justify-center cursor-pointer transition h-8 w-8 p-2 rounded-sm
-        ${active ? 'bg-blue-500 text-white hover:bg-blue-600' : 'hover:bg-stone-200'}`}
+      {...rest}
+      className={`flex items-center justify-center cursor-pointer transition
+        h-8 w-8 p-2 rounded-sm
+        ${active
+          ? "bg-blue-500 text-white hover:bg-blue-600"
+          : "hover:bg-stone-200"}
+        ${className ?? ""}
+      `}
     >
       {icon}
     </button>

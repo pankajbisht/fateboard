@@ -92,13 +92,10 @@ export function PanelManager({ config, toolbarPosition = "left" }) {
 
   const closePanel = (id) => {
 
-    console.log(id);
-
     const tool = config.find((t) => t.id === id);
     if (!tool) return;
 
     setActivePanel(null);
-    console.log(tool)
     if (tool.id === "draw") return;
 
     store.setActiveTool("select");

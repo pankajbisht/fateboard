@@ -23,8 +23,6 @@ export function ShapePanel({ closePanel }) {
 
   function handleAddShape(type) {
 
-      console.log("..", type);
-
       if (type === "line") {
         enableLineDrawing(commonProps, closePanel);
       } else {

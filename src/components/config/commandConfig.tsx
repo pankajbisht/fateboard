@@ -46,6 +46,24 @@ export const commandRegistry = [
     }
   },
   {
+    id: "group",
+    description: "Group selected object",
+    shortcut: ["Meta+G", "Ctrl+G"],
+    handler: ({ get, set }) => {
+      const { groupLayers } = get();
+      groupLayers();
+    }
+  },
+  {
+    id: "ungroup",
+    description: "Ungroup selected object",
+    shortcut: ["Meta+Shift+U", "Ctrl+Shift+U"],
+    handler: ({ get, set }) => {
+      const { ungroupSelected } = get();
+      ungroupSelected();
+    }
+  },
+  {
     id: "undo",
     description: "Undo",
     shortcut: ["Meta+Z", "Ctrl+Z"],

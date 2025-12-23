@@ -34,8 +34,6 @@ export const createTransformSlice = (set, get) => ({
   _isSyncing: false, // avoid circular updates
 
   updateFromFabric: (obj) => {
-    console.log(obj);
-
     if (!obj) {
       set({ hasSelection: false }); // disable inputs
       return;

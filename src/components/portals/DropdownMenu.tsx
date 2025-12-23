@@ -46,7 +46,7 @@ const DropdownMenu = ({ trigger, children }) => {
       <IconButton
         icon={trigger}
         onClick={() => setOpen(!open)}
-        title="Grid View"
+        title="Menu"
       />
 
       {open && (

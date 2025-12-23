@@ -17,8 +17,6 @@ export function Header() {
   const fileInputRef = useRef(null);
   const { selectedObject } = useStore();
 
-  console.log("Header:", selectedObject);
-
   const handleDownload = () => {
     if (!canvas) return;
     const json = JSON.stringify(canvas.toJSON(["backgroundColor", "customId"]));

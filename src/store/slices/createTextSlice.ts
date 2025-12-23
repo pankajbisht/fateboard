@@ -71,7 +71,6 @@ export const createTextSlice = (set, get) => ({
 
     // ✅ Editing behavior
     fabricText.on("editing:entered", () => {
-      console.log('here')
       if (fabricText.fill === placeholderColor) {
         fabricText.selectAll();
         fabricText.set("fill", textColor);
@@ -80,8 +79,6 @@ export const createTextSlice = (set, get) => ({
     });
 
     fabricText.on("editing:exited", () => {
-      console.log('here')
-
       if (!fabricText.text.trim()) {
         fabricText.text = text;  // restore placeholder
         fabricText.set("fill", placeholderColor);
