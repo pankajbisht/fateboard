@@ -1,0 +1,198 @@
+import React from "react";
+
+function ImageSlider({ images }) {
+  const [index, setIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % images.length);
+    }, 2500);
+    return () => clearInterval(id);
+  }, [images.length]);
+
+  return (
+    <div className="relative bg-white rounded-2xl shadow overflow-hidden">
+      <img
+        src={images[index]}
+        alt="App glimpse"
+        className="w-full h-64 object-cover transition-all"
+      />
+
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-2">
+        {images.map((_, i) => (
+          <span
+            key={i}
+            className={`h-2 w-2 rounded-full ${i === index ? "bg-blue-600" : "bg-gray-300"}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Slideshow() {
+  const slides = [
+    {
+      title: "Explain Complex Ideas",
+      text: "Break down difficult concepts using simple drawings.",
+    },
+    {
+      title: "Engage Your Audience",
+      text: "Keep users focused with visual storytelling.",
+    },
+    {
+      title: "Boost Conversions",
+      text: "Clear explanations lead to better decisions.",
+    },
+  ];
+
+  const [index, setIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % slides.length);
+    }, 3000);
+    return () => clearInterval(id);
+  }, []);
+
+  const slide = slides[index];
+
+  return (
+    <div className="bg-white/10 backdrop-blur rounded-2xl p-8 shadow-lg min-h-[220px] flex flex-col justify-center transition-all">
+      <h4 className="text-2xl font-bold mb-3">{slide.title}</h4>
+      <p className="opacity-90">{slide.text}</p>
+
+      <div className="flex gap-2 mt-6">
+        {slides.map((_, i) => (
+          <span
+            key={i}
+            className={`h-2 w-2 rounded-full ${
+              i === index ? "bg-white" : "bg-white/40"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default function WhiteboardMarketingSite() {
+  return (
+    <div className="min-h-screen bg-gray-50 text-gray-800">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+          <h1 className="text-xl font-bold">Whiteboard Marketing</h1>
+          <nav className="space-x-6 text-sm">
+            <a href="#features" className="hover:text-blue-600">Features</a>
+            <a href="#process" className="hover:text-blue-600">Process</a>
+            <a href="#contact" className="hover:text-blue-600">Contact</a>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+        <div className="max-w-6xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
+          {/* Text */}
+          <div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Explain Your Product Clearly
+            </h2>
+            <p className="text-lg mb-8 opacity-90">
+              Simple, engaging whiteboard slides that turn ideas into customers.
+            </p>
+            <button className="bg-white text-blue-600 px-8 py-3 rounded-xl font-semibold shadow hover:scale-105 transition">
+              Get a Demo
+            </button>
+          </div>
+
+          {/* Slideshow */}
+          <Slideshow />
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="py-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <h3 className="text-3xl font-bold text-center mb-12">Key Features</h3>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[{
+              title: "Custom Whiteboard Slides",
+              desc: "Create tailor-made slides that match your brand and message."
+            },{
+              title: "Animated Explanations",
+              desc: "Smooth hand-drawn animations that guide viewers step by step."
+            },{
+              title: "Marketing-Focused Storytelling",
+              desc: "Designed to educate, persuade, and convert your audience."
+            }].map((item) => (
+                <div
+                  key={item.title}
+                  className="bg-white p-8 rounded-2xl shadow hover:shadow-lg transition"
+                >
+                  <h4 className="text-xl font-semibold mb-3">{item.title}</h4>
+                  <p className="text-sm text-gray-600">{item.desc}</p>
+                </div>
+              ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Process */}
+      <section id="process" className="bg-gray-100 py-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <h3 className="text-3xl font-bold text-center mb-12">Our Process</h3>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            {/* Steps */}
+            <div className="space-y-6">
+              {[
+                { title: "Script", desc: "We understand your product and craft a clear script." },
+                { title: "Storyboard", desc: "Each scene is planned visually before animation." },
+                { title: "Animate", desc: "Whiteboard drawings bring the story to life." },
+                { title: "Launch", desc: "Final video is delivered ready for marketing." },
+              ].map((step, i) => (
+                <div key={step.title} className="flex gap-4">
+                  <div className="text-xl font-bold text-blue-600">{i + 1}</div>
+                  <div>
+                    <div className="font-semibold">{step.title}</div>
+                    <div className="text-sm text-gray-600">{step.desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Image Slider */}
+            <ImageSlider
+              images={[
+                "https://placehold.co/600x400?text=Whiteboard+Editor",
+                "https://placehold.co/600x400?text=Drawing+Animation",
+                "https://placehold.co/600x400?text=Scene+Timeline",
+                "https://placehold.co/600x400?text=Final+Preview",
+              ]}
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section id="contact" className="py-24 text-center">
+        <h3 className="text-3xl font-bold mb-4">Ready to Grow Your Brand?</h3>
+        <p className="text-gray-600 mb-8">
+          Let’s create a whiteboard video that explains and sells.
+        </p>
+        <button className="bg-blue-600 text-white px-10 py-4 rounded-xl font-semibold shadow hover:bg-blue-700 transition">
+          Contact Us
+        </button>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-white border-t">
+        <div className="max-w-6xl mx-auto px-6 py-6 text-sm text-center text-gray-500">
+          © {new Date().getFullYear()} Whiteboard Marketing. All rights reserved.
+        </div>
+      </footer>
+    </div>
+  );
+}
