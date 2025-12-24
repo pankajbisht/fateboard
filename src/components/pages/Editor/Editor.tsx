@@ -5,8 +5,11 @@ import { PanelManager } from "../../organisms/PanelManager.tsx";
 import { leftPanelConfig, rightPanelConfig } from "../../config/panelConfig.tsx";
 import { Footer } from '../../organisms/footer';
 import { ContextMenu } from '../../organisms/ContextMenu.tsx';
+import { usePageTitle } from '../../../lib/utils/usePageTitle.ts';
 
 const EditorPage = () => {
+    usePageTitle("Draw | Fateboard");
+
   return <div>
     <EditorTemplate
       header={<Header />}

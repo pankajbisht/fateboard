@@ -1,6 +1,7 @@
 import React from "react";
 import Brand from "../../atoms/Brand";
 import { useNavigate } from "react-router-dom";
+import { usePageTitle } from "../../../lib/utils/usePageTitle";
 
 function ImageSlider({ images }) {
   const [index, setIndex] = React.useState(0);
@@ -33,6 +34,7 @@ function ImageSlider({ images }) {
 }
 
 export default function WhiteboardMarketingSite() {
+  usePageTitle("Online Whiteboard | Fateboard");
   const navigate = useNavigate();
 
   const handleStartDrawing = () => {
@@ -47,12 +49,12 @@ export default function WhiteboardMarketingSite() {
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
           <Brand
             src="fate.svg"
-            className="h-10 cursor-pointer hidden md:block"
+            className="h-10 cursor-pointer"
           />
           <nav className="space-x-6 text-sm">
-            {/*<a href="#features" className="hover:text-blue-600">Features</a>
-            <a href="#process" className="hover:text-blue-600">Process</a>
-            <a href="#contact" className="hover:text-blue-600">Contact</a>*/}
+            <a href="#features" className="hover:text-blue-600">Features</a>
+            <a href="#process" className="hover:text-blue-600">Action</a>
+            {/*<a href="#contact" className="hover:text-blue-600">Contact</a>*/}
           </nav>
         </div>
       </header>
