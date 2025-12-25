@@ -62,7 +62,7 @@
 #           github_token: ${{ secrets.GITHUB_TOKEN }}
 
 
-name: Deploy FateBoard
+name: Deployment FateBoard
 
 on:
     push:
@@ -84,9 +84,15 @@ jobs:
               with:
                   node-version: 20
 
-            # 3️⃣ Install dependencies
+            # 3️⃣ Node version from .nvmrc
+            - name: Set up Node.js
+              uses: actions/setup-node@v3
+              with:
+                node-version-file: .nvmrc
+
+            # 4️⃣ Install dependencies
             - name: Install dependencies
-              run: npm i
+              run: npm install
 
             # 4️⃣ Build project
             - name: Build project
