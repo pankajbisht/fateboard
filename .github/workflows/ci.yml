@@ -17,6 +17,10 @@ jobs:
     name: Build and Test
     runs-on: ubuntu-latest
 
+    env:
+      # 🔥 FORCE ROLLUP TO USE JS IMPLEMENTATION (NO NATIVE BINARIES)
+      ROLLUP_SKIP_NATIVE: true
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,7 +31,6 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      # ✅ Correct fix for Rollup optional binary issue
       - name: Install dependencies
         env:
           SKIP_HUSKY: '1'
@@ -62,6 +65,9 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
 
+    env:
+      ROLLUP_SKIP_NATIVE: true
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -95,6 +101,9 @@ jobs:
     needs: build-and-test
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
+    env:
+      ROLLUP_SKIP_NATIVE: true
 
     steps:
       - name: Download build output
