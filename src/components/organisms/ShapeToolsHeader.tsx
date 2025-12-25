@@ -1,7 +1,7 @@
 import { useStore } from '@store';
 import { ToggleGroup } from '../molecules/ToggleGroup.tsx';
 import OriginSelector from '../molecules/OriginSelector.tsx';
-import { use, useState } from 'react';
+import { useState } from 'react';
 import FlipIcon from '../../assets/icons/flip.tsx';
 import { SingleToggleButton } from '../molecules/SingleToggleButton.tsx';
 import { TransformInput } from '../molecules/TransformInput.tsx';
