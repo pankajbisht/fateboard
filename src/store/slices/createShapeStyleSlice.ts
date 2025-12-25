@@ -741,7 +741,7 @@ export const createShapeStyleSlice = (set, get, store) => ({
             insert: false,
           });
 
-          let rawPaths = convertStrokeToPath(item.children?.[0] ?? item);
+          const rawPaths = convertStrokeToPath(item.children?.[0] ?? item);
           const paths: paper.Path[] = Array.isArray(rawPaths)
             ? rawPaths
             : rawPaths
