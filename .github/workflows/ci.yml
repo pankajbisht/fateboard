@@ -78,12 +78,6 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v3
 
-            # 2️⃣ Setup Node.js
-            - name: Setup Node.js
-              uses: actions/setup-node@v3
-              with:
-                  node-version: 20
-
             # 3️⃣ Node version from .nvmrc
             - name: Set up Node.js
               uses: actions/setup-node@v3
