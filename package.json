@@ -5,21 +5,32 @@
     "version": "0.0.0",
     "type": "module",
     "scripts": {
-        "dev": "vite",
-        "build": "tsc -b && vite build",
-        "prebuild": "vite build",
-        "build:no-check": "vite build",
-        "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
-        "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
-        "preview": "vite preview --host 0.0.0.0",
-        "prepare": "husky install",
-        "server": "json-server --watch db.json --port 4000",
-        "deploy": "gh-pages -d dist",
-        "test": "vitest",
-        "test:watch": "vitest --watch",
-        "test:run": "vitest run",
-        "test:coverage": "vitest run --coverage",
-        "type-check": "tsc --noEmit"
+      "dev": "vite",
+      "build": "tsc -b && vite build",
+      "build:no-check": "vite build",
+      "prebuild": "npm run type-check",
+      "clean": "rimraf dist",
+
+      "preview": "vite preview --host 0.0.0.0",
+
+      "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+      "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+      "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+      "check": "npm run lint && npm run type-check && npm run format:check",
+
+      "type-check": "tsc --noEmit",
+
+      "server": "json-server --watch db.json --port 4000",
+
+      "deploy": "gh-pages -d dist",
+
+      "test": "vitest",
+      "test:watch": "vitest --watch",
+      "test:run": "vitest run",
+      "test:coverage": "vitest run --coverage",
+
+      "prepare": "husky install",
+      "postinstall": "husky install || true"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.0.0",
