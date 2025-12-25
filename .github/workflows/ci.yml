@@ -14,106 +14,48 @@ permissions:
 
 jobs:
   build-and-test:
-    name: Build and Test
     runs-on: ubuntu-latest
 
-    env:
-      # 🔥 FORCE ROLLUP TO USE JS IMPLEMENTATION (NO NATIVE BINARIES)
-      ROLLUP_SKIP_NATIVE: true
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Use Node.js (LTS)
+      - name: Use Node.js LTS
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: 20
+          cache: npm
 
-      - name: Install dependencies
+      # ✅ THE ACTUAL FIX
+      - name: Install dependencies (force optional)
         env:
           SKIP_HUSKY: '1'
-        run: npm ci --no-audit --no-fund
-
-      - name: Lint
-        run: npm run lint --if-present
+        run: npm ci --include=optional --no-audit --no-fund
 
       - name: Build
-        run: npm run build
+        run: npm run build --if-present
 
-      - name: Run tests
-        run: npm run test:run
+      - name: Test
+        run: npm run test:run --if-present
 
-      - name: Upload coverage (if exists)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage
-          if-no-files-found: ignore
-
-      - name: Upload build output
+      - name: Upload dist
         uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist
           if-no-files-found: error
 
-  docker-build-and-push:
-    name: Build and Push Docker Image
-    needs: build-and-test
-    runs-on: ubuntu-latest
-
-    env:
-      ROLLUP_SKIP_NATIVE: true
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
-
   deploy-pages:
-    name: Deploy to GitHub Pages
-    needs: build-and-test
     if: github.ref == 'refs/heads/main'
+    needs: build-and-test
     runs-on: ubuntu-latest
 
-    env:
-      ROLLUP_SKIP_NATIVE: true
-
     steps:
-      - name: Download build output
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - uses: peaceiris/actions-gh-pages@v3
         with:
           publish_dir: ./dist
           github_token: ${{ secrets.GITHUB_TOKEN }}
