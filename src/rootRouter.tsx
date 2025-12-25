@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import EditorPage from './components/pages/Editor/Editor.tsx';
 import NotFound from './components/pages/NotFound/NotFoundPage.tsx';
 import EditorSettingPage from './components/pages/Setting/EditorSettingPage.tsx';
@@ -7,7 +7,7 @@ import WhiteboardMarketingSite from './components/pages/web/WhiteboardMarketingS
 
 export function RootRouter() {
     return (
-        <BrowserRouter basename="/">
+        <HashRouter basename="/">
             <Routes>
                 <Route path="/" element={<WhiteboardMarketingSite />} />
                 <Route path="/draw" element={<EditorPage />} />
@@ -16,6 +16,6 @@ export function RootRouter() {
 
                 <Route path="*" element={<NotFound />} />
             </Routes>
-        </BrowserRouter>
+        </HashRouter>
     );
 }
