@@ -2,6 +2,14 @@
 <html>
   <head>
     <meta http-equiv="refresh" content="0; URL=/" />
+    <!-- public/404.html -->
+    <script type="text/javascript">
+      // Get the full path from the URL
+      var path = window.location.pathname;
+
+      // Redirect to index.html with the path as hash
+      window.location.replace("/#" + path);
+    </script>
   </head>
   <body></body>
 </html>
