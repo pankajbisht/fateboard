@@ -8,6 +8,12 @@ const options = [
     { label: 'Intersect', value: 'intersect' },
     { label: 'Subtract', value: 'subtract' },
     { label: 'Exclude', value: 'exclude' },
+    { label: 'Divide', value: 'divide' },
+    { label: 'Cut', value: 'cut' },
+    { label: 'Punch', value: 'punch' },
+    { label: 'Crop', value: 'crop' },
+    { label: 'Smart Union', value: 'smartUnion' },
+    { label: 'Xor Split', value: 'xorSplit' },
 ];
 
 export const BooleanOperationsDropdown = () => {
@@ -27,6 +33,24 @@ export const BooleanOperationsDropdown = () => {
                 break;
             case 'exclude':
                 store.excludeSelected({ fill: 'purple' });
+                break;
+            case 'divide':
+                store.divideSelected({ fill: 'purple' });
+                break;
+            case 'cut':
+                store.cutSelected({ fill: 'purple' });
+                break;
+            case 'punch':
+                store.punchSelected({ fill: 'purple' });
+                break;
+            case 'crop':
+                store.cropSelected({ fill: 'purple' });
+                break;
+            case 'smartUnion':
+                store.smartUnionSelected({ fill: 'purple' });
+                break;
+            case 'xorSplit':
+                store.xorSplitSelected({ fill: 'purple' });
                 break;
             default:
                 break;

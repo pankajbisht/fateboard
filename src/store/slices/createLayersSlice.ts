@@ -198,11 +198,13 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         const activeObjects = canvas.getActiveObjects();
         if (!activeObjects.length) return;
 
-        const sortedObjects = activeObjects.sort(
-            (a, b) => canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b),
-        );
+        activeObjects.forEach(obj => {
+          if (obj.type !== 'activeselection') {
+            const i = canvas.getObjects().indexOf(obj);
+            canvas.moveObjectTo(obj, i + 1);
+          }
+        });
 
-        sortedObjects.forEach((obj) => canvas.bringObjectForward(obj));
         canvas.requestRenderAll();
     },
 
@@ -213,42 +215,48 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         const activeObjects = canvas.getActiveObjects();
         if (!activeObjects.length) return;
 
-        const sortedObjects = activeObjects.sort(
-            (a, b) => canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a),
-        );
+        activeObjects.forEach(obj => {
+          if (obj.type !== 'activeselection') {
+            const i = canvas.getObjects().indexOf(obj);
+            canvas.moveObjectTo(obj, Math.max(0, i - 1));
+          }
+        });
 
-        sortedObjects.forEach((obj) => canvas.sendObjectBackwards(obj));
         canvas.requestRenderAll();
     },
 
     bringToFront: () => {
-        const canvas = get().canvas;
-        if (!canvas) return;
+      const canvas = get().canvas;
+      if (!canvas) return;
 
-        const activeObjects = canvas.getActiveObjects();
-        if (!activeObjects.length) return;
+      const activeObjects = canvas.getActiveObjects();
+      if (!activeObjects.length) return;
 
-        const sortedObjects = activeObjects.sort(
-            (a, b) => canvas.getObjects().indexOf(a) - canvas.getObjects().indexOf(b),
-        );
+      activeObjects.forEach(obj => {
 
-        sortedObjects.forEach((obj) => canvas.bringToFront(obj));
-        canvas.requestRenderAll();
+          if (obj.type !== 'activeselection') {
+              canvas.moveObjectTo(obj, canvas.getObjects().length - 1);
+            }
+      });
+
+
+      canvas.requestRenderAll();
     },
 
     sendToBack: () => {
-        const canvas = get().canvas;
-        if (!canvas) return;
+      const canvas = get().canvas;
+      if (!canvas) return;
 
-        const activeObjects = canvas.getActiveObjects();
-        if (!activeObjects.length) return;
+      const activeObjects = [...canvas.getActiveObjects()];
+      if (!activeObjects.length) return;
 
-        const sortedObjects = activeObjects.sort(
-            (a, b) => canvas.getObjects().indexOf(b) - canvas.getObjects().indexOf(a),
-        );
+      canvas.getActiveObjects().forEach(obj => {
+        if (obj.type !== 'activeselection') {
+          canvas.moveObjectTo(obj, 0);
+        }
+      });
 
-        sortedObjects.forEach((obj) => canvas.sendToBack(obj));
-        canvas.requestRenderAll();
+      canvas.requestRenderAll();
     },
 
     deleteObject: () => {

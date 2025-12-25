@@ -63,7 +63,7 @@ export const createCanvasSlice = (set, get, store) => ({
 
         const canvas = new fabric.Canvas(el, {
             backgroundColor: fateboardCanvasConfig.bg,
-            preserveObjectStacking: false,
+            preserveObjectStacking: true,
         });
 
         get().saveState(); // undo/redo

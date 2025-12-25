@@ -5,6 +5,10 @@ import { useState } from 'react';
 import FlipIcon from '../../assets/icons/flip.tsx';
 import { SingleToggleButton } from '../molecules/SingleToggleButton.tsx';
 import { TransformInput } from '../molecules/TransformInput.tsx';
+import SendToBack from '@/assets/icons/sendbackward.tsx';
+import SendBackward from '@/assets/icons/sendbackward.tsx';
+import SendForward from '@/assets/icons/bringforward.tsx';
+import BringForward from '@/assets/icons/bringforward.tsx';
 
 const round = (val) => Math.round(val);
 
@@ -73,6 +77,8 @@ export const ShapeToolsHeader = () => {
     const ungroupSelected = useStore((s) => s.ungroupSelected);
     const bringForward = useStore((s) => s.bringForward);
     const sendBackward = useStore((s) => s.sendBackward);
+    const bringToFront = useStore((s) => s.bringToFront);
+    const sendToBack = useStore((s) => s.sendToBack);
     const toggleActiveObjectLock = useStore((s) => s.toggleActiveObjectLock);
     const alignObjects = useStore((s) => s.alignObjects);
     const hasSelection = useStore((s) => s.hasSelection);
@@ -86,10 +92,14 @@ export const ShapeToolsHeader = () => {
             groupLayers();
         } else if (key === 'ungroup') {
             ungroupSelected();
-        } else if (key === 'sendtoback') {
+        } else if (key === 'bringforward') {
             bringForward();
-        } else if (key === 'bringtofront') {
+        } else if (key === 'sendbackward') {
             sendBackward();
+        } else if (key === 'sendtoback') {
+            sendToBack();
+        } else if (key === 'bringtofront') {
+            bringToFront();
         } else if (key === 'lock') {
             toggleActiveObjectLock();
         } else if (key === 'unlock') {
@@ -212,14 +222,41 @@ export const ShapeToolsHeader = () => {
                         single
                         options={[
                             {
+                                key: 'sendbackward',
+                                icon: 'fa-solid fa-angle-down',
+                                tooltip: 'Send backward',
+                            },
+                            {
+                                key: 'bringforward',
+                                icon: 'fa-solid fa-angle-up',
+                                tooltip: 'Bring forward',
+                            },
+                        ]}
+                        onChange={(formats) => {
+                            const { sendtoback, bringtofront } = formats;
+
+                            const active = Object.entries(formats).find(([_, value]) => value);
+                            console.log('Back:', active);
+
+                            if (active) {
+                                const [key, value] = active;
+                                handleButton(key, value);
+                            }
+                        }}
+                    />
+
+                    <ToggleGroup
+                        single
+                        options={[
+                            {
                                 key: 'sendtoback',
-                                icon: 'fa-solid fa-arrow-down',
+                                icon: 'fa-solid fa-angles-down',
                                 tooltip: 'Send to back',
                             },
                             {
                                 key: 'bringtofront',
-                                icon: 'fa-solid fa-arrow-up',
-                                tooltip: 'Bring to bfront',
+                                icon: 'fa-solid fa-angles-up',
+                                tooltip: 'Bring to front',
                             },
                         ]}
                         onChange={(formats) => {
