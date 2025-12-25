@@ -26,7 +26,7 @@ jobs:
             - name: Install dependencies
               env:
                   SKIP_HUSKY: '1'
-              run: npm i
+              run: npm install --no-audit --no-fund
 
             - name: Lint (eslint)
               run: npm run lint
