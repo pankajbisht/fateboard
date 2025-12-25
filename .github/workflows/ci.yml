@@ -27,10 +27,15 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      # 🔧 IMPORTANT: Fix npm optional dependency bug (Rollup)
+      - name: Enable optional dependencies
+        run: npm config set optional true
+
+      # ✅ npm ci FIXES rollup-linux-x64-gnu issue
       - name: Install dependencies
         env:
           SKIP_HUSKY: '1'
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Lint
         run: npm run lint --if-present
