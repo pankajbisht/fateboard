@@ -19,14 +19,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ✅ USE SUPPORTED NODE VERSION
       - name: Use Node.js LTS
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
 
-      # ✅ THE ACTUAL FIX
-      - name: Install dependencies (force optional)
+      # ✅ REQUIRED FOR ROLLUP
+      - name: Install dependencies
         env:
           SKIP_HUSKY: '1'
         run: npm ci --include=optional --no-audit --no-fund
