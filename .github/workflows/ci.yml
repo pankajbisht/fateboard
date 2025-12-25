@@ -68,31 +68,50 @@ on:
     push:
         branches:
             - main # Deploy on push to main branch
+    pull_request:
+      branches: [main]
 
 jobs:
     build-deploy:
         runs-on: ubuntu-latest
 
         steps:
-            # 1️⃣ Checkout the repo
+            # 1️. Checkout the repo
             - name: Checkout repository
-              uses: actions/checkout@v3
+              uses: actions/checkout@v4
 
-            # 3️⃣ Node version from .nvmrc
+            # 2. Node version from .nvmrc
             - name: Set up Node.js
               uses: actions/setup-node@v3
               with:
                 node-version-file: .nvmrc
+                cache: npm
 
-            # 4️⃣ Install dependencies
+            # 3. Install dependencies
             - name: Install dependencies
-              run: npm install
+              run: npm ci
 
-            # 4️⃣ Build project
+            # 4. Lint code
+            - name: Lint code
+              run: npm run lint --if-present
+
+            # 5. Ts Check
+            - name: Type Check
+              run: npm run type-check --if-present
+
+            # 6. Build project
             - name: Build project
-              run: npm run build:no-check
+              run: npm run build:no-check --if-present
 
-            # 7️⃣ Deploy to GitHub Pages
+            # 7. Test Case Execution
+            - name: Test
+              run: npm run test:run --if-present
+
+            # 8. Add Custom Domain (CNAME)
+            - name: Add custom domain
+              run: echo "${{ vars.PAGES_DOMAIN }}" > dist/CNAME
+
+            # 9. Deploy to GitHub Pages
             - name: Deploy to GitHub Pages
               uses: peaceiris/actions-gh-pages@v4
               with:

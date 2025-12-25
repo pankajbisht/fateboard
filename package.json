@@ -18,7 +18,8 @@
         "test": "vitest",
         "test:watch": "vitest --watch",
         "test:run": "vitest run",
-        "test:coverage": "vitest run --coverage"
+        "test:coverage": "vitest run --coverage",
+        "type-check": "tsc --noEmit"
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.0.0",
