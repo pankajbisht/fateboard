@@ -24,6 +24,8 @@ jobs:
                   cache: 'npm'
 
             - name: Install dependencies
+              env:
+                  SKIP_HUSKY: '1'
               run: npm ci
 
             - name: Lint (eslint)
