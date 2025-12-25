@@ -1,64 +1,81 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/fateicon.svg" type="image/svg+xml">
-    <link rel="icon" href="/fateicon-96.png" type="image/png" sizes="96x96">
-    <title>Online Whiteboard | Fateboard</title>
-    <meta name="description" content="Interactive web-based whiteboard for real-time collaboration, brainstorming, and idea sharing.
-    Work together seamlessly with live drawing, notes, and team interaction." />
-    <meta name="keywords" content="whiteboard, online drawing, collaboration, sketch" />
-    <meta name="author" content="Fateboard" />
-    <meta name="robots" content="index, follow" />
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" href="/fateicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/fateicon-96.png" type="image/png" sizes="96x96" />
+        <title>Online Whiteboard | Fateboard</title>
+        <meta
+            name="description"
+            content="Interactive web-based whiteboard for real-time collaboration, brainstorming, and idea sharing.
+    Work together seamlessly with live drawing, notes, and team interaction."
+        />
+        <meta name="keywords" content="whiteboard, online drawing, collaboration, sketch" />
+        <meta name="author" content="Fateboard" />
+        <meta name="robots" content="index, follow" />
 
-    <!-- Open Graph / Social Media -->
-    <meta property="og:title" content="My Whiteboard App" />
-    <meta property="og:description" content="Draw, collaborate, and share ideas online." />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/fateicon.svg" />
-    <meta property="og:url" content="https://www.fateboard.com/" />
+        <!-- Open Graph / Social Media -->
+        <meta property="og:title" content="My Whiteboard App" />
+        <meta property="og:description" content="Draw, collaborate, and share ideas online." />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="/fateicon.svg" />
+        <meta property="og:url" content="https://www.fateboard.com/" />
 
-    <link rel="canonical" href="https://www.fateboard.com/" />
+        <link rel="canonical" href="https://www.fateboard.com/" />
 
-    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap"
+            rel="stylesheet"
+        />
 
-    <link
-      rel="stylesheet"
-      href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css"
-    />
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.2/css/all.min.css"
+        />
 
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Online Whiteboard",
-        "operatingSystem": "Web",
-        "applicationCategory": "Productivity",
-        "offers": {
-          "@type": "Offer",
-          "price": "0"
-        },
-        "url": "https://www.fateboard.com/",
-        "description": "Free online whiteboard for math notes, brainstorming, and real-time collaboration."
-      }
-    </script>
+        <script type="application/ld+json">
+            {
+                "@context": "https://schema.org",
+                "@type": "SoftwareApplication",
+                "name": "Online Whiteboard",
+                "operatingSystem": "Web",
+                "applicationCategory": "Productivity",
+                "offers": {
+                    "@type": "Offer",
+                    "price": "0"
+                },
+                "url": "https://www.fateboard.com/",
+                "description": "Free online whiteboard for math notes, brainstorming, and real-time collaboration."
+            }
+        </script>
 
-    <!-- Google Analytics -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_ID%"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', '%VITE_GA_ID%');
-    </script>
-  </head>
-  <body>
-    <div id="fateboard"></div>
-    <div id="fateboard-portal"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+        <!-- Google Analytics -->
+        <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_ID%"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() {
+                dataLayer.push(arguments);
+            }
+            gtag('js', new Date());
+            gtag('config', '%VITE_GA_ID%');
+        </script>
+    </head>
+    <body>
+        <div id="fateboard"></div>
+        <div id="fateboard-portal"></div>
+        <script type="module" src="/src/main.jsx"></script>
+    </body>
 </html>

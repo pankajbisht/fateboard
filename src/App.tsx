@@ -1,5 +1,5 @@
-import { RootRouter } from "./rootRouter";
+import { RootRouter } from './rootRouter';
 
 export default function App() {
-  return <RootRouter />;
+    return <RootRouter />;
 }

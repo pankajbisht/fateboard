@@ -1,4 +1,7 @@
-export const Icon = () => (
-//    <span className="text-blue-500">🎵</span>
-    <i className="fa-solid fa-list-check"></i>
+import React from 'react';
+
+export const Icon: React.FC<{ className?: string }> = ({ className = '' }) => (
+    <i className={'fa-solid fa-list-check ' + className} />
 );
+
+export default Icon;

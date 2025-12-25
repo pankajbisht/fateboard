@@ -1,82 +1,80 @@
-export const createUndoRedoSlice = (set, get) => ({
-  undoStack: [],
-  redoStack: [],
-  MAX_HISTORY: 20,
-  _isRestoring: false,
+import type { SliceCreator } from '../types';
 
-  // -------------------------------
-  // Save current canvas state
-  // -------------------------------
-  saveState: () => {
-    const { canvas, _isRestoring, undoStack } = get();
-    if (!canvas || _isRestoring) return; // 🚫 skip if undo/redo in progress
+export interface UndoRedoSlice {
+    MAX_HISTORY: number;
+    _isRestoring: boolean;
+    undoStack: [];
+    redoStack: [];
 
-    const state = JSON.stringify(canvas.toJSON()); // always string
-    const newUndoStack = [...undoStack, state];
+    saveState: () => void;
+    undo: () => void;
+    redo: () => void;
+    clearHistory: () => void;
+}
 
-    set({
-      undoStack: newUndoStack,
-      redoStack: [], // clear redo on new change
-    });
+export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store) => ({
+    MAX_HISTORY: 20,
+    _isRestoring: false,
+    undoStack: [],
+    redoStack: [],
 
-    // console.log("Save UndoStack:", get().undoStack, "RedoStack:", get().redoStack);
-  },
+    saveState: () => {
+        const { canvas, _isRestoring, undoStack } = get();
+        if (!canvas || _isRestoring) return; // 🚫 skip if undo/redo in progress
 
-  // -------------------------------
-  // Undo last action
-  // -------------------------------
-  undo: () => {
-    const { canvas, undoStack, redoStack } = get();
-    if (!canvas || undoStack.length <= 1) return; // nothing to undo
+        const state = JSON.stringify(canvas.toJSON()); // always string
+        const newUndoStack = [...undoStack, state];
 
-    const currentState = JSON.stringify(canvas.toJSON());
+        set({
+            undoStack: newUndoStack,
+            redoStack: [], // clear redo on new change
+        });
+    },
 
-    // Previous state is the one before the last
-    const prevState = undoStack[undoStack.length - 1];
-    const newUndoStack = undoStack.slice(0, -1);
+    undo: () => {
+        const { canvas, undoStack, redoStack } = get();
+        if (!canvas || undoStack.length <= 1) return; // nothing to undo
 
-    set({ _isRestoring: true });
+        const currentState = JSON.stringify(canvas.toJSON());
 
-    canvas.loadFromJSON(prevState, () => {
-      set({
-        undoStack: newUndoStack,
-        redoStack: [currentState, ...redoStack],
-        _isRestoring: false,
-      });
+        // Previous state is the one before the last
+        const prevState = undoStack[undoStack.length - 1];
+        const newUndoStack = undoStack.slice(0, -1);
 
-      canvas.requestRenderAll();
-    });
-  },
+        set({ _isRestoring: true });
 
+        canvas.loadFromJSON(prevState, () => {
+            set({
+                undoStack: newUndoStack,
+                redoStack: [currentState, ...redoStack],
+                _isRestoring: false,
+            });
 
-  // -------------------------------
-  // Redo last undone action
-  // -------------------------------
-  redo: () => {
-    const { canvas, undoStack, redoStack } = get();
-    if (!canvas || redoStack.length === 0) return;
+            canvas.requestRenderAll();
+        });
+    },
 
-    const currentState = JSON.stringify(canvas.toJSON());
+    redo: () => {
+        const { canvas, undoStack, redoStack } = get();
+        if (!canvas || redoStack.length === 0) return;
 
-    const nextState = redoStack[0];
-    const newRedoStack = redoStack.slice(1);
+        const currentState = JSON.stringify(canvas.toJSON());
 
-    set({ _isRestoring: true });
+        const nextState = redoStack[0];
+        const newRedoStack = redoStack.slice(1);
 
-    canvas.loadFromJSON(nextState, () => {
-      set({
-        undoStack: [...undoStack, currentState],
-        redoStack: newRedoStack,
-        _isRestoring: false,
-      });
+        set({ _isRestoring: true });
 
-      canvas.requestRenderAll();
-    });
-  },
+        canvas.loadFromJSON(nextState, () => {
+            set({
+                undoStack: [...undoStack, currentState],
+                redoStack: newRedoStack,
+                _isRestoring: false,
+            });
 
+            canvas.requestRenderAll();
+        });
+    },
 
-  // -------------------------------
-  // Clear history
-  // -------------------------------
-  clearHistory: () => set({ undoStack: [], redoStack: [] }),
+    clearHistory: () => set({ undoStack: [], redoStack: [] }),
 });

@@ -526,7 +526,7 @@
 //};
 //
 //export { Editor };
-//* 
+//*
 
 //const EditorPage = () => {
 //  const canvasRef = useRef(null);

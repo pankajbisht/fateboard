@@ -1,57 +1,66 @@
-import * as fabric from "fabric";
+import * as fabric from 'fabric';
+import type { SliceCreator } from '../types';
 
-export const createNotebookSlice = (set, get) => ({
-  gridEnabled: true,
-  gridSize: 20, // like math notebook spacing
-  toggleGrid: () => {
-    const canvas = get().canvas;
-    if (!canvas) return;
+export interface NotebookSlice {
+    gridEnabled: boolean;
+    gridSize: number;
+    toggleGrid: () => void;
+    drawGrid: () => void;
+}
 
-    set({ gridEnabled: !get().gridEnabled });
-    get().drawGrid(); // redraw
-  },
+export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store) => ({
+    gridEnabled: true,
+    gridSize: 20, // like math notebook spacing
 
-  drawGrid: () => {
-    const canvas = get().canvas;
-    if (!canvas) return;
+    toggleGrid: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
 
-    const { gridEnabled, gridSize } = get();
+        set({ gridEnabled: !get().gridEnabled });
+        get().drawGrid(); // redraw
+    },
 
-    // clear old background
-    canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
+    drawGrid: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
 
-    if (!gridEnabled) return;
+        const { gridEnabled, gridSize } = get();
 
-    const { width, height } = canvas;
+        // clear old background
+        canvas.setBackgroundImage(null, canvas.renderAll.bind(canvas));
 
-    // create grid pattern
-    const gridCanvas = document.createElement("canvas");
-    gridCanvas.width = gridSize;
-    gridCanvas.height = gridSize;
-    const ctx = gridCanvas.getContext("2d");
+        if (!gridEnabled) return;
 
-    ctx.strokeStyle = "#e0e0e0"; // light gray lines
-    ctx.lineWidth = 1;
+        // const { width, height } = canvas;
 
-    // vertical line
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(0, gridSize);
-    ctx.stroke();
+        // create grid pattern
+        const gridCanvas = document.createElement('canvas');
+        gridCanvas.width = gridSize;
+        gridCanvas.height = gridSize;
+        const ctx = gridCanvas.getContext('2d')!;
 
-    // horizontal line
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(gridSize, 0);
-    ctx.stroke();
+        ctx.strokeStyle = '#e0e0e0'; // light gray lines
+        ctx.lineWidth = 1;
 
-    // create pattern
-    const pattern = new fabric.Pattern({
-      source: gridCanvas,
-      repeat: "repeat",
-    });
+        // vertical line
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(0, gridSize);
+        ctx.stroke();
 
-    // apply as background
-    canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
-  },
+        // horizontal line
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(gridSize, 0);
+        ctx.stroke();
+
+        // create pattern
+        const pattern = new fabric.Pattern({
+            source: gridCanvas,
+            repeat: 'repeat',
+        });
+
+        // apply as background
+        canvas.setBackgroundColor(pattern, canvas.renderAll.bind(canvas));
+    },
 });

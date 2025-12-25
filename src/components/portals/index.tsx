@@ -1,8 +1,8 @@
-import { createPortal } from "react-dom";
+import { createPortal } from 'react-dom';
 
 const Portal = ({ children }) => {
-  const portalRoot = document.getElementById("fateboard-portal");
-  return createPortal(children, portalRoot);
+    const portalRoot = document.getElementById('fateboard-portal');
+    return createPortal(children, portalRoot);
 };
 
 export default Portal;

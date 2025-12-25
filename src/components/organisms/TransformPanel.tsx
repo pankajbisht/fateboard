@@ -1,141 +1,140 @@
-import { useEffect, useState, useCallback } from "react";
-import { useStore } from "../../store";
-import { PanelHeader } from "../molecules/PanelHeader.tsx";
-import LabeledInput from "../atoms/LabeledInput.tsx";
+import { useEffect, useState, useCallback } from 'react';
+import { useStore } from '../../store';
+import { PanelHeader } from '../molecules/PanelHeader.tsx';
+import LabeledInput from '../atoms/LabeledInput.tsx';
 
 export function TransformPanel({ closePanel }) {
-  const canvas = useStore((s) => s.canvas);
-  const [selectedObject, setSelectedObject] = useState(null);
+    const canvas = useStore((s) => s.canvas);
+    const [selectedObject, setSelectedObject] = useState(null);
 
-  const [props, setProps] = useState({
-    left: 0,
-    top: 0,
-    width: 0,
-    height: 0,
-    angle: 0,
-  });
-
-  // ✅ Single source of truth for object → state sync
-  const syncFromObject = useCallback(() => {
-    if (!canvas) return;
-
-    const obj = canvas.getActiveObject();
-    setSelectedObject(obj);
-
-    if (!obj) return;
-
-    setProps({
-      left: Math.round(obj.left || 0),
-      top: Math.round(obj.top || 0),
-      width: Math.round((obj.width || 0) * (obj.scaleX || 1)),
-      height: Math.round((obj.height || 0) * (obj.scaleY || 1)),
-      angle: Math.round(obj.angle || 0),
+    const [props, setProps] = useState({
+        left: 0,
+        top: 0,
+        width: 0,
+        height: 0,
+        angle: 0,
     });
-  }, [canvas]);
 
-  // ✅ Live preview while dragging/scaling/rotating
-  const syncLive = useCallback(() => {
-    if (!canvas) return;
+    // ✅ Single source of truth for object → state sync
+    const syncFromObject = useCallback(() => {
+        if (!canvas) return;
 
-    const obj = canvas.getActiveObject();
-    if (!obj) return;
+        const obj = canvas.getActiveObject();
+        setSelectedObject(obj);
 
-    setProps({
-      left: Math.round(obj.left || 0),
-      top: Math.round(obj.top || 0),
-      width: Math.round((obj.width || 0) * (obj.scaleX || 1)),
-      height: Math.round((obj.height || 0) * (obj.scaleY || 1)),
-      angle: Math.round(obj.angle || 0),
-    });
-  }, [canvas]);
+        if (!obj) return;
 
-  useEffect(() => {
-    if (!canvas) return;
+        setProps({
+            left: Math.round(obj.left || 0),
+            top: Math.round(obj.top || 0),
+            width: Math.round((obj.width || 0) * (obj.scaleX || 1)),
+            height: Math.round((obj.height || 0) * (obj.scaleY || 1)),
+            angle: Math.round(obj.angle || 0),
+        });
+    }, [canvas]);
 
-    // Bind events
-    canvas.on("selection:created", syncFromObject);
-    canvas.on("selection:updated", syncFromObject);
-    canvas.on("selection:cleared", syncFromObject);
-    canvas.on("object:moving", syncLive);
-    canvas.on("object:scaling", syncLive);
-    canvas.on("object:rotating", syncLive);
+    // ✅ Live preview while dragging/scaling/rotating
+    const syncLive = useCallback(() => {
+        if (!canvas) return;
 
-    // Initial sync
-    syncFromObject();
+        const obj = canvas.getActiveObject();
+        if (!obj) return;
 
-    return () => {
-      canvas.off("selection:created", syncFromObject);
-      canvas.off("selection:updated", syncFromObject);
-      canvas.off("selection:cleared", syncFromObject);
-      canvas.off("object:moving", syncLive);
-      canvas.off("object:scaling", syncLive);
-      canvas.off("object:rotating", syncLive);
+        setProps({
+            left: Math.round(obj.left || 0),
+            top: Math.round(obj.top || 0),
+            width: Math.round((obj.width || 0) * (obj.scaleX || 1)),
+            height: Math.round((obj.height || 0) * (obj.scaleY || 1)),
+            angle: Math.round(obj.angle || 0),
+        });
+    }, [canvas]);
+
+    useEffect(() => {
+        if (!canvas) return;
+
+        // Bind events
+        canvas.on('selection:created', syncFromObject);
+        canvas.on('selection:updated', syncFromObject);
+        canvas.on('selection:cleared', syncFromObject);
+        canvas.on('object:moving', syncLive);
+        canvas.on('object:scaling', syncLive);
+        canvas.on('object:rotating', syncLive);
+
+        // Initial sync
+        syncFromObject();
+
+        return () => {
+            canvas.off('selection:created', syncFromObject);
+            canvas.off('selection:updated', syncFromObject);
+            canvas.off('selection:cleared', syncFromObject);
+            canvas.off('object:moving', syncLive);
+            canvas.off('object:scaling', syncLive);
+            canvas.off('object:rotating', syncLive);
+        };
+    }, [canvas, syncFromObject, syncLive]);
+
+    // ✅ Single method for applying changes
+    const updateProperty = (prop: string, rawValue: number | string) => {
+        if (!selectedObject || !canvas) return;
+        const parsed = Number(rawValue);
+        if (isNaN(parsed)) return;
+
+        const value = parsed;
+
+        if (prop === 'width') {
+            const base = selectedObject.width || 1;
+            selectedObject.scaleX = value / base;
+        } else if (prop === 'height') {
+            const base = selectedObject.height || 1;
+            selectedObject.scaleY = value / base;
+        } else {
+            selectedObject.set(prop, value);
+        }
+
+        canvas.requestRenderAll();
+        setProps((prev) => ({ ...prev, [prop]: value }));
     };
-  }, [canvas, syncFromObject, syncLive]);
 
-  // ✅ Single method for applying changes
-  const updateProperty = (prop: string, rawValue: number) => {
-    if (!selectedObject || !canvas) return;
-    if (isNaN(rawValue)) return;
+    return (
+        <div className="w-64 space-y-3 rounded-md p-3">
+            <PanelHeader title="Transform" onClose={closePanel} />
 
-    let value = rawValue;
+            {/* Empty state */}
+            {!selectedObject && <div className="text-gray-400 text-xs">No object selected</div>}
 
-    if (prop === "width") {
-      const base = selectedObject.width || 1;
-      selectedObject.scaleX = value / base;
-    } else if (prop === "height") {
-      const base = selectedObject.height || 1;
-      selectedObject.scaleY = value / base;
-    } else {
-      selectedObject.set(prop, value);
-    }
+            {/* Position */}
+            <div className="flex gap-4">
+                {(['left', 'top'] as const).map((key) => (
+                    <LabeledInput
+                        key={key}
+                        label={key === 'left' ? 'X' : 'Y'}
+                        value={props[key]}
+                        disabled={!selectedObject}
+                        onChange={(val) => updateProperty(key, val)}
+                    />
+                ))}
+            </div>
 
-    canvas.requestRenderAll();
-    setProps((prev) => ({ ...prev, [prop]: value }));
-  };
+            {/* Size */}
+            <div className="flex gap-4">
+                {(['width', 'height'] as const).map((key) => (
+                    <LabeledInput
+                        key={key}
+                        label={key === 'width' ? 'W' : 'H'}
+                        value={props[key]}
+                        disabled={!selectedObject}
+                        onChange={(val) => updateProperty(key, val)}
+                    />
+                ))}
+            </div>
 
-  return (
-    <div className="w-64 space-y-3 rounded-md p-3">
-      <PanelHeader title="Transform" onClose={closePanel} />
-
-      {/* Empty state */}
-      {!selectedObject && (
-        <div className="text-gray-400 text-xs">No object selected</div>
-      )}
-
-      {/* Position */}
-      <div className="flex gap-4">
-        {(["left", "top"] as const).map((key) => (
-          <LabeledInput
-            key={key}
-            label={key === "left" ? "X" : "Y"}
-            value={props[key]}
-            disabled={!selectedObject}
-            onChange={(val) => updateProperty(key, val)}
-          />
-        ))}
-      </div>
-
-      {/* Size */}
-      <div className="flex gap-4">
-        {(["width", "height"] as const).map((key) => (
-          <LabeledInput
-            key={key}
-            label={key === "width" ? "W" : "H"}
-            value={props[key]}
-            disabled={!selectedObject}
-            onChange={(val) => updateProperty(key, val)}
-          />
-        ))}
-      </div>
-
-      {/* Rotation */}
-      <LabeledInput
-        label="R"
-        value={props.angle}
-        disabled={!selectedObject}
-        onChange={(val) => updateProperty("angle", val)}
-      />
-    </div>
-  );
+            {/* Rotation */}
+            <LabeledInput
+                label="R"
+                value={props.angle}
+                disabled={!selectedObject}
+                onChange={(val) => updateProperty('angle', val)}
+            />
+        </div>
+    );
 }

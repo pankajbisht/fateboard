@@ -1,16 +1,15 @@
-import tailwindcolors from "tailwindcss/colors";
+import tailwindcolors from 'tailwindcss/colors';
 
 function tailwindBgToHex(bgClass) {
-      const [, color, shade] = bgClass.split("-");
-      return tailwindcolors[color]?.[shade];
+    const [, color, shade] = bgClass.split('-');
+    return tailwindcolors[color]?.[shade];
 }
 
-
-export const createBackgroundColor = (set, get) => ({
-    backgroundColor: "#ff0000",
-    borderColor: "#000000",
-    borderWidth: "1",
-    borderStyle: "solid",
+export const createBackgroundColor = (set, get, _store) => ({
+    backgroundColor: '#ff0000',
+    borderColor: '#000000',
+    borderWidth: '1',
+    borderStyle: 'solid',
 
     setBackgroundColor: (bgColor) => {
         const canvas = get().canvas;
@@ -22,9 +21,9 @@ export const createBackgroundColor = (set, get) => ({
         const obj = canvas.getActiveObject();
         if (!obj) return;
 
-        obj.set("fill", color);
+        obj.set('fill', color);
         canvas.requestRenderAll();
 
         set({ backgroundColor: bgColor });
-    }
-})
+    },
+});

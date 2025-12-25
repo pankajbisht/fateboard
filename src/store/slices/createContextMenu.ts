@@ -1,10 +1,10 @@
-export const createContextMenu = (set, get) => ({
+export const createContextMenu = (set, _get, _store) => ({
     visible: false,
-      x: 0,
-      y: 0,
-      items: [],
+    x: 0,
+    y: 0,
+    items: [],
 
-      openMenu: (x, y, items) => {
+    openMenu: (x: number, y: number, items: any[]) => {
         // prevent overflow
         const MENU_WIDTH = 220;
         const MENU_HEIGHT = items.length * 36;
@@ -13,15 +13,15 @@ export const createContextMenu = (set, get) => ({
         const posY = Math.min(y, window.innerHeight - MENU_HEIGHT);
 
         set({
-          visible: true,
-          x: posX,
-          y: posY,
-          items,
+            visible: true,
+            x: posX,
+            y: posY,
+            items,
         });
-      },
+    },
 
-      closeMenu: () =>
+    closeMenu: () =>
         set({
-          visible: false,
+            visible: false,
         }),
-})
+});

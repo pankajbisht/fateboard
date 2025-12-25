@@ -1,6 +1,3 @@
 export const EditorSidebar = () => {
-
-    return <>
-        
-    </>
-}
+    return <></>;
+};

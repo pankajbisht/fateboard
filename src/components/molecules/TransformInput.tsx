@@ -1,33 +1,41 @@
-import LabeledInput from "../atoms/LabeledInput";
+import LabeledInput from '../atoms/LabeledInput';
 
-export const TransformInput = ({ label, value, disabled, onChange, max }) => {
-  const handleChange = (e) => {
-    const raw = e; // e.target.value
+type TransformInputProps = {
+    label: string;
+    value?: number | string;
+    disabled?: boolean;
+    onChange?: (val: any) => void;
+    max?: number | string;
+};
 
-    // Ensure empty input doesn't force NaN
-    if (raw === "") {
-      onChange(0);
-      return;
-    }
+export const TransformInput = ({ label, value, disabled, onChange, max }: TransformInputProps) => {
+    const handleChange = (e) => {
+        const raw = e; // e.target.value
 
-    let num = parseInt(raw, 10);
-    if (isNaN(num)) num = 0;
+        // Ensure empty input doesn't force NaN
+        if (raw === '') {
+            onChange(0);
+            return;
+        }
 
-    onChange(num == 0 ? "" : num );
-  };
+        let num = parseInt(String(raw), 10);
+        if (isNaN(num)) num = 0;
 
-  const onKeyDownHandler = (e) => {
-    if (e.key === "." || e.key === "e") e.preventDefault();
-  };
+        onChange(num == 0 ? '' : num);
+    };
 
-  return (
-    <LabeledInput
-      label={label}
-      value={value ?? 0}
-      onChange={handleChange}
-      disabled={disabled}
-      onKeyDown={onKeyDownHandler}
-      max={max}
-    />
-  );
+    const onKeyDownHandler = (e) => {
+        if (e.key === '.' || e.key === 'e') e.preventDefault();
+    };
+
+    return (
+        <LabeledInput
+            label={label}
+            value={value ?? 0}
+            onChange={handleChange}
+            disabled={disabled}
+            onKeyDown={onKeyDownHandler}
+            max={max}
+        />
+    );
 };

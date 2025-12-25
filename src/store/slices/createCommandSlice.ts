@@ -1,17 +1,17 @@
-import { commandRegistry as commandConfig } from "../../components/config/commandConfig.tsx";
+import { commandRegistry as commandConfig } from '../../components/config/commandConfig.tsx';
 
-export const createCommandSlice = (set, get) => {
-  const commands = commandConfig.map((cmd) => ({
-    ...cmd,
-    handler: () => cmd.handler({ get, set }),
-  }));
+export const createCommandSlice = (set, get, store) => {
+    const commands = commandConfig.map((cmd) => ({
+        ...cmd,
+        handler: () => cmd.handler({ get, set }),
+    }));
 
-  return {
-    commands,
+    return {
+        commands,
 
-    runCommand: (id) => {
-      const cmd = get().commands.find((c) => c.id === id);
-      if (cmd) cmd.handler();
-    },
-  };
+        runCommand: (id) => {
+            const cmd = get().commands.find((c) => c.id === id);
+            if (cmd) cmd.handler();
+        },
+    };
 };

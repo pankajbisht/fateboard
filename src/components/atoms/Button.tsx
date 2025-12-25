@@ -1,25 +1,59 @@
 import clsx from 'clsx';
+import React from 'react';
 
-export const Button = (props) => {
-    const { size='md', variant='primary', onClick, children, className="", disabled=false } = props;
+export type ButtonProps = {
+    size?: 'sm' | 'md' | 'lg';
+    variant?: 'primary' | 'danger' | 'ghost';
+    onClick?: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    children?: React.ReactNode;
+    className?: string;
+    disabled?: boolean;
+    ariaLabel?: string;
+    title?: string;
+};
 
-    const sizes = {
-        sm: "px-3 py-1 text-sm",
-        md: "px-4 py-2 text-base",
-        lg: "px-5 py-3 text-lg"
+export const Button: React.FC<ButtonProps> = ({
+    size = 'md',
+    variant = 'primary',
+    onClick,
+    children,
+    className = '',
+    disabled = false,
+    ariaLabel,
+    title,
+}) => {
+    const sizes: Record<string, string> = {
+        sm: 'px-3 py-1 text-sm',
+        md: 'px-4 py-2 text-base',
+        lg: 'px-5 py-3 text-lg',
     };
 
-    const variants = {
-        primary: "bg-blue-500 hover:bg-blue-600",
-        danger: "bg-rose-500 hover:bg-rose-600"
+    const variants: Record<string, string> = {
+        primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm',
+        danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm',
+        ghost: 'bg-transparent hover:bg-gray-100 text-gray-800 border border-transparent',
     };
 
-    const disabledStyle = "bg-gray-200 text-gray-500 cursor-not-allowed"
+    const disabledStyle = 'bg-gray-200 text-gray-500 cursor-not-allowed shadow-none opacity-80';
 
-    return <button
+    return (
+        <button
+            type="button"
+            aria-label={ariaLabel}
+            title={title}
             disabled={disabled}
-            className={clsx("text-white rounded-lg", className, sizes[size], disabled ? disabledStyle : variants[variant] )}
-            onClick={onClick}>
-        { children }
-    </button>
-}
+            onClick={disabled ? undefined : onClick}
+            className={clsx(
+                'inline-flex items-center justify-center rounded-md transition-shadow duration-150 outline-none focus-visible:ring-2 focus-visible:ring-offset-2',
+                sizes[size],
+                disabled ? disabledStyle : variants[variant],
+                className,
+            )}
+            aria-disabled={disabled}
+        >
+            {children}
+        </button>
+    );
+};
+
+export default Button;

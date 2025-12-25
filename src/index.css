@@ -1,18 +1,18 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 canvas {
-  touch-action: none;   /* prevents scrolling while drawing */
-  -webkit-touch-action: none; /* for old IE */
-  -ms-touch-action: none; /* for old IE */
+    touch-action: none; /* prevents scrolling while drawing */
+    -webkit-touch-action: none; /* for old IE */
+    -ms-touch-action: none; /* for old IE */
 }
 .bg-primary {
-  background: #121212;
-  color: #EAEAEA;
+    background: #121212;
+    color: #eaeaea;
 }
 
 .bg-dark {
-    background: #0F172A;
-    color: #A0A0A0;
+    background: #0f172a;
+    color: #a0a0a0;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
@@ -20,36 +20,66 @@ canvas {
 }
 
 .scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
-input[type="color"]::-webkit-color-swatch-wrapper {
-  padding: 0;
+input[type='color']::-webkit-color-swatch-wrapper {
+    padding: 0;
 }
 
-input[type="color"]::-webkit-color-swatch {
-  border: none;
-  border-radius: 50%;
+input[type='color']::-webkit-color-swatch {
+    border: none;
+    border-radius: 50%;
 }
-
 
 @keyframes tooltip-min {
-  from { opacity: 1; transform: translateY(2px); }
-  to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 1;
+        transform: translateY(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 @keyframes tooltip-in {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .animate-tooltip {
-  animation: tooltip-in 1s ease-in-out;
+    animation: tooltip-in 1s ease-in-out;
+}
+
+/* Focus and control improvements for better keyboard UX */
+:focus {
+    outline: none;
+}
+
+.focus-ring {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+button,
+input,
+select,
+textarea {
+    transition:
+        box-shadow 120ms ease,
+        transform 120ms ease;
+}
+
+/* Subtle elevated buttons */
+.elevated {
+    box-shadow:
+        0 1px 2px rgba(16, 24, 40, 0.06),
+        0 1px 3px rgba(16, 24, 40, 0.04);
 }

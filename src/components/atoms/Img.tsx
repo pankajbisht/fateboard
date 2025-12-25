@@ -1,7 +1,16 @@
-import clsx from "clsx";
+import React from 'react';
+import clsx from 'clsx';
 
-export const Img = ({ src, height }) => {
-    return <>
-        <img src={src} className={clsx('h-' + height)} />
-    </>
-}
+type ImgProps = {
+    src: string;
+    height?: number | string;
+    alt?: string;
+    className?: string;
+};
+
+export const Img: React.FC<ImgProps> = ({ src, height, alt = '', className = '' }) => {
+    const hClass = typeof height === 'number' ? `h-${height}` : height || undefined;
+    return <img src={src} alt={alt} className={clsx(hClass, className)} />;
+};
+
+export default Img;

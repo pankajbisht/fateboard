@@ -1,19 +1,29 @@
-export function ColorPicker({ label, value, onChange, className = "" }) {
-  return (
-    <label className="inline-flex items-center gap-1.5 text-[11px] text-gray-600">
-      <span className="font-medium">{label}:</span>
+export function ColorPicker({
+    label,
+    value,
+    onChange,
+    className = '',
+}: {
+    label?: string;
+    value: string;
+    onChange?: (v: string) => void;
+    className?: string;
+}) {
+    return (
+        <label className="inline-flex items-center gap-1.5 text-[11px] text-gray-600">
+            {label ? <span className="font-medium">{label}:</span> : null}
 
-      <div
-        className="w-5 h-5 rounded-full p-[2px] border border-gray-200 shadow-sm"
-        style={{ backgroundColor: value }}
-      >
-        <input
-          type="color"
-          value={value}
-          onChange={(e) => onChange?.(e.target.value)}
-          className={`w-full h-full rounded-full opacity-0 cursor-pointer ${className}`}
-        />
-      </div>
-    </label>
-  );
+            <div
+                className="w-5 h-5 rounded-full p-[2px] border border-gray-200 shadow-sm"
+                style={{ backgroundColor: value }}
+            >
+                <input
+                    type="color"
+                    value={value}
+                    onChange={(e) => onChange?.(e.target.value)}
+                    className={`w-full h-full rounded-full opacity-0 cursor-pointer ${className}`}
+                />
+            </div>
+        </label>
+    );
 }
