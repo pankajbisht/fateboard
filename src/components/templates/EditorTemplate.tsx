@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react';
+
 type EditorTemplateProps = {
     header?: React.ReactNode;
     leftSidebar?: React.ReactNode;
@@ -5,6 +7,7 @@ type EditorTemplateProps = {
     canvasBoard: React.ReactNode;
     rightSidebar?: React.ReactNode;
     footer?: React.ReactNode;
+    rightPanel?: React.ReactNode;
 };
 
 const EditorTemplate = ({
@@ -14,6 +17,7 @@ const EditorTemplate = ({
     canvasBoard,
     rightSidebar,
     footer,
+    rightPanel,
 }: EditorTemplateProps) => {
     return (
         <div className="flex flex-col w-full h-screen bg-stone-300">
@@ -28,10 +32,13 @@ const EditorTemplate = ({
                 {undoRedoSidebar && <div className="flex-none">{undoRedoSidebar}</div>}
 
                 {/* Canvas - Centered */}
-                <div className="flex-1 flex justify-center items-center">{canvasBoard}</div>
+                <div className="flex-1 flex justify-center items-center overflow-hidden">
+                    {canvasBoard}
+                </div>
 
                 {/* Right Sidebar */}
                 {rightSidebar && <div className="flex-none">{rightSidebar}</div>}
+                {rightPanel && <div className="flex-none h-full">{rightPanel}</div>}
             </div>
 
             {/* Footer */}

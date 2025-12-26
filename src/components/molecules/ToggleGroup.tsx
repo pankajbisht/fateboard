@@ -3,7 +3,7 @@ import { Tooltip } from './Tooltip';
 
 export const ToggleGroup = ({ options, value = {}, onChange, single = false }) => {
     const [state, setState] = useState(value);
-    const size = 26;
+    const size = 20;
 
     const toggle = (key) => {
         let updated;

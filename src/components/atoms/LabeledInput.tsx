@@ -14,7 +14,7 @@ const LabeledInput = ({
     label,
     value = 0,
     min = 0,
-    max = 100,
+    max,
     step = 1,
     onChange,
     onKeyDown,

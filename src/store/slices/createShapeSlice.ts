@@ -18,7 +18,7 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => 
         if (!canvas) return;
 
         const { pageWidth, pageHeight, scale } = get();
-        const x = (pageWidth / 4) * scale;
+        const x = (pageWidth / 2) * scale;
         const y = (pageHeight / 2) * scale;
 
         const defaultPosition = {
@@ -32,6 +32,8 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => 
         };
 
         options = { ...defaultPosition, ...options };
+
+        console.log({ pageWidth, pageHeight, scale, options });
 
         let shape;
 

@@ -133,6 +133,56 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get, sto
         const cy = Number(transform.y) || 0;
         const width = Math.max(1, Number(transform.width) || 1);
         const height = Math.max(1, Number(transform.height) || 1);
+        const rotation = Number(transform.rotation) || 0;
+        const flipX = Boolean(transform.flipX);
+        const flipY = Boolean(transform.flipY);
+
+        // ✅ For images, apply scale instead of width/height
+        if (obj.type === 'image') {
+            const originalWidth = obj.width || 1;
+            const originalHeight = obj.height || 1;
+
+            obj.set({
+                left: cx,
+                top: cy,
+                scaleX: width / originalWidth,
+                scaleY: height / originalHeight,
+                angle: rotation,
+                flipX,
+                flipY,
+            });
+        } else {
+            // ✅ For other objects (textbox, rect, path)
+            obj.set({
+                left: cx,
+                top: cy,
+                width,
+                height,
+                angle: rotation,
+                flipX,
+                flipY,
+            });
+        }
+
+        obj.setCoords();
+        canvas.requestRenderAll();
+
+        set({ _isSyncing: false });
+    },
+
+    updateFabricFromStore1: () => {
+        console.log('.......');
+        const { transform, canvas } = get();
+        const obj = canvas?.getActiveObject();
+
+        if (!obj || get()._isSyncing) return;
+
+        set({ _isSyncing: true });
+
+        const cx = Number(transform.x) || 0;
+        const cy = Number(transform.y) || 0;
+        const width = Math.max(1, Number(transform.width) || 1);
+        const height = Math.max(1, Number(transform.height) || 1);
 
         const rotation = Number(transform.rotation) || 0;
         const flipX = Boolean(transform.flipX);

@@ -6,7 +6,8 @@ export const Palette = ({ scrollRef, fill, bgColors, colorsMap, onClick }) => {
         <>
             <div
                 ref={scrollRef}
-                className="h-10 bg-white w-full flex flex-wrap gap-0.01 max-h-64 overflow-y-auto"
+                className="bg-white w-full flex flex-wrap gap-0.01 overflow-y-auto"
+                style={{ height: 'calc(100vh - 56px - 40px - 90px)' }}
             >
                 {bgColors.flatMap((bg, idx) => {
                     return (

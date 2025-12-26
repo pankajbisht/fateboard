@@ -20,7 +20,7 @@ export const Swatch: React.FC<SwatchProp> = ({
             role="button"
             tabIndex={0}
             className={clsx(
-                'relative w-8 h-5 ml-px mb-px border border-stone-300 cursor-pointer',
+                'relative w-5 h-5 ml-px mb-px border border-stone-300 cursor-pointer',
                 bgColor,
                 className,
             )}

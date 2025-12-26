@@ -51,9 +51,9 @@ export const ColorSlider: React.FC<ColorSliderProps> = ({ scrollRef, className =
     };
 
     return (
-        <div className={clsx('flex flex-row items-center gap-1', className)}>
+        <div className={clsx('flex flex-col items-center', className)}>
             <button
-                className="h-10 w-8 flex items-center justify-center rounded hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-5 w-5 flex items-center justify-center hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 disabled={!canScrollUp}
                 onClick={() => scroll(-20)}
             >
@@ -61,7 +61,7 @@ export const ColorSlider: React.FC<ColorSliderProps> = ({ scrollRef, className =
             </button>
 
             <button
-                className="h-10 w-8 flex items-center justify-center rounded hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-5 w-5 flex items-center justify-center hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 disabled={!canScrollDown}
                 onClick={() => scroll(20)}
             >

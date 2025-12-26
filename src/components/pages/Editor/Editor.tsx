@@ -6,6 +6,7 @@ import { leftPanelConfig } from '../../config/panelConfig.tsx';
 import { Footer } from '../../organisms/footer';
 import { ContextMenu } from '../../organisms/ContextMenu.tsx';
 import { usePageTitle } from '../../../lib/utils/usePageTitle.ts';
+import { DockRoot } from '@/components/organisms/DraggableItem.tsx';
 
 const EditorPage = () => {
     usePageTitle('Draw | Fateboard');
@@ -17,10 +18,10 @@ const EditorPage = () => {
                 leftSidebar={<PanelManager config={leftPanelConfig} toolbarPosition="left" />}
                 // rightSidebar={<PanelManager config={rightPanelConfig} toolbarPosition="right" />}
                 // undoRedoSidebar={<PanelManager config={undoRedoPanelConfig} toolbarPosition="left" />}
+                rightPanel={<DockRoot />}
                 canvasBoard={<CanvasBoard />}
                 footer={<Footer />}
             />
-
             <ContextMenu />
         </div>
     );

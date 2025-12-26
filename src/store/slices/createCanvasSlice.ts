@@ -4,6 +4,7 @@ import { A4, FREEHAND } from '@lib/const/editor.ts';
 import { DEFAULT, LANDSCAPE, PAGE_SIZES, PORTRAIT } from '../../lib/const/editor';
 import { fateboardCanvasConfig } from '../../components/config/fateboard.config';
 import { MultiStopGradientTool } from '../../lib/utils/GradientTool';
+import { logger } from '@/lib/utils/logger';
 
 function enterTextEdit(group, text) {
     const canvas = group.canvas;
@@ -77,6 +78,8 @@ export const createCanvasSlice = (set, get, store) => ({
 
         const onChangeSelection = (e) => {
             const obj = e.target;
+
+            console.log('Don', e);
 
             set({ hasActiveShape: !!obj });
             get().setToolbar(e);
@@ -477,7 +480,8 @@ export const createCanvasSlice = (set, get, store) => ({
             obj?.customType === 'shape' ||
             e?.selected?.length > 0 ||
             obj?.type == 'group' ||
-            obj?.type == 'activeselection'
+            obj?.type == 'activeselection' ||
+            obj?.type == 'image'
         ) {
             set({
                 selectedObject: 'shape',

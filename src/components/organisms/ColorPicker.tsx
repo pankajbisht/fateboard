@@ -272,6 +272,39 @@ const colorsMap = {
     ],
 };
 
+function StrokeRemover({ onClick }: { onClick?: () => void }) {
+    return (
+        <div
+            role="button"
+            tabIndex={0}
+            onClick={onClick}
+            title="Remove stroke"
+            className="
+        relative w-5 h-5 ml-px mb-px
+        border border-dashed border-stone-400
+        cursor-pointer
+        group
+        hover:border-red-500
+        hover:bg-red-50
+        focus:outline-none
+      "
+        >
+            {/* Diagonal slash */}
+            <span
+                className="
+          absolute inset-0
+          before:absolute before:top-1/2 before:left-1/2
+          before:w-[120%] before:h-px
+          before:bg-stone-500
+          before:-translate-x-1/2 before:-translate-y-1/2
+          before:-rotate-45
+          group-hover:before:bg-red-500
+        "
+            />
+        </div>
+    );
+}
+
 export const ColorPicker = () => {
     const [bgColors, setBgColors] = useState([
         'red',
@@ -299,10 +332,11 @@ export const ColorPicker = () => {
     ]);
     const scrollRef = useRef(null);
 
-    const { handleColorChange, fill } = useStore();
+    const { handleColorChange, fill, setStrokeWidthN } = useStore();
 
     return (
-        <div className="flex flex-row items-start bg-white">
+        <div className="flex flex-col items-start bg-white w-6 flex-wrap">
+            <StrokeRemover onClick={() => setStrokeWidthN(0)} />
             <Palette
                 scrollRef={scrollRef}
                 fill={fill}

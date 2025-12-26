@@ -91,7 +91,7 @@ export function CanvasBoard() {
     };
 
     return (
-        <main className="bg-white shadow-lg relative" onContextMenu={onRightClick}>
+        <main className="bg-red-500 shadow-lg relative" onContextMenu={onRightClick}>
             <canvas ref={canvasRef} />
 
             {selectedObject?.type === 'textbox' && canvas && (

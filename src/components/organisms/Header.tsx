@@ -7,6 +7,8 @@ import Brand from '../atoms/Brand.tsx';
 import { TextToolsHeader } from './TextToolsHeader.tsx';
 import DropdownMenu, { DropdownMenuItem } from '../portals/DropdownMenu.tsx';
 import { Tooltip } from '../molecules/Tooltip.tsx';
+import { importFile } from '@/feature/import/index.ts';
+import { logger } from '@/lib/utils/logger.ts';
 
 export function Header() {
     const navigate = useNavigate();
@@ -16,6 +18,10 @@ export function Header() {
     const [show, setShow] = useState(false);
     const fileInputRef = useRef(null);
     const { selectedObject } = useStore();
+
+    logger.info('Clicked', {
+        selectedObject,
+    });
 
     const handleDownload = () => {
         if (!canvas) return;
@@ -101,19 +107,25 @@ export function Header() {
     };
 
     return (
-        <header className="fixed top-0 left-0 right-0 bg-stone-100 flex flex-row justify-between items-center z-50">
+        <header className="relative bg-stone-100 flex flex-row justify-between items-center z-50">
             <div className="flex flex-col w-full">
-                <div className="flex items-center justify-between w-full shadow-sm px-2">
+                <div className="flex items-center justify-between w-full shadow-xs px-2">
                     <Brand src="fate.svg" className="h-10 cursor-pointer hidden md:block" />
                     <Brand src="fateicon.svg" className="h-8 cursor-pointer md:hidden" />
 
                     <div className="flex gap-4 p-2">
                         <input
-                            type="file"
-                            accept=".fateboard"
                             ref={fileInputRef}
-                            className="hidden"
-                            onChange={handleUpload}
+                            type="file"
+                            accept=".png,.jpg,.jpeg,.webp,.svg,.fateboard"
+                            hidden
+                            onChange={async (e) => {
+                                if (!canvas) return;
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                await importFile(canvas, file);
+                                e.target.value = '';
+                            }}
                         />
 
                         <Tooltip position="bottom" content="Grid View">
@@ -173,7 +185,6 @@ export function Header() {
                 </div>
 
                 {selectedObject === 'shape' && <ShapeToolsHeader />}
-
                 {selectedObject && selectedObject?.type === 'textbox' && <TextToolsHeader />}
             </div>
         </header>

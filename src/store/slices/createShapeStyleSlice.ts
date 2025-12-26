@@ -2,7 +2,12 @@
 import * as fabric from 'fabric';
 import tailwindcolors from 'tailwindcss/colors';
 import paper from 'paper';
-import { applyBooleanOperation, BooleanEngine, exportPaperResult, extractStyle } from '@/lib/utils/BooleanEngine';
+import {
+    applyBooleanOperation,
+    BooleanEngine,
+    exportPaperResult,
+    extractStyle,
+} from '@/lib/utils/BooleanEngine';
 
 // Small helper used by boolean/path conversion code — lightweight shim until
 // full refactor of the path conversion helpers.
@@ -703,238 +708,406 @@ export const createShapeStyleSlice = (set, get, store) => ({
         });
     },
 
-
     booleanOperation: async (operation = 'union') => {
-      try {
-        const canvas = get().canvas;
-        const active = canvas.getActiveObject();
+        try {
+            const canvas = get().canvas;
+            const active = canvas.getActiveObject();
 
-        if (!active || active.type !== 'activeselection') {
-          alert('Select at least 2 objects');
-          return;
-        }
-
-        const objects = active.getObjects();
-        if (objects.length < 2) return;
-
-        if (!BooleanEngine[operation]) {
-          console.error('Invalid boolean operation:', operation);
-          return;
-        }
-
-        // --- Save center & style ---
-        const bounds = (active as any).getBoundingRect(true);
-        const center = { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 };
-        const style = extractStyle(objects[0]);
-        canvas.discardActiveObject();
-
-        // --- Setup Paper.js scope ---
-        const scope = new paper.PaperScope();
-        scope.setup(new scope.Size(5000, 5000));
-
-        // --- Convert Fabric objects to Paper Paths ---
-        let result: paper.Path[] = [];
-
-        objects.forEach(obj => {
-          const item = scope.project.importSVG(obj.toSVG(), {
-            expandShapes: true,
-            insert: false,
-          });
-
-          const rawPaths = convertStrokeToPath(item.children?.[0] ?? item);
-          const paths: paper.Path[] = Array.isArray(rawPaths)
-            ? rawPaths
-            : rawPaths
-              ? [rawPaths]
-              : [];
-
-          paths.forEach(path => {
-            if (!path || typeof path.divide !== 'function') return;
-
-            // First path → seed
-            if (result.length === 0) {
-              result.push(path);
-              return;
+            if (!active || active.type !== 'activeselection') {
+                alert('Select at least 2 objects');
+                return;
             }
 
-            // Splitter operations: divide / cut / xorSplit
-            // if (['divide', 'cut', 'xorSplit'].includes(operation)) {
-            //   const next: paper.Path[] = [];
-            //   result.forEach(base => {
-            //     const pieces = BooleanEngine[operation](base, path);
-            //     pieces.forEach(p => {
-            //       if (p && typeof p.divide === 'function') next.push(p);
-            //     });
-            //   });
-            //   result = next;
-            //   return;
-            // }
-            //
-            if (['divide', 'cut', 'xorSplit'].includes(operation)) {
-              const next: paper.Path[] = [];
-              result.forEach(base => {
-                let pieces = BooleanEngine[operation](base, path);
+            const objects = active.getObjects();
+            if (objects.length < 2) return;
 
-                // Normalize pieces to array
-                if (!pieces) return;
-                if (!Array.isArray(pieces)) pieces = [pieces];
+            if (!BooleanEngine[operation]) {
+                console.error('Invalid boolean operation:', operation);
+                return;
+            }
 
-                pieces.forEach(p => {
-                  if (p && typeof p.divide === 'function') next.push(p);
+            // --- Separate shapes and textboxes ---
+            const shapeObjects: fabric.Object[] = [];
+            const textObjects: fabric.Textbox[] = [];
+
+            objects.forEach((obj) => {
+                if (obj.type === 'textbox' || obj.type === 'text' || obj.type === 'i-text') {
+                    textObjects.push(obj as fabric.Textbox);
+                } else {
+                    shapeObjects.push(obj);
+                }
+            });
+
+            // Require at least two objects total
+            if (shapeObjects.length + textObjects.length < 2) {
+                alert('Select at least 2 objects for boolean operation.');
+                return;
+            }
+
+            canvas.discardActiveObject();
+
+            // --- Save center & style from first shape ---
+            const bounds = (active as any).getBoundingRect(true);
+            const center = { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 };
+            const style = extractStyle(shapeObjects[0]);
+
+            // --- Setup Paper.js scope ---
+            const scope = new paper.PaperScope();
+            scope.setup(new scope.Size(5000, 5000));
+            scope.activate();
+
+            let resultPaths: paper.Path[] = [];
+
+            // --- Convert all selected objects (shapes + text) to Paper.js paths and perform boolean ops ---
+            const allObjects = [...shapeObjects, ...textObjects];
+            for (const obj of allObjects) {
+                // For text objects, ensure we import their SVG representation so paper can expand glyphs to shapes
+                const svgSource = obj.toSVG();
+                const paperItem = scope.project.importSVG(svgSource, {
+                    expandShapes: true,
+                    insert: false,
                 });
-              });
-              result = next;
-              return;
+                const rawPaths = convertStrokeToPath(paperItem.children?.[0] ?? paperItem);
+                const paths: paper.Path[] = Array.isArray(rawPaths)
+                    ? rawPaths.filter((p) => p && typeof p.subtract === 'function')
+                    : rawPaths && typeof rawPaths.subtract === 'function'
+                    ? [rawPaths]
+                    : [];
+
+                for (const path of paths) {
+                    if (!path || typeof path.divide !== 'function') continue;
+
+                    // Seed first path
+                    if (resultPaths.length === 0) {
+                        resultPaths.push(path);
+                        continue;
+                    }
+
+                    // Split operations
+                    if (['divide', 'cut', 'xorSplit'].includes(operation)) {
+                        const next: paper.Path[] = [];
+                        resultPaths.forEach((base) => {
+                            let pieces = BooleanEngine[operation](base, path);
+                            if (!pieces) return;
+                            if (!Array.isArray(pieces)) pieces = [pieces];
+                            pieces.forEach((p) => {
+                                if (p && typeof p.divide === 'function') next.push(p);
+                            });
+                        });
+                        resultPaths = next;
+                        continue;
+                    }
+
+                    // Reducer operations
+                    if (
+                        [
+                            'union',
+                            'subtract',
+                            'intersect',
+                            'exclude',
+                            'smartUnion',
+                            'punch',
+                            'crop',
+                        ].includes(operation)
+                    ) {
+                        const reduced = BooleanEngine[operation](resultPaths[0], path);
+                        if (reduced) resultPaths = [reduced]; // keep only the latest reduced path
+                    }
+                }
             }
 
-
-            // Reducer operations: union / subtract / intersect / exclude / smartUnion / punch / crop
-            if (['union', 'subtract', 'intersect', 'exclude', 'smartUnion', 'punch', 'crop'].includes(operation)) {
-              const reduced = BooleanEngine[operation](result[0], path);
-              result = reduced ? [reduced] : [result[0]]; // keep previous if operation returned null
+            // --- Export Paper.js paths to Fabric objects ---
+            const resultParsed: fabric.Object[] = [];
+            if (resultPaths.length > 0) {
+                const rawSVG = resultPaths
+                    .map((p) => p.exportSVG({ asString: true, bounds: 'content', precision: 3 }))
+                    .join('\n');
+                const svg = `<svg xmlns="http://www.w3.org/2000/svg">${rawSVG}</svg>`;
+                const svgResult = await fabric.loadSVGFromString(svg);
+                svgResult.objects.forEach((obj) => {
+                    obj.set({
+                        ...style,
+                        strokeUniform: true,
+                        originX: 'center',
+                        originY: 'center',
+                    });
+                    obj.setPositionByOrigin(
+                        new fabric.Point(center.x, center.y),
+                        'center',
+                        'center',
+                    );
+                    resultParsed.push(obj);
+                });
             }
-          });
-        });
 
-        if (!result || result.length === 0) return;
+            // --- Remove original objects safely ---
+            canvas.remove(...objects);
 
-        // --- Export Paper.js paths to SVG ---
-        const rawSVG = result
-          .map(p => p.exportSVG({ asString: true, bounds: 'content', precision: 3 }))
-          .join('\n');
+            // --- Add new shapes ---
+            resultParsed.forEach((obj) => canvas.add(obj));
 
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg">${rawSVG}</svg>`;
-        const { objects: parsed } = await fabric.loadSVGFromString(svg);
-        if (!parsed || parsed.length === 0) return;
+            // --- Add textboxes back (fully editable) ---
+            textObjects.forEach((text) => canvas.add(text));
 
-        // --- Remove original objects ---
-        canvas.remove(...objects);
+            // --- Set active selection ---
+            const finalObjects = [...resultParsed, ...textObjects];
+            if (finalObjects.length > 1) {
+                const sel = new fabric.ActiveSelection(finalObjects, { canvas });
+                canvas.setActiveObject(sel);
+            } else if (finalObjects.length === 1) {
+                canvas.setActiveObject(finalObjects[0]);
+            }
 
-        // --- Add new Fabric objects with preserved style ---
-        parsed.forEach(obj => {
-          obj.set({ ...style, strokeUniform: true });
-          canvas.add(obj);
-        });
-
-        // --- Select all new objects ---
-        if (parsed.length > 1) {
-          const sel = new fabric.ActiveSelection(parsed, { canvas });
-          canvas.setActiveObject(sel);
-        } else {
-          canvas.setActiveObject(parsed[0]);
+            canvas.requestRenderAll();
+        } catch (err) {
+            console.error('Boolean operation error:', err);
+            alert('Boolean operation failed. Check console for details.');
         }
-
-        canvas.requestRenderAll();
-      } catch (err) {
-        console.error('Boolean operation error:', err);
-        alert('Boolean operation failed. Check console for details.');
-      }
     },
 
+    booleanOperationcd: async (operation = 'union') => {
+        try {
+            const canvas = get().canvas;
+            const active = canvas.getActiveObject();
 
+            if (!active || active.type !== 'activeselection') {
+                alert('Select at least 2 objects');
+                return;
+            }
+
+            const objects = active.getObjects();
+            if (objects.length < 2) return;
+
+            if (!BooleanEngine[operation]) {
+                console.error('Invalid boolean operation:', operation);
+                return;
+            }
+
+            // --- Save center & style ---
+            const bounds = (active as any).getBoundingRect(true);
+            const center = { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 };
+            const style = extractStyle(objects[0]);
+            canvas.discardActiveObject();
+
+            // --- Setup Paper.js scope ---
+            const scope = new paper.PaperScope();
+            scope.setup(new scope.Size(5000, 5000));
+
+            // --- Convert Fabric objects to Paper Paths ---
+            let result: paper.Path[] = [];
+
+            objects.forEach((obj) => {
+                let objToUse = obj;
+
+                // If text, convert to path first
+                if (obj.type === 'text' || obj.type === 'i-text') {
+                    objToUse = (obj as fabric.Text).toPath();
+                }
+
+                const item = scope.project.importSVG(objToUse.toSVG(), {
+                    expandShapes: true,
+                    insert: false,
+                });
+
+                const rawPaths = convertStrokeToPath(item.children?.[0] ?? item);
+                const paths: paper.Path[] = Array.isArray(rawPaths)
+                    ? rawPaths
+                    : rawPaths
+                    ? [rawPaths]
+                    : [];
+
+                paths.forEach((path) => {
+                    if (!path || typeof path.divide !== 'function') return;
+
+                    // First path → seed
+                    if (result.length === 0) {
+                        result.push(path);
+                        return;
+                    }
+
+                    // Splitter operations: divide / cut / xorSplit
+                    // if (['divide', 'cut', 'xorSplit'].includes(operation)) {
+                    //   const next: paper.Path[] = [];
+                    //   result.forEach(base => {
+                    //     const pieces = BooleanEngine[operation](base, path);
+                    //     pieces.forEach(p => {
+                    //       if (p && typeof p.divide === 'function') next.push(p);
+                    //     });
+                    //   });
+                    //   result = next;
+                    //   return;
+                    // }
+                    //
+                    if (['divide', 'cut', 'xorSplit'].includes(operation)) {
+                        const next: paper.Path[] = [];
+                        result.forEach((base) => {
+                            let pieces = BooleanEngine[operation](base, path);
+
+                            // Normalize pieces to array
+                            if (!pieces) return;
+                            if (!Array.isArray(pieces)) pieces = [pieces];
+
+                            pieces.forEach((p) => {
+                                if (p && typeof p.divide === 'function') next.push(p);
+                            });
+                        });
+                        result = next;
+                        return;
+                    }
+
+                    // Reducer operations: union / subtract / intersect / exclude / smartUnion / punch / crop
+                    if (
+                        [
+                            'union',
+                            'subtract',
+                            'intersect',
+                            'exclude',
+                            'smartUnion',
+                            'punch',
+                            'crop',
+                        ].includes(operation)
+                    ) {
+                        const reduced = BooleanEngine[operation](result[0], path);
+                        result = reduced ? [reduced] : [result[0]]; // keep previous if operation returned null
+                    }
+                });
+            });
+
+            if (!result || result.length === 0) return;
+
+            // --- Export Paper.js paths to SVG ---
+            const rawSVG = result
+                .map((p) => p.exportSVG({ asString: true, bounds: 'content', precision: 3 }))
+                .join('\n');
+
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg">${rawSVG}</svg>`;
+            const { objects: parsed } = await fabric.loadSVGFromString(svg);
+            if (!parsed || parsed.length === 0) return;
+
+            // --- Remove original objects ---
+            canvas.remove(...objects);
+
+            // --- Add new Fabric objects with preserved style ---
+            parsed.forEach((obj) => {
+                obj.set({ ...style, strokeUniform: true });
+                canvas.add(obj);
+            });
+
+            // --- Select all new objects ---
+            if (parsed.length > 1) {
+                const sel = new fabric.ActiveSelection(parsed, { canvas });
+                canvas.setActiveObject(sel);
+            } else {
+                canvas.setActiveObject(parsed[0]);
+            }
+
+            canvas.requestRenderAll();
+        } catch (err) {
+            console.error('Boolean operation error:', err);
+            alert('Boolean operation failed. Check console for details.');
+        }
+    },
 
     booleanOperationfinal: async (operation = 'union') => {
-      try {
-        const canvas = get().canvas;
-        const active = canvas.getActiveObject();
+        try {
+            const canvas = get().canvas;
+            const active = canvas.getActiveObject();
 
-        if (!active || active.type !== 'activeselection') {
-          alert('Select at least 2 objects');
-          return;
-        }
-
-        const objects = active.getObjects();
-        if (objects.length < 2) return;
-
-        if (!BooleanEngine[operation]) {
-          console.error('Invalid boolean operation:', operation);
-          return;
-        }
-
-        // --- SAVE CENTER POSITION ---
-        const bounds = (active as any).getBoundingRect(true);
-        const center = {
-          x: bounds.left + bounds.width / 2,
-          y: bounds.top + bounds.height / 2,
-        };
-
-        // --- SAVE STYLE ---
-        const style = extractStyle(objects[0]);
-
-        canvas.discardActiveObject();
-
-        // --- PAPER SCOPE ---
-        const scope = new paper.PaperScope();
-        scope.setup(new scope.Size(5000, 5000));
-
-        // --- APPLY BOOLEAN OPERATION ---
-        let result: paper.Item[] = [];
-
-        objects.forEach((obj, index) => {
-          const item = scope.project.importSVG(obj.toSVG(), {
-            expandShapes: true,
-            insert: false,
-          });
-
-          const paths = convertStrokeToPath(item.children?.[0] ?? item);
-          const pathArray = Array.isArray(paths) ? paths : [paths];
-
-          pathArray.forEach(path => {
-            if (!path) return;
-
-            if (result.length === 0) {
-              result.push(path);
-              return;
+            if (!active || active.type !== 'activeselection') {
+                alert('Select at least 2 objects');
+                return;
             }
 
-            // Use BooleanEngine operation
-            const out = BooleanEngine[operation](result[0], path);
+            const objects = active.getObjects();
+            if (objects.length < 2) return;
 
-            if (!out) return;
-
-            // Handle multiple paths (divide / cut / xorSplit)
-            if (Array.isArray(out)) {
-              result = out;
-            } else {
-              result = [out];
+            if (!BooleanEngine[operation]) {
+                console.error('Invalid boolean operation:', operation);
+                return;
             }
-          });
-        });
 
-        if (!result || result.length === 0) return;
+            // --- SAVE CENTER POSITION ---
+            const bounds = (active as any).getBoundingRect(true);
+            const center = {
+                x: bounds.left + bounds.width / 2,
+                y: bounds.top + bounds.height / 2,
+            };
 
-        // --- EXPORT PAPER PATHS TO SVG ---
-        const rawSVG = result
-          .map(p => p.exportSVG({ asString: true, bounds: 'content', precision: 3 }))
-          .join('\n');
+            // --- SAVE STYLE ---
+            const style = extractStyle(objects[0]);
 
-        const svg = `<svg xmlns="http://www.w3.org/2000/svg">${rawSVG}</svg>`;
+            canvas.discardActiveObject();
 
-        // --- LOAD INTO FABRIC ---
-        const { objects: parsed } = await fabric.loadSVGFromString(svg);
-        if (!parsed || parsed.length === 0) return;
+            // --- PAPER SCOPE ---
+            const scope = new paper.PaperScope();
+            scope.setup(new scope.Size(5000, 5000));
 
-        // --- CLEANUP OLD OBJECTS ---
-        canvas.remove(...objects);
+            // --- APPLY BOOLEAN OPERATION ---
+            let result: paper.Item[] = [];
 
-        // --- ADD NEW OBJECTS & SET STYLE ---
-        parsed.forEach(obj => {
-          obj.set({ ...style, strokeUniform: true });
-          canvas.add(obj);
-        });
+            objects.forEach((obj, index) => {
+                const item = scope.project.importSVG(obj.toSVG(), {
+                    expandShapes: true,
+                    insert: false,
+                });
 
-        // --- SELECT DIVIDED PIECES ---
-        const selection = new fabric.ActiveSelection(parsed, { canvas });
-        canvas.setActiveObject(selection);
+                const paths = convertStrokeToPath(item.children?.[0] ?? item);
+                const pathArray = Array.isArray(paths) ? paths : [paths];
 
-        canvas.requestRenderAll();
+                pathArray.forEach((path) => {
+                    if (!path) return;
 
-      } catch (err) {
-        console.error('Boolean operation failed:', err);
-        alert('Boolean operation failed. See console for details.');
-      }
+                    if (result.length === 0) {
+                        result.push(path);
+                        return;
+                    }
+
+                    // Use BooleanEngine operation
+                    const out = BooleanEngine[operation](result[0], path);
+
+                    if (!out) return;
+
+                    // Handle multiple paths (divide / cut / xorSplit)
+                    if (Array.isArray(out)) {
+                        result = out;
+                    } else {
+                        result = [out];
+                    }
+                });
+            });
+
+            if (!result || result.length === 0) return;
+
+            // --- EXPORT PAPER PATHS TO SVG ---
+            const rawSVG = result
+                .map((p) => p.exportSVG({ asString: true, bounds: 'content', precision: 3 }))
+                .join('\n');
+
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg">${rawSVG}</svg>`;
+
+            // --- LOAD INTO FABRIC ---
+            const { objects: parsed } = await fabric.loadSVGFromString(svg);
+            if (!parsed || parsed.length === 0) return;
+
+            // --- CLEANUP OLD OBJECTS ---
+            canvas.remove(...objects);
+
+            // --- ADD NEW OBJECTS & SET STYLE ---
+            parsed.forEach((obj) => {
+                obj.set({ ...style, strokeUniform: true });
+                canvas.add(obj);
+            });
+
+            // --- SELECT DIVIDED PIECES ---
+            const selection = new fabric.ActiveSelection(parsed, { canvas });
+            canvas.setActiveObject(selection);
+
+            canvas.requestRenderAll();
+        } catch (err) {
+            console.error('Boolean operation failed:', err);
+            alert('Boolean operation failed. See console for details.');
+        }
     },
-
 
     booleanOperation1: async (operation = 'union') => {
         const canvas = get().canvas;
@@ -982,18 +1155,19 @@ export const createShapeStyleSlice = (set, get, store) => ({
         const rawSVG = exportPaperResult(scope, result, operation);
         if (!rawSVG) return;
 
-        const { objects: parsed } = await fabric.loadSVGFromString(`<svg xmlns="http://www.w3.org/2000/svg">${rawSVG}</svg>`);
+        const { objects: parsed } = await fabric.loadSVGFromString(
+            `<svg xmlns="http://www.w3.org/2000/svg">${rawSVG}</svg>`,
+        );
         if (!parsed || parsed.length === 0) return;
 
-        parsed.forEach(obj => obj.set({ ...style, strokeUniform: true }));
+        parsed.forEach((obj) => obj.set({ ...style, strokeUniform: true }));
 
         canvas.remove(...objects);
-        parsed.forEach(obj => canvas.add(obj));
+        parsed.forEach((obj) => canvas.add(obj));
 
         const sel = new fabric.ActiveSelection(parsed, { canvas });
         canvas.setActiveObject(sel);
         canvas.requestRenderAll();
-
 
         // const result = applyBooleanOperation(scope, objects, operation);
 
@@ -1096,7 +1270,7 @@ export const createShapeStyleSlice = (set, get, store) => ({
     },
     xorSplitSelected(opts) {
         return get().booleanOperation('xorSplit', opts);
-    }
+    },
 });
 
 // export function applyBooleanOperation(
@@ -1171,8 +1345,6 @@ export const createShapeStyleSlice = (set, get, store) => ({
 
 //     return result;
 // }
-
-
 
 function getTopmostIndex(canvas, objects) {
     const stack = canvas.getObjects();

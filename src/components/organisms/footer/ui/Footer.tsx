@@ -7,7 +7,7 @@ export function Footer() {
     return (
         <footer className="flex flex-col">
             <ViewTool
-                colorTool={<ColorPicker />}
+                // colorTool={<small>ok</small>}
                 zoomTool={<FullScreen />}
                 strokeTool={<StrokeControls />}
             />

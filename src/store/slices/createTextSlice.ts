@@ -97,7 +97,7 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
         } = textObj;
 
         const { pageWidth, pageHeight, scale } = get();
-        const x = (pageWidth / 4) * scale;
+        const x = (pageWidth / 2) * scale;
         const y = (pageHeight / 2) * scale;
 
         const fabricText = new fabric.Textbox(text, {
