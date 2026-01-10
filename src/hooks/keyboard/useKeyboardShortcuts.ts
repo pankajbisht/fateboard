@@ -1,5 +1,19 @@
 import { useEffect } from 'react';
 import { useStore } from '@store';
+import { replaceToShortcut } from '@/lib/utils/isMac';
+
+function buildCombo(e: KeyboardEvent, drag = false) {
+    return [
+        e.metaKey ? 'Meta' : '',
+        e.ctrlKey ? 'Ctrl' : '',
+        e.shiftKey ? 'Shift' : '',
+        e.altKey ? 'Alt' : '',
+        drag ? 'Drag' : '',
+        e.code.startsWith('Key') ? e.code.replace('Key', '').toLowerCase() : e.code,
+    ]
+        .filter(Boolean)
+        .join('+');
+}
 
 export function useKeyboardShortcuts() {
     const commands = useStore((s) => s.commands);
@@ -19,20 +33,46 @@ export function useKeyboardShortcuts() {
             }
 
             // Build pressed combo string
-            const keyCombo = [
-                e.metaKey ? 'Meta' : '',
-                e.ctrlKey ? 'Ctrl' : '',
-                e.shiftKey ? 'Shift' : '',
-                e.altKey ? 'Alt' : '',
-                e.key.length === 1 ? e.key.toLowerCase() : e.key,
-            ]
-                .filter(Boolean)
-                .join('+');
+            // const keyCombo = [
+            //     e.metaKey ? 'Meta' : '',
+            //     e.ctrlKey ? 'Ctrl' : '',
+            //     e.shiftKey ? 'Shift' : '',
+            //     e.altKey ? 'Alt' : '',
+            //     e.key.length === 1 ? e.key.toLowerCase() : e.key,
+            // ]
+            //     .filter(Boolean)
+            //     .join('+');
+
+            const keyCombo = buildCombo(e);
 
             // Find matching command
-            const command = commands.find((c) =>
-                c.shortcut?.some((s) => s.toLowerCase() === keyCombo.toLowerCase()),
-            );
+            // const command = commands.find((c) =>
+            //     c.shortcut?.some((s) => {
+            //         console.log(s.toLowerCase(), keyCombo.toLowerCase())
+            //         return s.toLowerCase() === keyCombo.toLowerCase()
+            //     }),
+            // );
+            //
+            //
+
+            // if (e.metaKey && (e.code === 'Equal' || e.code === 'Minus')) {
+            //     e.preventDefault(); // may not fully stop browser zoom
+
+            //     runCommand(e.code === 'Equal' ? 'zoomIn' : 'zoomOut');
+            //     return;
+            // }
+
+            const command = commands.find((command) => {
+                // console.assert(
+                //     replaceToShortcut(command.shortcut) !== replaceToShortcut(keyCombo),
+                //     replaceToShortcut(command.shortcut),
+                //     replaceToShortcut(keyCombo),
+                // );
+
+                return replaceToShortcut(command.shortcut) === replaceToShortcut(keyCombo);
+            });
+
+            // console.log(commands, keyCombo)
 
             if (command) {
                 e.preventDefault(); // stop browser default (like Cmd+S)

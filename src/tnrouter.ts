@@ -1137,3 +1137,231 @@
 //    { id: "redo", icon: "fa-solid fa-rotate-right", position: "left", component: TransformPanel },
 //    { id: "undo", icon: "fa-solid fa-rotate-left", position: "left", component: LayerPanel },
 //];
+
+import { fabric } from 'fabric';
+import { nanoid } from 'nanoid';
+
+const initialValues = {
+    canvas: null,
+    objects: [],
+    _isSyncing: false,
+};
+
+export const advanceOperationSlice = (set, get, store) => ({
+    ...initialValues,
+
+    setCanvas: (canvas) => set({ canvas }),
+
+    addObject: (obj) => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        canvas.add(obj);
+        set({ objects: [...get().objects, obj] });
+    },
+
+    cloneObject: async (obj) => {
+        if (!obj) return null;
+        const cloned = await obj.clone();
+        cloned.set({ id: nanoid() });
+        return cloned;
+    },
+
+    removeObject: (obj) => {
+        const canvas = get().canvas;
+        if (!canvas || !obj) return;
+        canvas.remove(obj);
+        set({ objects: get().objects.filter((o) => o !== obj) });
+    },
+
+    // -------------------------------
+    // MOVE OBJECT
+    // -------------------------------
+    moveObject: (obj, offsetX = 0, offsetY = 0) => {
+        if (!obj) return;
+        obj.set({ left: obj.left + offsetX, top: obj.top + offsetY });
+        obj.canvas?.requestRenderAll();
+    },
+
+    // -------------------------------
+    // ROTATE OBJECT
+    // -------------------------------
+    rotateObject: (obj, angle = 0, absolute = false) => {
+        if (!obj) return;
+        obj.set({ angle: absolute ? angle : obj.angle + angle });
+        obj.canvas?.requestRenderAll();
+    },
+
+    // -------------------------------
+    // SCALE OBJECT
+    // -------------------------------
+    scaleObject: (obj, scaleX = 1, scaleY = scaleX) => {
+        if (!obj) return;
+        obj.set({ scaleX, scaleY });
+        obj.canvas?.requestRenderAll();
+    },
+
+    // -------------------------------
+    // MIRROR / FLIP
+    // -------------------------------
+    flipObject: (obj, horizontal = false, vertical = false) => {
+        if (!obj) return;
+        if (horizontal) obj.set('flipX', !obj.flipX);
+        if (vertical) obj.set('flipY', !obj.flipY);
+        obj.canvas?.requestRenderAll();
+    },
+
+    // -------------------------------
+    // Z-INDEX OPERATIONS
+    // -------------------------------
+    bringToFront: (obj) => obj.canvas?.bringToFront(obj),
+    sendToBack: (obj) => obj.canvas?.sendToBack(obj),
+    bringForward: (obj) => obj.canvas?.bringForward(obj),
+    sendBackward: (obj) => obj.canvas?.sendBackwards(obj),
+
+    // -------------------------------
+    // DUPLICATE + OFFSET
+    // -------------------------------
+    duplicateObject: async (obj, offset = 20) => {
+        if (!obj) return null;
+        const cloned = await get().cloneObject(obj);
+        cloned.set({
+            left: obj.left + offset,
+            top: obj.top + offset,
+        });
+        obj.canvas?.add(cloned);
+        return cloned;
+    },
+
+    // -------------------------------
+    // GROUP / UNGROUP
+    // -------------------------------
+    groupObjects: (objs) => {
+        const canvas = get().canvas;
+        if (!canvas || !objs?.length) return;
+
+        const group = new fabric.Group(objs, { id: nanoid() });
+        objs.forEach((o) => canvas.remove(o));
+        canvas.add(group);
+        return group;
+    },
+
+    ungroupObject: (group) => {
+        const canvas = get().canvas;
+        if (!canvas || !group || !(group instanceof fabric.Group)) return;
+
+        const items = group._objects;
+        canvas.remove(group);
+        items.forEach((o) => canvas.add(o));
+        return items;
+    },
+
+    // -------------------------------
+    // ALIGN OBJECTS
+    // -------------------------------
+    alignObjects: (objs, type = 'center') => {
+        if (!objs?.length) return;
+
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        switch (type) {
+            case 'left':
+                {
+                    const left = Math.min(...objs.map((o) => o.left));
+                    objs.forEach((o) => o.set({ left }));
+                }
+                break;
+            case 'right':
+                {
+                    const right = Math.max(...objs.map((o) => o.left + o.width * o.scaleX));
+                    objs.forEach((o) => o.set({ left: right - o.width * o.scaleX }));
+                }
+                break;
+            case 'center':
+                {
+                    const minX = Math.min(...objs.map((o) => o.left));
+                    const maxX = Math.max(...objs.map((o) => o.left + o.width * o.scaleX));
+                    const centerX = (minX + maxX) / 2;
+                    objs.forEach((o) => o.set({ left: centerX - (o.width * o.scaleX) / 2 }));
+                }
+                break;
+            case 'top':
+                {
+                    const top = Math.min(...objs.map((o) => o.top));
+                    objs.forEach((o) => o.set({ top }));
+                }
+                break;
+            case 'bottom':
+                {
+                    const bottom = Math.max(...objs.map((o) => o.top + o.height * o.scaleY));
+                    objs.forEach((o) => o.set({ top: bottom - o.height * o.scaleY }));
+                }
+                break;
+        }
+        canvas.requestRenderAll();
+    },
+
+    // -------------------------------
+    // DISTRIBUTE OBJECTS
+    // -------------------------------
+    distributeObjects: (objs, axis = 'horizontal') => {
+        if (!objs?.length) return;
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        objs.sort((a, b) => (axis === 'horizontal' ? a.left - b.left : a.top - b.top));
+
+        const start = axis === 'horizontal' ? objs[0].left : objs[0].top;
+        const end = axis === 'horizontal' ? objs[objs.length - 1].left : objs[objs.length - 1].top;
+        const spacing = (end - start) / (objs.length - 1);
+
+        objs.forEach((o, i) => {
+            if (i === 0) return;
+            if (axis === 'horizontal') o.set({ left: start + spacing * i });
+            else o.set({ top: start + spacing * i });
+        });
+
+        canvas.requestRenderAll();
+    },
+
+    // -------------------------------
+    // RANDOMIZE OBJECTS
+    // -------------------------------
+    randomizeObjects: (objs, options = {}) => {
+        if (!objs?.length) return;
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const { offsetX = 0, offsetY = 0, rotate = 0, scaleMin = 1, scaleMax = 1 } = options;
+
+        objs.forEach((o) => {
+            o.set({
+                left: o.left + (Math.random() - 0.5) * offsetX * 2,
+                top: o.top + (Math.random() - 0.5) * offsetY * 2,
+                angle: o.angle + (Math.random() - 0.5) * rotate * 2,
+                scaleX: o.scaleX * (scaleMin + Math.random() * (scaleMax - scaleMin)),
+                scaleY: o.scaleY * (scaleMin + Math.random() * (scaleMax - scaleMin)),
+            });
+        });
+
+        canvas.requestRenderAll();
+    },
+
+    // -------------------------------
+    // RESET TRANSFORM
+    // -------------------------------
+    resetTransform: (obj) => {
+        if (!obj) return;
+        obj.set({
+            left: obj.originalLeft || obj.left,
+            top: obj.originalTop || obj.top,
+            angle: 0,
+            scaleX: 1,
+            scaleY: 1,
+            flipX: false,
+            flipY: false,
+        });
+        obj.canvas?.requestRenderAll();
+    },
+});

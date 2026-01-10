@@ -12,6 +12,8 @@
 
 import { useState } from 'react';
 import { Tooltip } from './Tooltip';
+import IconButton from '../atoms/IconButton';
+import { useStore } from '@/store';
 
 /**
  * SingleToggleButton
@@ -29,6 +31,7 @@ export function SingleToggleButton({
     onChange,
 }) {
     const [active, setActive] = useState(initial);
+    const iconSize = useStore((state) => state.iconSize);
 
     const handleClick = () => {
         let next = active;
@@ -50,12 +53,14 @@ export function SingleToggleButton({
 
     return (
         <Tooltip content={active ? tooltipOn : tooltipOff} position="bottom">
-            <button
+            <IconButton
+                icon={renderIcon(active ? iconOn : iconOff)}
+                title={active ? iconOn : iconOff}
+                aria-label={active ? iconOn : iconOff}
                 onClick={handleClick}
+                size={iconSize}
                 style={{
-                    width: size,
-                    height: size,
-                    borderRadius: 6,
+                    color: active ? '#fff' : '#334155',
                     background: active
                         ? 'linear-gradient(#3b82f6, #2563eb)'
                         : 'linear-gradient(#ffffff, #f1f5f9)',
@@ -63,26 +68,46 @@ export function SingleToggleButton({
                     boxShadow: active
                         ? '0 2px 4px rgba(37,99,235,0.4)'
                         : '0 1px 2px rgba(0,0,0,0.12)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer',
-                    transition: 'all 140ms ease',
-                    color: active ? '#fff' : '#334155',
                 }}
-            >
-                <div
-                    style={{
-                        width: size * 0.6,
-                        height: size * 0.6,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                    }}
-                >
-                    {renderIcon(active ? iconOn : iconOff)}
-                </div>
-            </button>
+            />
         </Tooltip>
     );
+
+    // return (
+    //     <Tooltip content={active ? tooltipOn : tooltipOff} position="bottom">
+    //         <button
+    //             onClick={handleClick}
+    //             style={{
+    //                 width: size,
+    //                 height: size,
+    //                 borderRadius: 6,
+    //                 background: active
+    //                     ? 'linear-gradient(#3b82f6, #2563eb)'
+    //                     : 'linear-gradient(#ffffff, #f1f5f9)',
+    //                 border: '1px solid #cbd5e1',
+    //                 boxShadow: active
+    //                     ? '0 2px 4px rgba(37,99,235,0.4)'
+    //                     : '0 1px 2px rgba(0,0,0,0.12)',
+    //                 display: 'flex',
+    //                 alignItems: 'center',
+    //                 justifyContent: 'center',
+    //                 cursor: 'pointer',
+    //                 transition: 'all 140ms ease',
+    //                 color: active ? '#fff' : '#334155',
+    //             }}
+    //         >
+    //             <div
+    //                 style={{
+    //                     width: size * 0.6,
+    //                     height: size * 0.6,
+    //                     display: 'flex',
+    //                     alignItems: 'center',
+    //                     justifyContent: 'center',
+    //                 }}
+    //             >
+    //                 {renderIcon(active ? iconOn : iconOff)}
+    //             </div>
+    //         </button>
+    //     </Tooltip>
+    // );
 }

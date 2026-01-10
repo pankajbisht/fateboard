@@ -403,7 +403,7 @@ export class GradientEditor {
 
 export const createShapeStyleSlice = (set, get, store) => ({
     activePaint: 'fill',
-    fill: '#FFFFFF',
+    fill: 'rgba(0, 0, 0, 0)',
     stroke: '#000000',
     strokeWidth: 1,
     strokeStyle: 'solid',
@@ -1239,6 +1239,234 @@ export const createShapeStyleSlice = (set, get, store) => ({
         // // canvas.setActiveObject(finalPath);
         // canvas.remove(...objects);
         // canvas.requestRenderAll();
+    },
+
+    clipSelectedObject23: async () => {
+        const canvas = get().canvas;
+
+        const active = canvas.getActiveObject();
+
+        if (!active || active.type !== 'activeselection') {
+            alert('Select exactly 2 objects (frame shape + image/object)');
+            return;
+        }
+
+        const objects = active.getObjects();
+        if (objects.length !== 2) {
+            alert('Select exactly 2 objects');
+            return;
+        }
+
+        // Order: frame first, content second
+        const [frameShape, content] = objects;
+
+        // Clone shape for clipping
+        const clipPath = await fabric.util.object.clone(frameShape);
+        clipPath.set({
+            absolutePositioned: true,
+        });
+
+        // Resize content to fit frame
+        if ('scaleToWidth' in content) {
+            content.scaleToWidth(frameShape.width!);
+            content.scaleToHeight(frameShape.height!);
+        }
+
+        // Frame border (visible)
+        const border = await fabric.util.object.clone(frameShape);
+        border.set({
+            fill: 'transparent',
+            stroke: '#999',
+            strokeWidth: 1,
+            selectable: false,
+            evented: false,
+        });
+
+        // Create frame group
+        const frameGroup = new fabric.Group([content, border], {
+            left: frameShape.left,
+            top: frameShape.top,
+            clipPath,
+            subTargetCheck: true,
+        });
+
+        // Allow inner object movement
+        content.set({
+            selectable: true,
+            evented: true,
+        });
+
+        // Cleanup
+        canvas.remove(frameShape);
+        canvas.add(frameGroup);
+        canvas.discardActiveObject();
+        canvas.setActiveObject(frameGroup);
+        canvas.requestRenderAll();
+    },
+
+    clipSelectedObject: async () => {
+        const canvas = get().canvas;
+        const active = canvas.getActiveObject();
+
+        if (!active || active.type !== 'activeselection') {
+            alert('Select 2 objects (target + clip shape)');
+            return;
+        }
+
+        const objects = active.getObjects();
+        if (objects.length !== 2) {
+            alert('Select exactly 2 objects');
+            return;
+        }
+
+        const [obj1, obj2] = objects;
+        let target, clipper;
+
+        // Decide target (prefer image)
+        if (obj1.type === 'image') {
+            target = obj1;
+            clipper = obj2;
+        } else if (obj2.type === 'image') {
+            target = obj2;
+            clipper = obj1;
+        } else {
+            target = obj1;
+            clipper = obj2;
+        }
+
+        // Wait for image to load if needed
+        if (target.type === 'image' && !target.getElement().complete) {
+            await new Promise((resolve) => {
+                target.getElement().onload = resolve;
+            });
+        }
+
+        // Safe clone function
+        // const cloneObjectSafe = async (obj) => {
+        //     return new Promise((resolve) => {
+        //         if (!obj) return resolve(null);
+
+        //         try {
+        //             obj.clone((cloned) => resolve(cloned));
+        //         } catch (err) {
+        //             if (obj.type === 'image') {
+        //                 obj.cloneAsImage((clonedImg) => resolve(clonedImg));
+        //             } else {
+        //                 console.error('Failed to clone object:', obj.type, err);
+        //                 resolve(null);
+        //             }
+        //         }
+        //     });
+        // };
+
+        const cloneObjectSafe = async (obj) => {
+            return new Promise((resolve) => {
+                if (!obj) return resolve(null);
+
+                // Temporarily store properties that can break clone
+                const originalClip = obj.clipPath;
+                const originalAbsolute = obj.absolutePositioned;
+
+                try {
+                    // Remove them temporarily
+                    obj.clipPath = null;
+                    obj.absolutePositioned = false;
+
+                    obj.clone((cloned) => {
+                        // Restore original properties
+                        obj.clipPath = originalClip;
+                        obj.absolutePositioned = originalAbsolute;
+                        resolve(cloned);
+                    });
+                } catch (err) {
+                    // fallback for images
+                    if (obj.type === 'image') {
+                        obj.cloneAsImage((clonedImg) => resolve(clonedImg));
+                    } else {
+                        console.error('Failed to clone object:', obj.type, err);
+                        resolve(null);
+                    }
+                }
+            });
+        };
+
+        // For groups or ActiveSelection, clone children
+        const clonedClipper = await (async () => {
+            if (clipper.type === 'activeSelection' || clipper.type === 'group') {
+                const clones = await Promise.all(
+                    clipper._objects.map((obj) => cloneObjectSafe(obj)),
+                );
+                return new fabric.Group(clones, { originX: 'center', originY: 'center' });
+            } else {
+                return cloneObjectSafe(clipper);
+            }
+        })();
+
+        if (!clonedClipper) {
+            console.error('Cannot clone clipper, skipping clip.');
+            return;
+        }
+
+        // Ensure target dimensions exist
+        const targetWidth = target.width * target.scaleX || 100;
+        const targetHeight = target.height * target.scaleY || 100;
+
+        // Set clipper properties
+        clonedClipper.set({
+            absolutePositioned: true,
+            originX: 'center',
+            originY: 'center',
+            left: target.left + targetWidth / 2,
+            top: target.top + targetHeight / 2,
+        });
+
+        // Apply clip
+        target.set({ clipPath: clonedClipper });
+
+        // Remove original clipper
+        canvas.remove(clipper);
+
+        // Cleanup selection
+        canvas.discardActiveObject();
+        canvas.setActiveObject(target);
+        canvas.requestRenderAll();
+    },
+
+    clipSelectedObject1: () => {
+        const canvas = get().canvas;
+
+        const active = canvas.getActiveObject();
+
+        if (!active || active.type !== 'activeselection') {
+            alert('Select 2 objects (target + clip shape)');
+            return;
+        }
+
+        const objects = active.getObjects();
+        if (objects.length !== 2) {
+            alert('Select exactly 2 objects');
+            return;
+        }
+
+        const [target, clipper] = objects;
+
+        // Normalize clipper position
+        clipper.set({
+            absolutePositioned: true,
+            left: target.left,
+            top: target.top,
+        });
+
+        // Apply clip
+        target.set({
+            clipPath: clipper,
+        });
+
+        // Cleanup
+        canvas.remove(clipper);
+        canvas.discardActiveObject();
+        canvas.setActiveObject(target);
+        canvas.requestRenderAll();
     },
 
     unionSelected(opts) {

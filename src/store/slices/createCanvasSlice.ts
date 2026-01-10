@@ -5,6 +5,9 @@ import { DEFAULT, LANDSCAPE, PAGE_SIZES, PORTRAIT } from '../../lib/const/editor
 import { fateboardCanvasConfig } from '../../components/config/fateboard.config';
 import { MultiStopGradientTool } from '../../lib/utils/GradientTool';
 import { logger } from '@/lib/utils/logger';
+import type { FabricObjectWithMaster } from './createShapeSlice';
+import { useStore } from '..';
+// import { addPathNodes } from './createNodeEditorSlice';
 
 function enterTextEdit(group, text) {
     const canvas = group.canvas;
@@ -41,6 +44,196 @@ function enterTextEdit(group, text) {
     canvas.requestRenderAll();
 }
 
+function updateMaster(master: fabric.Object & { __instances?: fabric.Object[] }) {
+    if (!master.__instances || master.__instances.length === 0) return;
+
+    const props = {
+        // 🎨 Visual
+        fill: master.fill,
+        stroke: master.stroke,
+        strokeWidth: master.strokeWidth,
+        strokeDashArray: master.strokeDashArray,
+        strokeLineCap: master.strokeLineCap,
+        strokeLineJoin: master.strokeLineJoin,
+        strokeMiterLimit: master.strokeMiterLimit,
+        opacity: master.opacity,
+        shadow: master.shadow,
+        strokeUniform: master.strokeUniform,
+
+        // 🔄 Transform
+        scaleX: master.scaleX,
+        scaleY: master.scaleY,
+        angle: master.angle,
+        skewX: master.skewX,
+        skewY: master.skewY,
+        flipX: master.flipX,
+        flipY: master.flipY,
+
+        // 🧱 Shape specific
+        rx: (master as any).rx,
+        ry: (master as any).ry,
+        radius: (master as any).radius,
+        path: (master as any).path,
+    };
+
+    master.__instances.forEach((instance) => {
+        instance.set(props);
+        instance.setCoords();
+    });
+
+    master.canvas?.requestRenderAll();
+}
+
+// function switchCanvasMode(canvas: fabric.Canvas, mode: 'select' | 'node', activePath?: fabric.Path) {
+//     switch (mode) {
+//         case 'node':
+//             canvas.isDrawingMode = false;
+//             canvas.selection = false;       // disable group selection
+//             canvas.skipTargetFind = false;  // allow pointer events on nodes
+
+//             // Disable all objects
+//             // canvas.getObjects().forEach(obj => {
+//             //     obj.selectable = false;
+//             //     obj.evented = false;
+//             //     if (obj.type === 'path') {
+//             //         obj.lockMovementX = true;
+//             //         obj.lockMovementY = true;
+//             //     }
+//             // });
+
+//             canvas.getObjects().forEach(obj => {
+//                     if (obj.type === 'path') {
+//                         obj.selectable = false;
+//                         obj.evented = false;
+//                         obj.lockMovementX = true;
+//                         obj.lockMovementY = true;
+//                     }
+//                 });
+
+//             if (activePath) {
+//                 // Lock the path so it cannot move
+//                 activePath.selectable = false;
+//                 activePath.evented = false;
+//                 activePath.lockMovementX = true;
+//                 activePath.lockMovementY = true;
+
+//                 // Enter node editing: add connectors on top
+//                 useStore.getState().enterNodeMode(activePath);
+//             }
+//             break;
+
+//         case 'select':
+//         default:
+//             canvas.isDrawingMode = false;
+//             canvas.selection = true;
+//             canvas.skipTargetFind = false;
+
+//             // Enable all objects
+//             canvas.getObjects().forEach(obj => {
+//                 obj.selectable = true;
+//                 obj.evented = true;
+//                 if (obj.type === 'path') {
+//                     obj.lockMovementX = false;
+//                     obj.lockMovementY = false;
+//                 }
+//             });
+
+//             // Remove node connectors
+//             canvas.getObjects().forEach(obj => {
+//                 if (obj.type === 'circle' && obj.hoverCursor === 'pointer') {
+//                     canvas.remove(obj);
+//                 }
+//             });
+//             useStore.getState().exitNodeMode(canvas, activePath)
+
+//             break;
+//     }
+
+//     canvas.requestRenderAll();
+// }
+
+function switchCanvasMode(
+    canvas: fabric.Canvas,
+    mode: 'select' | 'node',
+    activePath?: fabric.Path,
+) {
+    const store = useStore.getState();
+
+    switch (mode) {
+        case 'node':
+            canvas.isDrawingMode = false;
+            canvas.selection = false; // disable group selection
+            canvas.skipTargetFind = false; // allow pointer events on nodes
+
+            // Disable all paths
+            canvas.getObjects().forEach((obj) => {
+                if (obj.type === 'path') {
+                    obj.selectable = false;
+                    obj.evented = false;
+                    obj.lockMovementX = true;
+                    obj.lockMovementY = true;
+                }
+            });
+
+            if (activePath) {
+                // Ensure the active path itself is locked
+                activePath.selectable = false;
+                activePath.evented = false;
+                activePath.lockMovementX = true;
+                activePath.lockMovementY = true;
+
+                // Use store to enter node mode
+                store.enterNodeMode?.();
+            }
+            break;
+
+        case 'select':
+        default:
+            canvas.isDrawingMode = false;
+            canvas.selection = true;
+            canvas.skipTargetFind = false;
+
+            // Enable all paths
+            canvas.getObjects().forEach((obj) => {
+                if (obj.type === 'path') {
+                    obj.selectable = true;
+                    obj.evented = true;
+                    obj.lockMovementX = false;
+                    obj.lockMovementY = false;
+                }
+            });
+
+            // Remove all node connectors (circles)
+            canvas.getObjects().forEach((obj) => {
+                if (obj.type === 'circle' && obj.hoverCursor === 'pointer') {
+                    canvas.remove(obj);
+                }
+            });
+
+            // Exit node mode in store
+            // store.exitNodeMode?.(canvas);
+
+            break;
+    }
+
+    canvas.requestRenderAll();
+}
+
+function normalizePathAfterEdit(path: fabric.Path) {
+    if (!path) return;
+
+    // 1️⃣ Recalculate raw path bounding box
+    path._setPathDimensions?.();
+
+    // 2️⃣ Include strokeWidth in bounds
+    const strokeOffset = path.strokeWidth ? path.strokeWidth / 2 : 0;
+    path.width += strokeOffset;
+    path.height += strokeOffset;
+
+    // 3️⃣ Update Fabric coords (selection box)
+    path.setCoords();
+}
+
 export const createCanvasSlice = (set, get, store) => ({
     canvas: null,
     activeTool: 'select', // "select", "pan", "draw"
@@ -60,18 +253,29 @@ export const createCanvasSlice = (set, get, store) => ({
     },
 
     init: async (el) => {
+        if (!el) return;
         if (get().canvas) return;
 
         const canvas = new fabric.Canvas(el, {
             backgroundColor: fateboardCanvasConfig.bg,
             preserveObjectStacking: true,
+            stopContextMenu: true,
+            fireRightClick: true,
         });
 
+        canvas.backgroundColor = fateboardCanvasConfig.bg;
+
+        get().load();
         get().saveState(); // undo/redo
         set({ canvas });
-        get().setPageFormat(FREEHAND, LANDSCAPE);
-        get().enablePan();
+        console.log(get().format, get().orientation);
+        get().setPageFormat(get().format, get().orientation);
         get().setBrush();
+        // get().toggleGrid();
+
+        console.log('Mode', get().mode);
+
+        const persist = () => db.local.set('drawJson', canvas.toJSON());
 
         const editor = new MultiStopGradientTool(canvas, () => get().fill);
         set({ geditor: editor });
@@ -79,11 +283,16 @@ export const createCanvasSlice = (set, get, store) => ({
         const onChangeSelection = (e) => {
             const obj = e.target;
 
-            console.log('Don', e);
+            // console.log('Don', e);
 
             set({ hasActiveShape: !!obj });
             get().setToolbar(e);
             get().updateFromFabric(obj);
+            // get().saveState();
+            // persist();
+            get().filterUnlockedSelection(e);
+            // get().setInputFromFabric(obj)
+            // get().syncTransformFromSelection();
             // if (obj) editor.attach(obj);
             // get().setBackgroundColor()
         };
@@ -166,181 +375,69 @@ export const createCanvasSlice = (set, get, store) => ({
             });
         });
 
-        canvas.on('object:modified', (e) => onChangeSelection(e));
-    },
+        // canvas.on('object:modified', (e) => onChangeSelection(e));
+        //
+        // canvas.on("object:modified", (e) => {
+        //     const obj = e.target as FabricObjectWithMaster;
+        //     if (!obj) return;
 
-    init1: async (el) => {
-        if (get().canvas) return;
+        //     // Only propagate if this object is a master
+        //     if (obj.__instances && obj.__instances.length > 0) {
+        //         // Sync relevant properties to clones
+        //         updateMaster(obj, {
+        //             fill: obj.fill,
+        //             stroke: obj.stroke,
+        //             scaleX: obj.scaleX,
+        //             scaleY: obj.scaleY,
+        //             angle: obj.angle,
+        //             flipX: obj.flipX,
+        //             flipY: obj.flipY,
+        //         });
+        //     }
+        // });
+        //
+        canvas.on('object:modified', (e) => {
+            const obj = e.target as any;
+            if (!obj) return;
 
-        const canvas = new fabric.Canvas(el, {
-            backgroundColor: '#fff',
-            preserveObjectStacking: false,
-        });
-
-        // --- Load persisted state ---
-        //    const saved = db.local.get("drawJson");
-        //    if (saved) {
-        //      set({ _isRestoring: true });
-        //      canvas.loadFromJSON(saved, () => {
-        //        canvas.getObjects().forEach(obj => obj.setCoords());
-        //        canvas.renderAll();
-        //        set({ _isRestoring: false });
-        //      });
-        //    } else {
-        get().saveState(); // only if nothing is saved
-        //    }
-
-        set({ canvas });
-        get().enablePan();
-        get().setPageFormat(A4, DEFAULT);
-        get().setBrush();
-
-        // --- Utilities ---
-        const persist = () => db.local.set('drawJson', canvas.toJSON());
-
-        const updateObjectState = (obj) => {
-            if (!obj || get()._isRestoring) return; // 🚫 skip if undo/redo in progress
-            get().updateFromFabric(obj);
-            get().saveState();
-            // persist();
-        };
-
-        const setToolbar = (obj, isEditing = false) => {
-            if (obj?.type === 'textbox') {
-                set({
-                    selectedObject: obj,
-                    showTextToolbar: true,
-                    isEditingText: isEditing,
-                });
-                get().syncFromObject(obj);
-            } else {
-                set({
-                    selectedObject: 'shape',
-                });
+            // Only propagate from master
+            if (obj.__instances && obj.__instances.length > 0) {
+                updateMaster(obj);
             }
-        };
-
-        const clearToolbar = () => {
-            set({
-                selectedObject: null,
-                showTextToolbar: false,
-                isEditingText: false,
-            });
-        };
-
-        // --- Handlers ---
-        const handlers = {
-            //      "object:added": (e) => updateObjectState(e.target),
-            //      "object:modified": (e) => updateObjectState(e.target),
-            'object:removed': (e) => updateObjectState(e.target),
-
-            'selection:created': (e) => setToolbar(e.target),
-            'selection:updated': (e) => setToolbar(e.target),
-            'selection:cleared': () => clearToolbar(),
-
-            'mouse:down': (e) => setToolbar(e.target),
-
-            //      "text:editing:entered": (e) => setToolbar(e.target, true),
-            //      "text:editing:exited": () => set({ isEditingText: false }),
-
-            // ✅ hide toolbar during move/scale
-            //      "before:transform": (e) => {
-            //        if (e.target?.type === "textbox") clearToolbar();
-            //      },
-            //      "object:moving": (e) => {
-            //        if (e.target?.type === "textbox") clearToolbar();
-            //      },
-            //      "object:scaling": (e) => {
-            //        if (e.target?.type === "textbox") clearToolbar();
-            //      },
-            //
-            //      // ✅ restore toolbar & save after move/scale
-            //      "after:transform": (e) => {
-            //        if (e.target?.type === "textbox") setToolbar(e.target);
-            //        e.target?.setCoords(); // 🔑 recalc
-            //        updateObjectState(e.target);
-            //      },
-            'path:created': (e) => {
-                const path = e.path; // the drawn stroke
-                console.log('New path created:', path);
-
-                // Save to history stack
-                get().updateFromFabric(path);
-                get().saveState();
-            },
-        };
-
-        // --- Attach Events Dynamically ---
-        Object.entries(handlers).forEach(([event, handler]) => {
-            canvas.on(event, handler);
         });
     },
 
-    setCanvas: (canvas) => {
-        set({ canvas });
+    filterUnlockedSelection: (e) => {
+        const canvas = get().canvas;
         if (!canvas) return;
 
-        // Freehand setup
-        canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-        canvas.freeDrawingBrush.color = '#000';
-        canvas.freeDrawingBrush.width = 2;
+        const selection = canvas.getActiveObject();
+        if (!selection || selection.type !== 'activeselection') return;
 
-        get().enablePan();
-        get().setPageFormat('Freehand', 'landscape');
+        // guard against infinite loop
+        if (selection._filtered) return;
 
-        // Freehand push state
-        canvas.on('path:created', () => get().pushState());
+        const objects = selection.getObjects();
+        const unlocked = objects.filter((o) => !o._locked);
 
-        // Object added
-        canvas.on('object:added', (e) => {
-            const obj = e.target || null;
-            if (obj) {
-                set({ selectedObject: obj });
-                get().syncFromObject(obj);
-            }
+        // nothing to filter
+        if (unlocked.length === objects.length) return;
+
+        // all locked → cancel selection
+        if (unlocked.length === 0) {
+            canvas.discardActiveObject();
+            canvas.requestRenderAll();
+            return;
+        }
+
+        const activeSelection = new fabric.ActiveSelection(unlocked, {
+            canvas,
         });
 
-        // Selection events
-        canvas.on('selection:created', (e) => {
-            const obj = e.selected?.[0] || null;
-            set({ selectedObject: obj });
-            get().syncFromObject(obj);
-        });
+        activeSelection._filtered = true;
 
-        canvas.on('selection:updated', (e) => {
-            const obj = e.selected?.[0] || null;
-            set({ selectedObject: obj });
-            get().syncFromObject(obj);
-        });
-
-        canvas.on('selection:cleared', () => {
-            set({ selectedObject: null });
-            get().syncFromObject(null);
-        });
-
-        // Modified
-        canvas.on('object:modified', (e) => {
-            const obj = e.target || null;
-            set({ selectedObject: obj });
-            get().syncFromObject(obj);
-        });
-
-        // Transform lifecycle
-        canvas.on('before:transform', (e) => {
-            if (e.target?.type === 'textbox') set({ showTextToolbar: false });
-        });
-
-        canvas.on('object:scaling', (e) => {
-            console.log('Scaling:', e.target?.type);
-        });
-
-        canvas.on('after:transform', (e) => {
-            const obj = e.target || null;
-            if (obj?.type === 'textbox') {
-                set({ showTextToolbar: true, selectedObject: obj });
-                get().syncFromObject(obj);
-            }
-        });
+        canvas.setActiveObject(activeSelection);
+        canvas.requestRenderAll();
     },
 
     setSelectedObject: () => {
@@ -352,24 +449,62 @@ export const createCanvasSlice = (set, get, store) => ({
         if (!canvas) return;
         set({ activeTool: tool });
 
+        const activeObject = canvas.getActiveObject();
+
         switch (tool) {
             case 'pan':
                 canvas.isDrawingMode = false;
                 canvas.defaultCursor = 'grab';
                 canvas.selection = false;
                 canvas.skipTargetFind = true;
+                get().enablePan();
+
+                // Remove nodes if any
+                get().nodes.forEach((n) => {
+                    if (n.connectorLine) canvas.remove(n.connectorLine);
+                    canvas.remove(n);
+                });
+                set({ nodes: [] });
                 break;
+
             case 'draw':
-                console.log('here');
                 canvas.isDrawingMode = true;
-                canvas.freeDrawingBrush.color = '#000'; // optional
+                canvas.freeDrawingBrush.color = '#000';
+                canvas.selection = false;
+                canvas.skipTargetFind = false;
+                // remove nodes
+                get().nodes.forEach((n) => {
+                    if (n.connectorLine) canvas.remove(n.connectorLine);
+                    canvas.remove(n);
+                });
+                set({ nodes: [] });
+                break;
+
+            case 'node':
+                // canvas.isDrawingMode = false;
+                // canvas.selection = false;        // disable group selection
+                // canvas.skipTargetFind = false;   // enable pointer events on nodes
+                // if (activeObject) get().enterNodeMode(activeObject);
+                // break;
+                //
+                console.log(get().setActiveTool);
+                switchCanvasMode(canvas, 'node', activeObject);
                 break;
             case 'select':
             default:
-                canvas.isDrawingMode = false;
-                canvas.defaultCursor = 'default';
-                canvas.selection = true;
-                canvas.skipTargetFind = false;
+                // canvas.isDrawingMode = false;
+                // canvas.defaultCursor = 'default';
+                // canvas.selection = true;        // enable object selection
+                // canvas.skipTargetFind = false;  // allow objects to be clicked
+
+                switchCanvasMode(canvas, 'select');
+
+                // Remove nodes if switching from node mode
+                // get().nodes.forEach((n) => {
+                //     if (n.connectorLine) canvas.remove(n.connectorLine);
+                //     canvas.remove(n);
+                // });
+                // set({ nodes: [] });
                 break;
         }
 
@@ -432,21 +567,6 @@ export const createCanvasSlice = (set, get, store) => ({
         });
     },
 
-    updateTextStyle: (styles) => {
-        const canvas = get().canvas;
-        const obj = get().selectedObject;
-        if (!canvas || !obj || obj.type !== 'textbox') return;
-
-        if (styles.fontSize) obj.set('fontSize', styles.fontSize);
-        if (styles.fill) obj.set('fill', styles.fill);
-        if (styles.bold !== undefined) obj.set('fontWeight', styles.bold ? 'bold' : 'normal');
-        if (styles.italic !== undefined) obj.set('fontStyle', styles.italic ? 'italic' : 'normal');
-        if (styles.underline !== undefined) obj.set('underline', styles.underline);
-
-        canvas.renderAll();
-        get().pushState();
-    },
-
     clearBoard: () => {
         const canvas = get().canvas;
         if (!canvas) return;
@@ -455,6 +575,19 @@ export const createCanvasSlice = (set, get, store) => ({
         canvas.clear();
         canvas.backgroundColor = '#FFF';
         canvas.requestRenderAll();
+    },
+
+    saveBoard: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const json = JSON.stringify(canvas.toJSON(['backgroundColor', 'customId']));
+        const blob = new Blob([json], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'drawing.fateboard'; // <-- changed extension here
+        link.click();
+        URL.revokeObjectURL(link.href);
     },
 
     clearToolbar: () => {

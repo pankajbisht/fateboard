@@ -26,6 +26,8 @@ export const ContextMenu = () => {
     // 3. Nothing to show
     if (finalItems.length === 0) return null;
 
+    console.log(finalItems);
+
     return (
         <>
             {/* backdrop */}
@@ -51,11 +53,11 @@ export const ContextMenu = () => {
                                 closeMenu();
                             }}
                             className="
-                flex w-full items-center justify-between
-                rounded-lg px-3 py-2 text-sm
-                hover:bg-gray-100
-                disabled:opacity-40
-              "
+                                flex w-full items-center justify-between
+                                rounded-lg px-3 py-2 text-sm
+                                hover:bg-gray-100
+                                disabled:opacity-40
+                            "
                         >
                             <span className="flex items-center gap-2">
                                 {item.icon}

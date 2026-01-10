@@ -20,29 +20,41 @@ const EditorTemplate = ({
     rightPanel,
 }: EditorTemplateProps) => {
     return (
-        <div className="flex flex-col w-full h-screen bg-stone-300">
+        // <div className="flex flex-col h-screen overflow-hidden">
+        //     {/* Header */}
+        //     {header && header}
+
+        //     {/* Middle (fills remaining height automatically) - ROW layout */}
+        //     <main className="flex flex-row flex-1 overflow-hidden">
+        //         {leftSidebar && leftSidebar}
+        //         {canvasBoard && <div className='flex-1'>{canvasBoard}</div>}
+        //         {rightPanel && rightPanel}
+        //     </main>
+
+        //     {/* Footer */}
+        //     {footer && footer}
+        // </div>
+        //
+        <div className="flex flex-col h-screen overflow-hidden">
             {/* Header */}
-            {header && <div className="flex-none">{header}</div>}
+            {header && header}
 
-            {/* Main Content */}
-            <div className="flex flex-1 overflow-hidden">
-                {/* Left Sidebar */}
-                {leftSidebar && <div className="flex-none">{leftSidebar}</div>}
+            {/* Middle */}
+            <main className="relative flex flex-1 overflow-hidden flex-none">
+                {/*{canvasBoard && <div className='flex-1'>{canvasBoard}</div>}*/}
+                {canvasBoard && canvasBoard}
+                {/* Right panel positioned absolutely on the right */}
+                {leftSidebar && leftSidebar}
 
-                {undoRedoSidebar && <div className="flex-none">{undoRedoSidebar}</div>}
-
-                {/* Canvas - Centered */}
-                <div className="flex-1 flex justify-center items-center overflow-hidden">
+                {/*<div className="w-full h-full">
                     {canvasBoard}
-                </div>
+                </div>*/}
 
-                {/* Right Sidebar */}
-                {rightSidebar && <div className="flex-none">{rightSidebar}</div>}
-                {rightPanel && <div className="flex-none h-full">{rightPanel}</div>}
-            </div>
+                {rightPanel && <div className="absolute top-0 right-0 h-full">{rightPanel}</div>}
+            </main>
 
             {/* Footer */}
-            {footer && <div className="flex-none">{footer}</div>}
+            {footer && footer}
         </div>
     );
 };

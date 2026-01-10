@@ -7,7 +7,8 @@ export const PORTRAIT = 'portrait';
 
 export const PAGE_SIZES = {
     Default: { w: 1024, h: 600 },
-    Freehand: { w: 1920, h: 1080 },
+    // Freehand: { w: 1920, h: 1080 },
+    Freehand: { w: 500, h: 400 },
     A4: { w: 794, h: 1123 },
     A5: { w: 794, h: 1123 },
     Letter: { w: 816, h: 1056 },

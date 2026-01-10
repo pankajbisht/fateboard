@@ -12,14 +12,155 @@ export interface ShapeSlice {
     createArrowShape: (obj: Record<string, any>) => import('fabric').Group;
 }
 
+function createPolygon1(sides, radius) {
+    return Array.from({ length: sides }, (_, i) => {
+        const angle = ((2 * Math.PI) / sides) * i - Math.PI / 2;
+        return {
+            x: radius * Math.cos(angle),
+            y: radius * Math.sin(angle),
+        };
+    });
+}
+
+// Generic polygon creator
+function createPolygon(sides, radius) {
+    return Array.from({ length: sides }, (_, i) => {
+        const angle = ((2 * Math.PI) / sides) * i - Math.PI / 2; // point-top
+        return {
+            x: radius * Math.cos(angle),
+            y: radius * Math.sin(angle),
+        };
+    });
+}
+
+// Star shape
+function createStar(points = 5, outerRadius = 50, innerRadius = 25) {
+    const result = [];
+    const step = Math.PI / points;
+    for (let i = 0; i < 2 * points; i++) {
+        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+        const angle = i * step - Math.PI / 2;
+        result.push({ x: radius * Math.cos(angle), y: radius * Math.sin(angle) });
+    }
+    return result;
+}
+
+// Diamond
+function createDiamond(width = 100, height = 60) {
+    return [
+        { x: 0, y: -height / 2 },
+        { x: width / 2, y: 0 },
+        { x: 0, y: height / 2 },
+        { x: -width / 2, y: 0 },
+    ];
+}
+
+// Arrow
+function createArrow(width = 100, height = 60) {
+    return [
+        { x: -width / 2, y: -height / 4 },
+        { x: 0, y: -height / 4 },
+        { x: 0, y: -height / 2 },
+        { x: width / 2, y: 0 },
+        { x: 0, y: height / 2 },
+        { x: 0, y: height / 4 },
+        { x: -width / 2, y: height / 4 },
+    ];
+}
+
+export interface FabricObjectWithMaster extends fabric.Object {
+    __master?: fabric.Object; // reference to the parent
+    __instances?: fabric.Object[]; // clones linked to this master
+}
+
+const radToDeg = (rad: number) => (rad * 180) / Math.PI;
+
+function circleArcToPath(
+    radius: number,
+    startDeg: number,
+    endDeg: number,
+    options?: {
+        clockwise?: boolean;
+        close?: boolean;
+    },
+) {
+    const { clockwise = true, close = true } = options || {};
+
+    // Fabric v6: degrees → radians
+    const start = fabric.util.degreesToRadians(startDeg);
+    const end = fabric.util.degreesToRadians(endDeg);
+
+    // Centered at (r, r)
+    const cx = radius;
+    const cy = radius;
+
+    const x1 = cx + radius * Math.cos(start);
+    const y1 = cy + radius * Math.sin(start);
+
+    const x2 = cx + radius * Math.cos(end);
+    const y2 = cy + radius * Math.sin(end);
+
+    // Arc flags
+    const delta = Math.abs(endDeg - startDeg);
+    const largeArcFlag = delta > 180 ? 1 : 0;
+    const sweepFlag = clockwise ? 1 : 0;
+
+    return `
+    M ${x1} ${y1}
+    A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${x2} ${y2}
+    ${close ? 'Z' : ''}
+  `;
+}
+
+function sectorToPath(
+    radius: number,
+    startDeg: number,
+    endDeg: number,
+    options?: {
+        clockwise?: boolean;
+    },
+) {
+    const { clockwise = true } = options || {};
+
+    const start = fabric.util.degreesToRadians(startDeg);
+    const end = fabric.util.degreesToRadians(endDeg);
+
+    const cx = radius;
+    const cy = radius;
+
+    const x1 = cx + radius * Math.cos(start);
+    const y1 = cy + radius * Math.sin(start);
+
+    const x2 = cx + radius * Math.cos(end);
+    const y2 = cy + radius * Math.sin(end);
+
+    const delta = Math.abs(endDeg - startDeg);
+    const largeArcFlag = delta > 180 ? 1 : 0;
+    const sweepFlag = clockwise ? 1 : 0;
+
+    return `
+    M ${cx} ${cy}
+    L ${x1} ${y1}
+    A ${radius} ${radius} 0 ${largeArcFlag} ${sweepFlag} ${x2} ${y2}
+    Z
+  `;
+}
+
 export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => ({
     addShape: (shapeType, options = {} as Record<string, any>) => {
         const canvas = get().canvas;
         if (!canvas) return;
 
         const { pageWidth, pageHeight, scale } = get();
-        const x = (pageWidth / 2) * scale;
-        const y = (pageHeight / 2) * scale;
+        let x = (pageWidth / 2) * scale;
+        let y = (pageHeight / 2) * scale;
+
+        console.log(x, y, pageWidth, pageHeight);
+
+        if (get().freehand) {
+            x = 800;
+            y = 400;
+        }
 
         const defaultPosition = {
             left: x,
@@ -29,59 +170,87 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => 
             selection: true,
             hasControls: true,
             customType: 'shape',
+            fill: 'rgba(0,0,0,0)', // real transparent
+            objectCaching: false,
         };
 
         options = { ...defaultPosition, ...options };
 
-        console.log({ pageWidth, pageHeight, scale, options });
+        // console.log({ pageWidth, pageHeight, scale, defaultPosition, options, shapeType });
 
         let shape;
 
         switch (shapeType) {
-            case 'rect':
-                shape = new fabric.Rect({
-                    width: 80,
-                    height: 80,
-                    fill: 'transparent',
-                    stroke: 'black',
+            case 'triangle':
+                shape = new fabric.Triangle({
                     ...options,
                 });
                 break;
 
+            case 'square':
+                shape = new fabric.Rect({
+                    ...options,
+                });
+                break;
+
+            case 'rect':
+                shape = new fabric.Rect({
+                    ...options,
+                });
+                break;
+
+            case 'polygon':
+            case 'pentagon':
+                shape = new fabric.Polygon(createPolygon(5, options.width / 2), options);
+                break;
+
+            case 'hexagon':
+                shape = new fabric.Polygon(createPolygon(6, options.width / 2), options);
+                break;
+
+            case 'semi-circle': {
+                const d = sectorToPath(options.radius, -180, 0);
+                shape = new fabric.Path(d, {
+                    ...options,
+                });
+
+                break;
+            }
+
+            case 'quadrant': {
+                const d = sectorToPath(options.radius, -90, 0);
+
+                shape = new fabric.Path(d, {
+                    ...options,
+                });
+
+                break;
+            }
+
+            case 'sector': {
+                const d = sectorToPath(options.radius, -60, 0);
+
+                shape = new fabric.Path(d, {
+                    ...options,
+                });
+
+                break;
+            }
+
             case 'circle':
                 shape = new fabric.Circle({
-                    radius: 48,
-                    fill: 'transparent',
-                    stroke: 'black',
                     ...options,
                 });
                 break;
 
             case 'capsule':
                 shape = new fabric.Rect({
-                    radius: 48,
-                    fill: 'transparent',
-                    stroke: 'black',
                     ...options,
                 });
                 break;
 
             case 'ellipse':
                 shape = new fabric.Ellipse({
-                    rx: 70,
-                    ry: 45,
-                    fill: 'transparent',
-                    stroke: 'black',
-                    ...options,
-                });
-                break;
-
-            case 'triangle':
-                shape = new fabric.Triangle({
-                    width: 100,
-                    height: 100,
-                    fill: 'transparent',
-                    stroke: 'black',
                     ...options,
                 });
                 break;
@@ -97,29 +266,32 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => 
                 });
                 break;
 
-            case 'polygon':
-            case 'pentagon':
+            case 'diamond':
                 shape = new fabric.Polygon(
-                    options.points || [
-                        { x: 0, y: 0 },
-                        { x: 50, y: 0 },
-                        { x: 25, y: 50 },
-                    ],
-                    { fill: 'transparent', stroke: 'black', ...options },
+                    createDiamond(options.width || 100, options.height || 60),
+                    options,
                 );
                 break;
 
-            case 'diamond':
-                shape = new fabric.Polygon(
-                    [
-                        { x: 0, y: options.height / 2 || 40 },
-                        { x: options.width / 2 || 40, y: 0 },
-                        { x: options.width || 80, y: options.height / 2 || 40 },
-                        { x: options.width / 2 || 40, y: options.height || 80 },
-                    ],
-                    { fill: 'transparent', stroke: 'black', ...options },
-                );
+            case 'quadratic': {
+                const startX = options.startX ?? 0;
+                const startY = options.startY ?? 0;
+                const controlX = options.controlX ?? (options.width || 100) / 2;
+                const controlY = options.controlY ?? -(options.height || 100) / 2;
+                const endX = options.endX ?? (options.width || 100);
+                const endY = options.endY ?? 0;
+
+                const pathStr = `M ${startX} ${startY} Q ${controlX} ${controlY} ${endX} ${endY}`;
+
+                shape = new fabric.Path(pathStr, {
+                    ...options,
+                    fill: 'transparent', // curves have no fill
+                    stroke: options.stroke || 'black',
+                    strokeWidth: options.strokeWidth || 2,
+                });
+
                 break;
+            }
 
             case 'star':
                 shape = new fabric.Polygon(
@@ -170,6 +342,7 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => 
                 return;
         }
 
+        (shape as FabricObjectWithMaster).__instances = [];
         canvas.add(shape);
         canvas.setActiveObject(shape);
         canvas.renderAll();

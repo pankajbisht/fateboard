@@ -80,6 +80,7 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
     setStrokeWidth: (val) => set({ strokeWidth: val }),
     fillColor: '#000000',
     setFillColor: (val) => set({ fillColor: val }),
+
     addText: (textObj: TextInput = {}) => {
         const canvas = get().canvas;
         if (!canvas) return;
@@ -90,8 +91,8 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
             bold = false,
             italic = false,
             underline = false,
-            fontFamily = 'Bubblegum Sans',
-            width = 300,
+            fontFamily = 'Arial',
+            width = 200,
             textColor = '#000000', // normal text color
             placeholderColor = '#9ca3af', // lighter gray for placeholder
         } = textObj;
@@ -114,7 +115,7 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
             width,
             editable: true,
             objectCaching: false,
-            padding: 6,
+            padding: 4,
             splitByGrapheme: true,
         });
 

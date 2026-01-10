@@ -12,16 +12,29 @@ export const TransformInput = ({ label, value, disabled, onChange, max }: Transf
     const handleChange = (e) => {
         const raw = e; // e.target.value
 
-        // Ensure empty input doesn't force NaN
+        // 🔥 Allow clearing
         if (raw === '') {
-            onChange(0);
+            onChange?.('');
             return;
         }
 
-        let num = parseInt(String(raw), 10);
-        if (isNaN(num)) num = 0;
+        const num = Number(raw);
+        if (Number.isNaN(num)) return;
 
-        onChange(num == 0 ? '' : num);
+        if (typeof max === 'number' && num > max) return;
+
+        onChange?.(num);
+
+        // // Ensure empty input doesn't force NaN
+        // if (raw === '') {
+        //     onChange(0);
+        //     return;
+        // }
+
+        // let num = parseInt(String(raw), 10);
+        // if (isNaN(num)) num = 0;
+
+        // onChange(num == 0 ? '' : num);
     };
 
     const onKeyDownHandler = (e) => {

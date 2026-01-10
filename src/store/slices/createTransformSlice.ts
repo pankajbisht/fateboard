@@ -20,7 +20,7 @@ export interface TransformSlice {
     updateFromFabric: (obj: fabric.Object) => void;
     updateFabricFromStore: () => void;
     updateFabricFromStore1: () => void;
-    updateFabricFromStore11: () => void;
+    updateFabricFromStore111: () => void;
     flipX: () => void;
     flipY: () => void;
     setTransform: (key: string, value: string) => void;
@@ -39,27 +39,42 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get, sto
         originX: 'center',
         centerY: 'center',
         id: 'c',
+        rx: 0,
+        ry: 0,
     },
     hasSelection: false,
     _isSyncing: false, // avoid circular updates
 
-    updateFromFabric: (obj) => {
+    updateFromFabric: (obj?: fabric.Object) => {
         if (!obj) {
-            set({ hasSelection: false }); // disable inputs
+            set({ hasSelection: false });
             return;
         }
 
         if (get()._isSyncing) return;
 
-        const next = {
-            x: round(obj.left),
-            y: round(obj.top),
-            width: round(obj.getScaledWidth?.() ?? (obj.width || 0) * (obj.scaleX || 1)),
-            height: round(obj.getScaledHeight?.() ?? (obj.height || 0) * (obj.scaleY || 1)),
-            rotation: round(obj.angle || 0),
-            flipX: obj.scaleX < 0,
-            flipY: obj.scaleY < 0,
+        const scaleX = obj.scaleX ?? 1;
+        const scaleY = obj.scaleY ?? 1;
+
+        const next: any = {
+            x: round(obj.left ?? 0),
+            y: round(obj.top ?? 0),
+            width: round(
+                obj.getScaledWidth ? obj.getScaledWidth() : (obj.width ?? 0) * Math.abs(scaleX),
+            ),
+            height: round(
+                obj.getScaledHeight ? obj.getScaledHeight() : (obj.height ?? 0) * Math.abs(scaleY),
+            ),
+            rotation: round(obj.angle ?? 0),
+            flipX: scaleX < 0,
+            flipY: scaleY < 0,
         };
+
+        if (obj.type === 'rect') {
+            const rect = obj as fabric.Rect;
+            next.rx = rect.rx ?? 0;
+            next.ry = rect.ry ?? 0;
+        }
 
         const prev = get().transform;
 
@@ -70,14 +85,16 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get, sto
             prev.height !== next.height ||
             prev.rotation !== next.rotation ||
             prev.flipX !== next.flipX ||
-            prev.flipY !== next.flipY;
+            prev.flipY !== next.flipY ||
+            prev.rx !== next.rx ||
+            prev.ry !== next.ry;
 
         if (changed) {
             set({ transform: next, hasSelection: true });
         }
     },
 
-    updateFabricFromStore1: () => {
+    updateFabricFromStore111: () => {
         const { transform, canvas } = get();
         const obj = canvas?.getActiveObject();
         if (!obj) return;
@@ -122,6 +139,8 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get, sto
     },
 
     updateFabricFromStore: () => {
+        console.log('here...');
+
         const { transform, canvas } = get();
         const obj = canvas?.getActiveObject();
 
@@ -260,6 +279,7 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get, sto
     },
 
     setTransform: (key, value) => {
+        console.log('here');
         set((state) => ({
             transform: { ...state.transform, [key]: value },
         }));
@@ -290,5 +310,64 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get, sto
             },
         }));
         requestAnimationFrame(() => get().updateFabricFromStore());
+    },
+
+    setRadius: (rx?: number, ry?: number) => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const active = canvas.getActiveObject();
+        if (!active) return;
+
+        const safeRx = rx ?? 0;
+        const safeRy = ry ?? 0;
+
+        const updateRect = (obj: fabric.Object) => {
+            if (obj.type === 'rect') {
+                obj.set({
+                    rx: safeRx,
+                    ry: safeRy,
+                });
+                obj.setCoords();
+            }
+        };
+
+        if (active.type === 'rect') {
+            updateRect(active);
+        } else if (active.type === 'activeselection') {
+            active.getObjects().forEach(updateRect);
+        }
+
+        canvas.requestRenderAll();
+
+        // ✅ Correct Zustand state update
+        set((state) => ({
+            ...state,
+            transform: {
+                ...state.transform,
+                rx: safeRx,
+                ry: safeRy,
+            },
+        }));
+    },
+
+    syncTransformFromSelection: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const active = canvas.getActiveObject();
+        if (!active) return;
+
+        if (active.type === 'rect') {
+            set({ transform: { rx: active.rx || 0, ry: active.ry || 0 } });
+        } else if (active.type === 'activeselection') {
+            // For groups, you can pick the first rect or set to 0
+            const firstRect = active.getObjects().find((o) => o.type === 'rect');
+            if (firstRect) {
+                set({ transform: { rx: firstRect.rx || 0, ry: firstRect.ry || 0 } });
+            } else {
+                set({ transform: { rx: 0, ry: 0 } });
+            }
+        }
     },
 });

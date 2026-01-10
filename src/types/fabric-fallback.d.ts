@@ -2,11 +2,11 @@
 // we iteratively improve typings. Remove this when fabric typings are
 // fully restored.
 declare module 'fabric' {
-  const fabric: any;
-  export = fabric;
+    const fabric: any;
+    export = fabric;
 }
 
 declare module 'fabric/**' {
-  const anyExport: any;
-  export default anyExport;
+    const anyExport: any;
+    export default anyExport;
 }

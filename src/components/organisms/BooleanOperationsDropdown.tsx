@@ -14,6 +14,7 @@ const options = [
     { label: 'Crop', value: 'crop' },
     { label: 'Smart Union', value: 'smartUnion' },
     { label: 'Xor Split', value: 'xorSplit' },
+    { label: 'Clip', value: 'clip' },
 ];
 
 export const BooleanOperationsDropdown = () => {
@@ -51,6 +52,9 @@ export const BooleanOperationsDropdown = () => {
                 break;
             case 'xorSplit':
                 store.xorSplitSelected({ fill: 'purple' });
+                break;
+            case 'clip':
+                store.clipSelectedObject({ fill: 'purple' });
                 break;
             default:
                 break;

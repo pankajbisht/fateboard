@@ -28,12 +28,14 @@ import clsx from 'clsx';
 import { useEffect, useState } from 'react';
 import { useStore } from '../../store';
 import { Tooltip } from '../molecules/Tooltip';
+import IconButton from '../atoms/IconButton';
 
 export function Toolbar({ tools, activeTool, onToolClick, position }) {
     const isLocked = useStore((state) => state.isActiveObjectLocked());
+    const iconSize = useStore((state) => state.iconSize);
 
     const positionClasses = {
-        left: 'fixed top-1/2 left-2 -translate-y-1/2 flex-col',
+        left: 'fixed top-1/2 left-6 -translate-y-1/2 flex-col',
         right: 'fixed top-1/2 right-2 -translate-y-1/2 flex-col',
         top: 'fixed top-0 left-1/2 -translate-x-1/2 flex-row',
         bottom: 'fixed bottom-0 left-1/2 -translate-x-1/2 flex-row',
@@ -51,6 +53,24 @@ export function Toolbar({ tools, activeTool, onToolClick, position }) {
                             ? 'fa-solid fa-lock'
                             : 'fa-solid fa-unlock'
                         : tool.icon;
+
+                // return (
+                //     <Tooltip key={tool.id} content={tool.tooltip} position={tool.position}>
+                //         <IconButton
+                //             icon={<i className={iconClass}></i>}
+                //             // title={action.label}
+                //             // aria-label={action.label}
+                //             onClick={(e) => onToolClick(tool.id, e)}
+                //             size={iconSize}
+                //             className={clsx(
+                //                 'flex justify-center items-center cursor-pointer h-8 w-8 p-2 rounded-md',
+                //                 activeTool === tool.id
+                //                     ? 'bg-blue-500 text-white hover:bg-blue-600'
+                //                     : 'hover:bg-stone-200',
+                //             )}
+                //         />
+                //     </Tooltip>
+                // );
 
                 return (
                     <Tooltip key={tool.id} content={tool.tooltip} position={tool.position}>

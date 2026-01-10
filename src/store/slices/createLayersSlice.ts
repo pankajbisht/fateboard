@@ -1,4 +1,5 @@
 import type { SliceCreator } from '../types';
+import * as fabric from 'fabric';
 import { Group } from 'fabric';
 
 export interface LayerSlice {
@@ -169,6 +170,46 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         const locked = !activeObject._locked;
 
         if (locked) {
+            activeObject.set({
+                lockMovementX: true,
+                lockMovementY: true,
+                lockScalingX: true,
+                lockScalingY: true,
+                lockRotation: true,
+                hasControls: false,
+                _locked: true,
+            });
+
+            applyLockStyle(activeObject);
+            addLockIcon(canvas, activeObject);
+        } else {
+            activeObject.set({
+                lockMovementX: false,
+                lockMovementY: false,
+                lockScalingX: false,
+                lockScalingY: false,
+                lockRotation: false,
+                hasControls: true,
+                _locked: false,
+            });
+
+            removeLockStyle(activeObject);
+            removeLockIcon(canvas, activeObject);
+        }
+
+        canvas.requestRenderAll();
+    },
+
+    toggleActiveObjectLock1: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const activeObject = canvas.getActiveObject();
+        if (!activeObject) return;
+
+        const locked = !activeObject._locked;
+
+        if (locked) {
             // Lock but keep selectable
             activeObject.lockMovementX = true;
             activeObject.lockMovementY = true;
@@ -191,6 +232,70 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         canvas.renderAll();
     },
 
+    lock: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const active = canvas.getActiveObject();
+        if (!active) return;
+
+        // 🔑 Normalize to array
+        const objects = active.type === 'activeselection' ? active.getObjects() : [active];
+
+        objects.forEach((obj) => {
+            if (obj._locked) return;
+
+            obj.set({
+                selectable: true,
+                evented: true,
+
+                lockMovementX: true,
+                lockMovementY: true,
+                lockScalingX: true,
+                lockScalingY: true,
+                lockRotation: true,
+                hasControls: false,
+                _locked: true,
+            });
+
+            applyLockStyle(obj);
+            addLockIcon(canvas, obj);
+        });
+
+        canvas.discardActiveObject();
+        canvas.requestRenderAll();
+    },
+
+    unlock: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const active = canvas.getActiveObject();
+        if (!active) return;
+
+        const objects = active.type === 'activeselection' ? active.getObjects() : [active];
+
+        objects.forEach((obj) => {
+            if (!obj._locked) return;
+
+            obj.set({
+                lockMovementX: false,
+                lockMovementY: false,
+                lockScalingX: false,
+                lockScalingY: false,
+                lockRotation: false,
+                hasControls: true,
+
+                _locked: false,
+            });
+
+            removeLockStyle(obj);
+            removeLockIcon(canvas, obj);
+        });
+
+        canvas.requestRenderAll();
+    },
+
     bringForward: () => {
         const canvas = get().canvas;
         if (!canvas) return;
@@ -198,11 +303,11 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         const activeObjects = canvas.getActiveObjects();
         if (!activeObjects.length) return;
 
-        activeObjects.forEach(obj => {
-          if (obj.type !== 'activeselection') {
-            const i = canvas.getObjects().indexOf(obj);
-            canvas.moveObjectTo(obj, i + 1);
-          }
+        activeObjects.forEach((obj) => {
+            if (obj.type !== 'activeselection') {
+                const i = canvas.getObjects().indexOf(obj);
+                canvas.moveObjectTo(obj, i + 1);
+            }
         });
 
         canvas.requestRenderAll();
@@ -215,48 +320,46 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         const activeObjects = canvas.getActiveObjects();
         if (!activeObjects.length) return;
 
-        activeObjects.forEach(obj => {
-          if (obj.type !== 'activeselection') {
-            const i = canvas.getObjects().indexOf(obj);
-            canvas.moveObjectTo(obj, Math.max(0, i - 1));
-          }
+        activeObjects.forEach((obj) => {
+            if (obj.type !== 'activeselection') {
+                const i = canvas.getObjects().indexOf(obj);
+                canvas.moveObjectTo(obj, Math.max(0, i - 1));
+            }
         });
 
         canvas.requestRenderAll();
     },
 
     bringToFront: () => {
-      const canvas = get().canvas;
-      if (!canvas) return;
+        const canvas = get().canvas;
+        if (!canvas) return;
 
-      const activeObjects = canvas.getActiveObjects();
-      if (!activeObjects.length) return;
+        const activeObjects = canvas.getActiveObjects();
+        if (!activeObjects.length) return;
 
-      activeObjects.forEach(obj => {
-
-          if (obj.type !== 'activeselection') {
-              canvas.moveObjectTo(obj, canvas.getObjects().length - 1);
+        activeObjects.forEach((obj) => {
+            if (obj.type !== 'activeselection') {
+                canvas.moveObjectTo(obj, canvas.getObjects().length - 1);
             }
-      });
+        });
 
-
-      canvas.requestRenderAll();
+        canvas.requestRenderAll();
     },
 
     sendToBack: () => {
-      const canvas = get().canvas;
-      if (!canvas) return;
+        const canvas = get().canvas;
+        if (!canvas) return;
 
-      const activeObjects = [...canvas.getActiveObjects()];
-      if (!activeObjects.length) return;
+        const activeObjects = [...canvas.getActiveObjects()];
+        if (!activeObjects.length) return;
 
-      canvas.getActiveObjects().forEach(obj => {
-        if (obj.type !== 'activeselection') {
-          canvas.moveObjectTo(obj, 0);
-        }
-      });
+        canvas.getActiveObjects().forEach((obj) => {
+            if (obj.type !== 'activeselection') {
+                canvas.moveObjectTo(obj, 0);
+            }
+        });
 
-      canvas.requestRenderAll();
+        canvas.requestRenderAll();
     },
 
     deleteObject: () => {
@@ -400,6 +503,21 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         });
     },
 
+    cut: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const activeObject = canvas.getActiveObject();
+        if (!activeObject) return;
+
+        activeObject.clone().then((cloned) => {
+            set({ clipboard: cloned });
+            canvas.remove(activeObject);
+            canvas.discardActiveObject();
+            canvas.requestRenderAll();
+        });
+    },
+
     paste: async () => {
         const canvas = get().canvas;
         const clipboard = get().clipboard;
@@ -415,7 +533,7 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
             customType: 'shape',
         });
 
-        if (clonedObj.type === 'activeSelection') {
+        if (clonedObj.type === 'activeselection') {
             clonedObj.canvas = canvas;
             clonedObj.forEachObject((obj) => canvas.add(obj));
             clonedObj.setCoords();
@@ -460,6 +578,135 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         canvas.setActiveObject(clonedObj);
         canvas.requestRenderAll();
     },
+
+    cloneer: async (offset = 20) => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const active = canvas.getActiveObject();
+        if (!active) return;
+
+        // Clone geometry
+        const clone = await active.clone();
+
+        // Offset
+        clone.left = (active.left ?? 0) + offset;
+        clone.top = (active.top ?? 0) + offset;
+
+        // Link to master
+        (clone as FabricObjectWithMaster).__master = active;
+        (active as FabricObjectWithMaster).__instances?.push(clone);
+
+        // Add to canvas and select
+        canvas.add(clone);
+        canvas.setActiveObject(clone);
+        canvas.requestRenderAll();
+    },
+
+    clone: async (offset = 20) => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        const active = canvas.getActiveObject() as any;
+        if (!active) return;
+
+        const clone = await active.clone();
+
+        clone.set({
+            left: (active.left ?? 0) + offset,
+            top: (active.top ?? 0) + offset,
+        });
+
+        // Link
+        active.__instances ??= [];
+        clone.__master = active;
+        active.__instances.push(clone);
+
+        canvas.add(clone);
+        canvas.setActiveObject(clone);
+        canvas.requestRenderAll();
+    },
+
+    clone1: async (offset = 20) => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        let active = canvas.getActiveObject();
+        if (!active) return;
+
+        // 1️⃣ Convert ActiveSelection → Group
+        if (active.type === 'activeselection') {
+            active = (active as fabric.ActiveSelection).toGroup();
+            canvas.discardActiveObject();
+            canvas.add(active);
+        }
+
+        try {
+            // 2️⃣ Clone parent (async)
+            let clonedParent = await active.clone();
+
+            // 3️⃣ If cloned parent has children but is not a Group, wrap it in a Group
+            if ((clonedParent as any)._objects && clonedParent.type !== 'group') {
+                console.log('her....');
+                const objects = (clonedParent as any)._objects;
+                clonedParent = new fabric.Group(objects, {
+                    left: (active.left ?? 0) + offset,
+                    top: (active.top ?? 0) + offset,
+                    scale: active.scale,
+                });
+            } else {
+                console.log('123her....');
+
+                // Offset if already a Group
+                clonedParent.set({
+                    left: (active.left ?? 0) + offset,
+                    top: (active.top ?? 0) + offset,
+                    scale: active.scale,
+                });
+            }
+
+            // 4️⃣ Add cloned object/group to canvas
+            canvas.add(clonedParent);
+            canvas.setActiveObject(clonedParent);
+            canvas.requestRenderAll();
+        } catch (err) {
+            console.error('Clone failed:', err);
+        }
+    },
+
+    // clone: async (offset = 20) => {
+    //   const canvas = get().canvas;
+    //   if (!canvas) return;
+
+    //   let active = canvas.getActiveObject();
+    //   if (!active) return;
+
+    //   // Convert ActiveSelection → Group
+    //   if (active.type === 'activeselection') {
+    //     active = (active as fabric.ActiveSelection).toGroup();
+    //     canvas.discardActiveObject();
+    //     canvas.add(active);
+    //   }
+
+    //   try {
+    //     // ✅ Use cloneAsync for native await support
+    //     const clonedParent = await active.clone();
+
+    //     // Offset the clone
+    //     clonedParent.set({
+    //       left: (active.left ?? 0) + offset,
+    //       top: (active.top ?? 0) + offset,
+    //       evented: true,
+    //     });
+
+    //     // Add to canvas
+    //     canvas.add(clonedParent);
+    //     canvas.setActiveObject(clonedParent);
+    //     canvas.requestRenderAll();
+    //   } catch (err) {
+    //     console.error('Clone failed:', err);
+    //   }
+    // },
 
     alignObjects: (key) => {
         const canvas = get().canvas;
@@ -639,3 +886,71 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         return obj.type === 'group' || Array.isArray(obj._objects);
     },
 });
+
+function applyLockStyle(obj) {
+    obj.set({
+        opacity: 0.6,
+        hoverCursor: 'not-allowed',
+    });
+}
+
+function removeLockStyle(obj) {
+    obj.set({
+        opacity: 1,
+        hoverCursor: 'move',
+    });
+}
+
+function addLockIcon(canvas, obj) {
+    const icon = new fabric.Text('\uf023', {
+        fontFamily: 'Font Awesome 5 Free',
+        fontWeight: '900', // solid style
+        fontSize: 12, // smaller size
+        fill: 'red', // locked color
+        selectable: false,
+        evented: false,
+        originX: 'center',
+        originY: 'center',
+        padding: 2, // adds spacing inside the text box (optional)
+        opacity: 0.6,
+    });
+
+    obj._lockIcon = icon;
+    canvas.add(icon);
+    updateLockIconPosition(obj);
+
+    obj.on('moving', () => updateLockIconPosition(obj));
+    obj.on('scaling', () => updateLockIconPosition(obj));
+    obj.on('rotating', () => updateLockIconPosition(obj));
+}
+
+function updateLockIconPosition(obj) {
+    if (!obj._lockIcon) return;
+
+    const rect = obj.getBoundingRect(true, true);
+
+    const padding = 4; // space from top-right edges
+
+    obj._lockIcon.set({
+        left: rect.left + rect.width - obj._lockIcon.width / 2 - padding,
+        top: rect.top + obj._lockIcon.height / 2 + padding,
+    });
+
+    obj._lockIcon.setCoords();
+}
+
+// function updateLockIconPosition(obj) {
+//     if (!obj._lockIcon) return;
+
+//     obj._lockIcon.set({
+//         left: obj.left + obj.getScaledWidth() / 2 - 10,
+//         top: obj.top - obj.getScaledHeight() / 2 + 10,
+//     });
+// }
+
+function removeLockIcon(canvas, obj) {
+    if (obj._lockIcon) {
+        canvas.remove(obj._lockIcon);
+        obj._lockIcon = null;
+    }
+}

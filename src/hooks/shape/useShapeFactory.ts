@@ -1,13 +1,28 @@
 import * as fabric from 'fabric';
 import { useStore } from '@store';
+import SemiCircle from '@/assets/icons/SemiCircle.tsx';
+import Quadrant from '@/assets/icons/Quadrant';
+import Sector from '@/assets/icons/Sector';
 
 export const shapesList = [
     {
-        type: 'rect',
-        icon: 'fa-regular fa-square',
+        type: 'triangle',
+        tooltip: 'Triangle',
+        icon: 'fas fa-play rotate-270',
         defaultProps: {
             width: 120,
-            height: 80,
+            height: 120,
+            fill: 'transparent',
+            stroke: 'black',
+        },
+    },
+    {
+        type: 'square',
+        tooltip: 'Square',
+        icon: 'fa-sharp fa-solid fa-square',
+        defaultProps: {
+            width: 120,
+            height: 120,
             rx: 0,
             ry: 0,
             fill: 'transparent',
@@ -15,72 +30,139 @@ export const shapesList = [
         },
     },
     {
-        type: 'circle',
-        icon: 'fa-solid fa-circle',
+        type: 'rect',
+        tooltip: 'Rectangle',
+        icon: 'fa-solid fa-square transform scale-x-120',
         defaultProps: {
-            radius: 48,
+            width: 200,
+            height: 120,
+            rx: 0,
+            ry: 0,
             fill: 'transparent',
             stroke: 'black',
         },
     },
     {
-        type: 'paper',
-        icon: 'fa-solid fa-square-pen',
+        type: 'pentagon',
+        tooltip: 'Pentagon',
+        icon: 'fa-sharp fa-solid fa-pentagon',
         defaultProps: {
-            with: 120,
-            height: 80,
+            width: 200,
+            height: 120,
+            rx: 0,
+            ry: 0,
             fill: 'transparent',
-            strock: 'black',
+            stroke: 'black',
         },
     },
     {
-        type: 'triangle',
-        icon: 'fas fa-play rotate-270',
+        type: 'hexagon',
+        tooltip: 'Hexagon',
+        icon: 'fa-sharp fa-solid fa-hexagon',
         defaultProps: {
-            width: 100,
-            height: 100,
+            width: 200,
+            height: 120,
+            rx: 0,
+            ry: 0,
+            stroke: 'black',
+            fill: 'rgba(0,0,0,0)', // real transparent
+            objectCaching: false,
+        },
+    },
+    {
+        type: 'semi-circle',
+        tooltip: 'Semi Circle',
+        // icon: 'fa-solid fa-circle-half-stroke',
+        icon: SemiCircle,
+        defaultProps: {
+            radius: 120,
+            fill: 'transparent',
+            stroke: 'black',
+        },
+    },
+    {
+        type: 'quadrant',
+        tooltip: 'Quadrant',
+        icon: Quadrant,
+        defaultProps: {
+            radius: 120,
+            fill: 'transparent',
+            stroke: 'black',
+        },
+    },
+    {
+        type: 'sector',
+        tooltip: 'Sector',
+        icon: Sector,
+        defaultProps: {
+            radius: 120,
+            fill: 'transparent',
+            stroke: 'black',
+        },
+    },
+    {
+        type: 'circle',
+        tooltip: 'Circle',
+        icon: 'fa-sharp fa-solid fa-circle',
+        defaultProps: {
+            radius: 60,
             fill: 'transparent',
             stroke: 'black',
         },
     },
     {
         type: 'ellipse',
-        icon: 'fa-solid fa-circle transform scale-x-120',
+        tooltip: 'Ellipse',
+        icon: 'fa-regular fa-circle transform scale-x-120',
         defaultProps: {
-            rx: 70,
-            ry: 45,
+            rx: 100,
+            ry: 60,
             fill: 'transparent',
             stroke: 'black',
         },
     },
     {
         type: 'line',
+        tooltip: 'Line',
         icon: 'fa-solid fa-slash',
         defaultProps: {
             strokeWidth: 2,
             stroke: 'black',
         },
     },
-    // New shapes
     {
-        type: 'polygon',
-        icon: 'fa-solid fa-caret-up', // example FA icon
+        type: 'paper',
+        tooltip: 'Paper',
+        icon: 'fa-solid fa-square-pen',
         defaultProps: {
-            points: [
-                { x: 50, y: 0 },
-                { x: 100, y: 50 },
-                { x: 75, y: 100 },
-                { x: 25, y: 100 },
-                { x: 0, y: 50 },
-            ],
+            with: 120,
+            height: 60,
             fill: 'transparent',
-            stroke: 'black',
-            strokeWidth: 2,
+            strock: 'black',
         },
     },
+    // New shapes
+    // {
+    //     type: 'polygon',
+    //     tooltip: 'Polygon',
+    //     icon: 'fa-solid fa-caret-up', // example FA icon
+    //     defaultProps: {
+    //         points: [
+    //             { x: 50, y: 0 },
+    //             { x: 100, y: 50 },
+    //             { x: 75, y: 100 },
+    //             { x: 25, y: 100 },
+    //             { x: 0, y: 50 },
+    //         ],
+    //         fill: 'transparent',
+    //         stroke: 'black',
+    //         strokeWidth: 2,
+    //     },
+    // },
     {
         type: 'star',
-        icon: 'fa-solid fa-star',
+        tooltip: 'Star',
+        icon: 'fa-regular fa-star',
         defaultProps: {
             numPoints: 5,
             innerRadius: 20,
@@ -92,6 +174,7 @@ export const shapesList = [
     },
     {
         type: 'arrow',
+        tooltip: 'Arrow',
         icon: 'fa-solid fa-arrow-up',
         defaultProps: {
             width: 120,
@@ -102,34 +185,36 @@ export const shapesList = [
             headLength: 15, // optional for Fabric arrow plugin
         },
     },
-    {
-        type: 'diamond',
-        icon: 'fa-solid fa-gem', // approximate FA icon
-        defaultProps: {
-            width: 80,
-            height: 80,
-            fill: 'transparent',
-            stroke: 'black',
-            strokeWidth: 2,
-            angle: 45,
-        },
-    },
-    {
-        type: 'pentagon',
-        icon: 'fa-solid fa-star-half-stroke', // closest FA icon
-        defaultProps: {
-            points: [
-                { x: 50, y: 0 },
-                { x: 95, y: 38 },
-                { x: 78, y: 90 },
-                { x: 22, y: 90 },
-                { x: 5, y: 38 },
-            ],
-            fill: 'transparent',
-            stroke: 'black',
-            strokeWidth: 2,
-        },
-    },
+    // {
+    //     type: 'diamond',
+    //     tooltip: 'Diamond',
+    //     icon: 'fa-solid fa-gem', // approximate FA icon
+    //     defaultProps: {
+    //         width: 80,
+    //         height: 80,
+    //         fill: 'transparent',
+    //         stroke: 'black',
+    //         strokeWidth: 2,
+    //         angle: 45,
+    //     },
+    // },
+    // {
+    //     type: 'pentagon',
+    //     tooltip: 'pentagon',
+    //     icon: 'fa-solid fa-star-half-stroke', // closest FA icon
+    //     defaultProps: {
+    //         points: [
+    //             { x: 50, y: 0 },
+    //             { x: 95, y: 38 },
+    //             { x: 78, y: 90 },
+    //             { x: 22, y: 90 },
+    //             { x: 5, y: 38 },
+    //         ],
+    //         fill: 'transparent',
+    //         stroke: 'black',
+    //         strokeWidth: 2,
+    //     },
+    // },
 ];
 
 export const useShapeFactory = () => {

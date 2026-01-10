@@ -1,11 +1,16 @@
+import { useStore } from '@/store';
 import { useState, useEffect } from 'react';
 
 export function Fullscreen({ canvas }) {
     const [isFull, setIsFull] = useState(false);
-    const [originalSize, setOriginalSize] = useState({ width: 800, height: 500 });
+    const { w, h } = useStore((s) => s.pageFormat);
+
+    const [originalSize, setOriginalSize] = useState({ width: w, height: h });
 
     const toggleFullScreen = () => {
         if (!canvas) return;
+
+        console.log({ width: canvas.width, height: canvas.height });
 
         const canvasEl = canvas.lowerCanvasEl;
         if (!document.fullscreenElement) {

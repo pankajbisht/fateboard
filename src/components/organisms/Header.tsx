@@ -184,8 +184,11 @@ export function Header() {
                     </div>
                 </div>
 
-                {selectedObject === 'shape' && <ShapeToolsHeader />}
-                {selectedObject && selectedObject?.type === 'textbox' && <TextToolsHeader />}
+                {/*<section className='bg-red-300 h-8'>
+                    {selectedObject === 'shape' && <ShapeToolsHeader />}
+                    {selectedObject && selectedObject?.type === 'textbox' && <TextToolsHeader />}
+                </section>
+*/}
             </div>
         </header>
     );

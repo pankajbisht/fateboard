@@ -104,4 +104,14 @@ export const createUISlice: SliceCreator<UiSlice> = (set, get, store) => ({
         canvas.setViewportTransform(vpt);
         canvas.requestRenderAll();
     },
+
+    actualSize: () => {
+        const canvas = get().canvas;
+        if (!canvas) return;
+
+        canvas.setZoom(1);
+
+        canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
+        canvas.requestRenderAll();
+    },
 });

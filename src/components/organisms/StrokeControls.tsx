@@ -1,12 +1,11 @@
 import clsx from 'clsx';
 import { useStore } from '../../store';
 import { Dropdown } from '../atoms/Dropdown';
-import { STilte, Tile, WTilte } from '../molecules/Tile';
+import { STilte, Tile } from '../molecules/Tile';
 import { OpacityControl } from '../molecules/OpacityControl';
 import { TransformInput } from '../molecules/TransformInput';
 import { useState } from 'react';
 import { SingleToggleButton } from '../molecules/SingleToggleButton';
-import FlipIcon from '../../assets/icons/flip';
 import { LinearGradientIcon } from '../../assets/icons/LinearGradientIcon';
 import { RadialGradientIcon } from '../../assets/icons/RadialGradientIcon';
 import { GradientToolIcon } from '../../assets/icons/GradientToolIcon';
@@ -24,13 +23,13 @@ const ShadowDropdown = ({ disabled }) => {
     const removeShadow = useStore((s) => s.removeShadow);
 
     const value = activeShadow
-        ? (Object.entries(SHADOW_PRESETS).find(
+        ? Object.entries(SHADOW_PRESETS).find(
               ([, preset]) =>
                   preset.blur === activeShadow.blur &&
                   preset.offsetX === activeShadow.offsetX &&
                   preset.offsetY === activeShadow.offsetY &&
                   preset.color === activeShadow.color,
-          )?.[0] ?? 'custom')
+          )?.[0] ?? 'custom'
         : 'none';
 
     return (
@@ -59,7 +58,6 @@ export function StrokeControls() {
         strokeWidth,
         activePaint,
         setActivePaint,
-        setStroke,
         setStrokeWidthN,
         opacity,
         setOpacity,
@@ -68,17 +66,11 @@ export function StrokeControls() {
         strokeStyle,
         setStrokeStyle,
         addShadow,
-        applyShadowPreset,
         geditor,
     } = useStore();
 
-    const [active, setActive] = useState(false);
-
     const canvas = useStore((s) => s.canvas);
-
     const activeObject = canvas?.getActiveObject();
-    const activeBlur = activeObject?.shadow?.blur;
-
     const isFillActive = activePaint === 'fill';
     const isStrokeActive = activePaint === 'stroke';
 
@@ -87,28 +79,13 @@ export function StrokeControls() {
         setStrokeWidthN(value);
     };
 
-    const handleShadow = () => {
-        addShadow({
-            color: 'rgba(0,0,0,0.25)',
-            blur: 18,
-            offsetX: 6,
-            offsetY: 6,
-        });
-    };
-
-    const shadowOptions = [
-        { label: 'None', value: 'none' },
-        ...Object.keys(SHADOW_PRESETS).map((key) => ({
-            label: key.charAt(0).toUpperCase() + key.slice(1),
-            value: key,
-        })),
-    ];
-
-    const value =
-        Object.entries(SHADOW_PRESETS).find(([, v]) => v.blur === activeBlur)?.[0] ?? 'none';
-
     return (
-        <div className="flex flex-row justify-center items-center gap-5 bg-white">
+        <div
+            className={clsx(
+                'flex flex-row justify-center items-center gap-5 bg-white',
+                !activeObject && 'pointer-events-none opacity-50',
+            )}
+        >
             {/* Fill / Stroke Tiles */}
             <div className="flex flex-col gap-2">
                 <Tile

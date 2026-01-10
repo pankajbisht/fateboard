@@ -25,7 +25,9 @@ function ImageSlider({ images }: { images: string[] }) {
                 {images.map((_, i) => (
                     <span
                         key={i}
-                        className={`h-2 w-2 rounded-full ${i === index ? 'bg-blue-600' : 'bg-gray-300'}`}
+                        className={`h-2 w-2 rounded-full ${
+                            i === index ? 'bg-blue-600' : 'bg-gray-300'
+                        }`}
                     />
                 ))}
             </div>

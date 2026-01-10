@@ -5,6 +5,39 @@ import { ColorPicker } from '../atoms/ColorPicker.tsx';
 import { Select } from '../atoms/Select.tsx';
 import { NumberInput } from '../atoms/NumberInput.tsx';
 import { ToggleGroup } from '../molecules/ToggleGroup.tsx';
+import Dropdown from '../atoms/Dropdown.tsx';
+
+const FontSizeDropdown = ({ value, options, handleApply, className = '' }) => {
+    return (
+        <Dropdown
+            value={value}
+            options={options}
+            className={className}
+            onChange={(selected) => {
+                handleApply?.(selected);
+            }}
+        />
+    );
+};
+
+const options = [
+    { label: '8px', value: 8 },
+    { label: '10px', value: 10 },
+    { label: '12px', value: 12 },
+    { label: '14px', value: 14 },
+    { label: '16px', value: 16 },
+    { label: '18px', value: 18 },
+    { label: '20px', value: 20 },
+    { label: '24px', value: 24 },
+    { label: '28px', value: 28 },
+    { label: '32px', value: 32 },
+    { label: '36px', value: 36 },
+    { label: '48px', value: 48 },
+    { label: '64px', value: 64 },
+    { label: '72px', value: 72 },
+    { label: '96px', value: 96 },
+    { label: '144px', value: 144 },
+];
 
 export const TextToolsHeader = () => {
     const { canvas } = useStore();
@@ -104,27 +137,37 @@ export const TextToolsHeader = () => {
     }, [canvas]);
 
     return (
-        <div className="px-5 py-2 flex flex-wrap gap-3 overflow-x-auto items-center bg-white shadow-sm text-sm">
+        <div className="px-5 flex flex-wrap gap-4 overflow-x-auto items-center bg-white text-sm">
             <div className="flex items-center justify-between whitespace-nowrap text-sm gap-4">
-                <ColorPicker
+                <FontSizeDropdown
+                    value={fontSize}
+                    options={options}
+                    handleApply={(val) => {
+                        console.log(val);
+                        setFontSize(val);
+                        updateText({ fontSize: val });
+                    }}
+                />
+
+                {/*<ColorPicker
                     label="BG"
                     value={bgColor}
                     onChange={(bgColor) => {
                         setBgColor(color);
                         updateText({ backgroundColor: bgColor });
                     }}
-                />
+                />*/}
 
-                <ColorPicker
+                {/*<ColorPicker
                     label="TXT"
                     value={fillColor}
                     onChange={(color) => {
                         setFillColor(color);
                         updateText({ fill: color });
                     }}
-                />
+                />*/}
 
-                <Select
+                {/*<Select
                     onChange={(fontFamily) => {
                         console.log(fontFamily);
                         setFontFamily(fontFamily);
@@ -132,16 +175,16 @@ export const TextToolsHeader = () => {
                     }}
                     options={fonts}
                     value={fontFamily}
-                />
+                />*/}
 
-                <NumberInput
+                {/*<NumberInput
                     value={fontSize}
                     onChange={(fontSize) => {
                         const val = parseInt(String(fontSize), 10);
                         setFontSize(val);
                         updateText({ fontSize: val });
                     }}
-                />
+                />*/}
 
                 <ToggleGroup
                     options={[
@@ -189,16 +232,16 @@ export const TextToolsHeader = () => {
                 />
 
                 <div className="flex items-center gap-2">
-                    <ColorPicker
+                    {/*<ColorPicker
                         label="Stroke"
                         value={strokeColor}
                         onChange={(color) => {
                             setStrokeColor(color);
                             updateText({ stroke: color });
                         }}
-                    />
+                    />*/}
 
-                    <NumberInput
+                    {/*<NumberInput
                         label="STR"
                         max={10}
                         value={strokeWidth}
@@ -207,11 +250,11 @@ export const TextToolsHeader = () => {
                             setStrokeWidth(val);
                             updateText({ strokeWidth: val });
                         }}
-                    />
+                    />*/}
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <NumberInput
+                    {/*<NumberInput
                         label="LH"
                         step={0.1}
                         value={lineHeight}
@@ -220,9 +263,9 @@ export const TextToolsHeader = () => {
                             setLineHeight(val);
                             updateText({ lineHeight: val });
                         }}
-                    />
+                    />*/}
 
-                    <NumberInput
+                    {/*<NumberInput
                         label="LS"
                         value={charSpacing}
                         onChange={(charSpacing) => {
@@ -230,10 +273,10 @@ export const TextToolsHeader = () => {
                             setCharSpacing(val);
                             updateText({ charSpacing: val });
                         }}
-                    />
+                    />*/}
                 </div>
 
-                <IconButton
+                {/*<IconButton
                     icon={<i className="fa-solid fa-square text-xs"></i>}
                     onClick={() => {
                         const newVal = !hasShadow;
@@ -259,7 +302,7 @@ export const TextToolsHeader = () => {
                             });
                         }}
                     />
-                )}
+                )}*/}
             </div>
         </div>
     );

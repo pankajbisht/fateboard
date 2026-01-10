@@ -12,6 +12,14 @@ export const leftPanelConfig = [
         tooltip: 'Selector Tool',
     },
     {
+        id: 'node',
+        type: 'exclusive',
+        icon: 'fa-solid fa-share-nodes',
+        position: 'left',
+        component: null,
+        tooltip: 'Node Tool',
+    },
+    {
         id: 'pan',
         type: 'exclusive',
         icon: 'fa-solid fa-hand',

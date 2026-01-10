@@ -10,6 +10,7 @@ export const createCommandSlice = (set, get, store) => {
         commands,
 
         runCommand: (id) => {
+            // console.log(get().commands, id);
             const cmd = get().commands.find((c) => c.id === id);
             if (cmd) cmd.handler();
         },

@@ -16,8 +16,8 @@ export function Panel({ isOpen, position, from = 'left', children }) {
                 isOpen
                     ? 'opacity-100 translate-x-0 pointer-events-auto'
                     : from === 'left'
-                      ? '-translate-x-4 opacity-0 pointer-events-none'
-                      : 'translate-x-4 opacity-0 pointer-events-none',
+                    ? '-translate-x-4 opacity-0 pointer-events-none'
+                    : 'translate-x-4 opacity-0 pointer-events-none',
             )}
         >
             {children}

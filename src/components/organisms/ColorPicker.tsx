@@ -3,6 +3,7 @@ import { Swatches } from '../molecules/Swatches';
 import { Palette } from '../molecules/Palette';
 import { useStore } from '../../store';
 import { ColorSlider } from '../atoms/ColorSlider';
+import { Tooltip } from '../molecules/Tooltip';
 
 const colorsMap = {
     red: [
@@ -305,6 +306,39 @@ function StrokeRemover({ onClick }: { onClick?: () => void }) {
     );
 }
 
+function FillRemover({ onClick }: { onClick?: () => void }) {
+    return (
+        <div
+            role="button"
+            tabIndex={0}
+            onClick={onClick}
+            title="Remove stroke"
+            className="
+        relative w-5 h-5 ml-px mb-px
+        border border-dashed border-stone-400
+        cursor-pointer
+        group
+        hover:border-red-500
+        hover:bg-red-50
+        focus:outline-none
+      "
+        >
+            {/* Diagonal slash */}
+            <span
+                className="
+          absolute inset-0
+          before:absolute before:top-1/2 before:left-1/2
+          before:w-[120%] before:h-px
+          before:bg-stone-500
+          before:-translate-x-1/2 before:-translate-y-1/2
+          before:-rotate-45
+          group-hover:before:bg-red-500
+        "
+            />
+        </div>
+    );
+}
+
 export const ColorPicker = () => {
     const [bgColors, setBgColors] = useState([
         'red',
@@ -336,7 +370,9 @@ export const ColorPicker = () => {
 
     return (
         <div className="flex flex-col items-start bg-white w-6 flex-wrap">
-            <StrokeRemover onClick={() => setStrokeWidthN(0)} />
+            <Tooltip content="Remove Stroke">
+                <StrokeRemover onClick={() => setStrokeWidthN(0)} />
+            </Tooltip>
             <Palette
                 scrollRef={scrollRef}
                 fill={fill}
@@ -344,6 +380,10 @@ export const ColorPicker = () => {
                 colorsMap={colorsMap}
                 onClick={handleColorChange}
             />
+            <Tooltip content="Remove File">
+                <FillRemover onClick={() => handleColorChange('rgba(0,0,0,0)')} />
+            </Tooltip>
+
             <ColorSlider scrollRef={scrollRef} />
         </div>
     );

@@ -9,6 +9,11 @@ import SendToBack from '@/assets/icons/sendbackward.tsx';
 import SendBackward from '@/assets/icons/sendbackward.tsx';
 import SendForward from '@/assets/icons/bringforward.tsx';
 import BringForward from '@/assets/icons/bringforward.tsx';
+import { TextToolsHeader } from './TextToolsHeader.tsx';
+import { GlowDivider } from './toolbars/index.ts';
+import { Tooltip } from '../molecules/Tooltip.tsx';
+import IconButton from '../atoms/IconButton.tsx';
+import { LayerControlBar } from './toolbars/ui/bars/LayerControlBar.tsx';
 
 const round = (val) => Math.round(val);
 
@@ -71,6 +76,8 @@ const alignButtons = [
 ];
 
 export const ShapeToolsHeader = () => {
+    const [show, setShow] = useState(false);
+
     const transform = useStore((s) => s.transform);
     const setTransform = useStore((s) => s.setTransform);
     const groupLayers = useStore((s) => s.groupLayers);
@@ -85,7 +92,14 @@ export const ShapeToolsHeader = () => {
     const removeLayer = useStore((s) => s.removeLayer);
     const setOrigin = useStore((s) => s.setOrigin);
     const canvas = useStore((s) => s.canvas);
+    const setRadius = useStore((s) => s.setRadius);
     const [snap, setSnap] = useState(false);
+    const { selectedObject } = useStore();
+    const toggleGrid = useStore((s) => s.toggleGrid);
+
+    const active = canvas?.getActiveObject();
+
+    // console.log({ selectedObject });
 
     const handleButton = (key, value) => {
         if (key === 'group') {
@@ -114,33 +128,14 @@ export const ShapeToolsHeader = () => {
     };
 
     return (
-        <div className="px-5 py-2 overflow-x-auto shadow-sm bg-white">
+        // <div className="px-2 py-1 overflow-x-auto bg-white">
+        <div
+            className={`px-2 py-1 overflow-x-auto bg-white ${
+                !active ? 'pointer-events-none opacity-50' : ''
+            }`}
+        >
             <div className="flex items-center justify-between whitespace-nowrap text-sm">
                 <div className="flex items-center gap-4">
-                    <OriginSelector
-                        size={24}
-                        value={transform.id}
-                        onChange={(o) => {
-                            console.log(o);
-                            setOrigin(o);
-                        }}
-                    />
-
-                    <div className="flex items-center gap-2">
-                        {transformFields.map((field) => (
-                            <TransformInput
-                                key={field.key}
-                                label={field.label}
-                                value={transform[field.key]}
-                                disabled={!hasSelection}
-                                onChange={(val) => setTransform(field.key, val)}
-                            />
-                        ))}
-                    </div>
-
-                    {/* Divider */}
-                    <div className="border-l h-6 border-gray-300" />
-
                     <SingleToggleButton
                         action="flipX"
                         toggleType="switch"
@@ -170,55 +165,12 @@ export const ShapeToolsHeader = () => {
                             setTransform(action, value);
                         }}
                     />
-                </div>
 
-                {/* --- Right: Layer & Align --- */}
-                <div className="flex items-center gap-4">
-                    <ToggleGroup
-                        single={true}
-                        options={[
-                            {
-                                key: 'group',
-                                icon: 'fa-solid fa-object-group',
-                                tooltip: 'Group',
-                            },
-                            {
-                                key: 'ungroup',
-                                icon: 'fa-solid fa-object-ungroup',
-                                tooltip: 'Ungroup',
-                            },
-                        ]}
-                        onChange={(formats) => {
-                            const { group, ungroup } = formats;
+                    <GlowDivider />
 
-                            const active = Object.entries(formats).find(([_, value]) => value);
-                            console.log('Group:', active);
+                    <LayerControlBar />
 
-                            if (active) {
-                                const [key, value] = active;
-                                handleButton(key, value);
-                            }
-                        }}
-                    />
-
-                    <div className="border-l h-6 border-gray-300" />
-
-                    <SingleToggleButton
-                        action="lock"
-                        toggleType="switch"
-                        iconOn="fa-solid fa-lock"
-                        iconOff="fa-solid fa-unlock"
-                        tooltipOn="Locked"
-                        tooltipOff="Unlocked"
-                        initial={false}
-                        onChange={(formats) => {
-                            const { action, value } = formats;
-                            console.log(action, value);
-                            handleButton(action, value);
-                        }}
-                    />
-
-                    <ToggleGroup
+                    {/*<ToggleGroup
                         single
                         options={[
                             {
@@ -270,9 +222,73 @@ export const ShapeToolsHeader = () => {
                                 handleButton(key, value);
                             }
                         }}
-                    />
+                    />*/}
 
-                    <ToggleGroup
+                    <GlowDivider />
+
+                    <div className="flex items-center gap-2">
+                        {transformFields.map((field) => (
+                            <TransformInput
+                                key={field.key}
+                                label={field.label}
+                                value={transform[field.key]}
+                                disabled={!hasSelection}
+                                onChange={(val) => setTransform(field.key, val)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Divider */}
+                    {/*<div className="border-l h-6 border-gray-300" />*/}
+                </div>
+
+                {/* --- Right: Layer & Align --- */}
+                <div className="flex items-center gap-4">
+                    {/*<ToggleGroup
+                        single={true}
+                        options={[
+                            {
+                                key: 'group',
+                                icon: 'fa-solid fa-object-group',
+                                tooltip: 'Group',
+                            },
+                            {
+                                key: 'ungroup',
+                                icon: 'fa-solid fa-object-ungroup',
+                                tooltip: 'Ungroup',
+                            },
+                        ]}
+                        onChange={(formats) => {
+                            const { group, ungroup } = formats;
+
+                            const active = Object.entries(formats).find(([_, value]) => value);
+                            console.log('Group:', active);
+
+                            if (active) {
+                                const [key, value] = active;
+                                handleButton(key, value);
+                            }
+                        }}
+                    />*/}
+
+                    {/*<div className="border-l h-6 border-gray-300" />*/}
+
+                    {/*<SingleToggleButton
+                        action="lock"
+                        toggleType="switch"
+                        iconOn="fa-solid fa-lock"
+                        iconOff="fa-solid fa-unlock"
+                        tooltipOn="Locked"
+                        tooltipOff="Unlocked"
+                        initial={false}
+                        onChange={(formats) => {
+                            const { action, value } = formats;
+                            console.log(action, value);
+                            handleButton(action, value);
+                        }}
+                    />*/}
+
+                    {/*<ToggleGroup
                         single
                         options={[
                             {
@@ -362,8 +378,43 @@ export const ShapeToolsHeader = () => {
 
                             handleAlginmentAndDistributeButton(textAlign, formats);
                         }}
-                    />
+                    />*/}
+
+                    {/*<GlowDivider />
+
+                    <OriginSelector
+                        size={24}
+                        value={transform.id}
+                        onChange={(o) => {
+                            console.log(o);
+                            setOrigin(o);
+                        }}
+                    />*/}
                 </div>
+
+                {(active?.type === 'square' || active?.type === 'rect') && (
+                    <div className="flex gap-4 px-4">
+                        <GlowDivider />
+
+                        <TransformInput
+                            label="Rx"
+                            value={transform.rx}
+                            onChange={(val) => setRadius(val, transform.ry)}
+                        />
+                        <TransformInput
+                            label="Ry"
+                            value={transform.ry}
+                            onChange={(val) => setRadius(transform.rx, val)}
+                        />
+                    </div>
+                )}
+
+                {selectedObject && selectedObject?.type === 'textbox' && (
+                    <div className="flex px-4">
+                        <GlowDivider />
+                        <TextToolsHeader />
+                    </div>
+                )}
             </div>
         </div>
     );

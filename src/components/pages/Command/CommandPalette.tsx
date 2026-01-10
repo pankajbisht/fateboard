@@ -1,3 +1,4 @@
+import { commandRegistry } from '@/components/config/commandConfig.tsx';
 import { cn } from '../../../lib/utils/cn.ts';
 
 export function Card({ className, ...props }: { className?: string; [k: string]: any }) {
@@ -31,15 +32,21 @@ export function CardContent({ className, ...props }: { className?: string; [k: s
 
 // src/pages/CommandPalettePage.jsx
 import { useState, useEffect } from 'react';
+import { shortcut } from '@/lib/utils/isMac.ts';
 
-const commands = [
-    { id: 1, name: 'New File', mac: '⌘N', win: 'Ctrl+N' },
-    { id: 2, name: 'Open Settings', mac: '⌘,', win: 'Ctrl+,' },
-    { id: 3, name: 'Copy', mac: '⌘C', win: 'Ctrl+C' },
-    { id: 4, name: 'Paste', mac: '⌘V', win: 'Ctrl+V' },
-    { id: 5, name: 'Group', mac: '⌘G', win: 'Ctrl+G' },
-    { id: 6, name: 'Ungroup', mac: '⌘⇧U', win: 'Ctrl+Shift+U' },
-];
+// const commands = [
+//     { id: 1, name: 'New File', mac: '⌘N', win: 'Ctrl+N' },
+//     { id: 2, name: 'Open Settings', mac: '⌘,', win: 'Ctrl+,' },
+//     { id: 3, name: 'Copy', mac: '⌘C', win: 'Ctrl+C' },
+//     { id: 4, name: 'Paste', mac: '⌘V', win: 'Ctrl+V' },
+//     { id: 5, name: 'Group', mac: '⌘G', win: 'Ctrl+G' },
+//     { id: 6, name: 'Ungroup', mac: '⌘⇧U', win: 'Ctrl+Shift+U' },
+//     { id: 7, name: 'Lock', mac: '⌘L', win: 'Ctrl+L' },
+// ];
+
+const commands = commandRegistry;
+
+//console.log(commands);
 
 export default function CommandPalette() {
     const [query, setQuery] = useState('');
@@ -75,9 +82,7 @@ export default function CommandPalette() {
                                 className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer"
                             >
                                 <span>{cmd.name}</span>
-                                <span className="text-sm text-gray-500">
-                                    {os === 'mac' ? cmd.mac : cmd.win}
-                                </span>
+                                <span className="text-sm text-gray-500">{cmd.shortcut}</span>
                             </li>
                         ))}
                         {filtered.length === 0 && (

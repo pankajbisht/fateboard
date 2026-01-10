@@ -5,12 +5,8 @@ import { StrokeControls } from '@components/organisms/StrokeControls';
 
 export function Footer() {
     return (
-        <footer className="flex flex-col">
-            <ViewTool
-                // colorTool={<small>ok</small>}
-                zoomTool={<FullScreen />}
-                strokeTool={<StrokeControls />}
-            />
+        <footer className="flex flex-col border-t border-stone-200 bg-stone-500">
+            <ViewTool zoomTool={<FullScreen />} strokeTool={<StrokeControls />} />
         </footer>
     );
 }

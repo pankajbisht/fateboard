@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { IconButton } from '../atoms/IconButton';
+import { useStore } from '@/store';
 
 export const DropdownMenuItem = ({
     children,
@@ -10,8 +11,8 @@ export const DropdownMenuItem = ({
         position === 'top'
             ? 'hover:rounded-t-lg'
             : position === 'bottom'
-              ? 'hover:rounded-b-lg'
-              : '';
+            ? 'hover:rounded-b-lg'
+            : '';
 
     return (
         <button
@@ -25,6 +26,8 @@ export const DropdownMenuItem = ({
 };
 
 const DropdownMenu = ({ trigger, children }) => {
+    const iconSize = useStore((state) => state.iconSize);
+
     const [open, setOpen] = useState(false);
     const ref = useRef(null);
 
@@ -42,7 +45,12 @@ const DropdownMenu = ({ trigger, children }) => {
         <div className="relative inline-block" ref={ref}>
             {/*<button onClick={() => setOpen(!open)}>{trigger}</button>*/}
 
-            <IconButton icon={trigger} onClick={() => setOpen(!open)} title="Menu" />
+            <IconButton
+                icon={trigger}
+                onClick={() => setOpen(!open)}
+                title="Menu"
+                size={iconSize}
+            />
 
             {open && (
                 <div className="z-1000 absolute right-0 mt-2 w-40 rounded-lg bg-white shadow-lg ring-1 ring-black/10 bg-white text-gray-500">

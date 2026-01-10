@@ -4,150 +4,148 @@
 //  * Works with Path and CompoundPath
 //  */
 
-
 export const BooleanEngine = {
-  // -----------------------------
-  // BASIC HELPERS
-  // -----------------------------
+    // -----------------------------
+    // BASIC HELPERS
+    // -----------------------------
 
-  cleanup(...paths: paper.Path[]) {
-    paths.forEach(p => p && !p.removed && p.remove());
-  },
+    cleanup(...paths: paper.Path[]) {
+        paths.forEach((p) => p && !p.removed && p.remove());
+    },
 
-  reorientSafe(path: paper.Path) {
-    if (path && path.closed) path.reorient();
-    return path;
-  },
+    reorientSafe(path: paper.Path) {
+        if (path && path.closed) path.reorient();
+        return path;
+    },
 
-  intersects(a: paper.Path, b: paper.Path) {
-    return a && b && a.intersects(b);
-  },
+    intersects(a: paper.Path, b: paper.Path) {
+        return a && b && a.intersects(b);
+    },
 
-  cloneSafe(path: paper.Path) {
-    return path ? path.clone() : null;
-  },
+    cloneSafe(path: paper.Path) {
+        return path ? path.clone() : null;
+    },
 
-  simplifySafe(path: paper.Path, tolerance = 0.5) {
-    if (path && path.simplify) path.simplify(tolerance);
-    return path;
-  },
+    simplifySafe(path: paper.Path, tolerance = 0.5) {
+        if (path && path.simplify) path.simplify(tolerance);
+        return path;
+    },
 
-  // -----------------------------
-  // PRIMITIVE BOOLEAN OPERATIONS
-  // -----------------------------
+    // -----------------------------
+    // PRIMITIVE BOOLEAN OPERATIONS
+    // -----------------------------
 
-  union(a: paper.Path, b: paper.Path) {
-    if (!a || !b) return null;
-    const result = a.unite(b);
-    this.cleanup(a, b);
-    return this.reorientSafe(result);
-  },
+    union(a: paper.Path, b: paper.Path) {
+        if (!a || !b) return null;
+        const result = a.unite(b);
+        this.cleanup(a, b);
+        return this.reorientSafe(result);
+    },
 
-  intersect(a: paper.Path, b: paper.Path) {
-    if (!a || !b) return null;
-    const result = a.intersect(b);
-    this.cleanup(a, b);
-    return this.reorientSafe(result);
-  },
+    intersect(a: paper.Path, b: paper.Path) {
+        if (!a || !b) return null;
+        const result = a.intersect(b);
+        this.cleanup(a, b);
+        return this.reorientSafe(result);
+    },
 
-  subtract(a: paper.Path, b: paper.Path) {
-    if (!a || !b) return null;
-    const result = a.subtract(b);
-    this.cleanup(a, b);
-    return this.reorientSafe(result);
-  },
+    subtract(a: paper.Path, b: paper.Path) {
+        if (!a || !b) return null;
+        const result = a.subtract(b);
+        this.cleanup(a, b);
+        return this.reorientSafe(result);
+    },
 
-  exclude(a: paper.Path, b: paper.Path) {
-    if (!a || !b) return null;
-    const result = a.exclude(b);
-    this.cleanup(a, b);
-    return this.reorientSafe(result);
-  },
+    exclude(a: paper.Path, b: paper.Path) {
+        if (!a || !b) return null;
+        const result = a.exclude(b);
+        this.cleanup(a, b);
+        return this.reorientSafe(result);
+    },
 
-  divide(a: paper.Path, b: paper.Path) {
-    if (!a || !b) return [];
-    const parts = a.divide(b);
-    this.cleanup(a, b);
-    return parts || [];
-  },
+    divide(a: paper.Path, b: paper.Path) {
+        if (!a || !b) return [];
+        const parts = a.divide(b);
+        this.cleanup(a, b);
+        return parts || [];
+    },
 
-  cut(target: paper.Path, cutter: paper.Path) {
-    if (!target || !cutter) return [];
-    const parts = target.divide(cutter);
-    this.cleanup(target, cutter);
-    return parts || [];
-  },
+    cut(target: paper.Path, cutter: paper.Path) {
+        if (!target || !cutter) return [];
+        const parts = target.divide(cutter);
+        this.cleanup(target, cutter);
+        return parts || [];
+    },
 
-  punch(base: paper.Path, hole: paper.Path) {
-    if (!base || !hole) return null;
-    const result = base.subtract(hole);
-    this.cleanup(base, hole);
-    return this.reorientSafe(result);
-  },
+    punch(base: paper.Path, hole: paper.Path) {
+        if (!base || !hole) return null;
+        const result = base.subtract(hole);
+        this.cleanup(base, hole);
+        return this.reorientSafe(result);
+    },
 
-  crop(shape: paper.Path, area: paper.Path) {
-    if (!shape || !area) return null;
-    const result = shape.intersect(area);
-    this.cleanup(shape);
-    return this.reorientSafe(result);
-  },
+    crop(shape: paper.Path, area: paper.Path) {
+        if (!shape || !area) return null;
+        const result = shape.intersect(area);
+        this.cleanup(shape);
+        return this.reorientSafe(result);
+    },
 
-  xorSplit(a: paper.Path, b: paper.Path) {
-    if (!a || !b) return [];
-    const xor = a.exclude(b);
-    this.cleanup(a, b);
+    xorSplit(a: paper.Path, b: paper.Path) {
+        if (!a || !b) return [];
+        const xor = a.exclude(b);
+        this.cleanup(a, b);
 
-    if (xor.children && xor.children.length) {
-      return xor.children.map(c => this.reorientSafe(c));
-    }
-    return [this.reorientSafe(xor)];
-  },
+        if (xor.children && xor.children.length) {
+            return xor.children.map((c) => this.reorientSafe(c));
+        }
+        return [this.reorientSafe(xor)];
+    },
 
-  smartUnion(a: paper.Path, b: paper.Path) {
-    if (!a || !b) return null;
-    if (!this.intersects(a, b)) return null;
-    return this.union(a, b);
-  },
+    smartUnion(a: paper.Path, b: paper.Path) {
+        if (!a || !b) return null;
+        if (!this.intersects(a, b)) return null;
+        return this.union(a, b);
+    },
 
-  // -----------------------------
-  // POST-PROCESSING UTILITIES
-  // -----------------------------
+    // -----------------------------
+    // POST-PROCESSING UTILITIES
+    // -----------------------------
 
-  keepLargest(paths: paper.Path[]) {
-    if (!paths || !paths.length) return null;
-    return paths.reduce((max, p) => (p.area > max.area ? p : max), paths[0]);
-  },
+    keepLargest(paths: paper.Path[]) {
+        if (!paths || !paths.length) return null;
+        return paths.reduce((max, p) => (p.area > max.area ? p : max), paths[0]);
+    },
 
-  keepSmallest(paths: paper.Path[]) {
-    if (!paths || !paths.length) return null;
-    return paths.reduce((min, p) => (p.area < min.area ? p : min), paths[0]);
-  },
+    keepSmallest(paths: paper.Path[]) {
+        if (!paths || !paths.length) return null;
+        return paths.reduce((min, p) => (p.area < min.area ? p : min), paths[0]);
+    },
 
-  filterInside(paths: paper.Path[], container: paper.Path) {
-    if (!paths || !container) return [];
-    return paths.filter(p => container.contains(p.bounds.center));
-  },
+    filterInside(paths: paper.Path[], container: paper.Path) {
+        if (!paths || !container) return [];
+        return paths.filter((p) => container.contains(p.bounds.center));
+    },
 
-  filterOutside(paths: paper.Path[], container: paper.Path) {
-    if (!paths || !container) return [];
-    return paths.filter(p => !container.contains(p.bounds.center));
-  },
+    filterOutside(paths: paper.Path[], container: paper.Path) {
+        if (!paths || !container) return [];
+        return paths.filter((p) => !container.contains(p.bounds.center));
+    },
 
-  combine(paths: paper.Path[]) {
-    if (!paths || paths.length === 0) return null;
-    return paths.reduce((a, b) => a.unite(b));
-  },
+    combine(paths: paper.Path[]) {
+        if (!paths || paths.length === 0) return null;
+        return paths.reduce((a, b) => a.unite(b));
+    },
 
-  snapToGrid(paths: paper.Path[], gridSize = 10) {
-    if (!paths) return [];
-    paths.forEach(p => {
-      p.position.x = Math.round(p.position.x / gridSize) * gridSize;
-      p.position.y = Math.round(p.position.y / gridSize) * gridSize;
-    });
-    return paths;
-  }
+    snapToGrid(paths: paper.Path[], gridSize = 10) {
+        if (!paths) return [];
+        paths.forEach((p) => {
+            p.position.x = Math.round(p.position.x / gridSize) * gridSize;
+            p.position.y = Math.round(p.position.y / gridSize) * gridSize;
+        });
+        return paths;
+    },
 };
-
 
 // export const BooleanEngine = {
 //   // -----------------------------
@@ -275,7 +273,6 @@ export const BooleanEngine = {
 //   }
 // };
 
-
 // BooleanEngine.ts
 // BooleanEngine.ts
 // export const BooleanEngine = {
@@ -342,24 +339,23 @@ export function extractStyle(obj) {
     };
 }
 
-
 // normalizePaths.ts
 export function normalizeToPaths(input: any): paper.Path[] {
-  if (!input) return [];
+    if (!input) return [];
 
-  if (Array.isArray(input)) {
-    return input.filter(p => p && p.divide);
-  }
+    if (Array.isArray(input)) {
+        return input.filter((p) => p && p.divide);
+    }
 
-  if (input.divide) {
-    return [input];
-  }
+    if (input.divide) {
+        return [input];
+    }
 
-  if (input.children) {
-    return input.children.filter((c: any) => c && c.divide);
-  }
+    if (input.children) {
+        return input.children.filter((c: any) => c && c.divide);
+    }
 
-  return [];
+    return [];
 }
 
 export function applyBooleanOperation(scope, objects, operation) {
@@ -458,7 +454,6 @@ function convertStrokeToPath(path) {
     return path;
 }
 
-
 // export function exportPaperResult(
 //   scope: paper.PaperScope,
 //   result: paper.Path | paper.Path[]
@@ -495,47 +490,45 @@ function convertStrokeToPath(path) {
 //   return svg;
 // }
 
-
 export function exportPaperResult(
-  scope: paper.PaperScope,
-  result: paper.Path | paper.Path[],
-  operation: string
+    scope: paper.PaperScope,
+    result: paper.Path | paper.Path[],
+    operation: string,
 ): string | null {
+    if (!result) return null;
 
-  if (!result) return null;
+    // Reducer → single path
+    if (!Array.isArray(result)) {
+        return result.exportSVG({
+            asString: true,
+            bounds: 'content',
+            precision: 3,
+        });
+    }
 
-  // Reducer → single path
-  if (!Array.isArray(result)) {
-    return result.exportSVG({
-      asString: true,
-      bounds: 'content',
-      precision: 3,
+    // Divider → multiple paths
+    if (operation === 'divide' || operation === 'cut') {
+        return result
+            .map((p) =>
+                p.exportSVG({
+                    asString: true,
+                    bounds: 'content',
+                    precision: 3,
+                }),
+            )
+            .join('\n');
+    }
+
+    // Fallback → compound
+    const compound = new scope.CompoundPath({ children: result });
+    compound.reorient();
+
+    const svg = compound.exportSVG({
+        asString: true,
+        bounds: 'content',
+        precision: 3,
     });
-  }
 
-  // Divider → multiple paths
-  if (operation === 'divide' || operation === 'cut') {
-    return result
-      .map(p =>
-        p.exportSVG({
-          asString: true,
-          bounds: 'content',
-          precision: 3,
-        })
-      )
-      .join('\n');
-  }
-
-  // Fallback → compound
-  const compound = new scope.CompoundPath({ children: result });
-  compound.reorient();
-
-  const svg = compound.exportSVG({
-    asString: true,
-    bounds: 'content',
-    precision: 3,
-  });
-
-  compound.remove();
-  return svg;
+    compound.remove();
+    return svg;
 }

@@ -1,25 +1,43 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { ColorPicker } from './ColorPicker';
-
-type DockSide = 'left' | 'right';
-
-type PanelItem = {
-    label: string;
-    icon?: string;
-    onClick: () => void;
-};
-
-type Props = {
-    items: PanelItem[];
-    open: boolean;
-    width: number;
-    side: DockSide;
-    setWidth: (w: number) => void;
-    toggleOpen: () => void;
-    toggleSide: () => void;
-};
+import { TabsLayout } from './tabs';
+import { useStore } from '@/store';
+import { TransformInput } from '../molecules/TransformInput';
+import { EffectsPanel } from './effects';
 
 const SNAP_POINTS = [160, 240, 320, 400];
+
+// tabs.config.ts
+export const TABS_CONFIG = [
+    {
+        id: 'effects',
+        label: 'Edit Tools',
+        icon: 'fa-solid fa-screwdriver-wrench',
+        closable: false,
+        content: () => <EffectsPanel />,
+    },
+    // {
+    //     id: 'layer',
+    //     label: 'Layers',
+    //     icon: 'fa-solid fa-layer-group',
+    //     closable: false,
+    //     content: () => <div>Appearance</div>,
+    // },
+    // {
+    //     id: 'align',
+    //     label: 'Align and Distribute',
+    //     icon: 'fa-solid fa-align-left',
+    //     closable: true,
+    //     content: () => <div>Align and Distribute</div>,
+    // },
+    // {
+    //     id: 'fill',
+    //     label: 'Fill and Stroke',
+    //     icon: 'fa-solid fa-palette',
+    //     closable: true,
+    //     content: () => <div>Fill and Stroke</div>,
+    // },
+] as const;
 
 export function useDockResize(
     side: 'left' | 'right',
@@ -145,20 +163,19 @@ export const DockPanel = ({
             </button>
 
             {/* panel */}
-            {/*<div
-        className="bg-white shadow-xl border-l transition-[width,opacity] duration-300 overflow-hidden"
-        style={{ width: open ? width : 0, opacity: open ? 1 : 0 }}
-      >
-        <div
-          ref={scrollRef}
-          onScroll={(e) =>
-            onScrollSave((e.target as HTMLDivElement).scrollTop)
-          }
-          className="h-full overflow-y-auto p-3"
-        >
-          {children}
-        </div>
-      </div>*/}
+            <div
+                className="bg-white shadow-
+        xl border-l transition-[width,opacity] duration-300 overflow-hidden"
+                style={{ width: open ? width : 0, opacity: open ? 1 : 0 }}
+            >
+                <div
+                    ref={scrollRef}
+                    onScroll={(e) => onScrollSave((e.target as HTMLDivElement).scrollTop)}
+                    className="h-full overflow-y-auto"
+                >
+                    {children}
+                </div>
+            </div>
         </div>
     );
 };
@@ -190,17 +207,8 @@ export const DockRoot = () => {
         }
     }, [active, open]);
 
-    const togglePanel = (id: string) => {
-        if (open && active === id) {
-            setOpen(false);
-        } else {
-            setActive(id);
-            setOpen(true);
-        }
-    };
-
     return (
-        <aside className="flex" style={{ height: 'calc(100vh - 56px - 40px)' }}>
+        <aside className="flex" style={{ height: 'calc(100vh - 98px - 40px)' }}>
             <DockPanel
                 open={open}
                 onToggle={() => setOpen((o) => !o)}
@@ -209,9 +217,7 @@ export const DockRoot = () => {
                     panelMemory.current[active].scrollTop = scrollTop;
                 }}
             >
-                {active === 'props' && <h1>sda</h1>}
-                {active === 'layers' && <h1>sda</h1>}
-                {active === 'assets' && <h1>sda</h1>}
+                <TabsLayout tabs={TABS_CONFIG} defaultTab="effects" />
             </DockPanel>
 
             <ColorPicker />
