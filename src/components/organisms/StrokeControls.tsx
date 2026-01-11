@@ -87,7 +87,7 @@ export function StrokeControls() {
             )}
         >
             {/* Fill / Stroke Tiles */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-x-2 gap-y-1">
                 <Tile
                     label="Fill"
                     hasActiveShape={hasActiveShape}

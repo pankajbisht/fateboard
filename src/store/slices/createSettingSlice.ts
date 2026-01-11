@@ -7,7 +7,7 @@ const initialValues = {
     iconSize: 'md', // small, middium, large
     backgroundStyle1: 'ruled',
     orientation: 'LANDSCAPE',
-    freehand: false,
+    freehand: true,
     format: 'A4',
 };
 
@@ -17,16 +17,8 @@ export const createSettingSlice = (set, get, store) => ({
     },
 
     load: () => {
-        console.log('here');
-        console.log(db);
-        // db.config.createNamespace('FateBoard')
-        // db.config.switchNamespace('FateBoard')
-        //
-        // if (get().settings.freehand) {
-        //     set({ format: 'FREEHAND' })
-        // } else {
-        //     set({ format: 'A4' })
-        // }
+        // console.log('here');
+        // console.log(db);
     },
 
     setMode: (mode) => {

@@ -16,8 +16,6 @@ const EditorPage = () => {
     const freehand = useStore((s) => s.settings.freehand); // CanvasBoardFreeHand
     usePageTitle('Draw | Fateboard');
 
-    console.log('freehand', freehand);
-
     return (
         <>
             <EditorTemplate

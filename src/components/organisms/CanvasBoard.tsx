@@ -228,7 +228,7 @@ export function CanvasBoard() {
                     //     height: `calc(100vh - ${RULER_SIZE}px)`,
                     // }}
                     style={{
-                        height: 'calc(100vh - 80px - 50px - 20px)',
+                        height: 'calc(100vh - 80px - 50px - 25px)',
                         width: 'calc(100vw)',
                     }}
                     onMouseMove={(e) => setMouse(getMouse(e))}
