@@ -157,7 +157,7 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => 
 
         console.log(x, y, pageWidth, pageHeight);
 
-        if (get().freehand) {
+        if (get().settings.freehand) {
             x = 800;
             y = 400;
         }
