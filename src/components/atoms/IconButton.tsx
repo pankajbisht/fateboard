@@ -10,15 +10,15 @@ interface IconButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const buttonSizeMap = {
-    sm: 'h-7 w-7 p-1',
-    md: 'h-8 w-8 p-2',
-    lg: 'h-8 w-8 p-2.5',
+    sm: 'h-6 w-6 p-1',
+    md: 'h-6 w-6 p-1',
+    lg: 'h-7 w-7 p-2.5',
 };
 
 const iconSizeMap = {
-    sm: 'text-[12px] [&>svg]:h-3 [&>svg]:w-3 [&>img]:h-3 [&>img]:w-3',
-    md: 'text-[14px] [&>svg]:h-4 [&>svg]:w-4 [&>img]:h-4 [&>img]:w-4',
-    lg: 'text-[16px] [&>svg]:h-5 [&>svg]:w-5 [&>img]:h-5 [&>img]:w-5',
+    sm: 'text-[10px] [&>svg]:h-3 [&>svg]:w-3 [&>img]:h-3 [&>img]:w-3',
+    md: 'text-[10px] [&>svg]:h-4 [&>svg]:w-4 [&>img]:h-4 [&>img]:w-4',
+    lg: 'text-[12px] [&>svg]:h-5 [&>svg]:w-5 [&>img]:h-5 [&>img]:w-5',
 };
 
 export function IconButton({
@@ -28,7 +28,7 @@ export function IconButton({
     className,
     ...rest
 }: IconButtonProps & { size?: IconButtonSize }) {
-    console.log(active);
+    // console.log(active);
     return (
         <button
             {...rest}

@@ -55,7 +55,7 @@ import { AlignmentBarConfig } from '../../../../config/commandConfig';
 // ];
 
 const AlignmentBar = () => {
-    const iconSize = useStore((state) => state.iconSize);
+    const iconSize = useStore((state) => state.settings.iconSize);
 
     return (
         <ul className="flex items-center gap-2 px-1">

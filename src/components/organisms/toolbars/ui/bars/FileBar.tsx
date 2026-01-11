@@ -7,7 +7,7 @@ import { FileBarConfig } from '../../../../config/commandConfig';
 import { useRef } from 'react';
 
 function getFileActions(handlers) {
-    console.log(FileBarConfig, handlers.openFile);
+    // console.log(FileBarConfig, handlers.openFile);
 
     const x = FileBarConfig.map((config) => {
         if (config.id !== 'open') return config;
@@ -18,7 +18,7 @@ function getFileActions(handlers) {
         };
     });
 
-    console.log(x);
+    // console.log(x);
 
     return x;
 
@@ -59,7 +59,7 @@ function getFileActions(handlers) {
 }
 
 const FileBar = () => {
-    const iconSize = useStore((state) => state.iconSize);
+    const iconSize = useStore((state) => state.settings.iconSize);
 
     const fileInputRef = useRef(null);
     const canvas = useStore((s) => s.canvas);
@@ -72,7 +72,7 @@ const FileBar = () => {
         openFile: handleUploadClick,
     });
 
-    console.log(actions);
+    // console.log(actions);
 
     return (
         <>

@@ -35,7 +35,7 @@ const LAYERCONTROL_ACTIONS = [
 ];
 
 const LayerControlBar = () => {
-    const iconSize = useStore((state) => state.iconSize);
+    const iconSize = useStore((state) => state.settings.iconSize);
 
     return (
         <ul className="flex items-center gap-1 px-1">

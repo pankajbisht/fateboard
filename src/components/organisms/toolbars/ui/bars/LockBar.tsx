@@ -22,7 +22,7 @@ import { LockBarConfig } from '../../../../config/commandConfig';
 // ];
 
 const LockBar = () => {
-    const iconSize = useStore((state) => state.iconSize);
+    const iconSize = useStore((state) => state.settings.iconSize);
 
     return (
         <ul className="flex items-center gap-1 px-1">

@@ -1,1 +1,35 @@
 @import 'tailwindcss';
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Firefox */
+* {
+    scrollbar-width: thin; /* Firefox does not support exact px */
+    scrollbar-color: rgba(80, 140, 255, 0.5) transparent;
+}
+
+/* Chrome, Edge, Safari */
+*::-webkit-scrollbar {
+    width: 2px;
+    height: 2px;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgba(80, 140, 255, 0.45);
+    border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(80, 140, 255, 0.8);
+}
+
+*::-webkit-scrollbar-corner {
+    background: transparent;
+}

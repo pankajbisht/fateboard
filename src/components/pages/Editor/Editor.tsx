@@ -13,8 +13,10 @@ import { useStore } from '@/store/index.ts';
 import { CanvasBoardFreeHand } from '../CanvasBoard/CanvasBoard.tsx';
 
 const EditorPage = () => {
-    const freehand = useStore((s) => s.freehand); // CanvasBoardFreeHand
+    const freehand = useStore((s) => s.settings.freehand); // CanvasBoardFreeHand
     usePageTitle('Draw | Fateboard');
+
+    console.log('freehand', freehand);
 
     return (
         <>

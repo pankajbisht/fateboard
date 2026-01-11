@@ -31,7 +31,7 @@ export function SingleToggleButton({
     onChange,
 }) {
     const [active, setActive] = useState(initial);
-    const iconSize = useStore((state) => state.iconSize);
+    const iconSize = useStore((state) => state.settings.iconSize);
 
     const handleClick = () => {
         let next = active;
@@ -45,7 +45,7 @@ export function SingleToggleButton({
     const renderIcon = (icon) => {
         if (typeof icon === 'string') {
             // Font Awesome class string
-            return <i className={icon} style={{ fontSize: size * 0.55 }} />;
+            return <i className={icon} />;
         }
         // JSX / React component (SVG)
         return icon;

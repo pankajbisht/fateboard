@@ -21,7 +21,7 @@ export function ShapePanel({ closePanel }) {
 
     const { shapesList, add, enableLineDrawing, disableLineDrawing } = useShapeFactory();
     const commonProps = { fill, stroke, strokeWidth };
-    const iconSize = useStore((state) => state.iconSize);
+    const iconSize = useStore((state) => state.settings.iconSize);
 
     function handleAddShape(type) {
         if (type === 'line') {

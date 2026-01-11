@@ -5,7 +5,7 @@ import { Tooltip } from './Tooltip';
 export const FullScreen = () => {
     const toggleFullscreen = useStore((state) => state.toggleFullscreen);
     const isFullScreen = useStore((state) => state.isFullScreen);
-    const iconSize = useStore((state) => state.iconSize);
+    const iconSize = useStore((state) => state.settings.iconSize);
 
     return (
         <Tooltip position="bottom" content="Fullscreen">

@@ -14,19 +14,35 @@ import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 import { shortcut } from '@/lib/utils/isMac';
+import { useNavigate } from 'react-router-dom';
 
-const LOCK_ACTIONS = [
-    {
-        id: 'grid',
-        label: 'Grid',
-        shortcut: shortcut('⌘L', 'Ctrl+L'),
-        icon: <i className="fa-solid fa-table-cells-large" />,
-        onClick: () => useStore.getState().toggleGrid(),
-    },
-];
+function actionHndler(navigate) {
+    const LOCK_ACTIONS = [
+        {
+            id: 'grid',
+            label: 'Grid',
+            shortcut: shortcut('⌘L', 'Ctrl+L'),
+            icon: <i className="fa-solid fa-table-cells-large" />,
+            onClick: () => useStore.getState().toggleGrid(),
+        },
+        {
+            id: 'settings',
+            label: 'Settings',
+            // shortcut: shortcut('⌘L', 'Ctrl+L'),
+            icon: <i className="fa-solid fa-gear"></i>,
+            onClick: () => {
+                navigate('/setting', true);
+            },
+        },
+    ];
+
+    return LOCK_ACTIONS;
+}
 
 const ExtraBar = () => {
-    const iconSize = useStore((state) => state.iconSize);
+    const iconSize = useStore((state) => state.settings.iconSize);
+    const navigate = useNavigate();
+    const LOCK_ACTIONS = actionHndler(navigate);
 
     return (
         <ul className="flex items-center gap-1 px-1">

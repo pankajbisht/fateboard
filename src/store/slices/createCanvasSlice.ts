@@ -265,11 +265,11 @@ export const createCanvasSlice = (set, get, store) => ({
 
         canvas.backgroundColor = fateboardCanvasConfig.bg;
 
-        get().load();
+        // get().load();
         get().saveState(); // undo/redo
         set({ canvas });
-        console.log(get().format, get().orientation);
-        get().setPageFormat(get().format, get().orientation);
+        console.log(get().settings.format, get().settings.orientation);
+        get().setPageFormat(get().settings.format, get().settings.orientation);
         get().setBrush();
         // get().toggleGrid();
 
