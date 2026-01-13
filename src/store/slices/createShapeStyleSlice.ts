@@ -630,6 +630,10 @@ export const createShapeStyleSlice = (set, get, store) => ({
                 set({ stroke: normalized });
             } else {
                 set({ fill: normalized });
+                const o = {
+                    color: normalized,
+                };
+                get().setBrushColor(o);
             }
             return;
         }

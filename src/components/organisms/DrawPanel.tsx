@@ -12,6 +12,8 @@ export function DrawPanel({ closePanel }) {
     const brushType = useStore((s) => s.brush);
     const setBrush = useStore((s) => s.setBrush);
 
+    console.log('brushColor', brushColor);
+
     const brushOptions = ['pencil', 'circle', 'spray', 'pattern', 'eraser'];
 
     return (
@@ -36,13 +38,17 @@ export function DrawPanel({ closePanel }) {
                 </div>
 
                 {/* Right Column Top: Color Picker */}
-                <div className="flex items-center justify-between pl-4">
+                <div className="flex items-center justify-between pl-4 relative">
                     <span className="text-sm font-medium">Color:</span>
                     <input
                         type="color"
                         value={brushColor}
                         onChange={(e) => setBrushColor({ color: e.target.value })}
-                        className="w-6 h-6 p-0 rounded border"
+                        className="absolute right-0 w-8 h-8 opacity-0 cursor-pointer"
+                    />
+                    <div
+                        className="h-6 w-6 rounded-full border shadow-sm"
+                        style={{ backgroundColor: brushColor }}
                     />
                 </div>
 
@@ -71,7 +77,7 @@ export function DrawPanel({ closePanel }) {
                 {/* Right Column Middle: Quick Brush Width Presets */}
                 <div className="flex flex-row items-center justify-start gap-2 pl-4">
                     <span className="text-sm font-medium">Width:</span>
-                    {[15, 10, 5, 4, 2].map((size) => (
+                    {[12, 10, 8, 6, 4, 2].map((size) => (
                         <div
                             key={size}
                             onClick={() => setBrushWidth({ width: size })}

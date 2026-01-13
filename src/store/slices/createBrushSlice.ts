@@ -1,4 +1,5 @@
 import * as fabric from 'fabric';
+import tailwindcolors from 'tailwindcss/colors';
 
 /*
  * This slice interacts heavily with fabric's runtime types and the zustand
@@ -6,6 +7,12 @@ import * as fabric from 'fabric';
  * necessary. Keep changes minimal and safe.
  */
 type FateBoardBrush = 'pencil' | 'circle' | 'spray' | 'pattern';
+
+function tailwindBgToHex(bgClass: string): string | undefined {
+    const [, color, shade] = bgClass.split('-');
+    // tailwindcolors has a complex index signature — keep runtime behavior
+    return (tailwindcolors as any)[color]?.[shade];
+}
 
 export const createBrushSlice = (set: any, get: any, _store: any) => ({
     brush: 'pencil',
@@ -38,8 +45,10 @@ export const createBrushSlice = (set: any, get: any, _store: any) => ({
 
         canvas.freeDrawingBrush = brush;
         canvas.freeDrawingCursor = cursor;
+        console.log({ brush: type, color, width, cursor });
+
         set({ brush: type, color, width, cursor });
-        canvas.renderAll();
+        canvas.requestRenderAll();
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setBrushWidth: (options: any = {}) => {
@@ -51,25 +60,18 @@ export const createBrushSlice = (set: any, get: any, _store: any) => ({
         (canvas.freeDrawingBrush as any).width = width;
 
         set({ width });
+        canvas.requestRenderAll();
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setBrushColor: (options: any = {}) => {
         const canvas = get().canvas;
         if (!canvas) return;
-        console.log(options);
 
         const color = options?.color ?? (get() as any).color;
         (canvas.freeDrawingBrush as any).color = color;
 
+        canvas.contextTop.fillStyle = color;
         set({ color });
+        canvas.requestRenderAll();
     },
-    //    setBrushColor: (options={}) => {
-    //        const canvas = get().canvas;
-    //        if (!canvas) return;
-    //
-    //        const color = options?.color ?? get().color;
-    //        canvas.freeDrawingBrush.color = color;
-    //
-    //        set({ color });
-    //    }
 });
