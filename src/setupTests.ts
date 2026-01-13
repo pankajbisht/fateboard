@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import * as fabric from 'fabric';
 
 // -----------------------------
 // matchMedia mock
@@ -47,3 +48,5 @@ HTMLCanvasElement.prototype.getContext = vi.fn(() => {
         clip: vi.fn(),
     } as any;
 });
+
+vi.spyOn(fabric.Canvas.prototype, 'requestRenderAll').mockImplementation(() => {});

@@ -70,7 +70,6 @@ export const createBrushSlice = (set: any, get: any, _store: any) => ({
         const color = options?.color ?? (get() as any).color;
         (canvas.freeDrawingBrush as any).color = color;
 
-        canvas.contextTop.fillStyle = color;
         set({ color });
         canvas.requestRenderAll();
     },

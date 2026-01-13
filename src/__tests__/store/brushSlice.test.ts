@@ -7,7 +7,7 @@ describe('createBrushSlice', () => {
             canvas: {
                 freeDrawingBrush: { color: '#000', width: 2 },
                 freeDrawingCursor: '',
-                renderAll: vi.fn(),
+                requestRenderAll: vi.fn(),
             },
         };
 
@@ -27,7 +27,12 @@ describe('createBrushSlice', () => {
     });
 
     it('setBrushWidth updates width and calls set', () => {
-        const state: any = { canvas: { freeDrawingBrush: { width: 3 } } };
+        const state: any = {
+            canvas: {
+                freeDrawingBrush: { width: 3 },
+                requestRenderAll: vi.fn(),
+            },
+        };
         const set = vi.fn((patch) => Object.assign(state, patch));
         const get = () => state;
         const store = {} as any;
@@ -37,10 +42,16 @@ describe('createBrushSlice', () => {
 
         expect((state.canvas.freeDrawingBrush as any).width).toBe(7);
         expect(set).toHaveBeenCalled();
+        expect(state.canvas.requestRenderAll).toHaveBeenCalled();
     });
 
     it('setBrushColor updates color and calls set', () => {
-        const state: any = { canvas: { freeDrawingBrush: { color: '#000' } } };
+        const state: any = {
+            canvas: {
+                freeDrawingBrush: { color: '#000' },
+                requestRenderAll: vi.fn(),
+            },
+        };
         const set = vi.fn((patch) => Object.assign(state, patch));
         const get = () => state;
         const store = {} as any;
@@ -50,5 +61,6 @@ describe('createBrushSlice', () => {
 
         expect((state.canvas.freeDrawingBrush as any).color).toBe('#123');
         expect(set).toHaveBeenCalled();
+        expect(state.canvas.requestRenderAll).toHaveBeenCalled();
     });
 });
