@@ -628,6 +628,8 @@ export const createShapeStyleSlice = (set, get, store) => ({
             // No selection → update store only
             if (get().activePaint === 'stroke') {
                 set({ stroke: normalized });
+            } else if (get().hasShadow) {
+                get().setShadowColor(normalized);
             } else {
                 set({ fill: normalized });
                 const o = {
@@ -641,6 +643,8 @@ export const createShapeStyleSlice = (set, get, store) => ({
         activeObjects.forEach((obj) => {
             if (get().activePaint === 'stroke') {
                 obj.set({ stroke: normalized });
+            } else if (get().hasShadow) {
+                get().setShadowColor(normalized);
             } else {
                 // 🛑 prevent gradient overwrite
                 if (obj.fill instanceof fabric.Gradient) return;
@@ -649,8 +653,12 @@ export const createShapeStyleSlice = (set, get, store) => ({
             }
         });
 
+        console.log(get().hasShadow);
+
         if (get().activePaint === 'stroke') {
             set({ stroke: normalized });
+        } else if (get().hasShadow) {
+            get().setShadowColor(normalized);
         } else {
             set({ fill: normalized });
         }

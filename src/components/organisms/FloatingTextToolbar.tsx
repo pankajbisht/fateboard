@@ -3,6 +3,39 @@ import { useStore } from '@store';
 import { Select } from '../atoms/Select.tsx';
 import { ToggleGroup } from '../molecules/ToggleGroup.tsx';
 import { NumberInput } from '../atoms/NumberInput.tsx';
+import Dropdown from '../atoms/Dropdown.tsx';
+
+const options = [
+    { label: '8px', value: 8 },
+    { label: '10px', value: 10 },
+    { label: '12px', value: 12 },
+    { label: '14px', value: 14 },
+    { label: '16px', value: 16 },
+    { label: '18px', value: 18 },
+    { label: '20px', value: 20 },
+    { label: '24px', value: 24 },
+    { label: '28px', value: 28 },
+    { label: '32px', value: 32 },
+    { label: '36px', value: 36 },
+    { label: '48px', value: 48 },
+    { label: '64px', value: 64 },
+    { label: '72px', value: 72 },
+    { label: '96px', value: 96 },
+    { label: '144px', value: 144 },
+];
+
+const FontSizeDropdown = ({ value, options, handleApply, className = '' }) => {
+    return (
+        <Dropdown
+            value={value}
+            options={options}
+            className={className}
+            onChange={(selected) => {
+                handleApply?.(selected);
+            }}
+        />
+    );
+};
 
 export function FloatingTextToolbar({ target, canvas, onChange }) {
     const fontSize = useStore((state) => state.fontSize);
@@ -113,10 +146,10 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
     return (
         <div
             ref={toolbarRef}
-            className="absolute z-50 flex items-center gap-2 bg-white shadow-lg rounded-full px-4 py-2"
+            className="absolute z-50 flex items-center gap-2 bg-stone-50 shadow-lg rounded-full border-1 border-stone-100 px-4 py-2"
         >
             {/* Color Picker */}
-            <label className="relative cursor-pointer">
+            {/*<label className="relative cursor-pointer">
                 <input
                     type="color"
                     value={color}
@@ -131,9 +164,9 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
                     className="h-6 w-6 rounded-full border shadow-sm"
                     style={{ backgroundColor: color }}
                 />
-            </label>
+            </label>*/}
 
-            <Select
+            {/*<Select
                 onChange={(fontFamily) => {
                     console.log(fontFamily);
                     setFontFamily(fontFamily);
@@ -141,22 +174,42 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
                 }}
                 options={fonts}
                 value={fontFamily}
+            />*/}
+
+            <Dropdown
+                value={fontFamily}
+                options={fonts}
+                onChange={(fontFamily) => {
+                    console.log(fontFamily);
+                    setFontFamily(fontFamily);
+                    onChange?.({ fontFamily: fontFamily });
+                }}
             />
 
-            <NumberInput
+            <FontSizeDropdown
                 value={fontSize}
-                onChange={(fontSize) => {
+                options={options}
+                handleApply={(fontSize) => {
                     const val = parseInt(String(fontSize), 10);
                     setFontSize(val);
                     onChange?.({ fontSize: val });
                 }}
             />
 
+            {/*<NumberInput
+                value={fontSize}
+                onChange={(fontSize) => {
+                    const val = parseInt(String(fontSize), 10);
+                    setFontSize(val);
+                    onChange?.({ fontSize: val });
+                }}
+            />*/}
+
             <ToggleGroup
                 options={[
-                    { key: 'bold', icon: 'fa-solid fa-bold' },
-                    { key: 'italic', icon: 'fa-solid fa-italic' },
-                    { key: 'underline', icon: 'fa-solid fa-underline' },
+                    { key: 'bold', icon: 'fa-solid fa-bold', tooltip: 'Bold' },
+                    { key: 'italic', icon: 'fa-solid fa-italic', tooltip: 'Italic' },
+                    { key: 'underline', icon: 'fa-solid fa-underline', tooltip: 'Underline' },
                 ]}
                 onChange={(formats) => {
                     console.log('formats:', formats);

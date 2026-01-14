@@ -30,7 +30,7 @@ export function Dropdown({
                 value={value}
                 onChange={(e) => onChange?.(e.target.value)}
                 disabled={disabled}
-                className="p-1 text-xs border border-gray-300 rounded cursor-pointer"
+                className="px-1 h-6 text-xs border border-gray-300 rounded cursor-pointer"
             >
                 {options.map((opt) => (
                     <option key={opt.value} value={opt.value}>
