@@ -20,19 +20,35 @@ const EditorTemplate = ({
     rightPanel,
 }: EditorTemplateProps) => {
     return (
-        <div className="flex flex-col h-screen overflow-hidden">
-            {header && header}
+        // <div className="flex flex-col h-screen overflow-hidden">
+        //     {header && header}
 
-            <main className="relative flex flex-1 overflow-hidden flex-none">
-                {canvasBoard && canvasBoard}
+        //     <main className="relative flex flex-1 overflow-hidden flex-none">
+        //         {canvasBoard && canvasBoard}
 
-                {leftSidebar && leftSidebar}
+        //         {leftSidebar && leftSidebar}
 
-                {rightPanel && <div className="absolute top-0 right-0 h-full">{rightPanel}</div>}
-            </main>
+        //         {rightPanel && <div className="absolute top-0 right-0 h-full">{rightPanel}</div>}
+        //     </main>
 
-            {footer && footer}
-        </div>
+        //     {footer && footer}
+        // </div>
+        <>
+            <div className="flex flex-col h-screen overflow-hidden">
+                {header && header}
+
+                <main className="relative flex flex-1 overflow-hidden">
+                    {canvasBoard && canvasBoard}
+
+                    {rightPanel && (
+                        <div className="absolute top-0 right-0 h-full">{rightPanel}</div>
+                    )}
+                </main>
+
+                {footer && footer}
+            </div>
+            {leftSidebar && leftSidebar}
+        </>
     );
 };
 

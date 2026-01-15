@@ -213,7 +213,12 @@ export function CanvasBoard() {
                 viewportWidth={scrollRef.current?.clientWidth ?? 0}
             />
 
-            <div className="flex">
+            <div
+                className="flex bg-amber-400"
+                style={{
+                    height: 'calc(100% - 16px)',
+                }}
+            >
                 <LeftRuler
                     mouseY={mouse.y}
                     scrollY={scrollPos.y}
@@ -222,15 +227,7 @@ export function CanvasBoard() {
 
                 <div
                     ref={scrollRef}
-                    className="relative overflow-auto bg-stone-200"
-                    // style={{
-                    //     width: `calc(100vw - ${RULER_SIZE}px)`,
-                    //     height: `calc(100vh - ${RULER_SIZE}px)`,
-                    // }}
-                    style={{
-                        height: 'calc(100vh - 80px - 50px - 25px)',
-                        width: 'calc(100vw)',
-                    }}
+                    className="relative overflow-auto bg-stone-200 w-full"
                     onMouseMove={(e) => setMouse(getMouse(e))}
                 >
                     <div
@@ -245,7 +242,7 @@ export function CanvasBoard() {
 
                         {/* Artboard visual guide at origin (0,0) */}
                         <div
-                            className="overflow-hidden absolute bg-white border border-stone-300 h-auto w-auto shadow-sm"
+                            className="overflow-hidden absolute bg-white border border-stone-300 shadow-sm"
                             style={{
                                 // width: ARTBOARD_WIDTH,
                                 // height: ARTBOARD_HEIGHT,

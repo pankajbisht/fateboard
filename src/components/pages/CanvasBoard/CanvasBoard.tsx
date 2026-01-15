@@ -92,15 +92,8 @@ export function CanvasBoardFreeHand() {
     };
 
     return (
-        <div className="flex">
-            <div
-                className="shadow-lg relative"
-                onContextMenu={onRightClick}
-                style={{
-                    height: 'calc(100vh - 80px - 50px - 10px)',
-                    width: 'calc(100vw)',
-                }}
-            >
+        <div className="flex flex-1">
+            <div className="shadow-lg relative" onContextMenu={onRightClick}>
                 <canvas ref={canvasRef} />
 
                 {selectedObject?.type === 'textbox' && canvas && (

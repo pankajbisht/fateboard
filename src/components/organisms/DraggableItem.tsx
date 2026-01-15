@@ -208,7 +208,7 @@ export const DockRoot = () => {
     }, [active, open]);
 
     return (
-        <aside className="flex" style={{ height: 'calc(100vh - 98px - 40px)' }}>
+        <aside className="flex h-full">
             <DockPanel
                 open={open}
                 onToggle={() => setOpen((o) => !o)}
