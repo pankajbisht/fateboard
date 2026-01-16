@@ -152,15 +152,15 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => 
         if (!canvas) return;
 
         const { pageWidth, pageHeight, scale } = get();
-        let x = (pageWidth / 2) * scale;
-        let y = (pageHeight / 2) * scale;
+        const x = (pageWidth / 2) * scale;
+        const y = (pageHeight / 2) * scale;
 
         console.log(x, y, pageWidth, pageHeight);
 
-        if (get().settings.freehand) {
-            x = 800;
-            y = 400;
-        }
+        // if (get().settings.freehand) {
+        //     x = 800;
+        //     y = 400;
+        // }
 
         const defaultPosition = {
             left: x,

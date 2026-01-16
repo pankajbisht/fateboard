@@ -21,6 +21,7 @@ import { createSettingSlice } from './slices/createSettingSlice.ts';
 import { advanceOperationSlice } from './slices/advanceOperationSlice.ts';
 import { geometryEngineSlice } from './slices/geometryEngineSlice.ts';
 import { createNodeEditorSlice } from './slices/createNodeEditorSlice.ts';
+import { createFilterSlice } from './slices/createFilterSlice.ts';
 
 export const combinedSlice = (set, get, store) => ({
     ...createCanvasSlice(set, get, store),
@@ -41,6 +42,7 @@ export const combinedSlice = (set, get, store) => ({
     ...advanceOperationSlice(set, get, store),
     ...geometryEngineSlice(set, get, store),
     ...createNodeEditorSlice(set, get, store),
+    ...createFilterSlice(set, get, store),
     //  ...createNotebookSlice(set, get, store)
 });
 

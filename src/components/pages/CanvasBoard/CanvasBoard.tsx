@@ -16,14 +16,25 @@ export const shortcut = (mac: string, win: string) => (isMac ? mac : win);
 
 export function CanvasBoardFreeHand() {
     const canvasRef = useRef(null);
+    const containerRef = useRef(null);
     const geditorRef = useRef<MultiStopGradientTool | null>(null);
     const { init, selectedObject, canvas, openMenu, fill } = useStore();
     const eventLists = useStore();
     useKeyboardShortcuts();
 
+    const handleResize = () => {
+        if (canvas && containerRef.current) {
+            canvas.setDimensions({
+                width: containerRef.current.clientWidth,
+                height: containerRef.current.clientHeight,
+            });
+            canvas.renderAll();
+        }
+    };
+
     useEffect(() => {
         if (canvasRef.current) {
-            init(canvasRef.current);
+            init(canvasRef.current, containerRef.current);
             geditorRef.current = new MultiStopGradientTool(canvas, () => fill);
         }
 
@@ -32,9 +43,18 @@ export function CanvasBoardFreeHand() {
                 canvas.dispose();
                 geditorRef.current?.disable();
                 geditorRef.current = null;
+                containerRef.current = null;
             }
         };
     }, [init]);
+
+    useEffect(() => {
+        window.addEventListener('resize', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+        };
+    }, [canvas]);
 
     const onRightClick = (e) => {
         e.preventDefault();
@@ -93,7 +113,11 @@ export function CanvasBoardFreeHand() {
 
     return (
         <div className="flex flex-1">
-            <div className="shadow-lg relative" onContextMenu={onRightClick}>
+            <div
+                className="shadow-xs relative h-full w-full"
+                ref={containerRef}
+                onContextMenu={onRightClick}
+            >
                 <canvas ref={canvasRef} />
 
                 {selectedObject?.type === 'textbox' && canvas && (

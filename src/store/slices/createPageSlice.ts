@@ -47,8 +47,14 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
         const fmt = String(format || '').toLowerCase();
 
         if (fmt === 'freehand') {
-            canvas.setWidth(window.innerWidth * 2);
-            canvas.setHeight(window.innerHeight * 2);
+            // canvas.setWidth(window.innerWidth * 2);
+            // canvas.setHeight(window.innerHeight * 2);
+
+            canvas.setWidth(get().cw);
+            canvas.setHeight(get().ch);
+
+            console.log(get().cw, get().ch);
+
             canvas.setZoom(1);
             canvas.calcOffset();
             canvas.renderAll();

@@ -245,6 +245,8 @@ export const createCanvasSlice = (set, get, store) => ({
     showTextToolbar: true,
     hasActiveShape: false,
     geditor: null,
+    cw: 0,
+    ch: 0,
 
     hasMultipleSelection: () => {
         const canvas = get().canvas;
@@ -252,7 +254,7 @@ export const createCanvasSlice = (set, get, store) => ({
         return canvas.getActiveObjects().length > 1;
     },
 
-    init: async (el) => {
+    init: async (el, container) => {
         if (!el) return;
         if (get().canvas) return;
 
@@ -261,7 +263,16 @@ export const createCanvasSlice = (set, get, store) => ({
             preserveObjectStacking: true,
             stopContextMenu: true,
             fireRightClick: true,
+            // width: container.clientWidth,
+            // height: container.clientHeight
         });
+
+        if (get().settings.freehand) {
+            set({
+                cw: container.clientWidth,
+                ch: container.clientHeight,
+            });
+        }
 
         canvas.backgroundColor = fateboardCanvasConfig.bg;
 
