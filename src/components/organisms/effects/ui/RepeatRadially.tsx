@@ -2,6 +2,24 @@ import { TransformInput } from '@/components/molecules/TransformInput';
 import { EffectSection } from './EffectSection';
 import { useStore } from '@/store';
 import { useState } from 'react';
+import Dropdown from '@/components/atoms/Dropdown';
+
+const modeList = [
+    { label: 'ring', value: 'Ring' },
+    { label: 'spiral', value: 'Spiral' },
+];
+
+const anchorList = [
+    { label: 'TL', value: 'TL' },
+    { label: 'TC', value: 'TC' },
+    { label: 'TR', value: 'TR' },
+    { label: 'CL', value: 'CL' },
+    { label: 'CC', value: 'CC' },
+    { label: 'CR', value: 'CR' },
+    { label: 'BL', value: 'BL' },
+    { label: 'BC', value: 'BC' },
+    { label: 'BR', value: 'BR' },
+];
 
 export const RepeatRadially = () => {
     const { canvas, repeatRadially } = useStore();
@@ -81,7 +99,7 @@ export const RepeatRadially = () => {
             />
 
             <div className="flex flex-col gap-2 mt-2">
-                <label>
+                {/*<label>
                     Mode:
                     <select
                         value={mode}
@@ -90,10 +108,21 @@ export const RepeatRadially = () => {
                         <option value="ring">Ring</option>
                         <option value="spiral">Spiral</option>
                     </select>
+                </label>*/}
+
+                <label className="flex items-center gap-1 text-[11px] text-gray-500">
+                    <span>Mode:</span>
+                    <Dropdown
+                        options={modeList}
+                        value={mode}
+                        onChange={(value) => {
+                            setMode(value);
+                        }}
+                    />
                 </label>
 
-                <label>
-                    Clockwise:
+                <label className="flex items-center gap-1 text-[11px] text-gray-500">
+                    <span>Clockwise:</span>
                     <input
                         type="checkbox"
                         checked={clockwise}
@@ -101,8 +130,8 @@ export const RepeatRadially = () => {
                     />
                 </label>
 
-                <label>
-                    Rotate Along Path:
+                <label className="flex items-center gap-1 text-[11px] text-gray-500">
+                    <span>Rotate Along Path:</span>
                     <input
                         type="checkbox"
                         checked={rotateAlongPath}
@@ -110,8 +139,9 @@ export const RepeatRadially = () => {
                     />
                 </label>
 
-                <label>
-                    Opacity Fade:
+                <label className="flex items-center gap-1 text-[11px] text-gray-500">
+                    <span>Opacity Fade:</span>
+
                     <input
                         type="checkbox"
                         checked={opacityFade}
@@ -120,7 +150,18 @@ export const RepeatRadially = () => {
                 </label>
             </div>
 
-            <select
+            <label className="flex items-center gap-1 text-[11px] text-gray-500">
+                <span>Anchor:</span>
+                <Dropdown
+                    value={anchor}
+                    options={anchorList}
+                    onChange={(value) => {
+                        setAnchor(value);
+                    }}
+                />
+            </label>
+
+            {/*<select
                 value={anchor}
                 onChange={(e) => setAnchor(e.target.value)}
                 className="w-full mt-2"
@@ -130,7 +171,7 @@ export const RepeatRadially = () => {
                         {p}
                     </option>
                 ))}
-            </select>
+            </select>*/}
         </EffectSection>
     );
 };
