@@ -2,9 +2,8 @@ import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 import { importFile } from '@/feature/import';
-import { FileBarConfig } from '../../../../config/commandConfig';
-
 import { useRef } from 'react';
+import { FileBarConfig } from '@/components/config/toolbars';
 
 function getFileActions(handlers) {
     // console.log(FileBarConfig, handlers.openFile);
@@ -18,44 +17,7 @@ function getFileActions(handlers) {
         };
     });
 
-    // console.log(x);
-
     return x;
-
-    // const FILE_ACTIONS = [
-    //     {
-    //         id: 'new',
-    //         tooltip: 'Create New Board',
-    //         icon: <i className="fa-solid fa-file"></i>,
-    //         onClick: () => useStore.getState().clearBoard(),
-    //     },
-    //     {
-    //         id: 'open',
-    //         tooltip: 'Open Board',
-    //         icon: <i className="fa-regular fa-folder-open" />,
-    //         onClick: () => handlers.openFile(),
-    //     },
-    //     {
-    //         id: 'save',
-    //         tooltip: 'Save Board',
-    //         icon: <i className="fa-regular fa-floppy-disk" />,
-    //         onClick: () => useStore.getState().saveBoard(),
-    //     },
-    //     // {
-    //     //     id: 'export',
-    //     //     tooltip: 'Export Board',
-    //     //     icon: <i className="fa-solid fa-file-export"></i>,
-    //     //     onClick: () => console.log('Align Left'),
-    //     // },
-    //     // {
-    //     //     id: 'import',
-    //     //     tooltip: 'Import Board',
-    //     //     icon: <i className="fa-solid fa-file-arrow-up"></i>,
-    //     //     onClick: () => console.log('Align Left'),
-    //     // },
-    // ];
-
-    // return FILE_ACTIONS;
 }
 
 const FileBar = () => {

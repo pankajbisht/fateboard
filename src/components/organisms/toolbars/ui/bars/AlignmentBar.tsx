@@ -1,58 +1,7 @@
 import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
-import { AlignmentBarConfig } from '../../../../config/commandConfig';
-
-// const ALIGN_ACTIONS = [
-//     {
-//         id: 'align-left',
-//         label: 'Align Left',
-//         icon: <i className="fa-solid fa-align-left" />,
-//         onClick: () => useStore.getState().alignObjects('align-left'),
-//     },
-//     {
-//         id: 'align-center',
-//         label: 'Align Center',
-//         icon: <i className="fa-solid fa-align-center" />,
-//         onClick: () => useStore.getState().alignObjects('align-hcenter'),
-//     },
-//     {
-//         id: 'align-right',
-//         label: 'Align Right',
-//         icon: <i className="fa-solid fa-align-right" />,
-//         onClick: () => useStore.getState().alignObjects('align-right'),
-//     },
-//     {
-//         id: 'align-top',
-//         label: 'Align Top',
-//         icon: <i className="fa-solid fa-align-left rotate-90" />,
-//         onClick: () => useStore.getState().alignObjects('align-top'),
-//     },
-//     {
-//         id: 'align-middle',
-//         label: 'Align Middle',
-//         icon: <i className="fa-solid fa-align-center -rotate-90" />,
-//         onClick: () => useStore.getState().alignObjects('align-vcenter'),
-//     },
-//     {
-//         id: 'align-bottom',
-//         label: 'Align Bottom',
-//         icon: <i className="fa-solid fa-align-right rotate-90" />,
-//         onClick: () => useStore.getState().alignObjects('align-bottom'),
-//     },
-//     {
-//         id: 'distribute-horizontal',
-//         label: 'Distribute Horizontally',
-//         icon: <i className="fa-solid fa-grip-lines-vertical" />,
-//         onClick: () => useStore.getState().alignObjects('distribute-h'),
-//     },
-//     {
-//         id: 'distribute-vertical',
-//         label: 'Distribute Vertically',
-//         icon: <i className="fa-solid fa-grip-lines" />,
-//         onClick: () => useStore.getState().alignObjects('distribute-v'),
-//     },
-// ];
+import { AlignmentBarConfig } from '@/components/config/toolbars';
 
 const AlignmentBar = () => {
     const iconSize = useStore((state) => state.settings.iconSize);

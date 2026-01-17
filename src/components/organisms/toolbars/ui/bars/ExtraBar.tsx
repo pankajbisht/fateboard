@@ -1,15 +1,3 @@
-// <Tooltip position="bottom" content="Grid View">
-//     <IconButton
-//         active={show}
-//         icon={<i className="fa-solid fa-table-cells-large"></i>}
-//         onClick={() => {
-//             setShow(!show);
-//             toggleGrid();
-//         }}
-//         title="Grid View"
-//     />
-// </Tooltip>
-
 import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';

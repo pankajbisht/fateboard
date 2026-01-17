@@ -2,24 +2,7 @@ import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 import { shortcut } from '@/lib/utils/isMac';
-import { LockBarConfig } from '../../../../config/commandConfig';
-
-// const LOCK_ACTIONS = [
-//     {
-//         id: 'lock',
-//         label: 'Lock',
-//         shortcut: shortcut('⌘L', 'Ctrl+L'),
-//         icon: <i className="fa-solid fa-lock" />,
-//         onClick: () => useStore.getState().lock(),
-//     },
-//     {
-//         id: 'unlock',
-//         label: 'Unlock',
-//         shortcut: shortcut('⌘⇧L', 'Shift+Ctrl+L'),
-//         icon: <i className="fa-solid fa-lock-open" />,
-//         onClick: () => useStore.getState().unlock(),
-//     },
-// ];
+import { LockBarConfig } from '@/components/config/toolbars';
 
 const LockBar = () => {
     const iconSize = useStore((state) => state.settings.iconSize);

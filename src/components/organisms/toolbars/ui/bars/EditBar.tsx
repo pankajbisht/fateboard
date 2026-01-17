@@ -2,52 +2,7 @@ import { shortcut } from '@/lib/utils/isMac';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 import { useStore } from '@/store';
-import { EditBarConfig } from '../../../../config/commandConfig';
-
-// const EDIT_ACTIONS = [
-//     {
-//         id: 'copy',
-//         label: 'Copy',
-//         shortcut: shortcut('⌘C', 'Ctrl+C'),
-//         icon: <i className="fa-regular fa-copy" />,
-//         onClick: () => useStore.getState().copy(),
-//     },
-//     {
-//         id: 'cut',
-//         label: 'Cut',
-//         shortcut: shortcut('⌘X', 'Ctrl+X'),
-//         icon: <i className="fa-solid fa-scissors -rotate-90"></i>,
-//         onClick: () => useStore.getState().cut(),
-//     },
-//     {
-//         id: 'paste',
-//         label: 'Paste',
-//         shortcut: shortcut('⌘V', 'Ctrl+V'),
-//         icon: <i className="fa-regular fa-paste" />,
-//         onClick: () => useStore.getState().paste(),
-//     },
-//     {
-//         id: 'duplicate',
-//         label: 'Duplicate',
-//         shortcut: shortcut('⌘D', 'Ctrl+D'),
-//         icon: <i className="fa-regular fa-clone" />,
-//         onClick: () => useStore.getState().duplicate(),
-//     },
-//     {
-//         id: 'clone',
-//         label: 'Clone',
-//         shortcut: shortcut('⌥D', 'Alt+D'),
-//         icon: <i className="fa-solid fa-layer-group" />,
-//         onClick: () => useStore.getState().clone(),
-//     },
-//     {
-//         id: 'delete',
-//         label: 'Delete',
-//         shortcut: shortcut('delete', 'backscape'),
-//         icon: <i className="fa-solid fa-trash" />,
-//         onClick: () => useStore.getState().removeLayer(),
-//     },
-// ];
+import { EditBarConfig } from '@/components/config/toolbars';
 
 const EditBar = () => {
     const iconSize = useStore((state) => state.iconSize);

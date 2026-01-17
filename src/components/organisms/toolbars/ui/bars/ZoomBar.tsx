@@ -1,39 +1,7 @@
 import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
-import { shortcut } from '@/lib/utils/isMac';
-import { ZoomBarConfig } from '../../../../config/commandConfig';
-
-// const ZOOM_ACTIONS = [
-//     {
-//         id: 'zoom-in',
-//         label: 'Zoom In',
-//         shortcut: shortcut('⌘+', 'Ctrl+'),
-//         icon: <i className="fa-solid fa-magnifying-glass-plus" />,
-//         onClick: () => useStore.getState().zoomIn(),
-//     },
-//     {
-//         id: 'zoom-out',
-//         label: 'Zoom Out',
-//         shortcut: shortcut('⌘-', 'Ctrl-'),
-//         icon: <i className="fa-solid fa-magnifying-glass-minus" />,
-//         onClick: () => useStore.getState().zoomOut(),
-//     },
-//     {
-//         id: 'fit-to-screen',
-//         label: 'Fit to Screen',
-//         shortcut: shortcut('⌘0', 'Ctrl+0'),
-//         icon: <i className="fa-solid fa-expand" />,
-//         onClick: () => useStore.getState().zoomFit(),
-//     },
-//     {
-//         id: 'actual-size',
-//         label: 'Actual Size',
-//         shortcut: shortcut('⌘1', 'Ctrl+1'),
-//         icon: <i className="fa-solid fa-arrows-left-right" />,
-//         onClick: () => useStore.getState().actualSize(),
-//     },
-// ];
+import { ZoomBarConfig } from '@/components/config/toolbars';
 
 const ZoomBar = () => {
     const iconSize = useStore((state) => state.settings.iconSize);

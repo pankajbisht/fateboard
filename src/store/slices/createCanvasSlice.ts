@@ -261,8 +261,8 @@ export const createCanvasSlice = (set, get, store) => ({
         const canvas = new fabric.Canvas(el, {
             backgroundColor: fateboardCanvasConfig.bg,
             preserveObjectStacking: true,
-            stopContextMenu: true,
-            fireRightClick: true,
+            // stopContextMenu: true,
+            // fireRightClick: true,
             // width: container.clientWidth,
             // height: container.clientHeight
         });

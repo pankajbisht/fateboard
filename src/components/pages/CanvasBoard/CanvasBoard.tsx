@@ -5,6 +5,7 @@ import { MultiStopGradientTool } from '@/lib/utils/GradientTool';
 import { useStore } from '@/store';
 import { useKeyboardShortcuts } from '@/hooks';
 import { FloatingTextToolbar } from '@/components/organisms/FloatingTextToolbar';
+import { contextMenuRegistry } from '@/components/config/contextMenuRegistry';
 
 const VIRTUAL_SIZE = 8000; // total virtual workspace (allows negative space)
 const CANVAS_OFFSET = VIRTUAL_SIZE / 2; // offset to place origin at center
@@ -18,8 +19,13 @@ export function CanvasBoardFreeHand() {
     const canvasRef = useRef(null);
     const containerRef = useRef(null);
     const geditorRef = useRef<MultiStopGradientTool | null>(null);
-    const { init, selectedObject, canvas, openMenu, fill } = useStore();
-    const eventLists = useStore();
+
+    const init = useStore((s) => s.init);
+    const selectedObject = useStore((s) => s.selectedObject);
+    const canvas = useStore((s) => s.canvas);
+    const fill = useStore((s) => s.fill);
+    const openMenu = useStore((s) => s.openMenu);
+
     useKeyboardShortcuts();
 
     const handleResize = () => {
@@ -59,56 +65,7 @@ export function CanvasBoardFreeHand() {
     const onRightClick = (e) => {
         e.preventDefault();
 
-        openMenu(e.clientX, e.clientY, [
-            {
-                label: 'Copy',
-                icon: <i className="fa-solid fa-copy" />,
-                shortcut: shortcut('⌘C', 'Ctrl+C'),
-                when: () => eventLists.hasSelection,
-                onClick: () => eventLists.copy(),
-            },
-            {
-                label: 'Paste',
-                icon: <i className="fa-solid fa-paste" />,
-                shortcut: shortcut('⌘V', 'Ctrl+V'),
-                when: () => eventLists.canPaste(),
-                onClick: () => eventLists.paste(),
-            },
-            {
-                label: 'Duplicate',
-                icon: <i className="fa-solid fa-clone" />,
-                shortcut: shortcut('⌘D', 'Ctrl+D'),
-                when: () => eventLists.hasSelection,
-                onClick: () => eventLists.duplicate(),
-            },
-
-            { type: 'divider' },
-
-            {
-                label: 'Group',
-                icon: <i className="fa-solid fa-object-group" />,
-                shortcut: shortcut('⌘G', 'Ctrl+G'),
-                when: () => eventLists.hasMultipleSelection(),
-                onClick: () => eventLists.groupLayers(),
-            },
-            {
-                label: 'Ungroup',
-                icon: <i className="fa-solid fa-object-ungroup" />,
-                shortcut: shortcut('⌘⇧G', 'Ctrl+Shift+G'),
-                when: () => eventLists.isGroupSelected(),
-                onClick: () => eventLists.ungroupSelected(),
-            },
-
-            { type: 'divider' },
-
-            {
-                label: 'Delete',
-                icon: <i className="fa-solid fa-trash" />,
-                shortcut: shortcut('⌫', 'Del'),
-                when: () => eventLists.hasSelection,
-                onClick: () => eventLists.removeLayer(),
-            },
-        ]);
+        openMenu(e.clientX, e.clientY, contextMenuRegistry);
     };
 
     return (

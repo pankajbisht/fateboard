@@ -6,7 +6,7 @@ import { useStore } from '@store';
 import { useKeyboardShortcuts } from '../../hooks';
 import { FloatingTextToolbar } from './FloatingTextToolbar.tsx';
 import { MultiStopGradientTool } from '../../lib/utils/GradientTool.ts';
-import { contextMenuRegistry } from '../config/commandConfig.tsx';
+import { contextMenuRegistry } from '../config/contextMenuRegistry.tsx';
 
 const ARTBOARD_WIDTH = 1200;
 const ARTBOARD_HEIGHT = 800;
