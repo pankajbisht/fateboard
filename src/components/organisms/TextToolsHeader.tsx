@@ -91,6 +91,7 @@ export const TextToolsHeader = () => {
 
     // 🔑 Apply updates to active text object
     const updateText = (props) => {
+        console.log(props);
         const active = canvas?.getActiveObject();
         if (active && active.type.includes('text')) {
             active.set(props);

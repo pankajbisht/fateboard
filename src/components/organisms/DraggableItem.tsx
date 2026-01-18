@@ -4,6 +4,7 @@ import { TabsLayout } from './tabs';
 import { useStore } from '@/store';
 import { TransformInput } from '../molecules/TransformInput';
 import { EffectsPanel } from './effects';
+import Filters from './filter/ui/Filters';
 
 const SNAP_POINTS = [160, 240, 320, 400];
 
@@ -16,6 +17,15 @@ export const TABS_CONFIG = [
         closable: false,
         content: () => <EffectsPanel />,
     },
+
+    {
+        id: 'filter',
+        label: 'Filter Tools',
+        icon: 'fa-solid fa-sliders',
+        closable: false,
+        content: () => <Filters />,
+    },
+
     // {
     //     id: 'layer',
     //     label: 'Layers',
@@ -217,7 +227,7 @@ export const DockRoot = () => {
                     panelMemory.current[active].scrollTop = scrollTop;
                 }}
             >
-                <TabsLayout tabs={TABS_CONFIG} defaultTab="effects" />
+                <TabsLayout tabs={TABS_CONFIG} defaultTab="filter" />
             </DockPanel>
 
             <ColorPicker />

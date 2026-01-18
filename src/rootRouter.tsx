@@ -13,24 +13,8 @@ function RootLayout() {
 
     useEffect(() => {
         const data = db.local.get('fateboard-settings', {});
-        // useStore.getState().hydrate(data.setting);
-
-        console.log(data);
-
-        //   const data = useStore.getState().load();
-
-        //   console.log(data);
-        //
-        // if (data.settings) {
         useStore.getState().hydrate(data);
-        // } else {
-        // useStore.getState().hydrate({});
-        // }
-
         setStore(true);
-
-        // useStore.getState().hydrate(data);
-        // hydrate other stores here
     }, []);
 
     return store && <Outlet />;

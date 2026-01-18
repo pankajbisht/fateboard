@@ -189,7 +189,7 @@ export function TabsLayout({
     return (
         <div className="flex flex-col w-full">
             {/* TAB BAR */}
-            <div ref={containerRef} className="flex items-center border-b px-2">
+            <div ref={containerRef} className="flex items-center border-b border-stone-200 px-4">
                 {visible.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = tab.id === activeTab;
@@ -200,7 +200,7 @@ export function TabsLayout({
                         <div
                             key={tab.id}
                             className={clsx(
-                                'group flex items-center gap-2 px-3 py-1',
+                                'group flex items-center gap-2 px-6 py-1',
                                 isActive
                                     ? 'text-blue-600 bg-stone-200'
                                     : 'text-neutral-500 hover:text-neutral-700',

@@ -19,8 +19,6 @@ const EditorPage = () => {
             <EditorTemplate
                 header={<Header />}
                 leftSidebar={<PanelManager config={leftPanelConfig} toolbarPosition="left" />}
-                // rightSidebar={<PanelManager config={rightPanelConfig} toolbarPosition="right" />}
-                // undoRedoSidebar={<PanelManager config={undoRedoPanelConfig} toolbarPosition="left" />}
                 rightPanel={<DockRoot />}
                 canvasBoard={freehand ? <CanvasBoardFreeHand /> : <CanvasBoard />}
                 footer={<Footer />}

@@ -1,6 +1,7 @@
 import * as fabric from 'fabric';
 import { FONTS } from '@lib/const/fonts.ts';
 import type { SliceCreator } from '../types';
+import { Canvas } from 'fabric';
 
 type TextType = fabric.Text | fabric.IText | fabric.Textbox;
 
@@ -80,6 +81,16 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
     setStrokeWidth: (val) => set({ strokeWidth: val }),
     fillColor: '#000000',
     setFillColor: (val) => set({ fillColor: val }),
+
+    updateText: (props) => {
+        console.log(props);
+        const canvas = get().canvas;
+        const active = canvas?.getActiveObject();
+        if (active && active.type.includes('text')) {
+            active.set(props);
+            canvas.requestRenderAll();
+        }
+    },
 
     addText: (textObj: TextInput = {}) => {
         const canvas = get().canvas;

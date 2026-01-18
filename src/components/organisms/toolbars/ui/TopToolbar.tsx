@@ -7,9 +7,11 @@ import { LockBar } from './bars/LockBar';
 import { ZoomBar } from './bars/ZoomBar';
 import OriginSelector from '@/components/molecules/OriginSelector';
 import { ExtraBar } from './bars/ExtraBar';
+import { UndoRedoBar } from './bars/UndoRedoBar';
 
 const TOOLBAR_SECTIONS = [
     { id: 'file', component: FileBar },
+    { id: 'undoredo', component: UndoRedoBar },
     { id: 'edit', component: EditBar },
     { id: 'alignment', component: AlignmentBar },
     { id: 'group', component: GroupBar },

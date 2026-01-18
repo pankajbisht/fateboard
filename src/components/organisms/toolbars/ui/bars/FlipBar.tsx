@@ -1,14 +1,14 @@
 import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
-import { LAYERCONTROL_ACTIONS } from '@/components/config/toolbars/ui/LayerControlBarConfig';
+import { FlipBarConfig } from '@/components/config/toolbars/ui/FlipBarConfig';
 
-const LayerControlBar = () => {
+const FlipBar = () => {
     const iconSize = useStore((state) => state.settings.iconSize);
 
     return (
         <ul className="flex items-center gap-1 px-1">
-            {LAYERCONTROL_ACTIONS.map((action) => (
+            {FlipBarConfig.map((action) => (
                 <li key={action.id}>
                     <Tooltip
                         position="bottom"
@@ -33,4 +33,4 @@ const LayerControlBar = () => {
     );
 };
 
-export { LayerControlBar };
+export { FlipBar };

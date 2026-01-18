@@ -14,6 +14,7 @@ import { GlowDivider } from './toolbars/index.ts';
 import { Tooltip } from '../molecules/Tooltip.tsx';
 import IconButton from '../atoms/IconButton.tsx';
 import { LayerControlBar } from './toolbars/ui/bars/LayerControlBar.tsx';
+import { FlipBar } from './toolbars/ui/bars/FlipBar.tsx';
 
 const round = (val) => Math.round(val);
 
@@ -123,12 +124,7 @@ export const ShapeToolsHeader = () => {
         }
     };
 
-    const handleAlginmentAndDistributeButton = (key, value) => {
-        alignObjects(key);
-    };
-
     return (
-        // <div className="px-2 py-1 overflow-x-auto bg-white">
         <div
             className={`px-2 py-1 overflow-x-auto bg-white ${
                 !active ? 'pointer-events-none opacity-50' : ''
@@ -136,94 +132,9 @@ export const ShapeToolsHeader = () => {
         >
             <div className="flex items-center justify-between whitespace-nowrap text-sm">
                 <div className="flex items-center gap-4">
-                    <SingleToggleButton
-                        action="flipX"
-                        toggleType="switch"
-                        iconOn={<FlipIcon className="cursor-pointer" />}
-                        iconOff={<FlipIcon className="cursor-pointer" />}
-                        tooltipOn="Flipped horizontally"
-                        tooltipOff="Flip horizontally"
-                        initial={false}
-                        onChange={(formats) => {
-                            const { action, value } = formats;
-                            console.log(action, value);
-                            setTransform(action, value);
-                        }}
-                    />
-
-                    <SingleToggleButton
-                        action="flipY"
-                        toggleType="switch"
-                        iconOn={<FlipIcon className="rotate-90 cursor-pointer" />}
-                        iconOff={<FlipIcon className="rotate-90 cursor-pointer" />}
-                        tooltipOn="Flipped vertically"
-                        tooltipOff="Flip vertically"
-                        initial={false}
-                        onChange={(formats) => {
-                            console.log(formats);
-                            const { action, value } = formats;
-                            setTransform(action, value);
-                        }}
-                    />
-
+                    <FlipBar />
                     <GlowDivider />
-
                     <LayerControlBar />
-
-                    {/*<ToggleGroup
-                        single
-                        options={[
-                            {
-                                key: 'sendbackward',
-                                icon: 'fa-solid fa-angle-down',
-                                tooltip: 'Send backward',
-                            },
-                            {
-                                key: 'bringforward',
-                                icon: 'fa-solid fa-angle-up',
-                                tooltip: 'Bring forward',
-                            },
-                        ]}
-                        onChange={(formats) => {
-                            const { sendtoback, bringtofront } = formats;
-
-                            const active = Object.entries(formats).find(([_, value]) => value);
-                            console.log('Back:', active);
-
-                            if (active) {
-                                const [key, value] = active;
-                                handleButton(key, value);
-                            }
-                        }}
-                    />
-
-                    <ToggleGroup
-                        single
-                        options={[
-                            {
-                                key: 'sendtoback',
-                                icon: 'fa-solid fa-angles-down',
-                                tooltip: 'Send to back',
-                            },
-                            {
-                                key: 'bringtofront',
-                                icon: 'fa-solid fa-angles-up',
-                                tooltip: 'Bring to front',
-                            },
-                        ]}
-                        onChange={(formats) => {
-                            const { sendtoback, bringtofront } = formats;
-
-                            const active = Object.entries(formats).find(([_, value]) => value);
-                            console.log('Back:', active);
-
-                            if (active) {
-                                const [key, value] = active;
-                                handleButton(key, value);
-                            }
-                        }}
-                    />*/}
-
                     <GlowDivider />
 
                     <div className="flex items-center gap-2">
@@ -237,159 +148,6 @@ export const ShapeToolsHeader = () => {
                             />
                         ))}
                     </div>
-
-                    {/* Divider */}
-                    {/*<div className="border-l h-6 border-gray-300" />*/}
-                </div>
-
-                {/* --- Right: Layer & Align --- */}
-                <div className="flex items-center gap-4">
-                    {/*<ToggleGroup
-                        single={true}
-                        options={[
-                            {
-                                key: 'group',
-                                icon: 'fa-solid fa-object-group',
-                                tooltip: 'Group',
-                            },
-                            {
-                                key: 'ungroup',
-                                icon: 'fa-solid fa-object-ungroup',
-                                tooltip: 'Ungroup',
-                            },
-                        ]}
-                        onChange={(formats) => {
-                            const { group, ungroup } = formats;
-
-                            const active = Object.entries(formats).find(([_, value]) => value);
-                            console.log('Group:', active);
-
-                            if (active) {
-                                const [key, value] = active;
-                                handleButton(key, value);
-                            }
-                        }}
-                    />*/}
-
-                    {/*<div className="border-l h-6 border-gray-300" />*/}
-
-                    {/*<SingleToggleButton
-                        action="lock"
-                        toggleType="switch"
-                        iconOn="fa-solid fa-lock"
-                        iconOff="fa-solid fa-unlock"
-                        tooltipOn="Locked"
-                        tooltipOff="Unlocked"
-                        initial={false}
-                        onChange={(formats) => {
-                            const { action, value } = formats;
-                            console.log(action, value);
-                            handleButton(action, value);
-                        }}
-                    />*/}
-
-                    {/*<ToggleGroup
-                        single
-                        options={[
-                            {
-                                key: 'left',
-                                icon: 'fa-solid fa-align-left',
-                                tooltip: 'Align Left',
-                            },
-                            {
-                                key: 'center',
-                                icon: 'fa-solid fa-align-center',
-                                tooltip: 'Align Center',
-                            },
-                            {
-                                key: 'right',
-                                icon: 'fa-solid fa-align-right',
-                                tooltip: 'Align Right',
-                            },
-                        ]}
-                        onChange={(formats) => {
-                            console.log('align:', formats);
-                            const { left, center, right, justify } = formats;
-                            let textAlign = 'align-left'; // default fallback
-
-                            if (center) textAlign = 'align-hcenter';
-                            else if (right) textAlign = 'align-right';
-
-                            handleAlginmentAndDistributeButton(textAlign, formats);
-                        }}
-                    />
-
-                    <div className="border-l h-6 border-gray-300" />
-
-                    <ToggleGroup
-                        single
-                        options={[
-                            {
-                                key: 'top',
-                                icon: 'fa-solid fa-align-left rotate-90',
-                                tooltip: 'Align Top',
-                            },
-                            {
-                                key: 'middle',
-                                icon: 'fa-solid fa-align-center -rotate-90',
-                                tooltip: 'Align Middle',
-                            },
-                            {
-                                key: 'bottom',
-                                icon: 'fa-solid fa-align-right rotate-90',
-                                tooltip: 'Align Bottom',
-                            },
-                        ]}
-                        onChange={(formats) => {
-                            console.log('align:', formats);
-                            const { top, middle, bottom } = formats;
-                            let textAlign = 'align-left'; // default fallback
-
-                            if (top) textAlign = 'align-top';
-                            else if (middle) textAlign = 'align-vcenter';
-                            else if (bottom) textAlign = 'align-bottom';
-
-                            handleAlginmentAndDistributeButton(textAlign, formats);
-                        }}
-                    />
-
-                    <ToggleGroup
-                        single
-                        options={[
-                            {
-                                key: 'distribute-h',
-                                icon: 'fa-solid fa-align-left rotate-90',
-                                tooltip: 'Distribute horizontally',
-                            },
-                            {
-                                key: 'distribute-v',
-                                icon: 'fa-solid fa-align-center -rotate-90',
-                                tooltip: 'Distribute vertically',
-                            },
-                        ]}
-                        onChange={(formats) => {
-                            console.log('align:', formats);
-                            const { 'distribute-v': distributeV, 'distribute-h': distributeH } =
-                                formats;
-                            let textAlign = 'align-left'; // default fallback
-
-                            if (distributeH) textAlign = 'distribute-h';
-                            else if (distributeV) textAlign = 'distribute-v';
-
-                            handleAlginmentAndDistributeButton(textAlign, formats);
-                        }}
-                    />*/}
-
-                    {/*<GlowDivider />
-
-                    <OriginSelector
-                        size={24}
-                        value={transform.id}
-                        onChange={(o) => {
-                            console.log(o);
-                            setOrigin(o);
-                        }}
-                    />*/}
                 </div>
 
                 {(active?.type === 'square' || active?.type === 'rect') && (
