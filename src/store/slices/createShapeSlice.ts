@@ -151,11 +151,16 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get, _store) => 
         const canvas = get().canvas;
         if (!canvas) return;
 
-        const { pageWidth, pageHeight, scale } = get();
-        const x = (pageWidth / 2) * scale;
-        const y = (pageHeight / 2) * scale;
+        // const { pageWidth, pageHeight, scale } = get();
+        // const x = (pageWidth / 2) * scale;
+        // const y = (pageHeight / 2) * scale;
 
-        console.log(x, y, pageWidth, pageHeight);
+        const center = canvas.getVpCenter();
+
+        const x = center.x;
+        const y = center.y;
+
+        // console.log(x, y, pageWidth, pageHeight);
 
         // if (get().settings.freehand) {
         //     x = 800;

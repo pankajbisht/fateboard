@@ -108,9 +108,14 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
             placeholderColor = '#9ca3af', // lighter gray for placeholder
         } = textObj;
 
-        const { pageWidth, pageHeight, scale } = get();
-        const x = (pageWidth / 2) * scale;
-        const y = (pageHeight / 2) * scale;
+        // const { pageWidth, pageHeight, scale } = get();
+        // const x = (pageWidth / 2) * scale;
+        // const y = (pageHeight / 2) * scale;
+
+        const center = canvas.getVpCenter();
+
+        const x = center.x;
+        const y = center.y;
 
         // if (get().settings.freehand) {
         //     x = 800;

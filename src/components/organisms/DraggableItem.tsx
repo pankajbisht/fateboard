@@ -167,7 +167,7 @@ export const DockPanel = ({
             {/* 3-dot handle */}
             <button
                 onClick={onToggle}
-                className="w-2 border border-stone-400 cursor-ew-resize flex items-center justify-center bg-stone-100 hover:bg-stone-200"
+                className="w-2 border border-stone-200 cursor-ew-resize flex items-center justify-center bg-stone-200 hover:bg-stone-300"
             >
                 <i className="fa-solid fa-ellipsis-vertical" />
             </button>
@@ -175,7 +175,7 @@ export const DockPanel = ({
             {/* panel */}
             <div
                 className="bg-white shadow-
-        xl border-l transition-[width,opacity] duration-300 overflow-hidden"
+        xl border-l border-stone-200 transition-[width,opacity] duration-300 overflow-hidden"
                 style={{ width: open ? width : 0, opacity: open ? 1 : 0 }}
             >
                 <div
@@ -227,7 +227,7 @@ export const DockRoot = () => {
                     panelMemory.current[active].scrollTop = scrollTop;
                 }}
             >
-                <TabsLayout tabs={TABS_CONFIG} defaultTab="filter" />
+                <TabsLayout tabs={TABS_CONFIG} defaultTab="effects" />
             </DockPanel>
 
             <ColorPicker />

@@ -11,7 +11,7 @@ import { UndoRedoBar } from './bars/UndoRedoBar';
 
 const TOOLBAR_SECTIONS = [
     { id: 'file', component: FileBar },
-    { id: 'undoredo', component: UndoRedoBar },
+    // { id: 'undoredo', component: UndoRedoBar },
     { id: 'edit', component: EditBar },
     { id: 'alignment', component: AlignmentBar },
     { id: 'group', component: GroupBar },
