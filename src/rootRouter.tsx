@@ -7,6 +7,7 @@ import WhiteboardMarketingSite from './components/pages/web/WhiteboardMarketingS
 import { useStore } from './store/index.ts';
 import { useEffect, useState } from 'react';
 import db from 'opendb-store';
+import SharePage from './components/pages/SharePage/SharePage.tsx';
 
 function RootLayout() {
     const [store, setStore] = useState(false);
@@ -29,6 +30,7 @@ export function RootRouter() {
                     <Route path="/draw" element={<EditorPage />} />
                     <Route path="/setting" element={<EditorSettingPage />} />
                     <Route path="/command-palette" element={<CommandPalette />} />
+                    <Route path="/share/:docId" element={<SharePage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

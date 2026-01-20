@@ -15,6 +15,7 @@ import { Tooltip } from '../molecules/Tooltip.tsx';
 import IconButton from '../atoms/IconButton.tsx';
 import { LayerControlBar } from './toolbars/ui/bars/LayerControlBar.tsx';
 import { FlipBar } from './toolbars/ui/bars/FlipBar.tsx';
+import Button from '../atoms/Button.tsx';
 
 const round = (val) => Math.round(val);
 
