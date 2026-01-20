@@ -5,6 +5,7 @@ import { shortcut } from '@/lib/utils/isMac';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import Toast from '@/components/atoms/Toast';
+import db from 'opendb-store';
 
 const ExtraBar = () => {
     const canvas = useStore((state) => state.canvas);
@@ -30,7 +31,7 @@ const ExtraBar = () => {
             createdAt: Date.now(),
         };
 
-        localStorage.setItem(`board:${docId}`, JSON.stringify(payload));
+        db.local.set(`board:${docId}`, JSON.stringify(payload));
 
         //const link = `${window.location.origin}/share/${docId}?mode=view`;
         const link = `${window.location.origin}/#/share/${docId}?mode=view`;

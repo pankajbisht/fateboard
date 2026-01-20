@@ -1,92 +1,65 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLayoutEffect, useRef } from 'react';
+import { useParams, useSearchParams } from 'react-router-dom';
 import * as fabric from 'fabric';
+import db from 'opendb-store';
 
 export default function SharePage() {
-    const { docId } = useParams();
     const canvasRef = useRef<fabric.Canvas | null>(null);
-    const canvasElRef = useRef<HTMLCanvasElement>(null);
+    const canvasElRef = useRef<HTMLCanvasElement | null>(null);
+    const initializedRef = useRef(false);
 
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(true);
+    const { docId } = useParams();
+    const [params] = useSearchParams();
+    const mode = (params.get('mode') as 'view' | 'edit') || 'view';
 
     useLayoutEffect(() => {
-        const initCanvas = async () => {
-            const canvasEl = canvasElRef.current;
-            if (!canvasEl) {
-                setError('Canvas element not found');
-                setLoading(false);
-                return;
-            }
+        if (!canvasElRef.current) return;
+        if (initializedRef.current) return;
 
-            if (!docId) {
-                setError('Invalid link');
-                setLoading(false);
-                return;
-            }
+        initializedRef.current = true;
 
-            const raw = localStorage.getItem(`board:${docId}`);
-            if (!raw) {
-                setError('Board not found');
-                setLoading(false);
-                return;
-            }
+        const canvas = new fabric.Canvas(canvasElRef.current, {
+            backgroundColor: '#fff',
+            preserveObjectStacking: true,
+        });
 
-            let doc;
-            try {
-                doc = JSON.parse(raw);
-                if (!doc.canvasJSON) throw new Error();
-            } catch {
-                setError('Invalid board data');
-                setLoading(false);
-                return;
-            }
+        canvasRef.current = canvas;
 
-            try {
-                const canvas = new fabric.Canvas(canvasEl, {
-                    width: 900,
-                    height: 500,
-                    backgroundColor: '#fff',
-                });
-                canvasRef.current = canvas;
+        const raw = db.local.get(`board:${docId}`);
+        if (!raw) return;
 
-                // Load JSON async
-                await new Promise<void>((resolve, reject) => {
-                    canvas.loadFromJSON(
-                        doc.canvasJSON,
-                        () => {
-                            canvas.renderAll();
-                            resolve();
-                        },
-                        (err) => reject(err),
-                    );
-                });
+        const { canvasJSON } = JSON.parse(raw);
 
-                setLoading(false);
-            } catch (e) {
-                console.error(e);
-                setError('Failed to render canvas');
-                setLoading(false);
-            }
-        };
+        canvas.loadFromJSON(canvasJSON, () => {
+            const readOnly = mode === 'view';
 
-        initCanvas();
+            canvas.selection = !readOnly;
+            canvas.forEachObject((obj) => {
+                obj.selectable = !readOnly;
+                obj.evented = !readOnly;
+            });
+
+            canvas.requestRenderAll();
+        });
 
         return () => {
+            // IMPORTANT: guard cleanup
             if (canvasRef.current) {
                 canvasRef.current.dispose();
                 canvasRef.current = null;
+                initializedRef.current = false;
             }
         };
-    }, [docId]);
-
-    if (loading) return <h2 className="p-4">Loading shared canvas...</h2>;
-    if (error) return <h2 className="p-4 text-red-600 font-bold">{error}</h2>;
+    }, [docId, mode]);
 
     return (
-        <div className="p-4">
-            <h2 className="text-lg font-bold mb-2">Shared Canvas</h2>
-            <canvas ref={canvasElRef} />
+        <div className="flex justify-center items-center">
+            <canvas
+                ref={canvasElRef}
+                className="flex-1"
+                height={window.innerHeight}
+                width={window.innerWidth}
+            />
         </div>
     );
 }
