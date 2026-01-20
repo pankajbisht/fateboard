@@ -3,7 +3,7 @@ import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 import { shortcut } from '@/lib/utils/isMac';
 import { useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Toast from '@/components/atoms/Toast';
 import db from 'opendb-store';
 
@@ -11,6 +11,7 @@ const ExtraBar = () => {
     const canvas = useStore((state) => state.canvas);
     const iconSize = useStore((state) => state.settings.iconSize);
     const navigate = useNavigate();
+    const boardIdRef = useRef<string>(crypto.randomUUID());
 
     const [toastMessage, setToastMessage] = useState('');
 
@@ -19,26 +20,51 @@ const ExtraBar = () => {
     };
 
     // Fixed handleShareClick to use showToast callback
+    // const handleShareClick = (canvas: fabric.Canvas) => {
+    //     if (!canvas) return;
+
+    //     const docId = crypto.randomUUID();
+
+    //     const payload = {
+    //         id: docId,
+    //         version: 1,
+    //         canvasJSON: canvas.toJSON(),
+    //         createdAt: Date.now(),
+    //     };
+
+    //     db.local.set(`board:${docId}`, JSON.stringify(payload));
+
+    //     //const link = `${window.location.origin}/share/${docId}?mode=view`;
+    //     const link = `${window.location.origin}/#/share/${docId}?mode=view`;
+
+    //     navigator.clipboard.writeText(link);
+
+    //     showToast('Share link copied!'); // Use the callback
+    // };
+    //
     const handleShareClick = (canvas: fabric.Canvas) => {
         if (!canvas) return;
 
-        const docId = crypto.randomUUID();
+        const docId = boardIdRef.current;
 
         const payload = {
             id: docId,
             version: 1,
             canvasJSON: canvas.toJSON(),
-            createdAt: Date.now(),
+            updatedAt: Date.now(),
         };
 
         db.local.set(`board:${docId}`, JSON.stringify(payload));
 
-        //const link = `${window.location.origin}/share/${docId}?mode=view`;
         const link = `${window.location.origin}/#/share/${docId}?mode=view`;
 
-        navigator.clipboard.writeText(link);
+        // 🔐 copy link (safe)
+        navigator.clipboard?.writeText(link).catch(() => {});
 
-        showToast('Share link copied!'); // Use the callback
+        // 🆕 open immediately (avoids popup block)
+        window.open(link, '_blank', 'noopener,noreferrer');
+
+        showToast('Preview opened in new tab & link copied!');
     };
 
     const LOCK_ACTIONS = [
@@ -58,8 +84,8 @@ const ExtraBar = () => {
             },
         },
         {
-            id: 'share',
-            label: 'Share',
+            id: 'preview',
+            label: 'preview',
             icon: <i className="fa-solid fa-share-from-square"></i>,
             onClick: () => {
                 handleShareClick(canvas);
