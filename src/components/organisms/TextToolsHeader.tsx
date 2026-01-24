@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useStore } from '@store';
 import { IconButton } from '../atoms/IconButton.tsx';
 import { ColorPicker } from '../atoms/ColorPicker.tsx';
-import { Select } from '../atoms/Select.tsx';
-import { NumberInput } from '../atoms/NumberInput.tsx';
 import { ToggleGroup } from '../molecules/ToggleGroup.tsx';
 import Dropdown from '../atoms/Dropdown.tsx';
 import { GlowDivider } from './toolbars/index.ts';
+import { textAlignmentConfig } from '../config/textalignment.config.ts';
+import { textFormattingConfig } from '../config/textformatting.config.ts';
+import { fontSizeConfig } from '../config/fontsize.config.ts';
 
 const FontSizeDropdown = ({ value, options, handleApply, className = '' }) => {
     return (
@@ -20,25 +21,6 @@ const FontSizeDropdown = ({ value, options, handleApply, className = '' }) => {
         />
     );
 };
-
-const options = [
-    { label: '8px', value: 8 },
-    { label: '10px', value: 10 },
-    { label: '12px', value: 12 },
-    { label: '14px', value: 14 },
-    { label: '16px', value: 16 },
-    { label: '18px', value: 18 },
-    { label: '20px', value: 20 },
-    { label: '24px', value: 24 },
-    { label: '28px', value: 28 },
-    { label: '32px', value: 32 },
-    { label: '36px', value: 36 },
-    { label: '48px', value: 48 },
-    { label: '64px', value: 64 },
-    { label: '72px', value: 72 },
-    { label: '96px', value: 96 },
-    { label: '144px', value: 144 },
-];
 
 export const TextToolsHeader = () => {
     const { canvas } = useStore();
@@ -72,6 +54,8 @@ export const TextToolsHeader = () => {
     const isUnderline = useStore((state) => state.isUnderline);
     const setIsUnderline = useStore((state) => state.setIsUnderline);
 
+    // console.log('here', isBold, isItalic, isUnderline);
+
     const charSpacing = useStore((state) => state.charSpacing);
     const setCharSpacing = useStore((state) => state.setCharSpacing);
 
@@ -87,17 +71,23 @@ export const TextToolsHeader = () => {
     const fillColor = useStore((state) => state.fillColor);
     const setFillColor = useStore((state) => state.setFillColor);
 
+    const textAlign = useStore((state) => state.textAlign);
+    const setTextAlign = useStore((state) => state.setTextAlign);
+    const updateText = useStore((state) => state.updateText);
+
+    console.log('Text', textAlign);
+
     const fonts = useStore((s) => s.fonts);
 
     // 🔑 Apply updates to active text object
-    const updateText = (props) => {
-        console.log(props);
-        const active = canvas?.getActiveObject();
-        if (active && active.type.includes('text')) {
-            active.set(props);
-            canvas.requestRenderAll();
-        }
-    };
+    // const updateText = (props) => {
+    //     console.log(props);
+    //     const active = canvas?.getActiveObject();
+    //     if (active && active.type.includes('text')) {
+    //         active.set(props);
+    //         canvas.requestRenderAll();
+    //     }
+    // };
 
     // 🔑 Sync toolbar with selected text
     useEffect(() => {
@@ -135,7 +125,7 @@ export const TextToolsHeader = () => {
 
                 <FontSizeDropdown
                     value={fontSize}
-                    options={options}
+                    options={fontSizeConfig}
                     handleApply={(val) => {
                         console.log(val);
                         setFontSize(val);
@@ -161,33 +151,14 @@ export const TextToolsHeader = () => {
                     }}
                 />*/}
 
-                {/*<Select
-                    onChange={(fontFamily) => {
-                        console.log(fontFamily);
-                        setFontFamily(fontFamily);
-                        updateText({ fontFamily: fontFamily });
-                    }}
-                    options={fonts}
-                    value={fontFamily}
-                />*/}
-
-                {/*<NumberInput
-                    value={fontSize}
-                    onChange={(fontSize) => {
-                        const val = parseInt(String(fontSize), 10);
-                        setFontSize(val);
-                        updateText({ fontSize: val });
-                    }}
-                />*/}
-
                 <ToggleGroup
-                    options={[
-                        { key: 'bold', icon: 'fa-solid fa-bold', tooltip: 'Bold' },
-                        { key: 'italic', icon: 'fa-solid fa-italic', tooltip: 'Italic' },
-                        { key: 'underline', icon: 'fa-solid fa-underline', tooltip: 'Underline' },
-                    ]}
+                    options={textFormattingConfig}
+                    value={{
+                        bold: isBold,
+                        italic: isItalic,
+                        underline: isUnderline,
+                    }}
                     onChange={(formats) => {
-                        console.log('formats:', formats);
                         const { bold, italic, underline } = formats;
 
                         setIsBold(bold);
@@ -202,25 +173,22 @@ export const TextToolsHeader = () => {
 
                 <ToggleGroup
                     single
-                    options={[
-                        { key: 'left', icon: 'fa-solid fa-align-left', tooltip: 'Left Align' },
-                        {
-                            key: 'center',
-                            icon: 'fa-solid fa-align-center',
-                            tooltip: 'Center Align',
-                        },
-                        { key: 'right', icon: 'fa-solid fa-align-right', tooltip: 'Right Align' },
-                        { key: 'justify', icon: 'fa-solid fa-align-justify', tooltip: 'Justify' },
-                    ]}
+                    options={textAlignmentConfig}
+                    value={{
+                        left: textAlign === 'left',
+                        center: textAlign === 'center',
+                        right: textAlign === 'right',
+                        justify: textAlign === 'justify',
+                    }}
                     onChange={(formats) => {
-                        console.log('align:', formats);
-                        const { left, center, right, justify } = formats;
-                        let textAlign = 'left'; // default fallback
+                        const { center, right, justify } = formats;
+                        let textAlign = 'left';
 
                         if (center) textAlign = 'center';
                         else if (right) textAlign = 'right';
                         else if (justify) textAlign = 'justify';
 
+                        setTextAlign(textAlign);
                         updateText({ textAlign: textAlign });
                     }}
                 />

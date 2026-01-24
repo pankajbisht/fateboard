@@ -35,7 +35,7 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
         if (!canvas) return;
         canvas.setZoom(zoom);
         set({ zoom });
-        get().drawBackground(); // 🔹 keep background in sync on zoom changes
+        get().drawBackground();
         canvas.renderAll();
     },
 
@@ -47,13 +47,8 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
         const fmt = String(format || '').toLowerCase();
 
         if (fmt === 'freehand') {
-            // canvas.setWidth(window.innerWidth * 2);
-            // canvas.setHeight(window.innerHeight * 2);
-
             canvas.setWidth(get().cw);
             canvas.setHeight(get().ch);
-
-            console.log(get().cw, get().ch);
 
             canvas.setZoom(1);
             canvas.calcOffset();
@@ -63,7 +58,7 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
                 pageWidth: canvas.getWidth(),
                 pageHeight: canvas.getHeight(),
             });
-            //      get().drawBackground();    // 🔹 redraw background for new size
+
             return;
         }
 
@@ -72,7 +67,7 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
         const width = orientation === 'portrait' ? w : h;
         const height = orientation === 'portrait' ? h : w;
 
-        const MAX_PAGE_WIDTH = 800; // normalize
+        const MAX_PAGE_WIDTH = 800;
         const scale = MAX_PAGE_WIDTH / width;
 
         canvas.setWidth(width * scale);
@@ -82,6 +77,6 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
         canvas.renderAll();
 
         set({ scale, pageWidth: width, pageHeight: height });
-        get().drawBackground(); // 🔹 redraw background for new size/scale
+        get().drawBackground();
     },
 });

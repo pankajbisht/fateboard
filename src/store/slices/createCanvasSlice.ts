@@ -284,7 +284,7 @@ export const createCanvasSlice = (set, get, store) => ({
         get().setBrush();
         // get().toggleGrid();
 
-        console.log('Mode', get().mode);
+        // console.log('Mode', get().mode);
 
         const persist = () => db.local.set('drawJson', canvas.toJSON());
 

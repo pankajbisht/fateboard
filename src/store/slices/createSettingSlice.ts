@@ -8,7 +8,7 @@ const initialValues = {
     backgroundStyle1: 'ruled',
     orientation: 'LANDSCAPE',
     freehand: true,
-    format: 'A4',
+    format: 'FREEHAND',
 };
 
 export const createSettingSlice = (set, get, store) => ({
@@ -63,6 +63,7 @@ export const createSettingSlice = (set, get, store) => ({
     hydrate: (data) => {
         // set({ ...initialValues, ...data });
         set({ settings: { ...initialValues, ...data } });
+        // console.log({ settings: { ...initialValues, ...data } })
     },
 
     updateSetting: (key, value) => {

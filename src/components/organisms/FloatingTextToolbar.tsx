@@ -1,28 +1,9 @@
-import { useState, useRef, useLayoutEffect, useEffect } from 'react';
+import { useRef, useLayoutEffect, useEffect } from 'react';
 import { useStore } from '@store';
-import { Select } from '../atoms/Select.tsx';
 import { ToggleGroup } from '../molecules/ToggleGroup.tsx';
-import { NumberInput } from '../atoms/NumberInput.tsx';
 import Dropdown from '../atoms/Dropdown.tsx';
-
-const options = [
-    { label: '8px', value: 8 },
-    { label: '10px', value: 10 },
-    { label: '12px', value: 12 },
-    { label: '14px', value: 14 },
-    { label: '16px', value: 16 },
-    { label: '18px', value: 18 },
-    { label: '20px', value: 20 },
-    { label: '24px', value: 24 },
-    { label: '28px', value: 28 },
-    { label: '32px', value: 32 },
-    { label: '36px', value: 36 },
-    { label: '48px', value: 48 },
-    { label: '64px', value: 64 },
-    { label: '72px', value: 72 },
-    { label: '96px', value: 96 },
-    { label: '144px', value: 144 },
-];
+import { fontSizeConfig } from '../config/fontsize.config.ts';
+import { textFormattingConfig } from '../config/textformatting.config.ts';
 
 const FontSizeDropdown = ({ value, options, handleApply, className = '' }) => {
     return (
@@ -38,11 +19,10 @@ const FontSizeDropdown = ({ value, options, handleApply, className = '' }) => {
 };
 
 export function FloatingTextToolbar({ target, canvas, onChange }) {
+    console.log(target.fontSize);
+
     const fontSize = useStore((state) => state.fontSize);
     const setFontSize = useStore((state) => state.setFontSize);
-
-    const color = useStore((state) => state.color);
-    const setColor = useStore((state) => state.setColor);
 
     const fontFamily = useStore((state) => state.fontFamily);
     const setFontFamily = useStore((state) => state.setFontFamily);
@@ -59,20 +39,14 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
     const fonts = useStore((s) => s.fonts);
     const toolbarRef = useRef(null);
 
-    // Sync toolbar state whenever target changes
     useEffect(() => {
         if (!target) return;
-        setFontSize(target.fontSize || 16);
-        setColor(target.fill || '#000000');
 
         setIsBold(target.fontWeight === 'bold');
-        //    setIsItalic(target.fontWeight === "bold");
-        //    setIsBold(target.fontWeight === "bold");
-
-        //    setBold(target.fontWeight === "bold");
-        //    setItalic(target.fontStyle === "italic");
-        //    setUnderline(!!target.underline);
-        //    setFontFamily(target.fontFamily || "Arial");
+        setIsItalic(target.fontStyle === 'italic');
+        setIsUnderline(!!target.underline);
+        setFontFamily(target.fontFamily || 'Arial');
+        setFontSize(target.fontSize || 14);
     }, [target]);
 
     // Positioning toolbar below text object
@@ -139,43 +113,11 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
 
     if (!target) return null;
 
-    const styleButton = (active) =>
-        `w-6 h-6 flex items-center justify-center border rounded-md text-sm
-     ${active ? 'bg-gray-200 border-gray-400' : 'hover:bg-gray-100'}`;
-
     return (
         <div
             ref={toolbarRef}
             className="absolute z-50 flex items-center gap-2 bg-stone-50 shadow-lg rounded-full border-1 border-stone-100 px-4 py-2"
         >
-            {/* Color Picker */}
-            {/*<label className="relative cursor-pointer">
-                <input
-                    type="color"
-                    value={color}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        setColor(val);
-                        onChange?.({ fill: val });
-                    }}
-                    className="absolute inset-0 opacity-0 cursor-pointer"
-                />
-                <div
-                    className="h-6 w-6 rounded-full border shadow-sm"
-                    style={{ backgroundColor: color }}
-                />
-            </label>*/}
-
-            {/*<Select
-                onChange={(fontFamily) => {
-                    console.log(fontFamily);
-                    setFontFamily(fontFamily);
-                    onChange?.({ fontFamily: fontFamily });
-                }}
-                options={fonts}
-                value={fontFamily}
-            />*/}
-
             <Dropdown
                 value={fontFamily}
                 options={fonts}
@@ -188,7 +130,7 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
 
             <FontSizeDropdown
                 value={fontSize}
-                options={options}
+                options={fontSizeConfig}
                 handleApply={(fontSize) => {
                     const val = parseInt(String(fontSize), 10);
                     setFontSize(val);
@@ -196,23 +138,14 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
                 }}
             />
 
-            {/*<NumberInput
-                value={fontSize}
-                onChange={(fontSize) => {
-                    const val = parseInt(String(fontSize), 10);
-                    setFontSize(val);
-                    onChange?.({ fontSize: val });
-                }}
-            />*/}
-
             <ToggleGroup
-                options={[
-                    { key: 'bold', icon: 'fa-solid fa-bold', tooltip: 'Bold' },
-                    { key: 'italic', icon: 'fa-solid fa-italic', tooltip: 'Italic' },
-                    { key: 'underline', icon: 'fa-solid fa-underline', tooltip: 'Underline' },
-                ]}
+                options={textFormattingConfig}
+                value={{
+                    bold: isBold,
+                    italic: isItalic,
+                    underline: isUnderline,
+                }}
                 onChange={(formats) => {
-                    console.log('formats:', formats);
                     const { bold, italic, underline } = formats;
 
                     setIsBold(bold);

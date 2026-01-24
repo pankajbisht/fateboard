@@ -1,63 +1,6 @@
-// import { useState, useEffect } from 'react';
-
-// export function Switch({ checked, onCheckedChange }) {
-//     return (
-//         <button
-//             type="button"
-//             role="switch"
-//             aria-checked={checked}
-//             onClick={() => onCheckedChange(!checked)}
-//             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-//                 checked ? 'bg-blue-600' : 'bg-gray-300'
-//             }`}
-//         >
-//             <span
-//                 className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-//                     checked ? 'translate-x-6' : 'translate-x-1'
-//                 }`}
-//             />
-//         </button>
-//     );
-// }
-
-// export default function EditorSettingPage() {
-//     const [darkMode, setDarkMode] = useState(false);
-
-//     useEffect(() => {
-//         if (darkMode) {
-//             document.documentElement.classList.add('dark'); // ✅ add .dark to <html>
-//         } else {
-//             document.documentElement.classList.remove('dark');
-//         }
-//     }, [darkMode]);
-
-//     return (
-//         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6 transition-colors">
-//             <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">
-//                 ⚙️ Settings
-//             </h1>
-
-//             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-//                 <div className="rounded-2xl shadow p-4 bg-white dark:bg-gray-800 transition-colors">
-//                     <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">
-//                         Appearance
-//                     </h2>
-//                     <div className="flex items-center justify-between mt-3">
-//                         <span className="text-gray-700 dark:text-gray-300">Dark Mode</span>
-//                         <Switch checked={darkMode} onCheckedChange={setDarkMode} />
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// }
-
-import { useState } from 'react';
+import IconButton from '@/components/atoms/IconButton';
 import { useStore } from '@/store/index.ts';
-
-/* =====================
-   BASIC UI COMPONENTS
-   ===================== */
+import db from 'opendb-store';
 
 function Card({ children }) {
     return <div className="rounded-2xl bg-white shadow-sm border border-gray-200">{children}</div>;
@@ -65,35 +8,6 @@ function Card({ children }) {
 
 function CardContent({ children, className = '' }) {
     return <div className={`p-4 ${className}`}>{children}</div>;
-}
-
-function Button({ children, variant = 'primary', onClick }) {
-    const base = 'px-4 py-2 rounded-lg text-sm font-medium transition';
-    const styles = {
-        primary: 'bg-black text-white hover:bg-gray-800',
-        secondary: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
-    };
-
-    return (
-        <button onClick={onClick} className={`${base} ${styles[variant]}`}>
-            {children}
-        </button>
-    );
-}
-
-function Input({ value, onChange, type = 'text' }) {
-    return (
-        <input
-            type={type}
-            value={value}
-            onChange={onChange}
-            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black"
-        />
-    );
-}
-
-function Label({ children }) {
-    return <label className="text-sm font-medium">{children}</label>;
 }
 
 function Switch({ checked, onCheckedChange }) {
@@ -113,44 +27,19 @@ function Switch({ checked, onCheckedChange }) {
     );
 }
 
-function Select({ value, onChange, options = [], disabled = false }) {
+function SettingRow({ label, value, onChange, children }) {
     return (
-        <select
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            disabled={disabled}
-            className={`rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-black transition
-        ${
-            disabled
-                ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                : 'bg-white text-black border-gray-300 hover:border-gray-400'
-        }`}
-        >
-            {options.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                </option>
-            ))}
-        </select>
+        <div className="flex items-center justify-between gap-4">
+            <span className="text-sm font-medium">{label}</span>
+
+            <div className="flex items-center gap-2">
+                {children ?? <Switch checked={Boolean(value)} onCheckedChange={onChange} />}
+            </div>
+        </div>
     );
 }
 
-/* =====================
-   SETTINGS PAGE
-   ===================== */
-
 export default function EditorSettingPage() {
-    // const [settings, setSettings] = useState({
-    //   username: "pankaj",
-    //   email: "pankaj@example.com",
-    //   darkMode: true,
-    //   notifications: true,
-    //   autoSave: false,
-    // });
-
-    // const update = (key, value) =>
-    //   setSettings((s) => ({ ...s, [key]: value }));
-
     const settings = useStore((s) => s.settings);
     const toggleFreehand = useStore((s) => s.toggleFreehand);
 
@@ -190,6 +79,14 @@ export default function EditorSettingPage() {
                 <Card>
                     <CardContent className="space-y-4">
                         <h2 className="text-lg font-medium">Preferences</h2>
+                        <SettingRow label="Reset">
+                            <IconButton
+                                icon={<i className="fa-solid fa-trash-arrow-up"></i>}
+                                onClick={() => {
+                                    db.local.clear();
+                                }}
+                            />
+                        </SettingRow>
 
                         {/*<SettingRow
                           label="Theme"
@@ -320,37 +217,6 @@ export default function EditorSettingPage() {
                         </SettingRow>
                     </CardContent>
                 </Card>
-            </div>
-        </div>
-    );
-}
-
-// function SettingRow({ label, value, onChange }) {
-//   return (
-//     <div className="flex items-center justify-between">
-//       <span className="text-sm">{label}</span>
-//       <Switch checked={value} onCheckedChange={onChange} />
-//     </div>
-//   );
-// }
-
-// function SettingRow({ label, value, onChange, children }) {
-//     return (
-//         <div className="flex items-center justify-between gap-4">
-//             <span className="text-sm font-medium">{label}</span>
-
-//             {children ? children : <Switch checked={value} onCheckedChange={onChange} />}
-//         </div>
-//     );
-// }
-
-function SettingRow({ label, value, onChange, children }) {
-    return (
-        <div className="flex items-center justify-between gap-4">
-            <span className="text-sm font-medium">{label}</span>
-
-            <div className="flex items-center gap-2">
-                {children ?? <Switch checked={Boolean(value)} onCheckedChange={onChange} />}
             </div>
         </div>
     );

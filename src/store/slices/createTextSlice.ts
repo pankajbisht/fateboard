@@ -81,6 +81,8 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
     setStrokeWidth: (val) => set({ strokeWidth: val }),
     fillColor: '#000000',
     setFillColor: (val) => set({ fillColor: val }),
+    textAlign: '',
+    setTextAlign: (val) => set({ textAlign: val }),
 
     updateText: (props) => {
         console.log(props);

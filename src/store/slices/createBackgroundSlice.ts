@@ -1,9 +1,4 @@
-// store/backgroundSlice.ts
 import * as fabricNS from 'fabric';
-
-/* -------------------------------------------------------
-   Types
-------------------------------------------------------- */
 
 export type BackgroundStyle = 'none' | 'grid' | 'ruled' | 'dots' | 'isometric';
 
@@ -13,15 +8,7 @@ type PatternFactoryCtx = {
 
 type PatternFactory = (ctx: PatternFactoryCtx) => fabricNS.Pattern | null;
 
-/* -------------------------------------------------------
-   Fabric Resolver (ESM + CJS safe)
-------------------------------------------------------- */
-
 const getFabric = () => (fabricNS as any).fabric ?? fabricNS;
-
-/* -------------------------------------------------------
-   Pattern Implementations
-------------------------------------------------------- */
 
 const gridPattern: PatternFactory = ({ get }) => {
     const fabric = getFabric();
@@ -132,10 +119,6 @@ const isometricPattern: PatternFactory = ({ get }) => {
     return new fabric.Pattern({ source: tile, repeat: 'repeat' });
 };
 
-/* -------------------------------------------------------
-   Pattern Registry (Scalable)
-------------------------------------------------------- */
-
 const BACKGROUND_PATTERNS: Record<BackgroundStyle, PatternFactory | null> = {
     none: null,
     grid: gridPattern,
@@ -144,13 +127,7 @@ const BACKGROUND_PATTERNS: Record<BackgroundStyle, PatternFactory | null> = {
     isometric: isometricPattern,
 };
 
-/* -------------------------------------------------------
-   Zustand Slice
-------------------------------------------------------- */
-
 export const createBackgroundSlice = (set, get, store) => ({
-    /* ---------- State ---------- */
-
     backgroundStyle: 'none' as BackgroundStyle,
 
     gridSize: 20,
@@ -163,8 +140,6 @@ export const createBackgroundSlice = (set, get, store) => ({
     ruledLineHeight: 24,
     ruledColor: '#c0d6ff',
     ruledLineWidth: 1,
-
-    /* ---------- Actions ---------- */
 
     setBackgroundStyle: (style: BackgroundStyle) => {
         set({ backgroundStyle: style });
@@ -186,8 +161,6 @@ export const createBackgroundSlice = (set, get, store) => ({
         set(opts);
         get().drawBackground();
     },
-
-    /* ---------- Renderer ---------- */
 
     drawBackground: () => {
         const canvas = get().canvas;

@@ -1,129 +1,19 @@
 import { useStore } from '@store';
-import { ToggleGroup } from '../molecules/ToggleGroup.tsx';
-import OriginSelector from '../molecules/OriginSelector.tsx';
-import { useState } from 'react';
-import FlipIcon from '../../assets/icons/flip.tsx';
-import { SingleToggleButton } from '../molecules/SingleToggleButton.tsx';
 import { TransformInput } from '../molecules/TransformInput.tsx';
-import SendToBack from '@/assets/icons/sendbackward.tsx';
-import SendBackward from '@/assets/icons/sendbackward.tsx';
-import SendForward from '@/assets/icons/bringforward.tsx';
-import BringForward from '@/assets/icons/bringforward.tsx';
 import { TextToolsHeader } from './TextToolsHeader.tsx';
 import { GlowDivider } from './toolbars/index.ts';
-import { Tooltip } from '../molecules/Tooltip.tsx';
-import IconButton from '../atoms/IconButton.tsx';
 import { LayerControlBar } from './toolbars/ui/bars/LayerControlBar.tsx';
 import { FlipBar } from './toolbars/ui/bars/FlipBar.tsx';
-import Button from '../atoms/Button.tsx';
-
-const round = (val) => Math.round(val);
-
-const transformFields = [
-    { key: 'x', label: 'X' },
-    { key: 'y', label: 'Y' },
-    { key: 'width', label: 'W' },
-    { key: 'height', label: 'H' },
-    { key: 'rotation', label: 'R' },
-];
-
-const flipButtons = [
-    { title: 'Flip X', icon: 'arrows-left-right', key: 'flipX' },
-    { title: 'Flip Y', icon: 'arrows-up-down', key: 'flipY' },
-];
-
-const layerButtons = [
-    { title: 'Group', icon: 'object-group', key: 'group' },
-    { title: 'Ungroup', icon: 'object-ungroup', key: 'ungroup' },
-    { divider: true },
-    { title: 'Lock', icon: 'lock', key: 'lock' },
-    { title: 'Unlock', icon: 'unlock', key: 'unlock' },
-    { divider: true },
-    { title: 'Send to Back', icon: 'arrow-down', key: 'sendtoback' },
-    { title: 'Bring to Front', icon: 'arrow-up', key: 'bringtofront' },
-    { divider: true },
-    { title: 'Delete', icon: 'trash', key: 'delete' },
-];
-
-const alignButtons = [
-    // Horizontal alignment
-    { title: 'Align Left', icon: 'align-left', key: 'align-left' },
-    {
-        title: 'Align Center (Horizontally)',
-        icon: 'align-center',
-        key: 'align-hcenter',
-    },
-    { title: 'Align Right', icon: 'align-right', key: 'align-right' },
-
-    // Vertical alignment
-    { title: 'Align Top', icon: 'align-up', key: 'align-top' },
-    {
-        title: 'Align Middle (Vertically)',
-        icon: 'align-middle',
-        key: 'align-vcenter',
-    },
-    { title: 'Align Bottom', icon: 'align-down', key: 'align-bottom' },
-
-    // Distribute horizontally / vertically
-    {
-        title: 'Distribute Horizontally',
-        icon: 'grip-lines-horizontal',
-        key: 'distribute-h',
-    },
-    {
-        title: 'Distribute Vertically',
-        icon: 'grip-lines-vertical',
-        key: 'distribute-v',
-    },
-];
+import { transformFieldsConfig } from '../config/transformfields.config.ts';
 
 export const ShapeToolsHeader = () => {
-    const [show, setShow] = useState(false);
-
     const transform = useStore((s) => s.transform);
     const setTransform = useStore((s) => s.setTransform);
-    const groupLayers = useStore((s) => s.groupLayers);
-    const ungroupSelected = useStore((s) => s.ungroupSelected);
-    const bringForward = useStore((s) => s.bringForward);
-    const sendBackward = useStore((s) => s.sendBackward);
-    const bringToFront = useStore((s) => s.bringToFront);
-    const sendToBack = useStore((s) => s.sendToBack);
-    const toggleActiveObjectLock = useStore((s) => s.toggleActiveObjectLock);
-    const alignObjects = useStore((s) => s.alignObjects);
     const hasSelection = useStore((s) => s.hasSelection);
-    const removeLayer = useStore((s) => s.removeLayer);
-    const setOrigin = useStore((s) => s.setOrigin);
     const canvas = useStore((s) => s.canvas);
     const setRadius = useStore((s) => s.setRadius);
-    const [snap, setSnap] = useState(false);
     const { selectedObject } = useStore();
-    const toggleGrid = useStore((s) => s.toggleGrid);
-
     const active = canvas?.getActiveObject();
-
-    // console.log({ selectedObject });
-
-    const handleButton = (key, value) => {
-        if (key === 'group') {
-            groupLayers();
-        } else if (key === 'ungroup') {
-            ungroupSelected();
-        } else if (key === 'bringforward') {
-            bringForward();
-        } else if (key === 'sendbackward') {
-            sendBackward();
-        } else if (key === 'sendtoback') {
-            sendToBack();
-        } else if (key === 'bringtofront') {
-            bringToFront();
-        } else if (key === 'lock') {
-            toggleActiveObjectLock();
-        } else if (key === 'unlock') {
-            toggleActiveObjectLock();
-        } else if (key === 'delete') {
-            removeLayer();
-        }
-    };
 
     return (
         <div
@@ -139,7 +29,7 @@ export const ShapeToolsHeader = () => {
                     <GlowDivider />
 
                     <div className="flex items-center gap-2">
-                        {transformFields.map((field) => (
+                        {transformFieldsConfig.map((field) => (
                             <TransformInput
                                 key={field.key}
                                 label={field.label}
