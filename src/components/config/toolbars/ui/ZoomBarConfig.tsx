@@ -4,6 +4,7 @@ import { useStore } from '@/store';
 export const ZoomBarConfig = [
     {
         id: 'zoom-in',
+        label: 'Zoom In',
         name: 'Zoom In',
         description: 'Zoom In',
         shortcut: shortcut('⌘+equal', 'Ctrl++'),
@@ -16,6 +17,8 @@ export const ZoomBarConfig = [
     },
     {
         id: 'zoom-out',
+        label: 'Zoom Out',
+        name: 'Zoom Out',
         description: 'Zoom Out',
         shortcut: shortcut('⌘+minus', 'Ctrl+-'),
         icon: <i className="fa-solid fa-magnifying-glass-minus" />,
@@ -27,6 +30,8 @@ export const ZoomBarConfig = [
     },
     {
         id: 'fit-to-screen',
+        label: 'Fit to Screen',
+        name: 'Fit to Screen',
         description: 'Fit to Screen',
         shortcut: shortcut('⌘+Digit0', 'Ctrl+0'),
         icon: <i className="fa-solid fa-expand" />,
@@ -38,6 +43,8 @@ export const ZoomBarConfig = [
     },
     {
         id: 'actual-size',
+        label: 'Actual Size',
+        name: 'Actual Size',
         description: 'Actual Size',
         shortcut: shortcut('⌘+Digit1', 'Ctrl+1'),
         icon: <i className="fa-solid fa-arrows-left-right" />,

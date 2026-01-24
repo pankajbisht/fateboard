@@ -108,24 +108,6 @@ export const TextToolsHeader = () => {
             if (active && active.type.includes('text')) {
                 setFontSize(active.fontSize || 24);
                 setFontFamily(active.fontFamily || 'Arial');
-                //        setIsBold(active.fontWeight === "bold");
-                //        setIsItalic(active.fontStyle === "italic");
-                //        setIsUnderline(!!active.underline);
-                //        setAlign(active.textAlign || "left");
-                //        setFillColor(active.fill || "#000000");
-                //
-                //        if (active.shadow) {
-                //          setHasShadow(true);
-                //          setShadowColor(active.shadow.color || "#888888");
-                //        } else {
-                //          setHasShadow(false);
-                //        }
-                //
-                //        setStrokeWidth(active.strokeWidth || 0);
-                //        setStrokeColor(active.stroke || "#000000");
-                //        setLineHeight(active.lineHeight || 1.2);
-                //        setCharSpacing(active.charSpacing || 0);
-                //        setBgColor(active.backgroundColor || "");
             }
         };
 
@@ -144,11 +126,6 @@ export const TextToolsHeader = () => {
                 <Dropdown
                     value={fontFamily}
                     options={fonts}
-                    // onChange={(fontFamily) => {
-                    //     console.log(fontFamily);
-                    //     setFontFamily(fontFamily);
-                    //     onChange?.({ fontFamily: fontFamily });
-                    // }}
                     onChange={(fontFamily) => {
                         console.log(fontFamily);
                         setFontFamily(fontFamily);

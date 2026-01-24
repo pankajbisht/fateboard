@@ -299,8 +299,8 @@ export const createCanvasSlice = (set, get, store) => ({
             set({ hasActiveShape: !!obj });
             get().setToolbar(e);
             get().updateFromFabric(obj);
-            // get().saveState();
-            // persist();
+            get().saveState();
+            persist();
             get().filterUnlockedSelection(e);
             // get().setInputFromFabric(obj)
             // get().syncTransformFromSelection();

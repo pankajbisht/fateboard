@@ -8,6 +8,7 @@ import { useStore } from './store/index.ts';
 import { useEffect, useState } from 'react';
 import db from 'opendb-store';
 import SharePage from './components/pages/SharePage/SharePage.tsx';
+import HelpPage from './components/pages/HelpPage/HelpPage.tsx';
 
 function RootLayout() {
     const [store, setStore] = useState(false);
@@ -31,6 +32,7 @@ export function RootRouter() {
                     <Route path="/setting" element={<EditorSettingPage />} />
                     <Route path="/command-palette" element={<CommandPalette />} />
                     <Route path="/share/:docId" element={<SharePage />} />
+                    <Route path="/help" element={<HelpPage />} />
                 </Route>
 
                 <Route path="*" element={<NotFound />} />

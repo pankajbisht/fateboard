@@ -19,29 +19,6 @@ const ExtraBar = () => {
         setToastMessage(msg);
     };
 
-    // Fixed handleShareClick to use showToast callback
-    // const handleShareClick = (canvas: fabric.Canvas) => {
-    //     if (!canvas) return;
-
-    //     const docId = crypto.randomUUID();
-
-    //     const payload = {
-    //         id: docId,
-    //         version: 1,
-    //         canvasJSON: canvas.toJSON(),
-    //         createdAt: Date.now(),
-    //     };
-
-    //     db.local.set(`board:${docId}`, JSON.stringify(payload));
-
-    //     //const link = `${window.location.origin}/share/${docId}?mode=view`;
-    //     const link = `${window.location.origin}/#/share/${docId}?mode=view`;
-
-    //     navigator.clipboard.writeText(link);
-
-    //     showToast('Share link copied!'); // Use the callback
-    // };
-    //
     const handleShareClick = (canvas: fabric.Canvas) => {
         if (!canvas) return;
 
@@ -85,10 +62,18 @@ const ExtraBar = () => {
         },
         {
             id: 'preview',
-            label: 'preview',
+            label: 'Preview',
             icon: <i className="fa-solid fa-share-from-square"></i>,
             onClick: () => {
                 handleShareClick(canvas);
+            },
+        },
+        {
+            id: 'help',
+            label: 'Help',
+            icon: <i className="fa-solid fa-circle-question"></i>,
+            onClick: () => {
+                navigate('/help');
             },
         },
     ];

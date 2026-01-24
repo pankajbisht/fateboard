@@ -12,64 +12,6 @@ const PropertiesPanel = ({ canvas, isExpanded, activeSection, onClose, onToggleS
     const [diameter, setDiameter] = useState<number | string>('');
     const [color, setColor] = useState('#000000');
 
-    // Update state when object selection changes
-    //  const updateSelectedObject = (object) => {
-    //    if (!object) {
-    //      setSelectedObject(null);
-    //      setTop('');
-    //      setLeft('');
-    //      setWidth('');
-    //      setHeight('');
-    //      setDiameter('');
-    //      setColor('#000000');
-    //      return;
-    //    }
-    //
-    //    setSelectedObject(object);
-    //
-    //    if (object.type === 'rect') {
-    //      setWidth(Math.round(object.width * object.scaleX));
-    //      setHeight(Math.round(object.height * object.scaleY));
-    //      setDiameter('');
-    //      setColor(object.fill || '#000000');
-    //    } else if (object.type === 'circle') {
-    //      setDiameter(Math.round(object.radius * 2 * object.scaleX));
-    //      setWidth('');
-    //      setHeight('');
-    //      setColor(object.fill || '#000000');
-    //    }
-    //  };
-
-    //const updateSelectedObject = (object) => {
-    //  if (!object) {
-    //    setSelectedObject(null);
-    //    setWidth("");
-    //    setHeight("");
-    //    setDiameter("");
-    //    setTop("");
-    //    setLeft("");
-    //    setColor("#000000");
-    //    return;
-    //  }
-    //
-    //  setSelectedObject(object);
-    //
-    //  setTop(Math.round(object.top));
-    //  setLeft(Math.round(object.left));
-    //
-    //  if (object.type === "rect") {
-    //    setWidth(Math.round(object.width * object.scaleX));
-    //    setHeight(Math.round(object.height * object.scaleY));
-    //    setDiameter("");
-    //    setColor(object.fill || "#000000");
-    //  } else if (object.type === "circle") {
-    //    setDiameter(Math.round(object.radius * 2 * object.scaleX));
-    //    setWidth("");
-    //    setHeight("");
-    //    setColor(object.fill || "#000000");
-    //  }
-    //};
-
     const updateSelectedObject = (object) => {
         if (!object) {
             setSelectedObject(null);
@@ -121,49 +63,6 @@ const PropertiesPanel = ({ canvas, isExpanded, activeSection, onClose, onToggleS
             canvas.off('object:modified', onModified);
         };
     }, [canvas]);
-
-    // Handle input changes and update Fabric.js objects
-    //  const handleTransformChange = (property, value) => {
-    //    if (!selectedObject || !canvas) return;
-    //    const numValue = parseFloat(value);
-    //
-    //    if (selectedObject.type === 'rect') {
-    //      if (property === 'width') {
-    //        selectedObject.set({
-    //          scaleX: 1,
-    //          width: numValue,
-    //        });
-    //        setWidth(numValue);
-    //      }
-    //      if (property === 'height') {
-    //        selectedObject.set({
-    //          scaleY: 1,
-    //          height: numValue,
-    //        });
-    //        setHeight(numValue);
-    //      }
-    //    }
-    //
-    //    if (selectedObject.type === 'circle' && property === 'diameter') {
-    //      selectedObject.set({
-    //        scaleX: 1,
-    //        scaleY: 1,
-    //        radius: numValue / 2,
-    //      });
-    //      setDiameter(numValue);
-    //    }
-    //
-    //    if (property === 'fill') {
-    //      selectedObject.set({ fill: value });
-    //      setColor(value);
-    //    }
-    //
-    //    // Recalculate selection box
-    //    selectedObject.setCoords();
-    //
-    //    // Redraw canvas
-    //    canvas.renderAll();
-    //};
 
     const handleTransformChange = (property, value) => {
         if (!selectedObject || !canvas) return;

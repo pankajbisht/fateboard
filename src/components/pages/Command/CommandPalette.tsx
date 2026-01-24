@@ -30,19 +30,8 @@ export function CardContent({ className, ...props }: { className?: string; [k: s
     return <div className={cn('p-4', className)} {...props} />;
 }
 
-// src/pages/CommandPalettePage.jsx
 import { useState, useEffect } from 'react';
 import { shortcut } from '@/lib/utils/isMac.ts';
-
-// const commands = [
-//     { id: 1, name: 'New File', mac: '⌘N', win: 'Ctrl+N' },
-//     { id: 2, name: 'Open Settings', mac: '⌘,', win: 'Ctrl+,' },
-//     { id: 3, name: 'Copy', mac: '⌘C', win: 'Ctrl+C' },
-//     { id: 4, name: 'Paste', mac: '⌘V', win: 'Ctrl+V' },
-//     { id: 5, name: 'Group', mac: '⌘G', win: 'Ctrl+G' },
-//     { id: 6, name: 'Ungroup', mac: '⌘⇧U', win: 'Ctrl+Shift+U' },
-//     { id: 7, name: 'Lock', mac: '⌘L', win: 'Ctrl+L' },
-// ];
 
 const commands = commandRegistry;
 

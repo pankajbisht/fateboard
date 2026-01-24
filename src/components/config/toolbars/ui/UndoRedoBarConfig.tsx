@@ -20,6 +20,7 @@ export const UndoRedoBarConfig = [
     {
         id: 'redo',
         label: 'Redo',
+        name: 'Redo',
         description: 'Redo',
         shortcut: shortcut('⌘⇧z', 'Ctrl+Shift+z'),
         icon: <RedoIcon />,
