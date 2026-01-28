@@ -1,19 +1,9 @@
 import { useEffect, useRef } from 'react';
-import * as fabric from 'fabric';
-import db from 'opendb-store';
 import { MultiStopGradientTool } from '@/lib/utils/GradientTool';
 import { useStore } from '@/store';
 import { useKeyboardShortcuts } from '@/hooks';
 import { FloatingTextToolbar } from '@/components/organisms/FloatingTextToolbar';
 import { contextMenuRegistry } from '@/components/config/contextMenuRegistry';
-
-const VIRTUAL_SIZE = 8000; // total virtual workspace (allows negative space)
-const CANVAS_OFFSET = VIRTUAL_SIZE / 2; // offset to place origin at center
-
-export const isMac =
-    typeof navigator !== 'undefined' && /Mac|iPhone|iPad/i.test(navigator.platform);
-
-export const shortcut = (mac: string, win: string) => (isMac ? mac : win);
 
 export function CanvasBoardFreeHand() {
     const canvasRef = useRef(null);

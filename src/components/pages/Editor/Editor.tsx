@@ -8,7 +8,7 @@ import { usePageTitle } from '../../../lib/utils/usePageTitle.ts';
 import { DockRoot } from '@/components/organisms/DraggableItem.tsx';
 import { Header } from '@/components/organisms/header/index.ts';
 import { useStore } from '@/store/index.ts';
-import { CanvasBoardFreeHand } from '../CanvasBoard/CanvasBoard.tsx';
+import { CanvasBoardFreeHand } from '../../organisms/CanvasBoardFreeHand.tsx';
 
 const EditorPage = () => {
     const freehand = useStore((s) => s.settings.freehand); // CanvasBoardFreeHand

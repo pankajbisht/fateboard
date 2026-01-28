@@ -1,137 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
-import * as fabric from 'fabric';
-import db from 'opendb-store';
-
 import { useStore } from '@store';
 import { useKeyboardShortcuts } from '../../hooks';
 import { FloatingTextToolbar } from './FloatingTextToolbar.tsx';
 import { MultiStopGradientTool } from '../../lib/utils/GradientTool.ts';
 import { contextMenuRegistry } from '../config/contextMenuRegistry.tsx';
-
-const ARTBOARD_WIDTH = 1200;
-const ARTBOARD_HEIGHT = 800;
-const RULER_SIZE = 30;
-const VIRTUAL_SIZE = 8000; // total virtual workspace (allows negative space)
-const CANVAS_OFFSET = VIRTUAL_SIZE / 2; // offset to place origin at center
-const GRID_STEP = 50;
-
-// const GRID_STEP = 100;        // major unit
-// const SUB_DIVS = 10;          // number of subdivisions
-// const SUB_STEP = GRID_STEP / SUB_DIVS; // 10px
-
-function TopRuler({ mouseX, scrollX, viewportWidth }: any) {
-    const ZERO_X = CANVAS_OFFSET - scrollX;
-
-    const GRID_STEP = 100;
-    const SUB_DIVS = 10;
-    const SUB_STEP = GRID_STEP / SUB_DIVS;
-
-    const RANGE = 2000;
-
-    return (
-        <div className="h-[16px] bg-slate-50 border-b border-slate-200 relative overflow-hidden select-none">
-            {Array.from({ length: (RANGE * 2) / SUB_STEP }).map((_, i) => {
-                const value = i * SUB_STEP - RANGE;
-                const left = ZERO_X + value + 15;
-
-                if (left < -60 || left > viewportWidth + 60) return null;
-
-                const isMajor = value % GRID_STEP === 0;
-                const isMid = value % GRID_STEP === GRID_STEP / 2;
-
-                const height = isMajor ? 'h-full' : isMid ? 'h-[40%]' : 'h-[20%]';
-
-                const color = isMajor ? 'border-slate-500' : 'border-slate-300';
-
-                return (
-                    <div
-                        key={i}
-                        className={`absolute bottom-0 border-l ${height} ${color}`}
-                        style={{ left }}
-                    >
-                        {isMajor && (
-                            <span className="absolute top-[4px] left-[4px] text-[6px] text-slate-600 font-medium">
-                                {value}
-                            </span>
-                        )}
-                    </div>
-                );
-            })}
-
-            {/* Origin */}
-            <div
-                className="absolute top-0 h-full w-[2px] bg-blue-600 pointer-events-none"
-                style={{ left: ZERO_X + 15 }}
-            />
-
-            {/* Cursor */}
-            <div
-                className="absolute top-0 h-full w-[1px] bg-red-500/80 pointer-events-none"
-                style={{ left: ZERO_X + mouseX + 15 }}
-            />
-        </div>
-    );
-}
-
-function LeftRuler({ mouseY, scrollY, viewportHeight }: any) {
-    const ZERO_Y = CANVAS_OFFSET - scrollY;
-
-    const GRID_STEP = 100;
-    const SUB_DIVS = 10;
-    const SUB_STEP = GRID_STEP / SUB_DIVS;
-
-    const RANGE = 2000;
-
-    return (
-        <div className="w-[16px] bg-slate-50 border-r border-slate-200 relative overflow-hidden select-none">
-            {Array.from({ length: (RANGE * 2) / SUB_STEP }).map((_, i) => {
-                const value = i * SUB_STEP - RANGE;
-                const top = ZERO_Y + value;
-
-                if (top < -60 || top > viewportHeight + 60) return null;
-
-                const isMajor = value % GRID_STEP === 0;
-                const isMid = value % GRID_STEP === GRID_STEP / 2;
-
-                const width = isMajor ? 'w-full' : isMid ? 'w-[40%]' : 'w-[20%]';
-
-                const color = isMajor ? 'border-slate-900' : 'border-slate-300';
-
-                return (
-                    <div
-                        key={i}
-                        className={`absolute right-0 border-t ${width} ${color}`}
-                        style={{ top }}
-                    >
-                        {isMajor && (
-                            <span className="absolute left-[6px] top-[6px] -rotate-90 origin-left text-[6px] text-slate-600 font-medium">
-                                {value}
-                            </span>
-                        )}
-                    </div>
-                );
-            })}
-
-            {/* Origin */}
-            <div
-                className="absolute left-0 w-full h-[2px] bg-blue-600 pointer-events-none"
-                style={{ top: ZERO_Y }}
-            />
-
-            {/* Cursor */}
-            <div
-                className="absolute left-0 w-full h-[1px] bg-red-500/80 pointer-events-none"
-                style={{ top: ZERO_Y + mouseY }}
-            />
-        </div>
-    );
-}
+import TopRuler from '../molecules/DesignFrame/ui/TopRuler.tsx';
+import LeftRuler from '../molecules/DesignFrame/ui/LeftRuler.tsx';
+import { CANVAS_OFFSET, VIRTUAL_SIZE } from '../config/canvas.config.ts';
 
 export function CanvasBoard() {
     const canvasRef = useRef<HTMLCanvasElement | null>(null);
     const geditorRef = useRef<MultiStopGradientTool | null>(null);
-    const { init, selectedObject, canvas, openMenu, fill } = useStore();
-    const eventLists = useStore();
+    const init = useStore((s) => s.init);
+    const canvas = useStore((s) => s.canvas);
+    const openMenu = useStore((s) => s.openMenu);
+    const fill = useStore((s) => s.fill);
+    const selectedObject = useStore((s) => s.selectedObject);
+
     useKeyboardShortcuts();
 
     const scrollRef = useRef<HTMLDivElement | null>(null);

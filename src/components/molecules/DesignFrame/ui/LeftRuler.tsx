@@ -1,62 +1,57 @@
-import { useEffect, useRef, useState } from 'react';
-import { RULER_SIZE, GRID } from './ruler.constants';
+import { CANVAS_OFFSET } from '@/components/config/canvas.config';
 
-export function LeftRuler() {
-    const ref = useRef<HTMLDivElement>(null);
-    const [scrollTop, setScrollTop] = useState(0);
-    const [height, setHeight] = useState(0);
+function LeftRuler({ mouseY, scrollY, viewportHeight }: any) {
+    const ZERO_Y = CANVAS_OFFSET - scrollY;
 
-    useEffect(() => {
-        const section = ref.current?.parentElement as HTMLElement;
-        if (!section) return;
+    const GRID_STEP = 100;
+    const SUB_DIVS = 10;
+    const SUB_STEP = GRID_STEP / SUB_DIVS;
 
-        const onScroll = () => setScrollTop(section.scrollTop);
-        const onResize = () => setHeight(section.clientHeight);
-
-        onResize();
-        section.addEventListener('scroll', onScroll);
-        window.addEventListener('resize', onResize);
-
-        return () => {
-            section.removeEventListener('scroll', onScroll);
-            window.removeEventListener('resize', onResize);
-        };
-    }, []);
-
-    const center = height / 2;
-    const start = Math.floor((scrollTop - center) / GRID) - 1;
-    const end = start + Math.ceil(height / GRID) + 3;
+    const RANGE = 2000;
 
     return (
-        <div
-            ref={ref}
-            className="sticky left-0 z-20 bg-[#2a2a2a] border-r border-black"
-            style={{ width: RULER_SIZE, marginTop: RULER_SIZE }}
-        >
-            <svg width={RULER_SIZE} height="100%">
-                {Array.from({ length: end - start }).map((_, i) => {
-                    const value = start + i;
-                    const y = value * GRID - scrollTop + center;
-                    const major = value % 5 === 0;
+        <div className="w-[16px] bg-slate-50 border-r border-slate-200 relative overflow-hidden select-none">
+            {Array.from({ length: (RANGE * 2) / SUB_STEP }).map((_, i) => {
+                const value = i * SUB_STEP - RANGE;
+                const top = ZERO_Y + value;
 
-                    return (
-                        <g key={value} transform={`translate(0,${y})`}>
-                            <line x1={RULER_SIZE} x2={major ? 0 : RULER_SIZE / 2} stroke="#888" />
-                            {major && (
-                                <text
-                                    x={2}
-                                    y={10}
-                                    fill="#aaa"
-                                    fontSize="10"
-                                    transform="rotate(-90 2 10)"
-                                >
-                                    {value * GRID}
-                                </text>
-                            )}
-                        </g>
-                    );
-                })}
-            </svg>
+                if (top < -60 || top > viewportHeight + 60) return null;
+
+                const isMajor = value % GRID_STEP === 0;
+                const isMid = value % GRID_STEP === GRID_STEP / 2;
+
+                const width = isMajor ? 'w-full' : isMid ? 'w-[40%]' : 'w-[20%]';
+
+                const color = isMajor ? 'border-slate-900' : 'border-slate-300';
+
+                return (
+                    <div
+                        key={i}
+                        className={`absolute right-0 border-t ${width} ${color}`}
+                        style={{ top }}
+                    >
+                        {isMajor && (
+                            <span className="absolute left-[6px] top-[6px] -rotate-90 origin-left text-[6px] text-slate-600 font-medium">
+                                {value}
+                            </span>
+                        )}
+                    </div>
+                );
+            })}
+
+            {/* Origin */}
+            <div
+                className="absolute left-0 w-full h-[2px] bg-blue-600 pointer-events-none"
+                style={{ top: ZERO_Y }}
+            />
+
+            {/* Cursor */}
+            <div
+                className="absolute left-0 w-full h-[1px] bg-red-500/80 pointer-events-none"
+                style={{ top: ZERO_Y + mouseY }}
+            />
         </div>
     );
 }
+
+export default LeftRuler;
