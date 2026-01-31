@@ -4,72 +4,47 @@ import { Dropdown } from '../atoms/Dropdown';
 import { STilte, Tile } from '../molecules/Tile';
 import { OpacityControl } from '../molecules/OpacityControl';
 import { TransformInput } from '../molecules/TransformInput';
-import { useState } from 'react';
 import { SingleToggleButton } from '../molecules/SingleToggleButton';
 import { LinearGradientIcon } from '../../assets/icons/LinearGradientIcon';
 import { RadialGradientIcon } from '../../assets/icons/RadialGradientIcon';
 import { GradientToolIcon } from '../../assets/icons/GradientToolIcon';
 import { BooleanOperationsDropdown } from './BooleanOperationsDropdown';
-
-const SHADOW_PRESETS = {
-    soft: { blur: 12, offsetX: 0, offsetY: 6, color: 'rgba(0,0,0,0.2)' },
-    medium: { blur: 20, offsetX: 0, offsetY: 10, color: 'rgba(0,0,0,0.25)' },
-    strong: { blur: 40, offsetX: 0, offsetY: 20, color: 'rgba(0,0,0,0.3)' },
-};
-
-const ShadowDropdown = ({ disabled }) => {
-    const activeShadow = useStore((s) => s.activeObjectShadow);
-    const applyShadowPreset = useStore((s) => s.applyShadowPreset);
-    const removeShadow = useStore((s) => s.removeShadow);
-
-    const value = activeShadow
-        ? Object.entries(SHADOW_PRESETS).find(
-              ([, preset]) =>
-                  preset.blur === activeShadow.blur &&
-                  preset.offsetX === activeShadow.offsetX &&
-                  preset.offsetY === activeShadow.offsetY &&
-                  preset.color === activeShadow.color,
-          )?.[0] ?? 'custom'
-        : 'none';
-
-    return (
-        <Dropdown
-            value={value}
-            disabled={disabled}
-            options={[
-                { label: 'None', value: 'none' },
-                ...Object.keys(SHADOW_PRESETS).map((key) => ({
-                    label: key.charAt(0).toUpperCase() + key.slice(1),
-                    value: key,
-                })),
-            ]}
-            onChange={(val) => {
-                if (val === 'none') return removeShadow();
-                applyShadowPreset(val);
-            }}
-        />
-    );
-};
+import ShadowDropdown from '../molecules/ShadowDropdown';
 
 export function StrokeControls() {
-    const {
-        fill,
-        stroke,
-        strokeWidth,
-        activePaint,
-        setActivePaint,
-        setStrokeWidthN,
-        opacity,
-        setOpacity,
-        hasActiveShape,
-        strokeStyleList,
-        strokeStyle,
-        setStrokeStyle,
-        addShadow,
-        geditor,
-    } = useStore();
+    // const {
+    //     fill,
+    //     stroke,
+    //     strokeWidth,
+    //     activePaint,
+    //     setActivePaint,
+    //     setStrokeWidthN,
+    //     opacity,
+    //     setOpacity,
+    //     hasActiveShape,
+    //     strokeStyleList,
+    //     strokeStyle,
+    //     setStrokeStyle,
+    //     addShadow,
+    //     geditor,
+    // } = useStore();
+    //
 
+    const activePaint = useStore((s) => s.activePaint);
+    const setStrokeWidthN = useStore((s) => s.setStrokeWidthN);
+    const hasActiveShape = useStore((s) => s.hasActiveShape);
+    const setActivePaint = useStore((s) => s.setActivePaint);
+    const fill = useStore((s) => s.fill);
+    const stroke = useStore((s) => s.stroke);
+    const strokeWidth = useStore((s) => s.strokeWidth);
+    const strokeStyleList = useStore((s) => s.strokeStyleList);
+    const strokeStyle = useStore((s) => s.strokeStyle);
+    const setStrokeStyle = useStore((s) => s.setStrokeStyle);
+    const opacity = useStore((s) => s.opacity);
+    const setOpacity = useStore((s) => s.setOpacity);
+    const geditor = useStore((s) => s.geditor);
     const canvas = useStore((s) => s.canvas);
+
     const activeObject = canvas?.getActiveObject();
     const isFillActive = activePaint === 'fill';
     const isStrokeActive = activePaint === 'stroke';

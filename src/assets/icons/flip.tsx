@@ -7,9 +7,9 @@ const FlipIcon = (props) => (
             y1="3"
             x2="12"
             y2="21"
-            stroke-width="2"
-            stroke-dasharray="3 2"
-            stroke-linecap="round"
+            strokeWidth="2"
+            strokeDasharray="3 2"
+            strokeLinecap="round"
             className="stroke-current"
         />
     </svg>

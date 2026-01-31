@@ -45,9 +45,9 @@ export const createBrushSlice = (set: any, get: any, _store: any) => ({
 
         canvas.freeDrawingBrush = brush;
         canvas.freeDrawingCursor = cursor;
-        console.log({ brush: type, color, width, cursor });
+        console.log({ brush: type, color, width, cursor }, cursor);
 
-        set({ brush: type, color, width, cursor });
+        set({ brush: type, color, width, cursor }, false, 'canvas/brush');
         canvas.requestRenderAll();
     },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

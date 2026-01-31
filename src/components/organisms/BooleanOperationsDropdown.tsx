@@ -1,60 +1,56 @@
 import React, { useState } from 'react';
 import { Dropdown } from '../atoms/Dropdown';
 import { useStore } from '../../store';
-
-const options = [
-    { label: 'Select Operation', value: '' },
-    { label: 'Union', value: 'union' },
-    { label: 'Intersect', value: 'intersect' },
-    { label: 'Subtract', value: 'subtract' },
-    { label: 'Exclude', value: 'exclude' },
-    { label: 'Divide', value: 'divide' },
-    { label: 'Cut', value: 'cut' },
-    { label: 'Punch', value: 'punch' },
-    { label: 'Crop', value: 'crop' },
-    { label: 'Smart Union', value: 'smartUnion' },
-    { label: 'Xor Split', value: 'xorSplit' },
-    { label: 'Clip', value: 'clip' },
-];
+import { booleanOperationConfig } from '../config/booleanoperation.config';
 
 export const BooleanOperationsDropdown = () => {
     const [value, setValue] = useState(''); // default operation
-    const store = useStore();
+    const unionSelected = useStore((s) => s.unionSelected);
+    const intersectSelected = useStore((s) => s.intersectSelected);
+    const subtractSelected = useStore((s) => s.subtractSelected);
+    const excludeSelected = useStore((s) => s.excludeSelected);
+    const divideSelected = useStore((s) => s.divideSelected);
+    const cutSelected = useStore((s) => s.cutSelected);
+    const punchSelected = useStore((s) => s.punchSelected);
+    const cropSelected = useStore((s) => s.cropSelected);
+    const smartUnionSelected = useStore((s) => s.smartUnionSelected);
+    const xorSplitSelected = useStore((s) => s.xorSplitSelected);
+    const clipSelectedObject = useStore((s) => s.clipSelectedObject);
 
     const handleApply = (operation) => {
         switch (operation) {
             case 'union':
-                store.unionSelected({ fill: 'green' });
+                unionSelected({ fill: 'green' });
                 break;
             case 'intersect':
-                store.intersectSelected({ fill: 'orange' });
+                intersectSelected({ fill: 'orange' });
                 break;
             case 'subtract':
-                store.subtractSelected({ fill: 'pink' });
+                subtractSelected({ fill: 'pink' });
                 break;
             case 'exclude':
-                store.excludeSelected({ fill: 'purple' });
+                excludeSelected({ fill: 'purple' });
                 break;
             case 'divide':
-                store.divideSelected({ fill: 'purple' });
+                divideSelected({ fill: 'purple' });
                 break;
             case 'cut':
-                store.cutSelected({ fill: 'purple' });
+                cutSelected({ fill: 'purple' });
                 break;
             case 'punch':
-                store.punchSelected({ fill: 'purple' });
+                punchSelected({ fill: 'purple' });
                 break;
             case 'crop':
-                store.cropSelected({ fill: 'purple' });
+                cropSelected({ fill: 'purple' });
                 break;
             case 'smartUnion':
-                store.smartUnionSelected({ fill: 'purple' });
+                smartUnionSelected({ fill: 'purple' });
                 break;
             case 'xorSplit':
-                store.xorSplitSelected({ fill: 'purple' });
+                xorSplitSelected({ fill: 'purple' });
                 break;
             case 'clip':
-                store.clipSelectedObject({ fill: 'purple' });
+                clipSelectedObject({ fill: 'purple' });
                 break;
             default:
                 break;
@@ -65,7 +61,7 @@ export const BooleanOperationsDropdown = () => {
         <div className="flex items-center space-x-2">
             <Dropdown
                 value={value}
-                options={options}
+                options={booleanOperationConfig}
                 onChange={(selected) => {
                     setValue(selected);
                     handleApply(selected);

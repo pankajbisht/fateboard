@@ -15,7 +15,6 @@ function RootLayout() {
 
     useEffect(() => {
         const data = db.local.get('fateboard-settings', {});
-        // console.log(data);
         useStore.getState().hydrate(data);
         setStore(true);
     }, []);

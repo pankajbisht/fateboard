@@ -1,6 +1,5 @@
 import { FullScreen } from '@components/molecules/FullScreen';
 import { ViewTool } from '@components/templates/ViewTool.template';
-import { ColorPicker } from '@components/organisms/ColorPicker';
 import { StrokeControls } from '@components/organisms/StrokeControls';
 
 export function Footer() {
