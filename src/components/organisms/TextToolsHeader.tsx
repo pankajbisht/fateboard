@@ -4,10 +4,10 @@ import { IconButton } from '../atoms/IconButton.tsx';
 import { ColorPicker } from '../atoms/ColorPicker.tsx';
 import { ToggleGroup } from '../molecules/ToggleGroup.tsx';
 import Dropdown from '../atoms/Dropdown.tsx';
-import { GlowDivider } from './toolbars/index.ts';
 import { textAlignmentConfig } from '../config/textalignment.config.ts';
 import { textFormattingConfig } from '../config/textformatting.config.ts';
 import { fontSizeConfig } from '../config/fontsize.config.ts';
+import { GlowDivider } from '../atoms/GlowDivider.tsx';
 
 const FontSizeDropdown = ({ value, options, handleApply, className = '' }) => {
     return (
@@ -133,24 +133,6 @@ export const TextToolsHeader = () => {
                     }}
                 />
 
-                {/*<ColorPicker
-                    label="BG"
-                    value={bgColor}
-                    onChange={(bgColor) => {
-                        setBgColor(color);
-                        updateText({ backgroundColor: bgColor });
-                    }}
-                />*/}
-
-                {/*<ColorPicker
-                    label="TXT"
-                    value={fillColor}
-                    onChange={(color) => {
-                        setFillColor(color);
-                        updateText({ fill: color });
-                    }}
-                />*/}
-
                 <ToggleGroup
                     options={textFormattingConfig}
                     value={{
@@ -193,16 +175,6 @@ export const TextToolsHeader = () => {
                     }}
                 />
 
-                {/*<div className="flex items-center gap-2">
-                    <ColorPicker
-                        label="Stroke"
-                        value={strokeColor}
-                        onChange={(color) => {
-                            setStrokeColor(color);
-                            updateText({ stroke: color });
-                        }}
-                    />*/}
-
                 {/*<NumberInput
                         label="STR"
                         max={10}
@@ -237,6 +209,15 @@ export const TextToolsHeader = () => {
                         }}
                     />
                 </div>*/}
+
+                {/*<ColorPicker
+                    label="BG"
+                    value={bgColor}
+                    onChange={(bgColor) => {
+                        setBgColor(color);
+                        updateText({ backgroundColor: bgColor });
+                    }}
+                />*/}
 
                 <GlowDivider />
 

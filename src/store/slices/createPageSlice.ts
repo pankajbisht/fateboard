@@ -21,12 +21,12 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
     scale: 1,
 
     setPageFormat: (format, orientation = 'portrait') => {
-        set({ pageFormat: format, orientation });
+        set({ pageFormat: format, orientation }, false, 'page/orientation');
         get().applyPageSize(format, orientation);
     },
 
     setOrientation: (orientation) => {
-        set({ orientation });
+        set({ orientation }, false, 'page/orientation');
         get().applyPageSize(get().pageFormat, orientation);
     },
 
@@ -53,11 +53,15 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
             canvas.setZoom(1);
             canvas.calcOffset();
             canvas.renderAll();
-            set({
-                scale: 1,
-                pageWidth: canvas.getWidth(),
-                pageHeight: canvas.getHeight(),
-            });
+            set(
+                {
+                    scale: 1,
+                    pageWidth: canvas.getWidth(),
+                    pageHeight: canvas.getHeight(),
+                },
+                false,
+                'page/applysize',
+            );
 
             return;
         }
@@ -76,7 +80,7 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get, store) => ({
         canvas.calcOffset();
         canvas.renderAll();
 
-        set({ scale, pageWidth: width, pageHeight: height });
+        set({ scale, pageWidth: width, pageHeight: height }, false, 'page/applysize');
         get().drawBackground();
     },
 });

@@ -1,10 +1,10 @@
 import { useStore } from '@store';
 import { TransformInput } from '../molecules/TransformInput.tsx';
 import { TextToolsHeader } from './TextToolsHeader.tsx';
-import { GlowDivider } from './toolbars/index.ts';
 import { LayerControlBar } from './toolbars/ui/bars/LayerControlBar.tsx';
 import { FlipBar } from './toolbars/ui/bars/FlipBar.tsx';
 import { transformFieldsConfig } from '../config/transformfields.config.ts';
+import { GlowDivider } from '../atoms/GlowDivider.tsx';
 
 export const ShapeToolsHeader = () => {
     const transform = useStore((s) => s.transform);

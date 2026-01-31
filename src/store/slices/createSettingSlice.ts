@@ -61,9 +61,7 @@ export const createSettingSlice = (set, get, store) => ({
     },
 
     hydrate: (data) => {
-        // set({ ...initialValues, ...data });
-        set({ settings: { ...initialValues, ...data } });
-        // console.log({ settings: { ...initialValues, ...data } })
+        set({ settings: { ...initialValues, ...data } }, false, 'settings/hydrate');
     },
 
     updateSetting: (key, value) => {

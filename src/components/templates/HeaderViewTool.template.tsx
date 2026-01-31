@@ -1,5 +1,3 @@
-import { GlowDivider } from '../organisms/toolbars';
-
 const HeaderViewTool = ({ brand, toolbar, transform }) => {
     return (
         <section className="flex flex-col">

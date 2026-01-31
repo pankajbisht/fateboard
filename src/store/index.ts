@@ -50,7 +50,7 @@ export const combinedSlice = (set, get, store) => ({
 const isDev = process.env.NODE_ENV === 'development';
 
 export const useStore = create(
-    devtools(withLogger(combinedSlice), {
+    devtools(combinedSlice, {
         name: 'DesignEditorStore',
         enabled: isDev,
     }),

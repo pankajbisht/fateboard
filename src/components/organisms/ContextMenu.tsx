@@ -1,7 +1,11 @@
 import { useStore } from '../../store';
 
 export const ContextMenu = () => {
-    const { visible, x, y, items, closeMenu } = useStore();
+    const visible = useStore((s) => s.visible);
+    const items = useStore((s) => s.items);
+    const closeMenu = useStore((s) => s.closeMenu);
+    const x = useStore((s) => s.x);
+    const y = useStore((s) => s.y);
 
     if (!visible) return null;
 

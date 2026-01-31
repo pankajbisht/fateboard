@@ -172,7 +172,7 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
         }, 0);
 
         // ✅ Sync with store + history
-        set({ showTextToolbar: true, selectedObject: fabricText });
+        set({ showTextToolbar: true, selectedObject: fabricText }, false, 'text/add');
         get().saveState();
         canvas.requestRenderAll();
     },

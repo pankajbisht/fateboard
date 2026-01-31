@@ -6,9 +6,9 @@ const BringForward = (props) => (
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
     >
         <rect x="5" y="5" width="12" height="12" opacity="0.4" />
 
