@@ -384,7 +384,7 @@ export const createCanvasSlice = (set, get, store) => ({
         canvas.on('selection:created', get().handleSelectionChange);
         canvas.on('selection:updated', get().handleSelectionChange);
         canvas.on('selection:cleared', get().handleSelectionClear);
-        canvas.on('mouse:down', get().handleSelectionClear);
+        canvas.on('mouse:down', get().handleSelectionChange);
         canvas.on('mouse:dblclick', get().handleDBLClick);
         canvas.on('object:modified', get().handleObjectChange);
     },

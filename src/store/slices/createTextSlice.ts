@@ -1,7 +1,6 @@
 import * as fabric from 'fabric';
-import { FONTS } from '@lib/const/fonts.ts';
 import type { SliceCreator } from '../types';
-import { Canvas } from 'fabric';
+import { fontFamilyConfig } from '@/components/config/fontfamily.config';
 
 type TextType = fabric.Text | fabric.IText | fabric.Textbox;
 
@@ -52,7 +51,7 @@ export interface TextSlice {
 }
 
 export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
-    fonts: FONTS,
+    fonts: fontFamilyConfig,
     fontSize: 16,
     bgColor: '#000000',
     setBgColor: (val) => set({ bgColor: val }),
