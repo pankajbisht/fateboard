@@ -5,7 +5,7 @@ export const LockBarConfig = [
     {
         id: 'lock',
         label: 'Lock',
-        name: 'Lock selected object',
+        title: 'Lock selected object',
         description: 'Lock selected object',
         shortcut: shortcut('⌘L', 'Ctrl+L'),
         icon: <i className="fa-solid fa-lock" />,
@@ -19,7 +19,7 @@ export const LockBarConfig = [
     {
         id: 'unlock',
         label: 'Unlock',
-        name: 'Unlock selected object',
+        title: 'Unlock selected object',
         description: 'Unlock selected object',
         shortcut: shortcut('⌘⇧L', 'Ctrl+Shift+L'),
         icon: <i className="fa-solid fa-lock-open" />,

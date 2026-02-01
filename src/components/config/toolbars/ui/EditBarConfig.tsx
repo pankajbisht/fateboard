@@ -5,7 +5,7 @@ export const EditBarConfig = [
     {
         id: 'copy',
         label: 'Copy',
-        name: 'Copy selected object',
+        title: 'Copy selected object',
         description: 'Copy selected object',
         shortcut: shortcut('⌘C', 'Ctrl+c'),
         icon: <i className="fa-regular fa-copy" />,
@@ -19,7 +19,7 @@ export const EditBarConfig = [
     {
         id: 'cut',
         label: 'Cut',
-        name: 'Cut selected object',
+        title: 'Cut selected object',
         description: 'Cut selected object',
         shortcut: shortcut('⌘X', 'Ctrl+x'),
         icon: <i className="fa-solid fa-scissors -rotate-90"></i>,
@@ -33,7 +33,7 @@ export const EditBarConfig = [
     {
         id: 'paste',
         label: 'Paste',
-        name: 'Paste object',
+        title: 'Paste object',
         description: 'Paste object',
         shortcut: shortcut('⌘V', 'Ctrl+v'),
         icon: <i className="fa-regular fa-paste" />,
@@ -47,7 +47,7 @@ export const EditBarConfig = [
     {
         id: 'duplicate',
         label: 'Duplicate',
-        name: 'Duplicate object',
+        title: 'Duplicate object',
         description: 'Duplicate object',
         shortcut: shortcut('⌘D', 'Ctrl+D'),
         icon: <i className="fa-regular fa-clone" />,
@@ -61,7 +61,7 @@ export const EditBarConfig = [
     {
         id: 'clone',
         label: 'Clone',
-        name: 'Clone selected object',
+        title: 'Clone selected object',
         description: 'Clone selected object',
         shortcut: shortcut('⌥D', 'Alt+D'),
         icon: <i className="fa-solid fa-layer-group" />,
@@ -75,7 +75,7 @@ export const EditBarConfig = [
     {
         id: 'delete',
         label: 'Delete',
-        name: 'Delete selected object',
+        title: 'Delete selected object',
         description: 'Delete selected object',
         shortcut: shortcut('⌫', 'Backspace'),
         icon: <i className="fa-solid fa-trash" />,

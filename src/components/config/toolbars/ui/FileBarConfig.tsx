@@ -5,7 +5,7 @@ export const FileBarConfig = [
     {
         id: 'newfile',
         label: 'Create New Board',
-        name: 'Create New Board',
+        title: 'Create New Board',
         description: 'New File',
         shortcut: shortcut('⌘N', 'Ctrl+n'),
         icon: <i className="fa-solid fa-file" />,
@@ -19,7 +19,7 @@ export const FileBarConfig = [
     {
         id: 'open',
         label: 'Open Board',
-        name: 'Open Board',
+        title: 'Open Board',
         description: 'Open Board',
         shortcut: shortcut('⌘O', 'Ctrl+o'),
         icon: <i className="fa-regular fa-folder-open" />,
@@ -33,7 +33,7 @@ export const FileBarConfig = [
     {
         id: 'save',
         label: 'Save Board',
-        name: 'Save Board',
+        title: 'Save Board',
         description: 'Save Board',
         shortcut: shortcut('⌘S', 'Ctrl+s'),
         icon: <i className="fa-regular fa-floppy-disk" />,

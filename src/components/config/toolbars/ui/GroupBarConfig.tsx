@@ -5,7 +5,7 @@ export const GroupBarConfig = [
     {
         id: 'group',
         label: 'Group',
-        name: 'Group selected object',
+        title: 'Group selected object',
         description: 'Group selected object',
         shortcut: shortcut('⌘G', 'Ctrl+G'),
         icon: <i className="fa-solid fa-object-group" />,
@@ -19,7 +19,7 @@ export const GroupBarConfig = [
     {
         id: 'ungroup',
         label: 'Ungroup',
-        name: 'Ungroup selected object',
+        title: 'Ungroup selected object',
         description: 'Ungroup selected object',
         shortcut: shortcut('⌘⇧U', 'Ctrl+Shift+U'),
         icon: <i className="fa-solid fa-object-ungroup" />,

@@ -9,4 +9,12 @@ const BrandLogo = () => {
     );
 };
 
-export { BrandLogo };
+const MBrandLogo = () => {
+    return (
+        <>
+            <Brand src="fateicon.svg" className="h-8 cursor-pointer" />
+        </>
+    );
+};
+
+export { BrandLogo, MBrandLogo };
