@@ -1,6 +1,5 @@
 import clsx from 'clsx';
 import { useStore } from '../../store';
-import { Dropdown } from '../atoms/Dropdown';
 import { STilte, Tile } from '../molecules/Tile';
 import { OpacityControl } from '../molecules/OpacityControl';
 import { TransformInput } from '../molecules/TransformInput';
@@ -12,24 +11,6 @@ import { BooleanOperationsDropdown } from './BooleanOperationsDropdown';
 import ShadowDropdown from '../molecules/ShadowDropdown';
 
 export function StrokeControls() {
-    // const {
-    //     fill,
-    //     stroke,
-    //     strokeWidth,
-    //     activePaint,
-    //     setActivePaint,
-    //     setStrokeWidthN,
-    //     opacity,
-    //     setOpacity,
-    //     hasActiveShape,
-    //     strokeStyleList,
-    //     strokeStyle,
-    //     setStrokeStyle,
-    //     addShadow,
-    //     geditor,
-    // } = useStore();
-    //
-
     const activePaint = useStore((s) => s.activePaint);
     const setStrokeWidthN = useStore((s) => s.setStrokeWidthN);
     const hasActiveShape = useStore((s) => s.hasActiveShape);

@@ -12,16 +12,15 @@ import { createUndoRedoSlice } from './slices/createUndoRedoSlice.ts';
 import { createTransformSlice } from './slices/createTransformSlice.ts';
 import { createShapeSlice } from './slices/createShapeSlice.ts';
 import { createTextSlice } from './slices/createTextSlice.ts';
-import { createNotebookSlice } from './slices/createNotebookSlice.ts';
-import { DEVELOPMENT } from '@lib/const/editor.ts';
 import { createBackgroundColor } from './slices/createBackgroundColor.ts';
 import { createContextMenu } from './slices/createContextMenu.ts';
-import { withLogger } from './middleware/withLogger.ts';
 import { createSettingSlice } from './slices/createSettingSlice.ts';
 import { advanceOperationSlice } from './slices/advanceOperationSlice.ts';
 import { geometryEngineSlice } from './slices/geometryEngineSlice.ts';
 import { createNodeEditorSlice } from './slices/createNodeEditorSlice.ts';
 import { createFilterSlice } from './slices/createFilterSlice.ts';
+// import { withLogger } from './middleware/withLogger.ts';
+// import { createNotebookSlice } from './slices/createNotebookSlice.ts';
 
 export const combinedSlice = (set, get, store) => ({
     ...createCanvasSlice(set, get, store),
@@ -55,11 +54,6 @@ export const useStore = create(
         enabled: isDev,
     }),
 );
-
-// export const useStore: any =
-//     isDev
-//         ? create(devtools(withLogger(combinedSlice)))
-//         : create(combinedSlice);
 
 // Proper RootState type inferred from the created store
 export type RootState = ReturnType<typeof useStore.getState>;

@@ -13,13 +13,13 @@ const ShadowDropdown = ({ disabled }) => {
     const removeShadow = useStore((s) => s.removeShadow);
 
     const value = activeShadow
-        ? Object.entries(SHADOW_PRESETS).find(
+        ? (Object.entries(SHADOW_PRESETS).find(
               ([, preset]) =>
                   preset.blur === activeShadow.blur &&
                   preset.offsetX === activeShadow.offsetX &&
                   preset.offsetY === activeShadow.offsetY &&
                   preset.color === activeShadow.color,
-          )?.[0] ?? 'custom'
+          )?.[0] ?? 'custom')
         : 'none';
 
     return (

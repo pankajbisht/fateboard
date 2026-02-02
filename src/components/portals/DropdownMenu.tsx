@@ -11,8 +11,8 @@ export const DropdownMenuItem = ({
         position === 'top'
             ? 'hover:rounded-t-lg'
             : position === 'bottom'
-            ? 'hover:rounded-b-lg'
-            : '';
+              ? 'hover:rounded-b-lg'
+              : '';
 
     return (
         <button

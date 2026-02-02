@@ -45,7 +45,7 @@ export const createBrushSlice = (set: any, get: any, _store: any) => ({
 
         canvas.freeDrawingBrush = brush;
         canvas.freeDrawingCursor = cursor;
-        console.log({ brush: type, color, width, cursor }, cursor);
+        // console.log({ brush: type, color, width, cursor }, cursor);
 
         set({ brush: type, color, width, cursor }, false, 'canvas/brush');
         canvas.requestRenderAll();

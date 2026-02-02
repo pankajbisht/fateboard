@@ -783,8 +783,8 @@ export const createShapeStyleSlice = (set, get, store) => ({
                 const paths: paper.Path[] = Array.isArray(rawPaths)
                     ? rawPaths.filter((p) => p && typeof p.subtract === 'function')
                     : rawPaths && typeof rawPaths.subtract === 'function'
-                    ? [rawPaths]
-                    : [];
+                      ? [rawPaths]
+                      : [];
 
                 for (const path of paths) {
                     if (!path || typeof path.divide !== 'function') continue;
@@ -925,8 +925,8 @@ export const createShapeStyleSlice = (set, get, store) => ({
                 const paths: paper.Path[] = Array.isArray(rawPaths)
                     ? rawPaths
                     : rawPaths
-                    ? [rawPaths]
-                    : [];
+                      ? [rawPaths]
+                      : [];
 
                 paths.forEach((path) => {
                     if (!path || typeof path.divide !== 'function') return;

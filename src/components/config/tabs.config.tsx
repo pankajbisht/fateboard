@@ -1,7 +1,7 @@
 import { EffectsPanel } from '../organisms/effects';
+import ExportCanvas from '../organisms/effects/ui/ExportCanvas';
 import Filters from '../organisms/filter/ui/Filters';
 
-// tabs.config.ts
 export const TABS_CONFIG = [
     {
         id: 'effects',
@@ -19,6 +19,20 @@ export const TABS_CONFIG = [
         content: () => <Filters />,
     },
 
+    {
+        id: 'export',
+        label: 'Export',
+        icon: 'fa-solid fa-file-export',
+        closable: false,
+        content: () => <ExportCanvas />,
+    },
+    // {
+    //     id: 'svgviewer',
+    //     label: 'SVG Viewer',
+    //     icon: 'fa-solid fa-code',
+    //     closable: false,
+    //     content: () => <SVGViewer />,
+    // },
     // {
     //     id: 'layer',
     //     label: 'Layers',

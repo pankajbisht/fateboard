@@ -75,8 +75,6 @@ export const TextToolsHeader = () => {
     const setTextAlign = useStore((state) => state.setTextAlign);
     const updateText = useStore((state) => state.updateText);
 
-    console.log('Text', textAlign);
-
     const fonts = useStore((s) => s.fonts);
 
     // 🔑 Apply updates to active text object

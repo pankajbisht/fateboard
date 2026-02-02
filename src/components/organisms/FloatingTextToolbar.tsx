@@ -5,22 +5,7 @@ import Dropdown from '../atoms/Dropdown.tsx';
 import { fontSizeConfig } from '../config/fontsize.config.ts';
 import { textFormattingConfig } from '../config/textformatting.config.ts';
 
-const FontSizeDropdown = ({ value, options, handleApply, className = '' }) => {
-    return (
-        <Dropdown
-            value={value}
-            options={options}
-            className={className}
-            onChange={(selected) => {
-                handleApply?.(selected);
-            }}
-        />
-    );
-};
-
 export function FloatingTextToolbar({ target, canvas, onChange }) {
-    console.log(target.fontSize);
-
     const fontSize = useStore((state) => state.fontSize);
     const setFontSize = useStore((state) => state.setFontSize);
 
@@ -128,10 +113,10 @@ export function FloatingTextToolbar({ target, canvas, onChange }) {
                 }}
             />
 
-            <FontSizeDropdown
+            <Dropdown
                 value={fontSize}
                 options={fontSizeConfig}
-                handleApply={(fontSize) => {
+                onChange={(fontSize) => {
                     const val = parseInt(String(fontSize), 10);
                     setFontSize(val);
                     onChange?.({ fontSize: val });

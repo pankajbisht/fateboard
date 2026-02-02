@@ -141,10 +141,10 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, position = 'top', chi
                                   finalPos === 'top'
                                       ? 'bottom-[-3px] left-1/2 -translate-x-1/2'
                                       : finalPos === 'bottom'
-                                      ? 'top-[-3px] left-1/2 -translate-x-1/2'
-                                      : finalPos === 'left'
-                                      ? 'right-[-3px] top-1/2 -translate-y-1/2'
-                                      : 'left-[-3px] top-1/2 -translate-y-1/2'
+                                        ? 'top-[-3px] left-1/2 -translate-x-1/2'
+                                        : finalPos === 'left'
+                                          ? 'right-[-3px] top-1/2 -translate-y-1/2'
+                                          : 'left-[-3px] top-1/2 -translate-y-1/2'
                               }`}
                           />
                       </div>,
