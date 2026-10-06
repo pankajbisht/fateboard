@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import { Swatches } from '../molecules/Swatches';
 import { Palette } from '../molecules/Palette';
 import { useStore } from '../../store';
 import { ColorSlider } from '../atoms/ColorSlider';
@@ -210,7 +209,6 @@ const colorsMap = {
         'bg-rose-800',
         'bg-rose-900',
     ],
-
     slate: [
         'bg-slate-50',
         'bg-slate-100',
@@ -274,73 +272,97 @@ const colorsMap = {
 };
 
 function StrokeRemover({ onClick }: { onClick?: () => void }) {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+        }
+    };
+
     return (
         <div
             role="button"
             tabIndex={0}
             onClick={onClick}
+            onKeyDown={handleKeyDown}
             title="Remove stroke"
             className="
-        relative w-5 h-5 ml-px mb-px
-        border border-dashed border-stone-400
-        cursor-pointer
-        group
-        hover:border-red-500
-        hover:bg-red-50
-        focus:outline-none
-      "
+                group relative
+                ml-px mb-px
+                h-5 w-5
+                cursor-pointer
+                border border-dashed border-stone-400
+                hover:border-red-500
+                hover:bg-red-50
+                focus:outline-none
+            "
         >
-            {/* Diagonal slash */}
             <span
                 className="
-          absolute inset-0
-          before:absolute before:top-1/2 before:left-1/2
-          before:w-[120%] before:h-px
-          before:bg-stone-500
-          before:-translate-x-1/2 before:-translate-y-1/2
-          before:-rotate-45
-          group-hover:before:bg-red-500
-        "
+                    absolute inset-0
+                    before:absolute
+                    before:left-1/2
+                    before:top-1/2
+                    before:h-px
+                    before:w-[120%]
+                    before:-translate-x-1/2
+                    before:-translate-y-1/2
+                    before:-rotate-45
+                    before:bg-stone-500
+                    group-hover:before:bg-red-500
+                "
             />
         </div>
     );
 }
 
 function FillRemover({ onClick }: { onClick?: () => void }) {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick?.();
+        }
+    };
+
     return (
         <div
             role="button"
             tabIndex={0}
             onClick={onClick}
-            title="Remove stroke"
+            onKeyDown={handleKeyDown}
+            title="Remove fill"
             className="
-        relative w-5 h-5 ml-px mb-px
-        border border-dashed border-stone-400
-        cursor-pointer
-        group
-        hover:border-red-500
-        hover:bg-red-50
-        focus:outline-none
-      "
+                group relative
+                ml-px mb-px
+                h-5 w-5
+                cursor-pointer
+                border border-dashed border-stone-400
+                hover:border-red-500
+                hover:bg-red-50
+                focus:outline-none
+            "
         >
-            {/* Diagonal slash */}
             <span
                 className="
-          absolute inset-0
-          before:absolute before:top-1/2 before:left-1/2
-          before:w-[120%] before:h-px
-          before:bg-stone-500
-          before:-translate-x-1/2 before:-translate-y-1/2
-          before:-rotate-45
-          group-hover:before:bg-red-500
-        "
+                    absolute inset-0
+                    before:absolute
+                    before:left-1/2
+                    before:top-1/2
+                    before:h-px
+                    before:w-[120%]
+                    before:-translate-x-1/2
+                    before:-translate-y-1/2
+                    before:-rotate-45
+                    before:bg-stone-500
+                    group-hover:before:bg-red-500
+                "
             />
         </div>
     );
 }
 
 export const ColorPicker = () => {
-    const [bgColors, setBgColors] = useState([
+    const [bgColors] = useState([
         'red',
         'orange',
         'amber',
@@ -364,15 +386,17 @@ export const ColorPicker = () => {
         'neutral',
         'stone',
     ]);
-    const scrollRef = useRef(null);
+
+    const scrollRef = useRef<HTMLDivElement | null>(null);
 
     const { handleColorChange, fill, setStrokeWidthN } = useStore();
 
     return (
-        <div className="flex flex-col items-start bg-white w-6 flex-wrap">
+        <div className="flex w-8 flex-col bg-white">
             <Tooltip content="Remove Stroke">
                 <StrokeRemover onClick={() => setStrokeWidthN(0)} />
             </Tooltip>
+
             <Palette
                 scrollRef={scrollRef}
                 fill={fill}
@@ -380,7 +404,8 @@ export const ColorPicker = () => {
                 colorsMap={colorsMap}
                 onClick={handleColorChange}
             />
-            <Tooltip content="Remove File">
+
+            <Tooltip content="Remove Fill">
                 <FillRemover onClick={() => handleColorChange('rgba(0,0,0,0)')} />
             </Tooltip>
 

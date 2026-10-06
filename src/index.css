@@ -5,31 +5,30 @@ html {
     scroll-behavior: smooth;
 }
 
-/* Firefox */
+/* Blue-500 Scrollbar */
 * {
-    scrollbar-width: thin; /* Firefox does not support exact px */
-    scrollbar-color: rgba(80, 140, 255, 0.5) transparent;
+    scrollbar-width: thin;
+    scrollbar-color: #3b82f6 #dbeafe;
 }
 
-/* Chrome, Edge, Safari */
 *::-webkit-scrollbar {
-    width: 2px;
-    height: 2px;
+    width: 3px;
+    height: 3px;
 }
 
 *::-webkit-scrollbar-track {
-    background: transparent;
+    background: #dbeafe;
 }
 
 *::-webkit-scrollbar-thumb {
-    background-color: rgba(80, 140, 255, 0.45);
+    background: #3b82f6;
     border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(80, 140, 255, 0.8);
+    background: #2563eb;
 }
 
 *::-webkit-scrollbar-corner {
-    background: transparent;
+    background: #dbeafe;
 }
