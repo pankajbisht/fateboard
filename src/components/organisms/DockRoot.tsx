@@ -43,7 +43,7 @@ export const DockRoot = () => {
                     panelMemory.current[active].scrollTop = scrollTop;
                 }}
             >
-                <TabsLayout tabs={TABS_CONFIG} defaultTab="effects" />
+                <TabsLayout tabs={TABS_CONFIG} defaultTab="template" />
             </DockPanel>
 
             <ColorPicker />

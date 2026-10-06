@@ -19,6 +19,7 @@ import { advanceOperationSlice } from './slices/advanceOperationSlice.ts';
 import { geometryEngineSlice } from './slices/geometryEngineSlice.ts';
 import { createNodeEditorSlice } from './slices/createNodeEditorSlice.ts';
 import { createFilterSlice } from './slices/createFilterSlice.ts';
+import { createTemplateSlice } from './slices/templateSlice.ts';
 // import { withLogger } from './middleware/withLogger.ts';
 // import { createNotebookSlice } from './slices/createNotebookSlice.ts';
 
@@ -43,6 +44,7 @@ export const combinedSlice = (set, get, store) => ({
     ...createNodeEditorSlice(set, get, store),
     ...createFilterSlice(set, get, store),
     ...createPageSlice(set, get, store),
+    ...createTemplateSlice(set, get, store),
     //  ...createNotebookSlice(set, get, store)
 });
 

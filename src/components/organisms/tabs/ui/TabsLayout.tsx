@@ -148,7 +148,7 @@ export function TabsLayout({
         const containerWidth = containerRef.current.offsetWidth;
         const nodes = Array.from(measureRef.current.children) as HTMLDivElement[];
 
-        const MIN_VISIBLE = 4; // minimum tabs to always show
+        const MIN_VISIBLE = 3; // minimum tabs to always show
         const v: TabConfig[] = [];
         const h: TabConfig[] = [];
 

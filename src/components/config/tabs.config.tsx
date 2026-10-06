@@ -1,8 +1,16 @@
 import { EffectsPanel } from '../organisms/effects';
 import ExportCanvas from '../organisms/effects/ui/ExportCanvas';
+import TemplateGallery from '../organisms/effects/ui/TemplateGallery';
 import Filters from '../organisms/filter/ui/Filters';
 
 export const TABS_CONFIG = [
+    {
+        id: 'template',
+        label: 'Template',
+        icon: 'fa-solid fa-file-code',
+        closable: false,
+        content: () => <TemplateGallery />,
+    },
     {
         id: 'effects',
         label: 'Edit Tools',
@@ -47,11 +55,11 @@ export const TABS_CONFIG = [
     //     closable: true,
     //     content: () => <div>Align and Distribute</div>,
     // },
-    // {
-    //     id: 'fill',
-    //     label: 'Fill and Stroke',
-    //     icon: 'fa-solid fa-palette',
-    //     closable: true,
-    //     content: () => <div>Fill and Stroke</div>,
-    // },
+    {
+        id: 'fill',
+        label: 'Fill and Stroke',
+        icon: 'fa-solid fa-palette',
+        closable: true,
+        content: () => <div>Fill and Stroke</div>,
+    },
 ] as const;
