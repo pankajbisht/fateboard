@@ -12,64 +12,222 @@ import type {
 
 import type { SliceCreator } from '@/store/types';
 
-// ------------------------------------------------------------
+// ============================================================
 // CONFIG
-// ------------------------------------------------------------
+// ============================================================
 
-/** Scale the template down (never up) so it always fits the canvas. */
-const FIT_TEMPLATE_TO_CANVAS = true;
+/**
+ * Space kept between the artboard and the edge of the viewport.
+ */
+const VIEW_PADDING = 40;
 
-/** Center the template on the canvas after fitting. */
-const CENTER_TEMPLATE_ON_CANVAS = true;
+/**
+ * Maximum zoom allowed when fitting the artboard.
+ */
+const MAX_FIT_ZOOM = 1;
 
-/** Reset zoom/pan so a previous viewport can't make the canvas look cropped. */
-const RESET_VIEWPORT_ON_APPLY = true;
+/**
+ * Minimum zoom allowed when fitting the artboard.
+ */
+const MIN_FIT_ZOOM = 0.05;
 
-/** Padding (px) kept around the template when fitting. */
-const CANVAS_PADDING = 0;
+/**
+ * Background color of the design/artboard.
+ */
+const ARTBOARD_COLOR = '#ffffff';
+
+/**
+ * When true, the complete template content is translated so that
+ * its bounding box is centered inside the artboard.
+ *
+ * IMPORTANT:
+ * This only TRANSLATES objects.
+ * It does not resize or scale template content.
+ */
+const CENTER_CONTENT_IN_ARTBOARD = true;
+
+// ============================================================
+// TYPES / STATE
+// ============================================================
+
+export interface DesignArtboard {
+    width: number;
+    height: number;
+}
 
 export interface TemplateSlice {
     designTemplates: DesignTemplate[];
+
     designTemplateSearch: string;
+
     designTemplateCategory: DesignTemplateCategory | 'All';
+
     designTemplateSizeId: string | 'All';
+
     favoriteDesignTemplateIds: string[];
 
+    /**
+     * Size of the design area in design pixels.
+     */
+    designArtboard: DesignArtboard | null;
+
+    /**
+     * Current viewport zoom.
+     */
+    designViewZoom: number;
+
     setDesignTemplateSearch: (value: string) => void;
+
     setDesignTemplateCategory: (category: DesignTemplateCategory | 'All') => void;
+
     setDesignTemplateSize: (sizeId: string | 'All') => void;
+
     toggleFavoriteDesignTemplate: (templateId: string) => void;
+
     getDesignTemplateById: (templateId: string) => DesignTemplate | undefined;
+
     getFilteredDesignTemplates: () => DesignTemplate[];
+
     applyDesignTemplate: (templateId: string) => Promise<void>;
+
+    /**
+     * Resize the Fabric canvas to its host and fit the artboard.
+     */
+    fitDesignToViewport: () => void;
 }
 
+// ============================================================
+// MODULE STATE
+// ============================================================
+
+/**
+ * Objects that belong to the editor UI/artboard rather than
+ * the actual design content.
+ */
+const ARTBOARD_OBJECTS = new WeakSet<FabricObject>();
+
+/**
+ * Prevents older async template loads from overwriting
+ * a newer template selection.
+ */
+let applyRequestId = 0;
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+function getCanvasHost(canvas: Canvas): HTMLElement | null {
+    return canvas.wrapperEl?.parentElement ?? null;
+}
+
+/**
+ * Pins Fabric's wrapper to the host so that the Fabric canvas
+ * does not participate in normal layout sizing.
+ *
+ * This prevents:
+ *
+ * - host expanding because of canvas
+ * - unwanted vertical overflow
+ * - artboard appearing too high/low
+ * - centering problems caused by flex/grid layout
+ */
+function pinCanvasToHost(canvas: Canvas, host: HTMLElement): void {
+    const hostPosition = getComputedStyle(host).position;
+
+    if (hostPosition === 'static') {
+        host.style.position = 'relative';
+    }
+
+    host.style.overflow = 'hidden';
+
+    const wrapper = canvas.wrapperEl;
+
+    wrapper.style.position = 'absolute';
+    wrapper.style.top = '0px';
+    wrapper.style.left = '0px';
+    wrapper.style.right = 'auto';
+    wrapper.style.bottom = 'auto';
+    wrapper.style.margin = '0';
+    wrapper.style.width = '100%';
+    wrapper.style.height = '100%';
+}
+
+/**
+ * Keeps template objects interactive according to their
+ * locked/selectable/evented configuration.
+ */
+function interactivity(object: { selectable?: boolean; evented?: boolean; locked?: boolean }) {
+    return {
+        selectable: object.selectable ?? !object.locked,
+
+        evented: object.evented ?? !object.locked,
+    };
+}
+
+/**
+ * Returns true when the Fabric object belongs to the
+ * editor artboard rather than the user's template.
+ */
+export function isArtboardObject(object: FabricObject): boolean {
+    return ARTBOARD_OBJECTS.has(object);
+}
+
+// ============================================================
+// SLICE
+// ============================================================
+
 export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _store) => ({
+    // ========================================================
+    // INITIAL STATE
+    // ========================================================
+
     designTemplates: DESIGN_TEMPLATES,
+
     designTemplateSearch: '',
+
     designTemplateCategory: 'All',
+
     designTemplateSizeId: 'All',
+
     favoriteDesignTemplateIds: [],
 
-    // ----------------------------------------------------------
-    // SEARCH / CATEGORY / SIZE
-    // ----------------------------------------------------------
+    designArtboard: null,
+
+    designViewZoom: 1,
+
+    // ========================================================
+    // SEARCH
+    // ========================================================
 
     setDesignTemplateSearch: (value) => {
-        set({ designTemplateSearch: value });
+        set({
+            designTemplateSearch: value,
+        });
     },
+
+    // ========================================================
+    // CATEGORY
+    // ========================================================
 
     setDesignTemplateCategory: (category) => {
-        set({ designTemplateCategory: category });
+        set({
+            designTemplateCategory: category,
+        });
     },
+
+    // ========================================================
+    // SIZE
+    // ========================================================
 
     setDesignTemplateSize: (sizeId) => {
-        set({ designTemplateSizeId: sizeId });
+        set({
+            designTemplateSizeId: sizeId,
+        });
     },
 
-    // ----------------------------------------------------------
+    // ========================================================
     // FAVORITES
-    // ----------------------------------------------------------
+    // ========================================================
 
     toggleFavoriteDesignTemplate: (templateId) => {
         set((state) => {
@@ -83,17 +241,17 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
         });
     },
 
-    // ----------------------------------------------------------
+    // ========================================================
     // GET TEMPLATE
-    // ----------------------------------------------------------
+    // ========================================================
 
     getDesignTemplateById: (templateId) => {
         return get().designTemplates.find((template) => template.id === templateId);
     },
 
-    // ----------------------------------------------------------
-    // FILTER
-    // ----------------------------------------------------------
+    // ========================================================
+    // FILTER TEMPLATES
+    // ========================================================
 
     getFilteredDesignTemplates: () => {
         const {
@@ -122,9 +280,104 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
         });
     },
 
-    // ----------------------------------------------------------
+    // ========================================================
+    // FIT ARTBOARD TO VIEWPORT
+    // ========================================================
+
+    fitDesignToViewport: () => {
+        const { canvas, designArtboard } = get();
+
+        if (!canvas || !designArtboard) {
+            return;
+        }
+
+        const host = getCanvasHost(canvas);
+
+        if (!host) {
+            return;
+        }
+
+        /**
+         * Important:
+         * Pin the Fabric wrapper before measuring the host.
+         */
+        pinCanvasToHost(canvas, host);
+
+        const viewWidth = Math.floor(host.clientWidth);
+
+        const viewHeight = Math.floor(host.clientHeight);
+
+        /**
+         * Host may not have dimensions yet.
+         *
+         * This commonly happens when:
+         * - tab is hidden
+         * - modal is opening
+         * - sidebar is being animated
+         * - component is mounting
+         */
+        if (viewWidth <= 0 || viewHeight <= 0) {
+            return;
+        }
+
+        /**
+         * Make Fabric's viewport canvas exactly
+         * the same size as its host.
+         */
+        if (canvas.getWidth() !== viewWidth || canvas.getHeight() !== viewHeight) {
+            canvas.setDimensions({
+                width: viewWidth,
+                height: viewHeight,
+            });
+        }
+
+        // ----------------------------------------------------
+        // AVAILABLE VIEWPORT SPACE
+        // ----------------------------------------------------
+
+        const availableWidth = Math.max(viewWidth - VIEW_PADDING * 2, 1);
+
+        const availableHeight = Math.max(viewHeight - VIEW_PADDING * 2, 1);
+
+        // ----------------------------------------------------
+        // CALCULATE FIT ZOOM
+        // ----------------------------------------------------
+
+        const widthZoom = availableWidth / designArtboard.width;
+
+        const heightZoom = availableHeight / designArtboard.height;
+
+        const zoom = Math.min(
+            MAX_FIT_ZOOM,
+            Math.max(MIN_FIT_ZOOM, Math.min(widthZoom, heightZoom)),
+        );
+
+        // ----------------------------------------------------
+        // CENTER ARTBOARD IN VIEWPORT
+        // ----------------------------------------------------
+
+        const scaledWidth = designArtboard.width * zoom;
+
+        const scaledHeight = designArtboard.height * zoom;
+
+        const panX = (viewWidth - scaledWidth) / 2;
+
+        const panY = (viewHeight - scaledHeight) / 2;
+
+        canvas.setViewportTransform([zoom, 0, 0, zoom, panX, panY]);
+
+        canvas.requestRenderAll();
+
+        if (get().designViewZoom !== zoom) {
+            set({
+                designViewZoom: zoom,
+            });
+        }
+    },
+
+    // ========================================================
     // APPLY TEMPLATE
-    // ----------------------------------------------------------
+    // ========================================================
 
     applyDesignTemplate: async (templateId: string) => {
         const canvas = get().canvas;
@@ -141,45 +394,142 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
             return;
         }
 
-        try {
-            // 1. Find size
-            const preset = SIZE_PRESETS.find((item) => item.id === template.sizeId);
+        const preset = SIZE_PRESETS.find((item) => item.id === template.sizeId);
 
-            if (!preset) {
-                console.warn(`Size preset not found: ${template.sizeId}`);
+        if (!preset) {
+            console.warn(`Size preset not found: ${template.sizeId}`);
+            return;
+        }
+
+        /**
+         * Every apply operation gets a unique ID.
+         *
+         * If the user quickly selects:
+         *
+         * Template A
+         * Template B
+         * Template C
+         *
+         * and A finishes loading after C,
+         * A will not overwrite C.
+         */
+        const requestId = ++applyRequestId;
+
+        try {
+            // ==================================================
+            // CREATE TEMPLATE OBJECTS
+            // ==================================================
+
+            const created = await Promise.all(
+                (template.objects ?? []).map((object) => createTemplateObject(object)),
+            );
+
+            // ==================================================
+            // CANCEL OLD REQUEST
+            // ==================================================
+
+            if (requestId !== applyRequestId || get().canvas !== canvas) {
                 return;
             }
 
-            // 2. Clear canvas
+            const objects = created.filter((item): item is FabricObject => item !== null);
+
+            // ==================================================
+            // CENTER CONTENT
+            // ==================================================
+
+            if (CENTER_CONTENT_IN_ARTBOARD) {
+                centerObjectsOnArtboard(objects, preset.width, preset.height);
+            }
+
+            // ==================================================
+            // RESET CANVAS
+            // ==================================================
+
             canvas.discardActiveObject();
+
             canvas.clear();
 
-            if (RESET_VIEWPORT_ON_APPLY) {
-                canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-            }
+            /**
+             * Reset previous clip path.
+             */
+            canvas.clipPath = undefined;
 
-            // 3. Set canvas dimensions
-            canvas.setDimensions({
+            // ==================================================
+            // CREATE ARTBOARD
+            // ==================================================
+
+            const artboard = new Rect({
+                left: 0,
+                top: 0,
+
                 width: preset.width,
+
                 height: preset.height,
+
+                fill: ARTBOARD_COLOR,
+
+                selectable: false,
+
+                evented: false,
+
+                hoverCursor: 'default',
+
+                objectCaching: false,
             });
 
-            // 4. Build template objects in order (keeps z-index correct)
-            for (const object of template.objects ?? []) {
-                await addTemplateObject(canvas, object);
-            }
+            ARTBOARD_OBJECTS.add(artboard);
 
-            // 5. Fit + center
-            if (FIT_TEMPLATE_TO_CANVAS || CENTER_TEMPLATE_ON_CANVAS) {
-                fitAndCenterObjects(canvas, preset.width, preset.height);
-            }
+            canvas.add(artboard);
 
-            // 6. Render
-            canvas.discardActiveObject();
+            // ==================================================
+            // ADD TEMPLATE OBJECTS
+            // ==================================================
+
+            objects.forEach((object) => {
+                canvas.add(object);
+            });
+
+            // ==================================================
+            // ARTBOARD CLIP
+            // ==================================================
+
+            canvas.clipPath = new Rect({
+                left: 0,
+                top: 0,
+
+                width: preset.width,
+
+                height: preset.height,
+
+                absolutePositioned: true,
+
+                selectable: false,
+
+                evented: false,
+
+                objectCaching: false,
+            });
+
+            // ==================================================
+            // UPDATE STATE
+            // ==================================================
+
+            set({
+                designArtboard: {
+                    width: preset.width,
+
+                    height: preset.height,
+                },
+            });
+
+            // ==================================================
+            // FIT ARTBOARD
+            // ==================================================
+
+            get().fitDesignToViewport();
+
             canvas.requestRenderAll();
-
-            // 7. Optional: update editor state
-            // get().saveHistory?.();
         } catch (error) {
             console.error('Failed to apply design template:', error);
         }
@@ -187,102 +537,134 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
 });
 
 // ============================================================
-// FIT + CENTER
+// CENTER TEMPLATE CONTENT
 // ============================================================
 
 /**
- * Visible bounds of an object. For clipped objects (cover-fit images)
- * the visible area is the clip box, not the overflowing image.
+ * Moves all template content so that the combined
+ * visible bounding box is centered inside the artboard.
+ *
+ * IMPORTANT:
+ *
+ * - Objects are NOT scaled.
+ * - Object dimensions are NOT changed.
+ * - Only position is changed.
+ * - Works with rotated objects.
  */
-function getVisibleBounds(object: FabricObject) {
-    object.setCoords();
-    const source = object.clipPath ?? object;
-    return source.getBoundingRect();
-}
-
-/**
- * Applies one uniform scale + translation to every object
- * (and its clipPath), so the whole template keeps its layout.
- */
-function fitAndCenterObjects(canvas: Canvas, canvasWidth: number, canvasHeight: number): void {
-    const objects = canvas.getObjects();
-
-    if (!objects.length) return;
-
-    // Bounds of the whole template
-    let minLeft = Infinity;
-    let minTop = Infinity;
-    let maxRight = -Infinity;
-    let maxBottom = -Infinity;
-
-    objects.forEach((object) => {
-        const rect = getVisibleBounds(object);
-
-        minLeft = Math.min(minLeft, rect.left);
-        minTop = Math.min(minTop, rect.top);
-        maxRight = Math.max(maxRight, rect.left + rect.width);
-        maxBottom = Math.max(maxBottom, rect.top + rect.height);
-    });
-
-    const contentWidth = maxRight - minLeft;
-    const contentHeight = maxBottom - minTop;
-
-    if (contentWidth <= 0 || contentHeight <= 0) return;
-
-    // Uniform scale: shrink only if the template is bigger than the canvas
-    let scale = 1;
-
-    if (FIT_TEMPLATE_TO_CANVAS) {
-        const availableWidth = Math.max(canvasWidth - CANVAS_PADDING * 2, 1);
-        const availableHeight = Math.max(canvasHeight - CANVAS_PADDING * 2, 1);
-
-        scale = Math.min(1, availableWidth / contentWidth, availableHeight / contentHeight);
+function centerObjectsOnArtboard(
+    objects: FabricObject[],
+    artboardWidth: number,
+    artboardHeight: number,
+): void {
+    if (!objects.length) {
+        return;
     }
 
-    // Where the (scaled) content's top-left should land
-    const scaledWidth = contentWidth * scale;
-    const scaledHeight = contentHeight * scale;
+    let minLeft = Infinity;
 
-    const targetLeft = CENTER_TEMPLATE_ON_CANVAS ? (canvasWidth - scaledWidth) / 2 : minLeft;
+    let minTop = Infinity;
 
-    const targetTop = CENTER_TEMPLATE_ON_CANVAS ? (canvasHeight - scaledHeight) / 2 : minTop;
+    let maxRight = -Infinity;
 
-    // Map a point from template space to canvas space
-    const mapX = (x: number) => targetLeft + (x - minLeft) * scale;
-    const mapY = (y: number) => targetTop + (y - minTop) * scale;
+    let maxBottom = -Infinity;
 
-    objects.forEach((object) => {
-        object.set({
-            left: mapX(object.left ?? 0),
-            top: mapY(object.top ?? 0),
-            scaleX: (object.scaleX ?? 1) * scale,
-            scaleY: (object.scaleY ?? 1) * scale,
-        });
+    // ========================================================
+    // CALCULATE COMPLETE CONTENT BOUNDS
+    // ========================================================
 
-        if (object.clipPath) {
-            const clip = object.clipPath;
+    for (const object of objects) {
+        object.setCoords();
 
-            clip.set({
-                left: mapX(clip.left ?? 0),
-                top: mapY(clip.top ?? 0),
-                scaleX: (clip.scaleX ?? 1) * scale,
-                scaleY: (clip.scaleY ?? 1) * scale,
-            });
-        }
+        const bounds = object.getBoundingRect();
+
+        minLeft = Math.min(minLeft, bounds.left);
+
+        minTop = Math.min(minTop, bounds.top);
+
+        maxRight = Math.max(maxRight, bounds.left + bounds.width);
+
+        maxBottom = Math.max(maxBottom, bounds.top + bounds.height);
+    }
+
+    // ========================================================
+    // VALIDATE BOUNDS
+    // ========================================================
+
+    if (
+        !Number.isFinite(minLeft) ||
+        !Number.isFinite(minTop) ||
+        !Number.isFinite(maxRight) ||
+        !Number.isFinite(maxBottom)
+    ) {
+        return;
+    }
+
+    const contentWidth = maxRight - minLeft;
+
+    const contentHeight = maxBottom - minTop;
+
+    if (contentWidth <= 0 || contentHeight <= 0) {
+        return;
+    }
+
+    // ========================================================
+    // CONTENT CENTER
+    // ========================================================
+
+    const contentCenterX = minLeft + contentWidth / 2;
+
+    const contentCenterY = minTop + contentHeight / 2;
+
+    // ========================================================
+    // ARTBOARD CENTER
+    // ========================================================
+
+    const artboardCenterX = artboardWidth / 2;
+
+    const artboardCenterY = artboardHeight / 2;
+
+    // ========================================================
+    // TRANSLATION
+    // ========================================================
+
+    const dx = artboardCenterX - contentCenterX;
+
+    const dy = artboardCenterY - contentCenterY;
+
+    // ========================================================
+    // MOVE OBJECTS
+    // ========================================================
+
+    for (const object of objects) {
+        const center = object.getCenterPoint();
+
+        object.setPositionByOrigin(
+            {
+                x: center.x + dx,
+                y: center.y + dy,
+            },
+            'center',
+            'center',
+        );
 
         object.setCoords();
-    });
+    }
 }
 
 // ============================================================
-// FABRIC OBJECT CREATOR
+// FABRIC OBJECT FACTORY
 // ============================================================
 
-async function addTemplateObject(canvas: Canvas, object: DesignTemplateObject): Promise<void> {
+/**
+ * Creates a Fabric object from template data.
+ *
+ * Returns null when an object cannot be created.
+ */
+async function createTemplateObject(object: DesignTemplateObject): Promise<FabricObject | null> {
     switch (object.type) {
-        // --------------------------------------------------------
+        // ====================================================
         // IMAGE
-        // --------------------------------------------------------
+        // ====================================================
 
         case 'image': {
             try {
@@ -290,165 +672,281 @@ async function addTemplateObject(canvas: Canvas, object: DesignTemplateObject): 
                     crossOrigin: 'anonymous',
                 });
 
-                const { width: sourceWidth, height: sourceHeight } = image.getOriginalSize();
+                const {
+                    width: sourceWidth,
+
+                    height: sourceHeight,
+                } = image.getOriginalSize();
 
                 if (!sourceWidth || !sourceHeight) {
                     console.warn('Template image has no size:', object.src);
-                    return;
+
+                    return null;
                 }
 
-                // Fall back to the image's natural size if the template has none
+                // --------------------------------------------
+                // TARGET SIZE
+                // --------------------------------------------
+
                 const targetWidth = object.width ?? sourceWidth;
+
                 const targetHeight = object.height ?? sourceHeight;
 
-                // Default "contain": the full image is always visible.
-                // Only crop when the template explicitly asks for "cover".
+                // --------------------------------------------
+                // FIT MODE
+                // --------------------------------------------
+
                 const fit = object.fit ?? 'contain';
 
                 let scaleX: number;
+
                 let scaleY: number;
 
+                // --------------------------------------------
+                // COVER
+                // --------------------------------------------
+
                 if (fit === 'cover') {
-                    const s = Math.max(targetWidth / sourceWidth, targetHeight / sourceHeight);
-                    scaleX = s;
-                    scaleY = s;
-                } else if (fit === 'fill') {
-                    scaleX = targetWidth / sourceWidth;
-                    scaleY = targetHeight / sourceHeight;
-                } else {
-                    const s = Math.min(targetWidth / sourceWidth, targetHeight / sourceHeight);
-                    scaleX = s;
-                    scaleY = s;
+                    const scale = Math.max(
+                        targetWidth / sourceWidth,
+
+                        targetHeight / sourceHeight,
+                    );
+
+                    scaleX = scale;
+
+                    scaleY = scale;
                 }
 
+                // --------------------------------------------
+                // FILL
+                // --------------------------------------------
+                else if (fit === 'fill') {
+                    scaleX = targetWidth / sourceWidth;
+
+                    scaleY = targetHeight / sourceHeight;
+                }
+
+                // --------------------------------------------
+                // CONTAIN
+                // --------------------------------------------
+                else {
+                    const scale = Math.min(
+                        targetWidth / sourceWidth,
+
+                        targetHeight / sourceHeight,
+                    );
+
+                    scaleX = scale;
+
+                    scaleY = scale;
+                }
+
+                // --------------------------------------------
+                // FINAL IMAGE SIZE
+                // --------------------------------------------
+
                 const scaledWidth = sourceWidth * scaleX;
+
                 const scaledHeight = sourceHeight * scaleY;
 
+                // --------------------------------------------
+                // IMAGE POSITION
+                // --------------------------------------------
+
                 image.set({
-                    // Center the scaled image inside its target box
                     left: object.left + (targetWidth - scaledWidth) / 2,
+
                     top: object.top + (targetHeight - scaledHeight) / 2,
+
                     scaleX,
+
                     scaleY,
+
                     cropX: 0,
+
                     cropY: 0,
+
                     angle: object.angle ?? 0,
+
                     opacity: object.opacity ?? 1,
-                    selectable: object.selectable ?? !object.locked,
-                    evented: object.evented ?? !object.locked,
+
+                    ...interactivity(object),
                 });
 
-                // "cover" overflows its box, so clip to the target area
+                // --------------------------------------------
+                // COVER CLIPPING
+                // --------------------------------------------
+
                 if (fit === 'cover') {
                     image.clipPath = new Rect({
                         left: object.left,
+
                         top: object.top,
+
                         width: targetWidth,
+
                         height: targetHeight,
+
                         absolutePositioned: true,
+
+                        selectable: false,
+
+                        evented: false,
+
+                        objectCaching: false,
                     });
                 }
 
-                canvas.add(image);
+                image.setCoords();
+
+                return image;
             } catch (error) {
                 console.error('Unable to load template image:', object.src, error);
-            }
 
-            return;
+                return null;
+            }
         }
 
-        // --------------------------------------------------------
+        // ====================================================
         // TEXT
-        // --------------------------------------------------------
+        // ====================================================
 
         case 'text': {
             const text = new Textbox(object.text, {
                 left: object.left,
+
                 top: object.top,
+
                 width: object.width ?? 500,
+
                 angle: object.angle ?? 0,
+
                 fontFamily: object.fontFamily ?? 'Arial',
+
                 fontSize: object.fontSize ?? 32,
+
                 fontWeight: object.fontWeight ?? 400,
+
                 fill: object.fill ?? '#111827',
+
                 textAlign: object.textAlign ?? 'left',
+
                 lineHeight: object.lineHeight ?? 1.16,
+
                 charSpacing: object.charSpacing ?? 0,
+
                 backgroundColor: object.backgroundColor ?? 'transparent',
+
                 opacity: object.opacity ?? 1,
-                selectable: object.selectable ?? !object.locked,
-                evented: object.evented ?? !object.locked,
+
+                ...interactivity(object),
             });
 
-            canvas.add(text);
-            return;
+            text.setCoords();
+
+            return text;
         }
 
-        // --------------------------------------------------------
+        // ====================================================
         // RECTANGLE
-        // --------------------------------------------------------
+        // ====================================================
 
         case 'rect': {
             const rect = new Rect({
                 left: object.left,
+
                 top: object.top,
+
                 width: object.width,
+
                 height: object.height,
+
                 fill: object.fill ?? '#000000',
+
                 stroke: object.stroke,
+
                 strokeWidth: object.strokeWidth ?? 0,
+
                 rx: object.rx ?? 0,
+
                 ry: object.ry ?? 0,
+
                 angle: object.angle ?? 0,
+
                 opacity: object.opacity ?? 1,
-                selectable: object.selectable ?? !object.locked,
-                evented: object.evented ?? !object.locked,
+
+                ...interactivity(object),
             });
 
-            canvas.add(rect);
-            return;
+            rect.setCoords();
+
+            return rect;
         }
 
-        // --------------------------------------------------------
+        // ====================================================
         // CIRCLE
-        // --------------------------------------------------------
+        // ====================================================
 
         case 'circle': {
             const circle = new Circle({
                 left: object.left,
+
                 top: object.top,
+
                 radius: object.radius,
+
                 fill: object.fill ?? '#000000',
+
                 stroke: object.stroke,
+
                 strokeWidth: object.strokeWidth ?? 0,
+
                 angle: object.angle ?? 0,
+
                 opacity: object.opacity ?? 1,
-                selectable: object.selectable ?? !object.locked,
-                evented: object.evented ?? !object.locked,
+
+                ...interactivity(object),
             });
 
-            canvas.add(circle);
-            return;
+            circle.setCoords();
+
+            return circle;
         }
 
-        // --------------------------------------------------------
+        // ====================================================
         // LINE
-        // --------------------------------------------------------
+        // ====================================================
 
         case 'line': {
             const line = new Line([object.x1, object.y1, object.x2, object.y2], {
                 left: object.left,
+
                 top: object.top,
+
                 stroke: object.stroke ?? '#000000',
+
                 strokeWidth: object.strokeWidth ?? 2,
+
                 angle: object.angle ?? 0,
+
                 opacity: object.opacity ?? 1,
-                selectable: object.selectable ?? !object.locked,
-                evented: object.evented ?? !object.locked,
+
+                ...interactivity(object),
             });
 
-            canvas.add(line);
-            return;
+            line.setCoords();
+
+            return line;
         }
+
+        // ====================================================
+        // UNKNOWN
+        // ====================================================
+
+        default:
+            console.warn('Unsupported template object:', object);
+
+            return null;
     }
 }

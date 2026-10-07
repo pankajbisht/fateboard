@@ -1,6 +1,6 @@
 export const DockPanel = ({
     open,
-    width = 280,
+    width = 320,
     onToggle,
     scrollRef,
     onScrollSave,

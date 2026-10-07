@@ -1,13 +1,175 @@
 import type { DesignTemplate } from './designTemplate.types';
 
 type TemplateObjects = DesignTemplate['objects'];
+type TemplateObject = TemplateObjects[number];
+
+/* ------------------------------------------------------------------ *
+ *  LAYOUT HELPERS
+ *  Every template below is built from these so that positions are
+ *  computed (centered, aligned) instead of guessed.
+ * ------------------------------------------------------------------ */
+
+const FONT = 'Arial';
+const CLEAR = 'rgba(0,0,0,0)';
+
+// Fabric's single-line text box is ~1.13 x fontSize tall.
+const LINE_BOX = 1.13;
+
+// Top offset that vertically centers one line of text inside a box.
+const textTop = (boxTop: number, boxHeight: number, fontSize: number) =>
+    Math.round(boxTop + (boxHeight - fontSize * LINE_BOX) / 2);
+
+const rect = (o: {
+    id: string;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    fill: string;
+    stroke?: string;
+    strokeWidth?: number;
+    radius?: number;
+    locked?: boolean; // non-interactive decoration
+}): TemplateObject =>
+    ({
+        id: o.id,
+        type: 'rect',
+        left: o.left,
+        top: o.top,
+        width: o.width,
+        height: o.height,
+        fill: o.fill,
+        ...(o.stroke ? { stroke: o.stroke, strokeWidth: o.strokeWidth ?? 2 } : {}),
+        ...(o.radius !== undefined ? { rx: o.radius, ry: o.radius } : {}),
+        ...(o.locked ? { selectable: false, evented: false } : {}),
+    }) as TemplateObject;
+
+// Circle positioned by its CENTER (Fabric uses top-left of the bounding box).
+const circle = (o: {
+    id: string;
+    cx: number;
+    cy: number;
+    r: number;
+    fill?: string;
+    stroke?: string;
+    strokeWidth?: number;
+}): TemplateObject =>
+    ({
+        id: o.id,
+        type: 'circle',
+        left: o.cx - o.r,
+        top: o.cy - o.r,
+        radius: o.r,
+        fill: o.fill ?? CLEAR,
+        ...(o.stroke ? { stroke: o.stroke, strokeWidth: o.strokeWidth ?? 2 } : {}),
+        selectable: false,
+        evented: false,
+    }) as TemplateObject;
+
+const photo = (o: {
+    id: string;
+    src: string;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    radius?: number;
+    locked?: boolean;
+}): TemplateObject =>
+    ({
+        id: o.id,
+        type: 'image',
+        src: o.src,
+        left: o.left,
+        top: o.top,
+        width: o.width,
+        height: o.height,
+        fit: 'cover',
+        ...(o.radius !== undefined ? { rx: o.radius, ry: o.radius } : {}),
+        selectable: false,
+        evented: false,
+        ...(o.locked ? { locked: true } : {}),
+    }) as TemplateObject;
+
+const txt = (o: {
+    id: string;
+    text: string;
+    left: number;
+    top: number;
+    width?: number;
+    size: number;
+    weight?: number;
+    fill: string;
+    align?: 'left' | 'center' | 'right';
+    font?: string;
+    spacing?: number;
+    lineHeight?: number;
+}): TemplateObject =>
+    ({
+        id: o.id,
+        type: 'text',
+        text: o.text,
+        left: o.left,
+        top: o.top,
+        ...(o.width !== undefined ? { width: o.width } : {}),
+        fontFamily: o.font ?? FONT,
+        fontSize: o.size,
+        fontWeight: o.weight ?? 700,
+        fill: o.fill,
+        textAlign: o.align ?? 'left',
+        ...(o.spacing !== undefined ? { charSpacing: o.spacing } : {}),
+        ...(o.lineHeight !== undefined ? { lineHeight: o.lineHeight } : {}),
+    }) as TemplateObject;
+
+// Pill / button with its label perfectly centered.
+const pill = (o: {
+    id: string;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    label: string;
+    size: number;
+    fill: string;
+    color: string;
+    stroke?: string;
+    strokeWidth?: number;
+    radius?: number;
+    spacing?: number;
+    weight?: number;
+    font?: string;
+}): TemplateObjects =>
+    [
+        rect({
+            id: o.id,
+            left: o.left,
+            top: o.top,
+            width: o.width,
+            height: o.height,
+            fill: o.fill,
+            stroke: o.stroke,
+            strokeWidth: o.strokeWidth,
+            radius: o.radius ?? o.height / 2,
+        }),
+        txt({
+            id: `${o.id}-text`,
+            text: o.label,
+            left: o.left,
+            top: textTop(o.top, o.height, o.size),
+            width: o.width,
+            size: o.size,
+            weight: o.weight ?? 800,
+            fill: o.color,
+            align: 'center',
+            spacing: o.spacing,
+            font: o.font,
+        }),
+    ] as TemplateObjects;
 
 /**
- * Fake a smooth gradient overlay using stacked, shrinking translucent rects.
- * Works with the existing "rect + rgba fill" object type, so no renderer
- * changes are needed.
- *
+ * Fake a smooth gradient with stacked, shrinking translucent rects.
  * direction = the edge where the overlay is DARKEST.
+ * More steps = less visible banding.
  */
 const fade = (opts: {
     id: string;
@@ -29,10 +191,10 @@ const fade = (opts: {
         top = 0,
         color = '0,0,0',
         maxAlpha = 0.85,
-        steps = 14,
+        steps = 22,
     } = opts;
 
-    // per-layer alpha so the stacked layers add up to maxAlpha at the edge
+    // per-layer alpha so all layers together reach maxAlpha at the edge
     const alpha = (1 - Math.pow(1 - maxAlpha, 1 / steps)).toFixed(3);
 
     return Array.from({ length: steps }, (_, i) => {
@@ -53,25 +215,31 @@ const fade = (opts: {
             y = top + height - h;
         }
 
-        return {
+        return rect({
             id: `${id}-${i}`,
-            type: 'rect' as const,
             left: x,
             top: y,
             width: w,
             height: h,
             fill: `rgba(${color},${alpha})`,
-            selectable: false,
-            evented: false,
-        };
+            locked: true,
+        });
     }) as TemplateObjects;
 };
 
-const CLEAR = 'rgba(0,0,0,0)';
+/*
+ * Layout rules used everywhere:
+ *  - M  = outer margin, every left-aligned element starts on it
+ *  - big display text is nudged left by OPTICAL so its letter edge
+ *    lines up with the small elements (large glyphs have side bearing)
+ *  - nothing important sits in the bottom-right of a YouTube thumbnail
+ *    (YouTube draws the duration badge there)
+ */
+const OPTICAL = -6;
 
 export const DESIGN_TEMPLATES: DesignTemplate[] = [
     // =========================================================
-    // YOUTUBE
+    // YOUTUBE  (1280 x 720)
     // =========================================================
 
     {
@@ -80,8 +248,8 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'YouTube',
         sizeId: 'youtube-thumbnail',
 
-        thumbnail: '/wallpaper/morning.jpg',
-        preview: '/wallpaper/morning.jpg',
+        thumbnail: '/template/history-dark.jpg',
+        preview: '/template/history-dark.jpg',
 
         description:
             'Dark cinematic documentary-style YouTube thumbnail for history and storytelling content.',
@@ -91,46 +259,30 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         featured: true,
 
         objects: [
-            {
+            photo({
                 id: 'background',
-                type: 'image',
-                src: '/wallpaper/morning.jpg',
-
+                src: '/template/morning.jpg',
                 left: 0,
                 top: 0,
-
                 width: 1280,
                 height: 720,
-
-                fit: 'cover',
-
-                selectable: false,
-                evented: false,
                 locked: true,
-            },
-
-            // soft overall darkening + strong fade from the left for text contrast
-            {
+            }),
+            rect({
                 id: 'dark-overlay',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
                 width: 1280,
                 height: 720,
-
                 fill: 'rgba(0,0,0,0.22)',
-
-                selectable: false,
-                evented: false,
-            },
+                locked: true,
+            }),
             ...fade({
                 id: 'fade-left',
                 direction: 'left',
-                width: 940,
+                width: 900,
                 height: 720,
-                maxAlpha: 0.92,
+                maxAlpha: 0.9,
             }),
             ...fade({
                 id: 'fade-bottom',
@@ -140,150 +292,79 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
                 maxAlpha: 0.8,
             }),
 
-            // warm glow ring on the right for depth
-            {
+            // glow ring: fully inside the canvas, clear of the text column
+            circle({
                 id: 'ring',
-                type: 'circle',
-
-                left: 880,
-                top: 130,
-
-                radius: 230,
-
+                cx: 1000,
+                cy: 360,
+                r: 220,
                 fill: 'rgba(249,115,22,0.07)',
                 stroke: 'rgba(249,115,22,0.55)',
                 strokeWidth: 3,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
-                id: 'accent',
-                type: 'rect',
-
-                left: 70,
-                top: 130,
-
-                width: 10,
-                height: 330,
-
-                fill: '#f97316',
-            },
-
-            {
+            ...pill({
                 id: 'badge',
-                type: 'rect',
-
-                left: 110,
-                top: 100,
-
+                left: 80,
+                top: 140,
                 width: 200,
-                height: 42,
-
+                height: 44,
+                label: 'EPISODE 01',
+                size: 18,
                 fill: '#f97316',
+                color: '#111111',
+                spacing: 120,
+            }),
 
-                rx: 21,
-                ry: 21,
-            },
-
-            {
-                id: 'badge-text',
-                type: 'text',
-
-                text: 'EPISODE 01',
-
-                left: 110,
-                top: 110,
-                width: 200,
-
-                fontFamily: 'Arial',
-                fontSize: 18,
-                fontWeight: 800,
-
-                fill: '#111111',
-
-                textAlign: 'center',
-                charSpacing: 120,
-            },
-
-            {
+            txt({
                 id: 'title-1',
-                type: 'text',
-
                 text: 'THE UNTOLD',
-
-                left: 105,
-                top: 165,
-
-                width: 800,
-
-                fontFamily: 'Arial',
-                fontSize: 118,
-                fontWeight: 900,
-
+                left: 80 + OPTICAL,
+                top: 215,
+                width: 760,
+                size: 104,
+                weight: 900,
                 fill: '#ffffff',
-
-                textAlign: 'left',
-            },
-
-            {
+            }),
+            txt({
                 id: 'title-2',
-                type: 'text',
-
                 text: 'HISTORY',
-
-                left: 105,
-                top: 285,
-
-                width: 800,
-
-                fontFamily: 'Arial',
-                fontSize: 138,
-                fontWeight: 900,
-
+                left: 80 + OPTICAL,
+                top: 315,
+                width: 760,
+                size: 150,
+                weight: 900,
                 fill: '#f97316',
+            }),
 
-                textAlign: 'left',
-            },
-
-            {
+            rect({
+                id: 'rule',
+                left: 80,
+                top: 480,
+                width: 120,
+                height: 6,
+                fill: '#f97316',
+            }),
+            txt({
                 id: 'subtitle',
-                type: 'text',
-
                 text: 'A STORY THAT CHANGED EVERYTHING',
-
-                left: 110,
-                top: 460,
-
-                width: 800,
-
-                fontFamily: 'Arial',
-                fontSize: 28,
-                fontWeight: 700,
-
+                left: 80,
+                top: 505,
+                width: 760,
+                size: 28,
                 fill: '#fde7d3',
+                spacing: 60,
+            }),
 
-                charSpacing: 60,
-            },
-
-            {
+            txt({
                 id: 'small-text',
-                type: 'text',
-
                 text: 'HISTORY • WAR • CULTURE',
-
-                left: 70,
-                top: 660,
-
-                fontFamily: 'Arial',
-                fontSize: 18,
-                fontWeight: 700,
-
+                left: 80,
+                top: 656,
+                size: 18,
                 fill: '#ffffff',
-
-                charSpacing: 140,
-            },
+                spacing: 140,
+            }),
         ],
     },
 
@@ -293,8 +374,8 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'YouTube',
         sizeId: 'youtube-thumbnail',
 
-        thumbnail: '/wallpaper/morning.jpg',
-        preview: '/wallpaper/morning.jpg',
+        thumbnail: '/template/flower.jpg',
+        preview: '/template/flower.jpg',
 
         description:
             'Bold cinematic template for warriors, battles, martial arts and historical stories.',
@@ -304,41 +385,24 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         featured: true,
 
         objects: [
-            {
+            photo({
                 id: 'background',
-                type: 'image',
-
-                src: '/wallpaper/morning.jpg',
-
+                src: '/template/night.jpg',
                 left: 0,
                 top: 0,
-
                 width: 1280,
                 height: 720,
-
-                fit: 'cover',
-
-                selectable: false,
-                evented: false,
                 locked: true,
-            },
-
-            {
+            }),
+            rect({
                 id: 'gradient',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
                 width: 1280,
                 height: 720,
-
                 fill: 'rgba(0,0,0,0.25)',
-
-                selectable: false,
-                evented: false,
-            },
-            // blood-red tinted shadow from the left
+                locked: true,
+            }),
             ...fade({
                 id: 'fade-left',
                 direction: 'left',
@@ -356,181 +420,96 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
                 maxAlpha: 0.75,
             }),
 
-            // concentric "rising sun" rings on the right
-            {
+            // concentric "rising sun" rings, centered together
+            circle({
                 id: 'ring-outer',
-                type: 'circle',
-
-                left: 840,
-                top: 70,
-
-                radius: 260,
-
+                cx: 1010,
+                cy: 360,
+                r: 240,
                 fill: 'rgba(239,68,68,0.10)',
                 stroke: '#ef4444',
                 strokeWidth: 4,
-
-                selectable: false,
-                evented: false,
-            },
-            {
+            }),
+            circle({
                 id: 'ring-inner',
-                type: 'circle',
-
-                left: 930,
-                top: 160,
-
-                radius: 170,
-
-                fill: CLEAR,
+                cx: 1010,
+                cy: 360,
+                r: 160,
                 stroke: 'rgba(255,255,255,0.35)',
                 strokeWidth: 2,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            txt({
                 id: 'title-1',
-                type: 'text',
-
                 text: 'THE LAST',
-
-                left: 70,
-                top: 105,
-
-                width: 800,
-
-                fontFamily: 'Arial',
-                fontSize: 108,
-                fontWeight: 900,
-
-                fill: '#ffffff',
-            },
-            {
-                id: 'title-2',
-                type: 'text',
-
-                text: 'WARRIOR',
-
-                left: 70,
-                top: 215,
-
-                width: 800,
-
-                fontFamily: 'Arial',
-                fontSize: 134,
-                fontWeight: 900,
-
-                fill: '#ef4444',
-            },
-
-            {
-                id: 'accent',
-                type: 'rect',
-
-                left: 75,
-                top: 385,
-
-                width: 260,
-                height: 8,
-
-                fill: '#ef4444',
-            },
-
-            {
-                id: 'subtitle',
-                type: 'text',
-
-                text: 'THE BATTLE THAT ENDED AN ERA',
-
-                left: 75,
-                top: 420,
-
+                left: 80 + OPTICAL,
+                top: 135,
                 width: 700,
-
-                fontFamily: 'Arial',
-                fontSize: 30,
-                fontWeight: 800,
-
+                size: 100,
+                weight: 900,
                 fill: '#ffffff',
-
-                charSpacing: 40,
-            },
-
-            {
-                id: 'badge',
-                type: 'rect',
-
-                left: 75,
-                top: 520,
-
-                width: 230,
-                height: 58,
-
+            }),
+            txt({
+                id: 'title-2',
+                text: 'WARRIOR',
+                left: 80 + OPTICAL,
+                top: 225,
+                width: 700,
+                size: 140,
+                weight: 900,
                 fill: '#ef4444',
+            }),
 
-                rx: 12,
-                ry: 12,
-            },
-
-            {
-                id: 'badge-text',
-                type: 'text',
-
-                text: 'TRUE STORY',
-
-                left: 75,
-                top: 536,
-                width: 230,
-
-                fontFamily: 'Arial',
-                fontSize: 22,
-                fontWeight: 900,
-
+            rect({
+                id: 'accent',
+                left: 80,
+                top: 390,
+                width: 240,
+                height: 8,
+                fill: '#ef4444',
+            }),
+            txt({
+                id: 'subtitle',
+                text: 'THE BATTLE THAT ENDED AN ERA',
+                left: 80,
+                top: 420,
+                width: 700,
+                size: 30,
+                weight: 800,
                 fill: '#ffffff',
+                spacing: 40,
+            }),
 
-                textAlign: 'center',
-                charSpacing: 100,
-            },
-
-            {
+            ...pill({
+                id: 'badge',
+                left: 80,
+                top: 505,
+                width: 220,
+                height: 56,
+                label: 'TRUE STORY',
+                size: 22,
+                weight: 900,
+                fill: '#ef4444',
+                color: '#ffffff',
+                radius: 12,
+                spacing: 100,
+            }),
+            ...pill({
                 id: 'badge-outline',
-                type: 'rect',
-
-                left: 325,
-                top: 520,
-
-                width: 230,
-                height: 58,
-
+                left: 320,
+                top: 505,
+                width: 220,
+                height: 56,
+                label: 'EPIC FINALE',
+                size: 22,
+                weight: 900,
                 fill: CLEAR,
+                color: '#ffffff',
                 stroke: '#ffffff',
                 strokeWidth: 3,
-
-                rx: 12,
-                ry: 12,
-            },
-
-            {
-                id: 'badge-outline-text',
-                type: 'text',
-
-                text: 'EPIC FINALE',
-
-                left: 325,
-                top: 536,
-                width: 230,
-
-                fontFamily: 'Arial',
-                fontSize: 22,
-                fontWeight: 900,
-
-                fill: '#ffffff',
-
-                textAlign: 'center',
-                charSpacing: 100,
-            },
+                radius: 12,
+                spacing: 100,
+            }),
         ],
     },
 
@@ -540,59 +519,41 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'YouTube',
         sizeId: 'youtube-thumbnail',
 
-        thumbnail: '/wallpaper/morning.jpg',
-        preview: '/wallpaper/morning.jpg',
+        thumbnail: '/template/mountain.jpg',
+        preview: '/template/mountain.jpg',
 
         description: 'Clean modern YouTube thumbnail with strong typography.',
 
         tags: ['minimal', 'modern', 'clean', 'creator'],
 
         objects: [
-            {
+            rect({
                 id: 'background',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
                 width: 1280,
                 height: 720,
-
                 fill: '#0b1020',
+                locked: true,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            // glow sits fully inside the canvas
+            circle({
                 id: 'glow',
-                type: 'circle',
-
-                left: -180,
-                top: 260,
-
-                radius: 360,
-
+                cx: 300,
+                cy: 360,
+                r: 300,
                 fill: 'rgba(99,102,241,0.14)',
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            photo({
                 id: 'image',
-                type: 'image',
-
-                src: '/wallpaper/morning.jpg',
-
+                src: '/template/morning.jpg',
                 left: 700,
                 top: 0,
-
                 width: 580,
                 height: 720,
-
-                fit: 'cover',
-            },
+            }),
             // blend the photo into the dark background
             ...fade({
                 id: 'image-blend',
@@ -604,139 +565,81 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
                 maxAlpha: 1,
             }),
 
-            {
+            rect({
                 id: 'accent',
-                type: 'rect',
-
-                left: 75,
-                top: 120,
-
+                left: 80,
+                top: 160,
                 width: 90,
                 height: 12,
-
                 fill: '#818cf8',
-            },
-
-            {
+            }),
+            txt({
                 id: 'title-1',
-                type: 'text',
-
                 text: 'CREATE',
-
-                left: 70,
-                top: 160,
-
-                width: 700,
-
-                fontFamily: 'Arial',
-                fontSize: 140,
-                fontWeight: 900,
-
+                left: 80 + OPTICAL,
+                top: 190,
+                width: 620,
+                size: 140,
+                weight: 900,
                 fill: '#ffffff',
-            },
-            {
+            }),
+            txt({
                 id: 'title-2',
-                type: 'text',
-
                 text: 'BETTER',
-
-                left: 70,
-                top: 290,
-
-                width: 700,
-
-                fontFamily: 'Arial',
-                fontSize: 140,
-                fontWeight: 900,
-
+                left: 80 + OPTICAL,
+                top: 315,
+                width: 620,
+                size: 140,
+                weight: 900,
                 fill: '#818cf8',
-            },
+            }),
 
-            // feature chips
-            {
+            // feature chips: 16px gaps, labels centered
+            ...pill({
                 id: 'chip-1',
-                type: 'rect',
-                left: 75,
-                top: 470,
+                left: 80,
+                top: 490,
                 width: 150,
-                height: 50,
+                height: 52,
+                label: 'SIMPLE',
+                size: 20,
+                weight: 700,
                 fill: CLEAR,
+                color: '#c7d2fe',
                 stroke: '#818cf8',
-                strokeWidth: 2,
-                rx: 25,
-                ry: 25,
-            },
-            {
-                id: 'chip-1-text',
-                type: 'text',
-                text: 'SIMPLE',
-                left: 75,
-                top: 484,
-                width: 150,
-                fontFamily: 'Arial',
-                fontSize: 20,
-                fontWeight: 700,
-                fill: '#c7d2fe',
-                textAlign: 'center',
-                charSpacing: 80,
-            },
-            {
+                spacing: 80,
+            }),
+            ...pill({
                 id: 'chip-2',
-                type: 'rect',
-                left: 240,
-                top: 470,
-                width: 130,
-                height: 50,
+                left: 246,
+                top: 490,
+                width: 120,
+                height: 52,
+                label: 'FAST',
+                size: 20,
+                weight: 700,
                 fill: CLEAR,
+                color: '#c7d2fe',
                 stroke: '#818cf8',
-                strokeWidth: 2,
-                rx: 25,
-                ry: 25,
-            },
-            {
-                id: 'chip-2-text',
-                type: 'text',
-                text: 'FAST',
-                left: 240,
-                top: 484,
-                width: 130,
-                fontFamily: 'Arial',
-                fontSize: 20,
-                fontWeight: 700,
-                fill: '#c7d2fe',
-                textAlign: 'center',
-                charSpacing: 80,
-            },
-            {
+                spacing: 80,
+            }),
+            ...pill({
                 id: 'chip-3',
-                type: 'rect',
-                left: 385,
-                top: 470,
+                left: 382,
+                top: 490,
                 width: 190,
-                height: 50,
+                height: 52,
+                label: 'POWERFUL',
+                size: 20,
                 fill: '#6366f1',
-                rx: 25,
-                ry: 25,
-            },
-            {
-                id: 'chip-3-text',
-                type: 'text',
-                text: 'POWERFUL',
-                left: 385,
-                top: 484,
-                width: 190,
-                fontFamily: 'Arial',
-                fontSize: 20,
-                fontWeight: 800,
-                fill: '#ffffff',
-                textAlign: 'center',
-                charSpacing: 80,
-            },
+                color: '#ffffff',
+                spacing: 80,
+            }),
         ],
     },
 
     // =========================================================
-    // INSTAGRAM
+    // INSTAGRAM  (1080 x 1080)
     // =========================================================
 
     {
@@ -745,8 +648,8 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'Instagram',
         sizeId: 'instagram-post',
 
-        thumbnail: '/wallpaper/morning.jpg',
-        preview: '/wallpaper/morning.jpg',
+        thumbnail: '/template/instagram-modern.jpg',
+        preview: '/template/instagram-modern.jpg',
 
         description: 'Modern square social media composition.',
 
@@ -755,169 +658,106 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         featured: true,
 
         objects: [
-            {
+            photo({
                 id: 'background',
-                type: 'image',
-
-                src: '/wallpaper/morning.jpg',
-
+                src: '/template/girl.jpg',
                 left: 0,
                 top: 0,
-
                 width: 1080,
                 height: 1080,
-
-                fit: 'cover',
-
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            }),
+            rect({
                 id: 'overlay',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
                 width: 1080,
                 height: 1080,
-
                 fill: 'rgba(0,0,0,0.18)',
-
-                selectable: false,
-                evented: false,
-            },
+                locked: true,
+            }),
             ...fade({
                 id: 'fade-bottom',
                 direction: 'bottom',
                 width: 1080,
-                height: 760,
+                height: 700,
                 maxAlpha: 0.9,
             }),
 
             // thin inset frame
-            {
+            rect({
                 id: 'frame',
-                type: 'rect',
-
                 left: 40,
                 top: 40,
-
                 width: 1000,
                 height: 1000,
-
                 fill: CLEAR,
                 stroke: 'rgba(255,255,255,0.4)',
                 strokeWidth: 2,
+                locked: true,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            ...pill({
                 id: 'tag',
-                type: 'rect',
-
                 left: 80,
                 top: 80,
-
                 width: 190,
                 height: 48,
-
+                label: 'FEATURED',
+                size: 20,
                 fill: '#facc15',
+                color: '#111111',
+                spacing: 120,
+            }),
 
-                rx: 24,
-                ry: 24,
-            },
-            {
-                id: 'tag-text',
-                type: 'text',
-
-                text: 'FEATURED',
-
-                left: 80,
-                top: 92,
-                width: 190,
-
-                fontFamily: 'Arial',
-                fontSize: 20,
-                fontWeight: 800,
-
-                fill: '#111111',
-
-                textAlign: 'center',
-                charSpacing: 120,
-            },
-
-            {
-                id: 'title',
-                type: 'text',
-
-                text: 'MAKE\nSOMETHING',
-
-                left: 80,
-                top: 500,
-
-                width: 920,
-
-                fontFamily: 'Arial',
-                fontSize: 118,
-                fontWeight: 900,
-
+            // three separate lines = predictable spacing, no overlap
+            txt({
+                id: 'title-1',
+                text: 'MAKE',
+                left: 80 + OPTICAL,
+                top: 521,
+                width: 940,
+                size: 120,
+                weight: 900,
                 fill: '#ffffff',
-
-                lineHeight: 0.9,
-            },
-
-            {
+            }),
+            txt({
+                id: 'title-2',
+                text: 'SOMETHING',
+                left: 80 + OPTICAL,
+                top: 635,
+                width: 940,
+                size: 120,
+                weight: 900,
+                fill: '#ffffff',
+            }),
+            txt({
                 id: 'title-accent',
-                type: 'text',
-
                 text: 'GREAT.',
-
-                left: 80,
-                top: 710,
-
-                width: 920,
-
-                fontFamily: 'Arial',
-                fontSize: 160,
-                fontWeight: 900,
-
+                left: 80 + OPTICAL,
+                top: 744,
+                width: 940,
+                size: 150,
+                weight: 900,
                 fill: '#facc15',
-            },
+            }),
 
-            {
+            rect({
                 id: 'line',
-                type: 'rect',
-
                 left: 80,
-                top: 930,
-
+                top: 910,
                 width: 120,
                 height: 6,
-
                 fill: '#ffffff',
-            },
-
-            {
+            }),
+            txt({
                 id: 'caption',
-                type: 'text',
-
                 text: 'YOUR BRAND • YOUR STORY',
-
                 left: 80,
-                top: 960,
-
-                fontFamily: 'Arial',
-                fontSize: 22,
-                fontWeight: 700,
-
+                top: 940,
+                size: 22,
                 fill: '#ffffff',
-
-                charSpacing: 120,
-            },
+                spacing: 120,
+            }),
         ],
     },
 
@@ -927,157 +767,88 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'Instagram',
         sizeId: 'instagram-post',
 
-        thumbnail: '/wallpaper/morning.jpg',
-        preview: '/wallpaper/morning.jpg',
+        thumbnail: '/template/instagram-quote.jpg',
+        preview: '/template/instagram-quote.jpg',
 
         description: 'Elegant quote design for social media.',
 
         tags: ['quote', 'instagram', 'motivation'],
 
         objects: [
-            {
+            rect({
                 id: 'background',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
                 width: 1080,
                 height: 1080,
-
                 fill: '#f6f3ee',
+                locked: true,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
+            // decorative circles kept INSIDE the frame
+            circle({ id: 'circle-large', cx: 840, cy: 250, r: 180, fill: '#e0e7ff' }),
+            circle({ id: 'circle-small', cx: 200, cy: 880, r: 120, fill: '#fde68a' }),
 
-            {
-                id: 'circle-large',
-                type: 'circle',
-
-                left: 720,
-                top: -200,
-
-                radius: 330,
-
-                fill: '#e0e7ff',
-
-                selectable: false,
-                evented: false,
-            },
-            {
-                id: 'circle-small',
-                type: 'circle',
-
-                left: -140,
-                top: 800,
-
-                radius: 220,
-
-                fill: '#fde68a',
-
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            rect({
                 id: 'frame',
-                type: 'rect',
-
                 left: 50,
                 top: 50,
-
                 width: 980,
                 height: 980,
-
                 fill: CLEAR,
                 stroke: '#1e1b4b',
                 strokeWidth: 2,
+                locked: true,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            txt({
                 id: 'quote-mark',
-                type: 'text',
-
                 text: '“',
-
                 left: 100,
-                top: 150,
+                top: 230,
                 width: 880,
-
-                fontFamily: 'Georgia',
-                fontSize: 340,
-                fontWeight: 700,
-
+                size: 300,
+                font: 'Georgia',
                 fill: '#6366f1',
-
-                textAlign: 'center',
-            },
-
-            {
+                align: 'center',
+            }),
+            txt({
                 id: 'quote',
-                type: 'text',
-
                 text: 'The journey\nis the story.',
-
                 left: 100,
-                top: 400,
-
+                top: 450,
                 width: 880,
-
-                fontFamily: 'Georgia',
-                fontSize: 84,
-                fontWeight: 700,
-
+                size: 84,
+                font: 'Georgia',
                 fill: '#1e1b4b',
+                align: 'center',
+                lineHeight: 1.15,
+            }),
 
-                lineHeight: 1.1,
-
-                textAlign: 'center',
-            },
-
-            {
+            rect({
                 id: 'divider',
-                type: 'rect',
-
                 left: 490,
-                top: 730,
-
+                top: 710,
                 width: 100,
                 height: 5,
-
                 fill: '#6366f1',
-            },
-
-            {
+            }),
+            txt({
                 id: 'author',
-                type: 'text',
-
                 text: 'YOUR NAME',
-
                 left: 100,
-                top: 770,
-
+                top: 750,
                 width: 880,
-
-                fontFamily: 'Arial',
-                fontSize: 24,
-                fontWeight: 700,
-
+                size: 24,
                 fill: '#4338ca',
-
-                textAlign: 'center',
-
-                charSpacing: 160,
-            },
+                align: 'center',
+                spacing: 160,
+            }),
         ],
     },
 
     // =========================================================
-    // POSTER
+    // POSTER  (1080 x 1350)
     // =========================================================
 
     {
@@ -1086,8 +857,8 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'Poster',
         sizeId: 'poster',
 
-        thumbnail: '/wallpaper/morning.jpg',
-        preview: '/wallpaper/morning.jpg',
+        thumbnail: '/template/morning.jpg',
+        preview: '/template/morning.jpg',
 
         description: 'Cinematic poster layout for events, stories and campaigns.',
 
@@ -1096,203 +867,134 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         featured: true,
 
         objects: [
-            {
+            photo({
                 id: 'background',
-                type: 'image',
-
-                src: '/wallpaper/morning.jpg',
-
+                src: '/template/morning.jpg',
                 left: 0,
                 top: 0,
-
                 width: 1080,
                 height: 1350,
-
-                fit: 'cover',
-
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            }),
+            rect({
                 id: 'overlay',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
                 width: 1080,
                 height: 1350,
-
                 fill: 'rgba(0,0,0,0.2)',
-
-                selectable: false,
-                evented: false,
-            },
+                locked: true,
+            }),
             ...fade({
                 id: 'fade-bottom',
                 direction: 'bottom',
                 width: 1080,
-                height: 900,
+                height: 880,
                 maxAlpha: 0.96,
             }),
             ...fade({
                 id: 'fade-top',
                 direction: 'top',
                 width: 1080,
-                height: 300,
+                height: 280,
                 maxAlpha: 0.65,
             }),
 
             // gold frame
-            {
+            rect({
                 id: 'frame',
-                type: 'rect',
-
                 left: 40,
                 top: 40,
-
                 width: 1000,
                 height: 1270,
-
                 fill: CLEAR,
                 stroke: 'rgba(251,191,36,0.6)',
                 strokeWidth: 2,
+                locked: true,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            txt({
                 id: 'eyebrow',
-                type: 'text',
-
                 text: 'AN EXTRAORDINARY STORY',
-
                 left: 80,
                 top: 105,
                 width: 920,
-
-                fontFamily: 'Arial',
-                fontSize: 20,
-                fontWeight: 700,
-
+                size: 20,
                 fill: '#fbbf24',
-
-                textAlign: 'center',
-                charSpacing: 220,
-            },
-
-            {
+                align: 'center',
+                spacing: 220,
+            }),
+            rect({
                 id: 'eyebrow-line',
-                type: 'rect',
-
                 left: 490,
                 top: 148,
-
                 width: 100,
                 height: 3,
-
                 fill: '#fbbf24',
-            },
+            }),
 
-            {
+            txt({
                 id: 'title-small',
-                type: 'text',
-
                 text: 'THE',
-
                 left: 80,
-                top: 790,
+                top: 840,
                 width: 920,
-
-                fontFamily: 'Georgia',
-                fontSize: 54,
-                fontWeight: 400,
-
+                size: 54,
+                weight: 400,
+                font: 'Georgia',
                 fill: '#fbbf24',
-
-                textAlign: 'center',
-                charSpacing: 500,
-            },
-
-            {
+                align: 'center',
+                spacing: 300,
+            }),
+            txt({
                 id: 'title',
-                type: 'text',
-
                 text: 'LEGEND',
-
                 left: 60,
-                top: 850,
+                top: 880,
                 width: 960,
-
-                fontFamily: 'Arial',
-                fontSize: 200,
-                fontWeight: 900,
-
+                size: 200,
+                weight: 900,
                 fill: '#ffffff',
+                align: 'center',
+            }),
 
-                textAlign: 'center',
-            },
-
-            {
+            rect({
                 id: 'line',
-                type: 'rect',
-
                 left: 450,
-                top: 1100,
-
+                top: 1085,
                 width: 180,
                 height: 6,
-
                 fill: '#fbbf24',
-            },
-
-            {
+            }),
+            txt({
                 id: 'description',
-                type: 'text',
-
                 text: 'A STORY OF COURAGE,\nHONOR AND SACRIFICE.',
-
                 left: 80,
-                top: 1135,
+                top: 1115,
                 width: 920,
-
-                fontFamily: 'Arial',
-                fontSize: 30,
-                fontWeight: 600,
-
+                size: 30,
+                weight: 600,
                 fill: '#ffffff',
-
-                lineHeight: 1.2,
-                textAlign: 'center',
-                charSpacing: 60,
-            },
-
-            {
+                align: 'center',
+                lineHeight: 1.25,
+                spacing: 60,
+            }),
+            txt({
                 id: 'footer',
-                type: 'text',
-
                 text: '2026 • ORIGINAL DOCUMENTARY',
-
                 left: 80,
-                top: 1250,
+                top: 1245,
                 width: 920,
-
-                fontFamily: 'Arial',
-                fontSize: 17,
-                fontWeight: 600,
-
+                size: 17,
+                weight: 600,
                 fill: '#d1d5db',
-
-                textAlign: 'center',
-                charSpacing: 140,
-            },
+                align: 'center',
+                spacing: 140,
+            }),
         ],
     },
 
     // =========================================================
-    // PRESENTATION
+    // PRESENTATION  (1920 x 1080)
     // =========================================================
 
     {
@@ -1301,196 +1003,110 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'Presentation',
         sizeId: 'presentation',
 
-        thumbnail: '/wallpaper/morning.jpg',
-        preview: '/wallpaper/morning.jpg',
+        thumbnail: '/template/presentation-business.jpg',
+        preview: '/template/presentation-business.jpg',
 
         description: 'Professional presentation cover.',
 
         tags: ['business', 'presentation', 'corporate'],
 
         objects: [
-            {
+            rect({
                 id: 'background',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
                 width: 1920,
                 height: 1080,
-
                 fill: '#0b1120',
+                locked: true,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            // layered circles for depth on the right
-            {
-                id: 'circle-big',
-                type: 'circle',
-
-                left: 1180,
-                top: 140,
-
-                radius: 440,
-
-                fill: 'rgba(99,102,241,0.12)',
-
-                selectable: false,
-                evented: false,
-            },
-            {
-                id: 'circle-mid',
-                type: 'circle',
-
-                left: 1360,
-                top: 320,
-
-                radius: 260,
-
-                fill: 'rgba(99,102,241,0.2)',
-
-                selectable: false,
-                evented: false,
-            },
-            {
+            // concentric circles, same center, all inside the slide
+            circle({
                 id: 'circle-ring',
-                type: 'circle',
-
-                left: 1060,
-                top: 20,
-
-                radius: 560,
-
-                fill: CLEAR,
+                cx: 1500,
+                cy: 540,
+                r: 420,
                 stroke: 'rgba(165,180,252,0.22)',
                 strokeWidth: 2,
+            }),
+            circle({ id: 'circle-big', cx: 1500, cy: 540, r: 330, fill: 'rgba(99,102,241,0.12)' }),
+            circle({ id: 'circle-mid', cx: 1500, cy: 540, r: 200, fill: 'rgba(99,102,241,0.2)' }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            rect({
                 id: 'accent',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
-                width: 35,
+                width: 28,
                 height: 1080,
-
                 fill: '#6366f1',
+                locked: true,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            txt({
                 id: 'small',
-                type: 'text',
-
                 text: 'PRESENTATION  /  2026',
-
-                left: 120,
-                top: 140,
-
-                fontFamily: 'Arial',
-                fontSize: 26,
-                fontWeight: 700,
-
+                left: 140,
+                top: 250,
+                size: 26,
                 fill: '#a5b4fc',
+                spacing: 160,
+            }),
 
-                charSpacing: 160,
-            },
-
-            {
+            txt({
                 id: 'title-1',
-                type: 'text',
-
                 text: 'YOUR BIG',
-
-                left: 115,
-                top: 280,
-
-                width: 1100,
-
-                fontFamily: 'Arial',
-                fontSize: 156,
-                fontWeight: 900,
-
+                left: 140 + OPTICAL,
+                top: 350,
+                width: 1000,
+                size: 150,
+                weight: 900,
                 fill: '#ffffff',
-            },
-            {
+            }),
+            txt({
                 id: 'title-2',
-                type: 'text',
-
                 text: 'IDEA',
-
-                left: 115,
-                top: 440,
-
-                width: 1100,
-
-                fontFamily: 'Arial',
-                fontSize: 156,
-                fontWeight: 900,
-
+                left: 140 + OPTICAL,
+                top: 485,
+                width: 1000,
+                size: 150,
+                weight: 900,
                 fill: '#818cf8',
-            },
+            }),
 
-            {
+            rect({
                 id: 'rule',
-                type: 'rect',
-
-                left: 125,
-                top: 650,
-
+                left: 140,
+                top: 685,
                 width: 160,
                 height: 8,
-
                 fill: '#6366f1',
-            },
-
-            {
+            }),
+            txt({
                 id: 'subtitle',
-                type: 'text',
-
                 text: 'A clear message starts with a clear design.',
-
-                left: 125,
-                top: 695,
-
+                left: 140,
+                top: 725,
                 width: 1000,
-
-                fontFamily: 'Arial',
-                fontSize: 36,
-                fontWeight: 400,
-
+                size: 36,
+                weight: 400,
                 fill: '#cbd5e1',
-            },
+            }),
 
-            {
+            txt({
                 id: 'footer',
-                type: 'text',
-
                 text: 'Presenter Name  |  Company',
-
-                left: 125,
+                left: 140,
                 top: 960,
-
-                fontFamily: 'Arial',
-                fontSize: 24,
-                fontWeight: 500,
-
+                size: 24,
+                weight: 500,
                 fill: '#64748b',
-            },
+            }),
         ],
     },
 
     // =========================================================
-    // MARKETING
+    // MARKETING  (1080 x 1080)
     // =========================================================
 
     {
@@ -1498,200 +1114,136 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         name: 'Product Advertisement',
         category: 'Marketing',
         sizeId: 'instagram-post',
-
-        thumbnail: '/wallpaper/morning.jpg',
-        preview: '/wallpaper/morning.jpg',
-
+        thumbnail: '/template/product.jpg',
+        preview: '/template/product.jpg',
         description: 'Bold product advertisement layout.',
-
         tags: ['product', 'marketing', 'advertisement'],
 
         objects: [
-            {
+            rect({
                 id: 'background',
-                type: 'rect',
-
                 left: 0,
                 top: 0,
-
                 width: 1080,
                 height: 1080,
+                fill: '#0f172a',
+                locked: true,
+            }),
 
-                fill: '#eef2ff',
+            // accent panel behind the photo
+            rect({
+                id: 'accent-block',
+                left: 380,
+                top: 0,
+                width: 700,
+                height: 1080,
+                fill: '#6366f1',
+                locked: true,
+            }),
 
-                selectable: false,
-                evented: false,
-            },
-
-            // spotlight behind the product
-            {
-                id: 'spotlight',
-                type: 'circle',
-
-                left: 160,
-                top: 70,
-
-                radius: 380,
-
-                fill: '#c7d2fe',
-
-                selectable: false,
-                evented: false,
-            },
-            {
-                id: 'spotlight-ring',
-                type: 'circle',
-
-                left: 110,
-                top: 20,
-
-                radius: 430,
-
-                fill: CLEAR,
-                stroke: 'rgba(99,102,241,0.35)',
-                strokeWidth: 2,
-
-                selectable: false,
-                evented: false,
-            },
-
-            {
+            txt({
                 id: 'brand',
-                type: 'text',
-
                 text: 'YOUR BRAND',
+                left: 80,
+                top: 80,
+                size: 22,
+                font: 'Montserrat',
+                fill: '#ffffff',
+                spacing: 300,
+            }),
 
-                left: 70,
-                top: 60,
-
-                fontFamily: 'Arial',
-                fontSize: 24,
-                fontWeight: 800,
-
-                fill: '#1e1b4b',
-
-                charSpacing: 200,
-            },
-
-            {
+            // photo: 80px right margin, bottom aligned with the CTA button
+            photo({
                 id: 'product',
-                type: 'image',
+                src: '/template/product.jpg',
+                left: 420,
+                top: 120,
+                width: 580,
+                height: 840,
+                radius: 32,
+            }),
 
-                src: '/wallpaper/morning.jpg',
-
-                left: 200,
-                top: 110,
-
-                width: 680,
-                height: 680,
-
-                fit: 'contain',
-            },
-
-            {
+            // badge centered exactly on the photo's top-left corner
+            circle({
                 id: 'badge',
-                type: 'circle',
-
-                left: 790,
-                top: 70,
-
-                radius: 90,
-
-                fill: '#6366f1',
-                stroke: '#ffffff',
-                strokeWidth: 8,
-            },
-
-            {
+                cx: 420,
+                cy: 120,
+                r: 64,
+                fill: '#facc15',
+                stroke: '#0f172a',
+                strokeWidth: 6,
+            }),
+            txt({
                 id: 'badge-text',
-                type: 'text',
-
                 text: 'NEW',
+                left: 420 - 64,
+                top: textTop(120 - 64, 128, 32),
+                width: 128,
+                size: 32,
+                weight: 800,
+                font: 'Montserrat',
+                fill: '#0f172a',
+                align: 'center',
+            }),
 
-                left: 790,
-                top: 136,
-                width: 180,
-
-                fontFamily: 'Arial',
-                fontSize: 38,
-                fontWeight: 900,
-
-                fill: '#ffffff',
-
-                textAlign: 'center',
-                charSpacing: 60,
-            },
-
-            {
+            // headline block (left column, 80 -> 372, stays clear of the photo)
+            rect({
+                id: 'rule',
+                left: 80,
+                top: 380,
+                width: 60,
+                height: 6,
+                fill: '#facc15',
+            }),
+            txt({
                 id: 'title-1',
-                type: 'text',
-
                 text: 'DESIGNED',
-
-                left: 70,
-                top: 815,
-
-                width: 700,
-
-                fontFamily: 'Arial',
-                fontSize: 82,
-                fontWeight: 900,
-
-                fill: '#0f172a',
-            },
-            {
-                id: 'title-2',
-                type: 'text',
-
-                text: 'FOR YOU.',
-
-                left: 70,
-                top: 900,
-
-                width: 700,
-
-                fontFamily: 'Arial',
-                fontSize: 82,
-                fontWeight: 900,
-
-                fill: '#6366f1',
-            },
-
-            {
-                id: 'cta',
-                type: 'rect',
-
-                left: 740,
-                top: 910,
-
-                width: 270,
-                height: 76,
-
-                fill: '#0f172a',
-
-                rx: 38,
-                ry: 38,
-            },
-
-            {
-                id: 'cta-text',
-                type: 'text',
-
-                text: 'SHOP NOW',
-
-                left: 740,
-                top: 932,
-                width: 270,
-
-                fontFamily: 'Arial',
-                fontSize: 26,
-                fontWeight: 800,
-
+                left: 80,
+                top: 430,
+                width: 300,
+                size: 56,
+                weight: 800,
+                font: 'Montserrat',
                 fill: '#ffffff',
+            }),
+            txt({
+                id: 'title-2',
+                text: 'FOR YOU.',
+                left: 80,
+                top: 490,
+                width: 300,
+                size: 56,
+                weight: 800,
+                font: 'Montserrat',
+                fill: '#c7d2fe',
+            }),
+            txt({
+                id: 'subtitle',
+                text: 'Premium quality.\nEveryday style.',
+                left: 80,
+                top: 575,
+                width: 290,
+                size: 24,
+                weight: 400,
+                font: 'Inter',
+                fill: '#e0e7ff',
+                lineHeight: 1.4,
+            }),
 
-                textAlign: 'center',
-                charSpacing: 100,
-            },
+            // CTA bottom-left, bottom edge aligned with the photo (960)
+            ...pill({
+                id: 'cta',
+                left: 80,
+                top: 888,
+                width: 260,
+                height: 72,
+                label: 'SHOP NOW',
+                size: 24,
+                font: 'Montserrat',
+                fill: '#facc15',
+                color: '#0f172a',
+                spacing: 80,
+            }),
         ],
     },
 ];
