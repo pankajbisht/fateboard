@@ -55,11 +55,11 @@ export const TABS_CONFIG = [
     //     closable: true,
     //     content: () => <div>Align and Distribute</div>,
     // },
-    {
-        id: 'fill',
-        label: 'Fill and Stroke',
-        icon: 'fa-solid fa-palette',
-        closable: true,
-        content: () => <div>Fill and Stroke</div>,
-    },
+    // {
+    //     id: 'fill',
+    //     label: 'Fill and Stroke',
+    //     icon: 'fa-solid fa-palette',
+    //     closable: true,
+    //     content: () => <div>Fill and Stroke</div>,
+    // },
 ] as const;
