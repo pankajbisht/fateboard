@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { SIZE_PRESETS } from '../sizePresets';
 import { useStore } from '@/store';
 import type { DesignTemplate, DesignTemplateCategory } from '../designTemplate.types';
+import Button from '@/components/atoms/Button';
 
 /* -------------------------------------------------------------------------- */
 /* Constants & helpers                                                        */
@@ -170,8 +171,24 @@ export default function TemplateGallery({ className = '', loading = false }: Tem
 
     const count = filteredTemplates.length;
 
+    const getTemplateCode = () => {
+        const template = useStore.getState().saveCanvasAsTemplate({
+            id: crypto.randomUUID(),
+            name: 'My Design',
+            category: 'Social',
+            sizeId: 'instagram-square',
+            thumbnail: '',
+            tags: ['custom'],
+        });
+
+        console.log(template);
+    };
+
     return (
         <section className={`flex h-full min-h-0 flex-col bg-white ${className}`}>
+            {
+                // <Button onClick={getTemplateCode}>Convert<Button>
+            }
             {/* Header */}
             <div className="shrink-0 border-b border-gray-200 bg-white">
                 <div className="px-5 pb-4 pt-5">

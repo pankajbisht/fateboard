@@ -58,6 +58,8 @@ export interface DesignArtboard {
 export interface TemplateSlice {
     designTemplates: DesignTemplate[];
 
+    saveCanvasAsTemplate: (template: Omit<DesignTemplate, 'objects'>) => DesignTemplate | null;
+
     designTemplateSearch: string;
 
     designTemplateCategory: DesignTemplateCategory | 'All';
@@ -194,6 +196,161 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
     designArtboard: null,
 
     designViewZoom: 1,
+
+    saveCanvasAsTemplate: (template) => {
+        const canvas = get().canvas;
+
+        if (!canvas) return null;
+
+        const objects = canvas.getObjects();
+
+        const templateObjects: DesignTemplateObject[] = objects
+            .map((object) => {
+                const type = object.type;
+
+                // -------------------------
+                // Rectangle
+                // -------------------------
+                if (type === 'rect') {
+                    const rect = object as Rect;
+
+                    return {
+                        id: rect.get('id'),
+                        type: 'rect',
+                        left: rect.left ?? 0,
+                        top: rect.top ?? 0,
+                        width: rect.getScaledWidth(),
+                        height: rect.getScaledHeight(),
+                        fill: rect.fill as string,
+                        stroke: rect.stroke as string,
+                        strokeWidth: rect.strokeWidth ?? 0,
+                        rx: rect.rx ?? 0,
+                        ry: rect.ry ?? 0,
+                        angle: rect.angle,
+                        opacity: rect.opacity,
+                        visible: rect.visible,
+                        selectable: rect.selectable,
+                        evented: rect.evented,
+                    };
+                }
+
+                // -------------------------
+                // Circle
+                // -------------------------
+                if (type === 'circle') {
+                    const circle = object as Circle;
+
+                    return {
+                        id: circle.get('id'),
+                        type: 'circle',
+                        left: circle.left ?? 0,
+                        top: circle.top ?? 0,
+                        radius: circle.radius ?? 0,
+                        fill: circle.fill as string,
+                        stroke: circle.stroke as string,
+                        strokeWidth: circle.strokeWidth ?? 0,
+                        angle: circle.angle,
+                        opacity: circle.opacity,
+                        visible: circle.visible,
+                        selectable: circle.selectable,
+                        evented: circle.evented,
+                    };
+                }
+
+                // -------------------------
+                // Line
+                // -------------------------
+                if (type === 'line') {
+                    const line = object as Line;
+
+                    return {
+                        id: line.get('id'),
+                        type: 'line',
+                        left: line.left ?? 0,
+                        top: line.top ?? 0,
+                        x1: line.x1 ?? 0,
+                        y1: line.y1 ?? 0,
+                        x2: line.x2 ?? 0,
+                        y2: line.y2 ?? 0,
+                        stroke: line.stroke as string,
+                        strokeWidth: line.strokeWidth ?? 1,
+                        angle: line.angle,
+                        opacity: line.opacity,
+                        visible: line.visible,
+                        selectable: line.selectable,
+                        evented: line.evented,
+                    };
+                }
+
+                // -------------------------
+                // Text / IText / Textbox
+                // -------------------------
+                if (type === 'text' || type === 'i-text' || type === 'textbox') {
+                    const textObject = object as IText | Textbox;
+
+                    return {
+                        id: textObject.get('id'),
+                        type: 'text',
+                        left: textObject.left ?? 0,
+                        top: textObject.top ?? 0,
+                        text: textObject.text ?? '',
+                        width: textObject.width,
+                        height: textObject.height,
+                        fontFamily: textObject.fontFamily,
+                        fontSize: textObject.fontSize,
+                        fontWeight: textObject.fontWeight,
+                        fill: textObject.fill as string,
+                        textAlign: textObject.textAlign,
+                        lineHeight: textObject.lineHeight,
+                        charSpacing: textObject.charSpacing,
+                        backgroundColor: textObject.backgroundColor,
+                        angle: textObject.angle,
+                        opacity: textObject.opacity,
+                        visible: textObject.visible,
+                        selectable: textObject.selectable,
+                        evented: textObject.evented,
+                    };
+                }
+
+                // -------------------------
+                // Image
+                // -------------------------
+                if (type === 'image') {
+                    const image = object as FabricImage;
+
+                    return {
+                        id: image.get('id'),
+                        type: 'image',
+                        left: image.left ?? 0,
+                        top: image.top ?? 0,
+                        width: image.getScaledWidth(),
+                        height: image.getScaledHeight(),
+
+                        // We store the original source
+                        src:
+                            image.get('src') ?? (image.getElement() as HTMLImageElement)?.src ?? '',
+
+                        fit: 'contain',
+
+                        angle: image.angle,
+                        opacity: image.opacity,
+                        visible: image.visible,
+                        selectable: image.selectable,
+                        evented: image.evented,
+                    };
+                }
+
+                return null;
+            })
+            .filter((object): object is DesignTemplateObject => object !== null);
+
+        const canvasTemplate: DesignTemplate = {
+            ...template,
+            objects: templateObjects,
+        };
+
+        return canvasTemplate;
+    },
 
     // ========================================================
     // SEARCH
