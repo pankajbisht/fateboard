@@ -2,32 +2,61 @@ import type { SliceCreator } from '../types';
 import * as fabric from 'fabric';
 import type { Transform } from '../../lib/types/transform.type';
 
-function getVisualAngle(rotation: number, flipX: boolean, flipY: boolean) {
-    if (flipX && !flipY) return -rotation;
-    if (!flipX && flipY) return 180 - rotation;
-    return rotation;
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+type OriginX = 'left' | 'center' | 'right';
+type OriginY = 'top' | 'center' | 'bottom';
+
+const r2 = (v: number) => Math.round((v ?? 0) * 100) / 100;
+
+const FACTOR_X: Record<string, number> = { left: -0.5, center: 0, right: 0.5 };
+const FACTOR_Y: Record<string, number> = { top: -0.5, center: 0, bottom: 0.5 };
+
+/** Offset (in canvas space) from an object's center to its chosen reference point. */
+function getRefOffset(
+    width: number,
+    height: number,
+    angleDeg: number,
+    originX: string,
+    originY: string,
+) {
+    const dx = (FACTOR_X[originX] ?? 0) * width;
+    const dy = (FACTOR_Y[originY] ?? 0) * height;
+    const a = (angleDeg * Math.PI) / 180;
+    const cos = Math.cos(a);
+    const sin = Math.sin(a);
+    return new fabric.Point(dx * cos - dy * sin, dx * sin + dy * cos);
 }
 
-function round(val: number) {
-    return Math.round(val ?? 0);
+function getScaledSize(obj: fabric.Object) {
+    return {
+        width: (obj.width ?? 0) * Math.abs(obj.scaleX ?? 1),
+        height: (obj.height ?? 0) * Math.abs(obj.scaleY ?? 1),
+    };
 }
+
+// ---------------------------------------------------------------------------
+// Slice
+// ---------------------------------------------------------------------------
 
 export interface TransformSlice {
     transform: Transform;
     hasSelection: boolean;
     _isSyncing: boolean;
 
-    updateFromFabric: (obj: fabric.Object) => void;
+    updateFromFabric: (obj?: fabric.Object) => void;
     updateFabricFromStore: () => void;
-    updateFabricFromStore1: () => void;
-    updateFabricFromStore111: () => void;
     flipX: () => void;
     flipY: () => void;
-    setTransform: (key: string, value: string) => void;
-    setOrigin: (origin: any) => void;
+    setTransform: (key: keyof Transform, value: number | string | boolean) => void;
+    setOrigin: (origin: { originX: OriginX; originY: OriginY; id: string }) => void;
+    setRadius: (rx?: number, ry?: number) => void;
+    syncTransformFromSelection: () => void;
 }
 
-export const createTransformSlice: SliceCreator<TransformSlice> = (set, get, store) => ({
+export const createTransformSlice: SliceCreator<TransformSlice> = (set, get) => ({
     transform: {
         x: 0,
         y: 0,
@@ -37,337 +66,179 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get, sto
         flipX: false,
         flipY: false,
         originX: 'center',
-        centerY: 'center',
+        originY: 'center', // NOTE: was `centerY` (typo). Update the Transform type too.
         id: 'c',
         rx: 0,
         ry: 0,
-    },
+    } as Transform,
     hasSelection: false,
-    _isSyncing: false, // avoid circular updates
+    _isSyncing: false, // avoids circular updates
 
-    updateFromFabric: (obj?: fabric.Object) => {
+    // -----------------------------------------------------------------------
+    // Fabric -> Store
+    // -----------------------------------------------------------------------
+    updateFromFabric: (obj) => {
         if (!obj) {
             set({ hasSelection: false });
             return;
         }
-
         if (get()._isSyncing) return;
 
-        const scaleX = obj.scaleX ?? 1;
-        const scaleY = obj.scaleY ?? 1;
+        const prev = get().transform;
+        const { width, height } = getScaledSize(obj);
+        const angle = obj.angle ?? 0;
 
-        const next: any = {
-            x: round(obj.left ?? 0),
-            y: round(obj.top ?? 0),
-            width: round(
-                obj.getScaledWidth ? obj.getScaledWidth() : (obj.width ?? 0) * Math.abs(scaleX),
-            ),
-            height: round(
-                obj.getScaledHeight ? obj.getScaledHeight() : (obj.height ?? 0) * Math.abs(scaleY),
-            ),
-            rotation: round(obj.angle ?? 0),
-            flipX: scaleX < 0,
-            flipY: scaleY < 0,
+        // X/Y = the chosen reference point (center by default)
+        const center = obj.getCenterPoint();
+        const off = getRefOffset(width, height, angle, prev.originX, prev.originY);
+
+        const next: Partial<Transform> = {
+            x: r2(center.x + off.x),
+            y: r2(center.y + off.y),
+            width: r2(width),
+            height: r2(height),
+            rotation: r2(angle),
+            flipX: !!obj.flipX,
+            flipY: !!obj.flipY,
         };
 
-        if (obj.type === 'rect') {
-            const rect = obj as fabric.Rect;
-            next.rx = rect.rx ?? 0;
-            next.ry = rect.ry ?? 0;
+        if (obj instanceof fabric.Rect) {
+            next.rx = obj.rx ?? 0;
+            next.ry = obj.ry ?? 0;
         }
 
-        const prev = get().transform;
+        const changed = (Object.keys(next) as (keyof Transform)[]).some((k) => prev[k] !== next[k]);
 
-        const changed =
-            prev.x !== next.x ||
-            prev.y !== next.y ||
-            prev.width !== next.width ||
-            prev.height !== next.height ||
-            prev.rotation !== next.rotation ||
-            prev.flipX !== next.flipX ||
-            prev.flipY !== next.flipY ||
-            prev.rx !== next.rx ||
-            prev.ry !== next.ry;
-
-        if (changed) {
-            set({ transform: next, hasSelection: true });
+        if (changed || !get().hasSelection) {
+            set((s) => ({
+                transform: { ...s.transform, ...next },
+                hasSelection: true,
+            }));
         }
     },
 
-    updateFabricFromStore111: () => {
-        const { transform, canvas } = get();
-        const obj = canvas?.getActiveObject();
-        if (!obj) return;
-
-        set({ _isSyncing: true });
-
-        // --- 1. Normalize origin for stable math
-        obj.set({
-            originX: 'center',
-            originY: 'center',
-            objectCaching: false,
-        });
-
-        // --- 2. Base dimensions
-        const baseWidth = obj._originalWidth || obj.width || 1;
-        const baseHeight = obj._originalHeight || obj.height || 1;
-
-        // Store original size once
-        if (!obj._originalWidth) {
-            obj._originalWidth = baseWidth;
-            obj._originalHeight = baseHeight;
-        }
-
-        // --- 3. Safe scale calculation
-        const scaleX = transform.width / baseWidth;
-        const scaleY = transform.height / baseHeight;
-
-        // --- 4. Apply transform
-        obj.set({
-            angle: transform.rotation || 0,
-            scaleX: transform.flipX ? -Math.abs(scaleX) : Math.abs(scaleX),
-            scaleY: transform.flipY ? -Math.abs(scaleY) : Math.abs(scaleY),
-        });
-
-        // --- 5. Position using absolute left/top
-        obj.setPositionByOrigin(new fabric.Point(transform.x, transform.y), 'center', 'center');
-
-        obj.setCoords();
-        canvas.requestRenderAll();
-
-        set({ _isSyncing: false });
-    },
-
+    // -----------------------------------------------------------------------
+    // Store -> Fabric
+    // -----------------------------------------------------------------------
     updateFabricFromStore: () => {
-        console.log('here...');
-
-        const { transform, canvas } = get();
+        const { transform: t, canvas } = get();
         const obj = canvas?.getActiveObject();
-
-        if (!obj || get()._isSyncing) return;
+        if (!canvas || !obj || get()._isSyncing) return;
 
         set({ _isSyncing: true });
+        try {
+            const width = Math.max(1, Number(t.width) || 1);
+            const height = Math.max(1, Number(t.height) || 1);
+            const rotation = Number(t.rotation) || 0;
 
-        const cx = Number(transform.x) || 0;
-        const cy = Number(transform.y) || 0;
-        const width = Math.max(1, Number(transform.width) || 1);
-        const height = Math.max(1, Number(transform.height) || 1);
-        const rotation = Number(transform.rotation) || 0;
-        const flipX = Boolean(transform.flipX);
-        const flipY = Boolean(transform.flipY);
-
-        // ✅ For images, apply scale instead of width/height
-        if (obj.type === 'image') {
-            const originalWidth = obj.width || 1;
-            const originalHeight = obj.height || 1;
-
+            // Size is always applied through scale (no double scaling).
             obj.set({
-                left: cx,
-                top: cy,
-                scaleX: width / originalWidth,
-                scaleY: height / originalHeight,
+                scaleX: width / (obj.width || 1),
+                scaleY: height / (obj.height || 1),
                 angle: rotation,
-                flipX,
-                flipY,
+                flipX: !!t.flipX,
+                flipY: !!t.flipY,
             });
-        } else {
-            // ✅ For other objects (textbox, rect, path)
-            obj.set({
-                left: cx,
-                top: cy,
-                width,
-                height,
-                angle: rotation,
-                flipX,
-                flipY,
-            });
+
+            // Convert the reference point back to the object's center.
+            const off = getRefOffset(width, height, rotation, t.originX, t.originY);
+            const center = new fabric.Point((Number(t.x) || 0) - off.x, (Number(t.y) || 0) - off.y);
+            obj.setXY(center, 'center', 'center');
+
+            obj.setCoords();
+            canvas.requestRenderAll();
+            // Fired synchronously while the guard is on, so history can record it
+            // without bouncing back into the store.
+            canvas.fire('object:modified', { target: obj });
+        } finally {
+            set({ _isSyncing: false });
         }
-
-        obj.setCoords();
-        canvas.requestRenderAll();
-
-        set({ _isSyncing: false });
     },
 
-    updateFabricFromStore1: () => {
-        console.log('.......');
-        const { transform, canvas } = get();
-        const obj = canvas?.getActiveObject();
-
-        if (!obj || get()._isSyncing) return;
-
-        set({ _isSyncing: true });
-
-        const cx = Number(transform.x) || 0;
-        const cy = Number(transform.y) || 0;
-        const width = Math.max(1, Number(transform.width) || 1);
-        const height = Math.max(1, Number(transform.height) || 1);
-
-        const rotation = Number(transform.rotation) || 0;
-        const flipX = Boolean(transform.flipX);
-        const flipY = Boolean(transform.flipY);
-
-        // ✅ Apply flip math ONLY here
-        const visualAngle = getVisualAngle(rotation, flipX, flipY);
-
-        obj.set({
-            left: cx,
-            top: cy,
-            width,
-            height,
-            angle: visualAngle,
-            flipX,
-            flipY,
-        });
-
-        obj.setCoords();
-        canvas.requestRenderAll();
-
-        set({ _isSyncing: false });
-    },
-
-    updateFabricFromStore11: () => {
-        const { transform, canvas } = get();
-        const obj = canvas?.getActiveObject();
-        if (!obj || get()._isSyncing) return;
-
-        set({ _isSyncing: true });
-
-        const x: number = Number(transform.x) || 0;
-        const y: number = Number(transform.y) || 0;
-        const width: number = Number(transform.width) || 1;
-        const height: number = Number(transform.height) || 1;
-
-        let angle: number = Number(transform.rotation) || 0;
-        const flipX = Boolean(transform.flipX);
-        const flipY = Boolean(transform.flipY);
-
-        console.log(x, y);
-
-        // --------------------------------
-        // 🔑 FIX: Adjust angle due to flip
-        // --------------------------------
-        if (flipX && !flipY) {
-            angle = -angle;
-        } else if (!flipX && flipY) {
-            angle = 180 - angle;
-        }
-        // flipX && flipY → angle unchanged
-
-        // --------------------------------
-        // Preserve visual center
-        // --------------------------------
-        const center = obj.getCenterPoint();
-
-        obj.set({
-            originX: 'center',
-            originY: 'center',
-            left: center.x,
-            top: center.y,
-            width,
-            height,
-            angle,
-            flipX,
-            flipY,
-        });
-
-        obj.setCoords();
-        // canvas.requestRenderAll();
-        canvas.renderAll();
-
-        set({ _isSyncing: false });
-    },
-
+    // -----------------------------------------------------------------------
+    // Actions
+    // -----------------------------------------------------------------------
     setTransform: (key, value) => {
-        console.log('here');
-        set((state) => ({
-            transform: { ...state.transform, [key]: value },
-        }));
-        requestAnimationFrame(() => get().updateFabricFromStore());
+        const isBool = key === 'flipX' || key === 'flipY';
+        const parsed = isBool ? Boolean(value) : Number(value);
+        set((s) => ({ transform: { ...s.transform, [key]: parsed } }));
+        get().updateFabricFromStore();
     },
 
     flipX: () => {
-        set((state) => ({
-            transform: { ...state.transform, flipX: !state.transform.flipX },
-        }));
-        requestAnimationFrame(() => get().updateFabricFromStore());
+        set((s) => ({ transform: { ...s.transform, flipX: !s.transform.flipX } }));
+        get().updateFabricFromStore();
     },
 
     flipY: () => {
-        set((state) => ({
-            transform: { ...state.transform, flipY: !state.transform.flipY },
-        }));
-        requestAnimationFrame(() => get().updateFabricFromStore());
+        set((s) => ({ transform: { ...s.transform, flipY: !s.transform.flipY } }));
+        get().updateFabricFromStore();
     },
 
+    // Origin is a UI reference point only: the object doesn't change,
+    // the X/Y shown in the panel do.
     setOrigin: (origin) => {
-        set((state) => ({
+        set((s) => ({
             transform: {
-                ...state.transform,
+                ...s.transform,
                 originX: origin.originX,
                 originY: origin.originY,
                 id: origin.id,
             },
         }));
-        requestAnimationFrame(() => get().updateFabricFromStore());
+        const obj = get().canvas?.getActiveObject();
+        if (obj) get().updateFromFabric(obj);
     },
 
-    setRadius: (rx?: number, ry?: number) => {
+    setRadius: (rx, ry) => {
         const canvas = get().canvas;
-        if (!canvas) return;
+        const active = canvas?.getActiveObject();
+        if (!canvas || !active) return;
 
-        const active = canvas.getActiveObject();
-        if (!active) return;
+        const safeRx = Math.max(0, rx ?? 0);
+        const safeRy = Math.max(0, ry ?? safeRx);
 
-        const safeRx = rx ?? 0;
-        const safeRy = ry ?? 0;
-
-        const updateRect = (obj: fabric.Object) => {
-            if (obj.type === 'rect') {
-                obj.set({
-                    rx: safeRx,
-                    ry: safeRy,
-                });
-                obj.setCoords();
+        const apply = (o: fabric.Object) => {
+            if (o instanceof fabric.Rect) {
+                o.set({ rx: safeRx, ry: safeRy });
+                o.setCoords();
             }
         };
 
-        if (active.type === 'rect') {
-            updateRect(active);
-        } else if (active.type === 'activeselection') {
-            active.getObjects().forEach(updateRect);
+        if (active instanceof fabric.ActiveSelection) {
+            active.getObjects().forEach(apply);
+        } else {
+            apply(active);
         }
 
         canvas.requestRenderAll();
+        canvas.fire('object:modified', { target: active });
 
-        // ✅ Correct Zustand state update
-        set((state) => ({
-            ...state,
-            transform: {
-                ...state.transform,
-                rx: safeRx,
-                ry: safeRy,
-            },
+        set((s) => ({
+            transform: { ...s.transform, rx: safeRx, ry: safeRy },
         }));
     },
 
     syncTransformFromSelection: () => {
         const canvas = get().canvas;
-        if (!canvas) return;
+        const active = canvas?.getActiveObject();
+        if (!canvas || !active) return;
 
-        const active = canvas.getActiveObject();
-        if (!active) return;
-
-        if (active.type === 'rect') {
-            set({ transform: { rx: active.rx || 0, ry: active.ry || 0 } });
-        } else if (active.type === 'activeselection') {
-            // For groups, you can pick the first rect or set to 0
-            const firstRect = active.getObjects().find((o) => o.type === 'rect');
-            if (firstRect) {
-                set({ transform: { rx: firstRect.rx || 0, ry: firstRect.ry || 0 } });
-            } else {
-                set({ transform: { rx: 0, ry: 0 } });
-            }
+        let rect: fabric.Rect | undefined;
+        if (active instanceof fabric.Rect) {
+            rect = active;
+        } else if (active instanceof fabric.ActiveSelection) {
+            rect = active.getObjects().find((o) => o instanceof fabric.Rect) as
+                | fabric.Rect
+                | undefined;
         }
+
+        set((s) => ({
+            transform: {
+                ...s.transform,
+                rx: rect?.rx ?? 0,
+                ry: rect?.ry ?? 0,
+            },
+        }));
     },
 });

@@ -1,8 +1,7 @@
 import * as fabric from 'fabric';
 import type { SliceCreator } from '../types';
 import { fontFamilyConfig } from '@/components/config/fontfamily.config';
-
-type TextType = fabric.Text | fabric.IText | fabric.Textbox;
+import { wirePlaceholderBehavior } from './colorSystemFixes';
 
 type TextInput = {
     text?: string;
@@ -32,6 +31,7 @@ export interface TextSlice {
     strokeColor: string;
     strokeWidth: number;
     fillColor: string;
+    textAlign: string;
 
     setBgColor: (val: string) => void;
     setFontSize: (val: number) => void;
@@ -47,10 +47,18 @@ export interface TextSlice {
     setStrokeColor: (val: string) => void;
     setStrokeWidth: (val: number) => void;
     setFillColor: (val: string) => void;
+    setTextAlign: (val: string) => void;
+    updateText: (props: Record<string, any>) => void;
     addText: (textObj?: TextInput) => void;
 }
 
-export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
+/*
+ * NOTE: the setters below only update the STORE (they never touch the canvas).
+ * Apply to the canvas with updateText(...) for text properties, and with
+ * handleColorChange / setFill / setStroke for colors. strokeWidth also exists in the
+ * shape-style slice; both default to 1, but keep one of them as the source of truth.
+ */
+export const createTextSlice: SliceCreator<TextSlice> = (set, get) => ({
     fonts: fontFamilyConfig,
     fontSize: 16,
     bgColor: '#000000',
@@ -83,14 +91,19 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
     textAlign: '',
     setTextAlign: (val) => set({ textAlign: val }),
 
+    // Fabric v6 types are 'Textbox' / 'IText' - the old `type.includes('text')` was always false
     updateText: (props) => {
-        console.log(props);
         const canvas = get().canvas;
-        const active = canvas?.getActiveObject();
-        if (active && active.type.includes('text')) {
-            active.set(props);
-            canvas.requestRenderAll();
-        }
+        if (!canvas) return;
+
+        const targets = canvas
+            .getActiveObjects()
+            .filter((o: any) => (o.type || '').toLowerCase().includes('text'));
+        if (targets.length === 0) return;
+
+        targets.forEach((o: any) => o.set(props));
+        canvas.requestRenderAll();
+        get().saveState?.();
     },
 
     addText: (textObj: TextInput = {}) => {
@@ -105,34 +118,22 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
             underline = false,
             fontFamily = 'Arial',
             width = 200,
-            textColor = '#000000', // normal text color
-            placeholderColor = '#9ca3af', // lighter gray for placeholder
+            textColor = '#000000',
+            placeholderColor = '#9ca3af',
         } = textObj;
-
-        // const { pageWidth, pageHeight, scale } = get();
-        // const x = (pageWidth / 2) * scale;
-        // const y = (pageHeight / 2) * scale;
 
         const center = canvas.getVpCenter();
 
-        const x = center.x;
-        const y = center.y;
-
-        // if (get().settings.freehand) {
-        //     x = 800;
-        //     y = 400;
-        // }
-
         const fabricText = new fabric.Textbox(text, {
-            left: x,
-            top: y,
+            left: center.x,
+            top: center.y,
             originX: 'center',
             originY: 'center',
             fontSize,
             fontWeight: bold ? 'bold' : 'normal',
             fontStyle: italic ? 'italic' : 'normal',
             underline,
-            fill: placeholderColor, // start with placeholder color
+            fill: placeholderColor, // starts as placeholder
             fontFamily,
             width,
             editable: true,
@@ -141,38 +142,21 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get, store) => ({
             splitByGrapheme: true,
         });
 
-        // ✅ Editing behavior
-        fabricText.on('editing:entered', () => {
-            if (fabricText.fill === placeholderColor) {
-                fabricText.selectAll();
-                fabricText.set('fill', textColor);
-                canvas.requestRenderAll();
-            }
-        });
-
-        fabricText.on('editing:exited', () => {
-            if (!fabricText.text.trim()) {
-                fabricText.text = text; // restore placeholder
-                fabricText.set('fill', placeholderColor);
-            } else {
-                fabricText.set('fill', textColor);
-            }
-            canvas.requestRenderAll();
-        });
+        // Placeholder handling that no longer overwrites a color the user picked
+        wirePlaceholderBehavior(fabricText, canvas, { text, textColor, placeholderColor });
 
         canvas.add(fabricText);
         canvas.setActiveObject(fabricText);
 
-        // ✅ Enter editing immediately
+        // Enter editing immediately
         fabricText.enterEditing();
         setTimeout(() => {
             fabricText.hiddenTextarea?.focus();
             fabricText.selectAll();
         }, 0);
 
-        // ✅ Sync with store + history
         set({ showTextToolbar: true, selectedObject: fabricText }, false, 'text/add');
-        get().saveState();
+        get().saveState?.();
         canvas.requestRenderAll();
     },
 });
