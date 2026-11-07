@@ -11,7 +11,7 @@
  *  crop       shapes below are trimmed to the top shape  style: each own (top shape dropped)
  */
 import * as fabric from 'fabric';
-import paper from 'paper';
+// paper.js loads on first use (≈120 KB gzip kept out of the startup bundle); types are global.
 
 /** The look a result keeps from its source shape. */
 export function extractStyle(obj: fabric.FabricObject): Record<string, unknown> {
@@ -86,7 +86,8 @@ export async function computeBoolean(
     shapes: fabric.FabricObject[],
 ): Promise<fabric.FabricObject[]> {
     if (shapes.length < 2) return [];
-    const scope = new paper.PaperScope();
+    const paperLib = (await import('paper')).default;
+    const scope = new paperLib.PaperScope();
     scope.setup(new scope.Size(1, 1));
 
     const items = shapes.map((s) => ({ item: toItem(scope, s), style: extractStyle(s) }));

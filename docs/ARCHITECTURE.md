@@ -164,6 +164,18 @@ Event flow, step by step:
 | Share | ExtraBar → `localStorage['board:<id>']` → `/share/:id` | `canvas.toJSON()` | Same-browser only (BUG-028) |
 | Settings | Setting slice | opendb `fateboard-settings` | Validated by `sanitizeSettings` |
 
+## Bundles and assets
+
+- **Routes are lazy chunks** (`app/rootRouter.tsx`, `React.lazy` + one `Suspense` with a blank background fallback): the
+  landing page never downloads the editor (`Editor` chunk ≈ 77 KB gzip) and vice versa. A failed chunk load after a
+  deploy hits the `ErrorBoundary` (Reload). Guard: `src/__tests__/codeSplitting.test.ts`.
+- **Vendor chunks** (`vite.config.ts` `build.rolldownOptions.output.codeSplitting.groups`): `fabric`, `paper`, `react`,
+  `icons`, cached separately across deploys. Startup = entry + react + fabric + icons ≈ 278 KB gzip (was one 490 KB chunk).
+- **paper.js loads on demand** (`lib/booleanOps.computeBoolean`, geometry engine `loadGeometryEngine()`), ≈ 120 KB gzip
+  kept out of startup. The store still imports Fabric, so every route loads it (the shell needs the store).
+- **Template images**: canvas / preview images ≤ 2048 px (≤ 0.7 MB), gallery cards use 640 px files in
+  `public/template/thumb/`; `dist` 39 MB → 9.5 MB. Guard: `src/__tests__/templateAssets.test.ts`.
+
 ## SEO
 
 Static GitHub Pages (ADR-11), no server and no rewrites, so every public route gets a real HTML file at build time:

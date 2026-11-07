@@ -248,7 +248,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'YouTube',
         sizeId: 'youtube-thumbnail',
 
-        thumbnail: '/template/history-dark.jpg',
+        thumbnail: '/template/thumb/history-dark.jpg',
         preview: '/template/history-dark.jpg',
 
         description:
@@ -374,7 +374,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'YouTube',
         sizeId: 'youtube-thumbnail',
 
-        thumbnail: '/template/flower.jpg',
+        thumbnail: '/template/thumb/flower.jpg',
         preview: '/template/flower.jpg',
 
         description:
@@ -519,7 +519,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'YouTube',
         sizeId: 'youtube-thumbnail',
 
-        thumbnail: '/template/mountain.jpg',
+        thumbnail: '/template/thumb/mountain.jpg',
         preview: '/template/mountain.jpg',
 
         description: 'Clean modern YouTube thumbnail with strong typography.',
@@ -648,7 +648,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'Instagram',
         sizeId: 'instagram-post',
 
-        thumbnail: '/template/instagram-modern.jpg',
+        thumbnail: '/template/thumb/instagram-modern.jpg',
         preview: '/template/instagram-modern.jpg',
 
         description: 'Modern square social media composition.',
@@ -767,7 +767,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'Instagram',
         sizeId: 'instagram-post',
 
-        thumbnail: '/template/instagram-quote.jpg',
+        thumbnail: '/template/thumb/instagram-quote.jpg',
         preview: '/template/instagram-quote.jpg',
 
         description: 'Elegant quote design for social media.',
@@ -857,7 +857,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'Poster',
         sizeId: 'poster',
 
-        thumbnail: '/template/morning.jpg',
+        thumbnail: '/template/thumb/morning.jpg',
         preview: '/template/morning.jpg',
 
         description: 'Cinematic poster layout for events, stories and campaigns.',
@@ -1003,7 +1003,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         category: 'Presentation',
         sizeId: 'presentation',
 
-        thumbnail: '/template/presentation-business.jpg',
+        thumbnail: '/template/thumb/presentation-business.jpg',
         preview: '/template/presentation-business.jpg',
 
         description: 'Professional presentation cover.',
@@ -1114,7 +1114,7 @@ export const DESIGN_TEMPLATES: DesignTemplate[] = [
         name: 'Product Advertisement',
         category: 'Marketing',
         sizeId: 'instagram-post',
-        thumbnail: '/template/product.jpg',
+        thumbnail: '/template/thumb/product.jpg',
         preview: '/template/product.jpg',
         description: 'Bold product advertisement layout.',
         tags: ['product', 'marketing', 'advertisement'],

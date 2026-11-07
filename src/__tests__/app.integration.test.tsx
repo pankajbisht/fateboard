@@ -72,7 +72,8 @@ describe('App integration (single test)', () => {
         render(<App />);
 
         // Marketing page content should be visible
-        expect(screen.getByText(/Draw the Fate/i)).toBeInTheDocument();
+        // pages are lazy-loaded chunks: wait for the landing page
+        expect(await screen.findByText(/Draw the Fate/i)).toBeInTheDocument();
         // BUG-132: the hero says what the product is, in words people search for
         expect(screen.getByText(/free online whiteboard/i)).toBeInTheDocument();
 

@@ -176,6 +176,7 @@ Key-collision data comes from an AST scan (not committed) of every slice's retur
 | BUG-142 | Minor | animation | open | Rest refresh (`registerAnimationEvents`) skips multi-selection edits (`ActiveSelection` children hold group-relative coords), so moving several animated objects together keeps their old rest state |
 | BUG-143 | Minor | build | open | Build warning: `fabricNS.fabric` is always undefined (`createBackgroundSlice.ts:2`, `IMPORT_IS_UNDEFINED`); the `?? fabricNS` fallback works, the first branch is dead |
 | BUG-144 | Minor | SEO / load | fixed (2026-11-07) | On refresh the static SEO fallback ("Fateboard: free online whiteboard and design canvas") flashed until React mounted. An inline `<head>` script adds `html.js` and CSS hides `[data-seo-fallback]`; crawlers and no-JS visitors still get it. Test: `e2e/seo.spec.ts` |
+| BUG-145 | Medium | templates | open | The "Instagram Modern" template uses `/template/girl.jpg`, which is not in `public/template/`: its photo never loads (the image object is skipped). Add the asset or change the template |
 
 ## Details
 

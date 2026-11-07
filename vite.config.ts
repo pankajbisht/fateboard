@@ -46,6 +46,26 @@ export default defineConfig({
     base: '/',
     plugins: [react(), tailwindcss(), prerenderRoutes()],
 
+    build: {
+        rolldownOptions: {
+            output: {
+                // Big libraries in their own long-cached chunks (pages are split by lazy routes).
+                codeSplitting: {
+                    groups: [
+                        { name: 'fabric', test: /node_modules[\\/]fabric[\\/]/, priority: 30 },
+                        { name: 'paper', test: /node_modules[\\/]paper[\\/]/, priority: 30 },
+                        {
+                            name: 'react',
+                            test: /node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/,
+                            priority: 20,
+                        },
+                        { name: 'icons', test: /node_modules[\\/]lucide-react[\\/]/, priority: 20 },
+                    ],
+                },
+            },
+        },
+    },
+
     resolve: {
         alias: {
             '@': path.resolve(__dirname, './src'),
