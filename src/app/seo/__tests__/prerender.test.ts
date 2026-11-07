@@ -3,7 +3,9 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { renderNotFoundHtml, renderRouteHtml, renderSitemap, routeFile } from '../prerender';
-import { SEO_ROUTES, SITE_URL, canonicalUrl, seoForPath } from '../routes';
+import { SEO_ROUTES, canonicalUrl, seoForPath } from '../routes';
+
+const SITE_URL = 'https://fateboard.test';
 
 const indexHtml = readFileSync(`${process.cwd()}/index.html`, 'utf8');
 const parse = (html: string) => new DOMParser().parseFromString(html, 'text/html');
@@ -38,15 +40,15 @@ describe('routes', () => {
         expect(seoForPath('/Draw').path).toBe('/draw');
         expect(seoForPath('/').path).toBe('/');
         expect(seoForPath('/share/abc').index).toBe(false);
-        expect(canonicalUrl(route('/'))).toBe(`${SITE_URL}/`);
-        expect(canonicalUrl(route('/help'))).toBe(`${SITE_URL}/help`);
+        expect(canonicalUrl(route('/'), SITE_URL)).toBe(`${SITE_URL}/`);
+        expect(canonicalUrl(route('/help'), SITE_URL)).toBe(`${SITE_URL}/help`);
     });
 });
 
 describe('renderRouteHtml', () => {
     it('writes the route head + fallback into a copy of index.html', () => {
         const help = route('/help');
-        const doc = parse(renderRouteHtml(indexHtml, help));
+        const doc = parse(renderRouteHtml(indexHtml, help, SITE_URL));
         expect(doc.title).toBe(help.title);
         expect(meta(doc, 'name="description"')).toBe(help.description);
         expect(meta(doc, 'name="robots"')).toMatch(/^index, follow/);
@@ -63,25 +65,33 @@ describe('renderRouteHtml', () => {
     });
 
     it('marks non-index routes noindex', () => {
-        const doc = parse(renderRouteHtml(indexHtml, route('/setting')));
+        const doc = parse(renderRouteHtml(indexHtml, route('/setting'), SITE_URL));
         expect(meta(doc, 'name="robots"')).toBe('noindex, follow');
         expect(doc.querySelector('link[rel="canonical"]')).toBeNull();
     });
 
     it('escapes HTML in values', () => {
         const doc = parse(
-            renderRouteHtml(indexHtml, { ...route('/help'), title: 'A & B <x> "q"' }),
+            renderRouteHtml(indexHtml, { ...route('/help'), title: 'A & B <x> "q"' }, SITE_URL),
         );
         expect(doc.title).toBe('A & B <x> "q"');
         const dollar = parse(
-            renderRouteHtml(indexHtml, { ...route('/help'), description: 'Save $1 & $&' }),
+            renderRouteHtml(
+                indexHtml,
+                { ...route('/help'), description: 'Save $1 & $&' },
+                SITE_URL,
+            ),
         );
         expect(meta(dollar, 'name="description"')).toBe('Save $1 & $&');
     });
 
     it('fails loudly when index.html lost a tag the build needs', () => {
         expect(() =>
-            renderRouteHtml(indexHtml.replace(/<link\s+rel="canonical"[^>]*>/, ''), route('/help')),
+            renderRouteHtml(
+                indexHtml.replace(/<link\s+rel="canonical"[^>]*>/, ''),
+                route('/help'),
+                SITE_URL,
+            ),
         ).toThrow(/canonical/);
     });
 
@@ -103,7 +113,10 @@ describe('renderNotFoundHtml', () => {
 
 describe('renderSitemap', () => {
     it('lists exactly the indexable routes', () => {
-        const xml = new DOMParser().parseFromString(renderSitemap(SEO_ROUTES), 'application/xml');
+        const xml = new DOMParser().parseFromString(
+            renderSitemap(SEO_ROUTES, SITE_URL),
+            'application/xml',
+        );
         const locs = [...xml.getElementsByTagName('loc')].map((l) => l.textContent);
         expect(locs).toEqual([`${SITE_URL}/`, `${SITE_URL}/draw`, `${SITE_URL}/help`]);
     });

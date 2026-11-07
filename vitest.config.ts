@@ -7,6 +7,9 @@ export default defineConfig({
         globals: true,
         environment: 'jsdom',
         setupFiles: 'src/setupTests.ts',
+        // VITE_SITE_URL is configuration (.env / CI). Tests use a placeholder origin on purpose, so nothing
+        // can depend on the real domain.
+        env: { VITE_SITE_URL: 'https://fateboard.test' },
         include: ['src/**/*.{test,spec}.{ts,tsx}'],
         coverage: {
             provider: 'v8',

@@ -49,8 +49,8 @@ function setFallback(html: string, heading: string, intro: string): string {
     return out;
 }
 
-export function renderRouteHtml(indexHtml: string, route: SeoRoute): string {
-    const url = canonicalUrl(route);
+export function renderRouteHtml(indexHtml: string, route: SeoRoute, siteUrl: string): string {
+    const url = canonicalUrl(route, siteUrl);
     let html = replaceOnce(
         indexHtml,
         /<title>[\s\S]*?<\/title>/,
@@ -101,10 +101,10 @@ export function renderNotFoundHtml(indexHtml: string): string {
     );
 }
 
-export function renderSitemap(routes: readonly SeoRoute[]): string {
+export function renderSitemap(routes: readonly SeoRoute[], siteUrl: string): string {
     const urls = routes
         .filter((r) => r.index)
-        .map((r) => `    <url>\n        <loc>${canonicalUrl(r)}</loc>\n    </url>`)
+        .map((r) => `    <url>\n        <loc>${canonicalUrl(r, siteUrl)}</loc>\n    </url>`)
         .join('\n');
     return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
 }
@@ -112,3 +112,7 @@ export function renderSitemap(routes: readonly SeoRoute[]): string {
 /** File each route is written to, relative to the build output (`/` is index.html itself). */
 export const routeFile = (route: SeoRoute) =>
     route.path === '/' ? null : `${route.path.slice(1)}.html`;
+
+/** robots.txt for the configured site (generated, so the domain is never hard-coded in `public/`). */
+export const renderRobots = (siteUrl: string) =>
+    `User-agent: *\nAllow: /\n\nSitemap: ${siteUrl}/sitemap.xml\n`;

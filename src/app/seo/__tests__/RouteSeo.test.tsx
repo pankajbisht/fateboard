@@ -4,7 +4,7 @@ import { act, render } from '@testing-library/react';
 import { MemoryRouter, useNavigate } from 'react-router-dom';
 import { RouteSeo } from '../RouteSeo';
 import { redirectLegacyHashUrl } from '../legacyHashUrl';
-import { SITE_URL } from '../routes';
+const SITE_URL = 'https://fateboard.test'; // vitest.config.ts env
 
 const head = () => ({
     title: document.title,

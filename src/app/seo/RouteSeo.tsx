@@ -5,6 +5,10 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { canonicalUrl, seoForPath, type SeoRoute } from './routes';
+import { normalizeSiteUrl } from './siteUrl';
+
+/** From `VITE_SITE_URL` (build-time env). Null in a dev server without it: canonical links are left alone. */
+const CONFIGURED_SITE_URL = normalizeSiteUrl(import.meta.env.VITE_SITE_URL);
 
 function setMeta(doc: Document, attr: 'name' | 'property', key: string, value: string) {
     let el = doc.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
@@ -16,7 +20,11 @@ function setMeta(doc: Document, attr: 'name' | 'property', key: string, value: s
     el.setAttribute('content', value);
 }
 
-export function applySeo(doc: Document, route: SeoRoute) {
+export function applySeo(
+    doc: Document,
+    route: SeoRoute,
+    siteUrl: string | null = CONFIGURED_SITE_URL,
+) {
     doc.title = route.title;
     setMeta(doc, 'name', 'description', route.description);
     setMeta(
@@ -31,14 +39,15 @@ export function applySeo(doc: Document, route: SeoRoute) {
     setMeta(doc, 'name', 'twitter:description', route.description);
 
     let canonical = doc.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!siteUrl) return;
     if (route.index) {
         if (!canonical) {
             canonical = doc.createElement('link');
             canonical.rel = 'canonical';
             doc.head.appendChild(canonical);
         }
-        canonical.href = canonicalUrl(route);
-        setMeta(doc, 'property', 'og:url', canonicalUrl(route));
+        canonical.href = canonicalUrl(route, siteUrl);
+        setMeta(doc, 'property', 'og:url', canonicalUrl(route, siteUrl));
     } else {
         canonical?.remove(); // a noindex page is not a copy of another URL
     }

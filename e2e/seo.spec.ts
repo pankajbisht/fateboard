@@ -11,9 +11,10 @@ test('old /#/ links redirect to the real path', async ({ page }) => {
 test('direct load of /help has its own title, canonical and robots', async ({ page }) => {
     await page.goto('/help');
     await expect(page).toHaveTitle(/Help/);
+    // absolute URL on the configured origin (VITE_SITE_URL), never a leftover placeholder
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
         'href',
-        'https://www.fateboard.com/help',
+        /^https?:\/\/[^/%]+\/help$/,
     );
     await expect(page.locator('meta[name="robots"]')).toHaveAttribute('content', /^index/);
 });
@@ -35,7 +36,14 @@ test('build ships per-route HTML, 404 shell and sitemap', async ({ request }) =>
     expect(notFound).toMatch(/<meta\s+name="robots"\s+content="noindex"/);
 
     const sitemap = await (await request.get('/sitemap.xml')).text();
-    expect(sitemap).toContain('<loc>https://www.fateboard.com/help</loc>');
+    expect(sitemap).toMatch(/<loc>https?:\/\/[^/<]+\/help<\/loc>/);
+
+    // generated from VITE_SITE_URL; no env placeholder survives the build
+    const robots = await (await request.get('/robots.txt')).text();
+    expect(robots).toMatch(/^Sitemap: https?:\/\/[^/\s]+\/sitemap\.xml$/m);
+    for (const file of ['/', '/help.html', '/404.html']) {
+        expect(await (await request.get(file)).text(), file).not.toMatch(/%VITE_/);
+    }
 });
 
 // The static SEO fallback must never flash for real visitors while the app loads (refresh showed

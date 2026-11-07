@@ -5,8 +5,6 @@
  * The `/` entry must match `index.html` (guarded by `seo.test.ts`).
  */
 
-export const SITE_URL = 'https://www.fateboard.com';
-
 export interface SeoRoute {
     /** Router path, no trailing slash (`/` for the landing page). */
     path: string;
@@ -82,5 +80,6 @@ export function seoForPath(pathname: string): SeoRoute {
     return SEO_ROUTES.find((r) => r.path === path) ?? FALLBACK_SEO;
 }
 
-export const canonicalUrl = (route: SeoRoute) =>
-    `${SITE_URL}${route.path === '/' ? '/' : route.path}`;
+/** Absolute URL of a route; `siteUrl` comes from `VITE_SITE_URL` (`normalizeSiteUrl`). */
+export const canonicalUrl = (route: SeoRoute, siteUrl: string) =>
+    `${siteUrl}${route.path === '/' ? '/' : route.path}`;

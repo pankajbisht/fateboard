@@ -29,6 +29,8 @@ jobs:
               env:
                   # Google Analytics id (repo Settings > Variables); empty = analytics off (BUG-131)
                   VITE_GA_ID: ${{ vars.VITE_GA_ID }}
+                  # Public site origin (repo Settings > Variables, required): canonical, Open Graph, sitemap, robots.txt
+                  VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
 
             - name: Upload Pages artifact
               uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0

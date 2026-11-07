@@ -10,7 +10,7 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 |---|---|---|
 | Install | `npm ci` | Node 26.13.0 exactly (`.nvmrc`, `engines`, `engine-strict`); husky installs on `prepare`. All versions exact; never add `^`/`~` |
 | Dev | `npm run dev` | Vite dev server |
-| Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build` |
+| Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build`. Needs `VITE_SITE_URL` in `.env` (see `.env.example`); fails without it |
 | Build (no type-check) | `npm run build:no-check` | `vite build` only; CI uses `npm run build` |
 | Preview | `npm run preview` | serves `dist/` on 0.0.0.0 |
 | Lint | `npm run lint` | ESLint 9 flat config |

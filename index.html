@@ -20,7 +20,7 @@
         />
         <meta name="author" content="Fateboard" />
         <meta name="robots" content="index, follow, max-image-preview:large" />
-        <link rel="canonical" href="https://www.fateboard.com/" />
+        <link rel="canonical" href="%VITE_SITE_URL%/" />
         <meta name="theme-color" content="#0a60d6" />
 
         <link rel="icon" href="/fateicon.svg" type="image/svg+xml" />
@@ -32,13 +32,13 @@
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="Fateboard" />
         <meta property="og:locale" content="en_US" />
-        <meta property="og:url" content="https://www.fateboard.com/" />
+        <meta property="og:url" content="%VITE_SITE_URL%/" />
         <meta property="og:title" content="Fateboard: Free Online Whiteboard &amp; Design Canvas" />
         <meta
             property="og:description"
             content="Sketch, draw shapes, add text and brainstorm on a free canvas in your browser. No sign-up needed."
         />
-        <meta property="og:image" content="https://www.fateboard.com/og-image.png" />
+        <meta property="og:image" content="%VITE_SITE_URL%/og-image.png" />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:alt" content="The Fateboard editor with a night-sky drawing on the canvas" />
@@ -48,7 +48,7 @@
             name="twitter:description"
             content="Sketch, draw shapes, add text and brainstorm on a free canvas in your browser. No sign-up needed."
         />
-        <meta name="twitter:image" content="https://www.fateboard.com/og-image.png" />
+        <meta name="twitter:image" content="%VITE_SITE_URL%/og-image.png" />
 
         <!-- Fonts: one request + preconnect (render-blocking CSS hurts Core Web Vitals). Only used faces download. -->
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -64,17 +64,17 @@
                 "@graph": [
                     {
                         "@type": "WebSite",
-                        "@id": "https://www.fateboard.com/#website",
+                        "@id": "%VITE_SITE_URL%/#website",
                         "name": "Fateboard",
-                        "url": "https://www.fateboard.com/",
+                        "url": "%VITE_SITE_URL%/",
                         "inLanguage": "en"
                     },
                     {
                         "@type": "WebApplication",
                         "name": "Fateboard",
                         "alternateName": "Fateboard Online Whiteboard",
-                        "url": "https://www.fateboard.com/",
-                        "image": "https://www.fateboard.com/og-image.png",
+                        "url": "%VITE_SITE_URL%/",
+                        "image": "%VITE_SITE_URL%/og-image.png",
                         "description": "Free online whiteboard and design canvas. Sketch, draw shapes, add text, brainstorm and mind map in your browser.",
                         "applicationCategory": "DesignApplication",
                         "operatingSystem": "Any (web browser)",
@@ -90,7 +90,7 @@
                             "Keyframe animation",
                             "Export to image and video"
                         ],
-                        "isPartOf": { "@id": "https://www.fateboard.com/#website" }
+                        "isPartOf": { "@id": "%VITE_SITE_URL%/#website" }
                     }
                 ]
             }
