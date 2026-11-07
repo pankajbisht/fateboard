@@ -2,6 +2,19 @@ import { useEffect } from 'react';
 import { useStore } from '@store';
 import { replaceToShortcut } from '@/lib/utils/isMac';
 
+/** Commands allowed from a focused field that has nothing unsaved in it (see below). */
+const HISTORY_COMMANDS = new Set(['undo', 'redo']);
+
+/**
+ * Focused element that should still hand ⌘Z / ⌘⇧Z to the canvas history:
+ * - a field whose value is already applied (`data-history-passthrough`, set by NumberField while
+ *   nothing is half-typed): Enter keeps the focus there, ⌘Z must still undo the change;
+ * - Fabric's hidden textarea (typing on the canvas): undo finishes the typing session first.
+ */
+const passesHistoryThrough = (target: HTMLElement) =>
+    target.getAttribute?.('data-fabric') === 'textarea' ||
+    !!target.closest?.('[data-history-passthrough="true"]');
+
 function buildCombo(e: KeyboardEvent, drag = false) {
     return [
         e.metaKey ? 'Meta' : '',
@@ -23,14 +36,13 @@ export function useKeyboardShortcuts() {
         const handleKeyDown = (e) => {
             const target = e.target;
 
-            // ✅ Skip if user is typing in input/textarea/contentEditable
-            if (
+            // Skip if the user is typing in an input / textarea / contentEditable,
+            // except undo / redo from a field that has nothing unsaved (see passesHistoryThrough)
+            const typing =
                 target.tagName === 'INPUT' ||
                 target.tagName === 'TEXTAREA' ||
-                target.isContentEditable
-            ) {
-                return;
-            }
+                target.isContentEditable;
+            if (typing && !passesHistoryThrough(target)) return;
 
             // Build pressed combo string
             // const keyCombo = [
@@ -69,12 +81,20 @@ export function useKeyboardShortcuts() {
                 //     replaceToShortcut(keyCombo),
                 // );
 
+                // menu-only commands have no shortcut (replaceToShortcut would throw on them and
+                // break every shortcut registered after them)
+                if (!command.shortcut) return false;
                 return replaceToShortcut(command.shortcut) === replaceToShortcut(keyCombo);
             });
 
             // console.log(commands, keyCombo)
 
             if (command) {
+                if (typing) {
+                    if (!HISTORY_COMMANDS.has(command.id)) return;
+                    // let go of the field first: it must follow the undone value, not re-apply its own
+                    target.blur?.();
+                }
                 e.preventDefault(); // stop browser default (like Cmd+S)
                 runCommand(command.id);
             }

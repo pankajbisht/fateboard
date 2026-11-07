@@ -1,70 +1,113 @@
+import { useMemo, useState, type ComponentType } from 'react';
 import { MBrandLogo } from '@/components/molecules/BrandLogo';
 import Preferences from '@/components/organisms/settings/ui/Preferences';
-import { useState } from 'react';
+import { Input } from '@/components/atoms/Input';
 
-const tools = [{ id: 'preferences', label: 'Preferences', component: Preferences }];
+interface SettingsSection {
+    id: string;
+    label: string;
+    /** Extra words the search box matches, so "dark" finds Preferences. */
+    keywords?: string[];
+    component: ComponentType;
+}
+
+// Add new sections here; the sidebar, search and routing pick them up automatically.
+const SECTIONS: SettingsSection[] = [
+    {
+        id: 'preferences',
+        label: 'Preferences',
+        keywords: [
+            'theme',
+            'dark',
+            'light',
+            'icon',
+            'size',
+            'page',
+            'canvas',
+            'orientation',
+            'freehand',
+        ],
+        component: Preferences,
+    },
+];
 
 export default function EditorSettingPage() {
-    const [activeTool, setActiveTool] = useState(tools[0].id);
-    const [expandedSections, setExpandedSections] = useState<string[]>([]);
-    const ActiveComponent = tools.find((tool) => tool.id === activeTool)?.component;
+    const [activeId, setActiveId] = useState(SECTIONS[0].id);
+    const [query, setQuery] = useState('');
 
-    const toggleSection = (sectionId: string) => {
-        setExpandedSections((prev) =>
-            prev.includes(sectionId) ? prev.filter((id) => id !== sectionId) : [...prev, sectionId],
+    const visibleSections = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        if (!q) return SECTIONS;
+        return SECTIONS.filter(
+            (s) => s.label.toLowerCase().includes(q) || s.keywords?.some((k) => k.includes(q)),
         );
-    };
+    }, [query]);
+
+    const active = SECTIONS.find((s) => s.id === activeId) ?? SECTIONS[0];
+    const ActiveComponent = active.component;
 
     return (
-        <div className="flex h-full bg-gray-50 text-gray-800">
+        <div className="flex min-h-dvh flex-col bg-surface-muted text-ink md:flex-row">
             {/* Sidebar */}
-            <aside className="w-72 p-6 bg-white flex flex-col">
-                <h3 className="flex gap-x-2 text-xl font-semibold mb-6 text-gray-900">
+            <aside className="flex w-full shrink-0 flex-col md:sticky md:top-0 md:h-dvh border-b border-line bg-surface p-5 md:w-72 md:border-b-0 md:border-r">
+                <div className="mb-5 flex items-center gap-x-2">
                     <MBrandLogo />
-                    Settings
-                </h3>
-                <input
-                    type="text"
-                    placeholder="Search topics..."
-                    className="mb-4 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                    onChange={(e) => {
-                        const query = e.target.value.toLowerCase();
-                        const firstMatch = tools.find((tool) =>
-                            tool.label.toLowerCase().includes(query),
-                        );
-                        if (firstMatch) setActiveTool(firstMatch.id);
+                    <h2 className="text-lg font-semibold text-ink">Settings</h2>
+                </div>
+
+                <Input
+                    id="settings-search"
+                    type="search"
+                    leadingIcon="magnifying-glass"
+                    aria-label="Search settings"
+                    value={query}
+                    placeholder="Search settings"
+                    autoComplete="off"
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                        if (e.key === 'Enter' && visibleSections[0])
+                            setActiveId(visibleSections[0].id);
+                        if (e.key === 'Escape') setQuery('');
                     }}
+                    className="mb-4"
                 />
-                <ul className="space-y-2 flex-1 overflow-y-auto">
-                    {tools.map((tool) => (
-                        <li key={tool.id}>
-                            <button
-                                className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 hover:bg-blue-100 hover:text-blue-900 ${
-                                    tool.id === activeTool
-                                        ? 'bg-blue-200 text-blue-900 font-semibold shadow-inner'
-                                        : 'text-gray-700'
-                                }`}
-                                onClick={() => setActiveTool(tool.id)}
-                            >
-                                {tool.label}
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+
+                <nav aria-label="Settings sections" className="min-h-0 flex-1 overflow-y-auto">
+                    {visibleSections.length > 0 ? (
+                        <ul className="space-y-1">
+                            {visibleSections.map((section) => {
+                                const isActive = section.id === active.id;
+                                return (
+                                    <li key={section.id}>
+                                        <button
+                                            type="button"
+                                            aria-current={isActive ? 'page' : undefined}
+                                            onClick={() => setActiveId(section.id)}
+                                            className={`w-full rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors
+                                                focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500
+                                                ${
+                                                    isActive
+                                                        ? 'bg-primary-50 text-primary-ink dark:bg-primary-500/15 dark:text-primary-300'
+                                                        : 'text-ink hover:bg-surface-muted'
+                                                }`}
+                                        >
+                                            {section.label}
+                                        </button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    ) : (
+                        <p className="px-3 py-2 text-sm text-ink-muted">
+                            No settings match “{query}”.
+                        </p>
+                    )}
+                </nav>
             </aside>
 
-            {/* Main Content */}
-            <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
-                <div className="rounded-2xl p-6 transition-all duration-300">
-                    {ActiveComponent ? (
-                        <ActiveComponent
-                            toggleSection={toggleSection}
-                            expandedSections={expandedSections}
-                        />
-                    ) : (
-                        <p className="text-gray-500">Select a topic from the left.</p>
-                    )}
-                </div>
+            {/* Content */}
+            <main className="min-w-0 flex-1">
+                <ActiveComponent />
             </main>
         </div>
     );

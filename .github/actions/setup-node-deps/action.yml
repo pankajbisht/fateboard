@@ -1,0 +1,20 @@
+# Shared setup used by every CI job: Node from .nvmrc (npm cache) + `npm ci`.
+# Run actions/checkout first (a local action is read from the checked-out repo).
+name: Setup Node and dependencies
+description: Install Node from .nvmrc with the npm cache, then run npm ci.
+
+runs:
+    using: composite
+    steps:
+        - name: Set up Node.js (.nvmrc)
+          uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+          with:
+              node-version-file: .nvmrc
+              cache: npm
+
+        - name: Install dependencies
+          shell: bash
+          run: npm ci
+          env:
+              NPM_CONFIG_FUND: 'false'
+              NPM_CONFIG_UPDATE_NOTIFIER: 'false'

@@ -1,15 +1,25 @@
+import clsx from 'clsx';
+import { NumberField } from './NumberField';
+
 type LabeledInputProps = {
     label: string;
     value?: number | string;
     min?: number | string;
     max?: number | string;
     step?: number | string;
-    onChange?: (value: number | string) => void;
-    onKeyDown?: (e: any) => void;
+    /** Called once per finished edit (Enter / blur / arrow nudge). */
+    onChange?: (value: number) => void;
     unit?: string; // optional: px, %, etc.
     disabled?: boolean;
+    className?: string;
+    /** Accessible name when the visible label is ambiguous (e.g. "Stroke width"). */
+    ariaLabel?: string;
 };
 
+const num = (v: number | string | undefined) =>
+    v === undefined || v === '' || !Number.isFinite(Number(v)) ? undefined : Number(v);
+
+/** Numeric field with a label on the left (Rows [− 12 +]); typing rules from `NumberField`. */
 const LabeledInput = ({
     label,
     value = 0,
@@ -17,33 +27,32 @@ const LabeledInput = ({
     max,
     step = 1,
     onChange,
-    onKeyDown,
     unit,
     disabled,
     className = '',
-}: LabeledInputProps & { className?: string }) => {
-    return (
-        <label className="flex items-center gap-1 text-[11px] text-gray-500">
-            <span>{label}:</span>
-
-            <div className="flex items-center gap-0.5">
-                <input
-                    type="number"
-                    min={min}
-                    max={max}
-                    step={step}
-                    value={value}
-                    disabled={disabled}
-                    onChange={(e) => onChange?.(Number(e.target.value))}
-                    onKeyDown={onKeyDown}
-                    className="w-14 h-6 px-1.5 text-[11px] text-gray-500 border border-gray-200
-            rounded bg-transparent focus:outline-none focus:border-gray-300"
-                />
-
-                {unit && <span className="text-[10px] text-gray-400">{unit}</span>}
-            </div>
-        </label>
-    );
-};
+    ariaLabel,
+}: LabeledInputProps) => (
+    <div
+        className={clsx(
+            'flex min-w-0 items-center justify-between gap-2 text-xs text-ink-muted',
+            className,
+        )}
+    >
+        <span aria-hidden className="min-w-0 truncate" title={label}>
+            {label}
+        </span>
+        <NumberField
+            aria-label={ariaLabel ?? label}
+            value={value}
+            min={num(min)}
+            max={num(max)}
+            step={num(step) ?? 1}
+            unit={unit}
+            disabled={disabled}
+            onCommit={(v) => onChange?.(v)}
+            className="w-[88px] shrink-0"
+        />
+    </div>
+);
 
 export default LabeledInput;

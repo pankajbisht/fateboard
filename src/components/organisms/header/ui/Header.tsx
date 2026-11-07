@@ -5,7 +5,7 @@ import { ShapeToolsHeader } from '../../ShapeToolsHeader';
 
 const Header = () => {
     return (
-        <header className="flex bg-white p-1 px-2 shadow-xs border-b border-stone-200">
+        <header className="flex min-w-0 bg-surface p-1 px-2 shadow-xs border-b border-line">
             <HeaderViewTool
                 brand={<BrandLogo />}
                 toolbar={<TopToolbar />}

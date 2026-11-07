@@ -6,19 +6,20 @@
         "lib": ["ES2022", "DOM", "DOM.Iterable"],
         "module": "ESNext",
         "skipLibCheck": true,
+        "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom/vitest"],
 
-        /* Path aliases (match Vite resolve.alias) */
-        "baseUrl": "./",
+        /* Path aliases (match Vite resolve.alias). No baseUrl: deprecated in TypeScript 6, paths are relative to this file */
         "paths": {
-            "@/*": ["src/*"],
-            "@components/*": ["src/components/*"],
-            "@store/*": ["src/store/*"],
-            "@lib/*": ["src/lib/*"],
-            "@hooks/*": ["src/hooks/*"],
-            "@store": ["src/store/index.ts"],
-            "@lib": ["src/lib/index.ts"],
-            "@components": ["src/components/index.ts"],
-            "@": ["src/index.ts"]
+            "@/*": ["./src/*"],
+            "@components/*": ["./src/components/*"],
+            "@store/*": ["./src/store/*"],
+            "@lib/*": ["./src/lib/*"],
+            "@hooks/*": ["./src/hooks/*"],
+            "@animation/*": ["./src/animation/*"],
+            "@store": ["./src/store/index.ts"],
+            "@lib": ["./src/lib/index.ts"],
+            "@components": ["./src/components/index.ts"],
+            "@": ["./src/index.ts"]
         },
 
         /* Bundler mode */

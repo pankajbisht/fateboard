@@ -1,13 +1,10 @@
-import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 import { LAYERCONTROL_ACTIONS } from '@/components/config/toolbars/ui/LayerControlBarConfig';
 
 const LayerControlBar = () => {
-    const iconSize = useStore((state) => state.settings.iconSize);
-
     return (
-        <ul className="flex items-center gap-1 px-1">
+        <ul className="flex items-center gap-0.5">
             {LAYERCONTROL_ACTIONS.map((action) => (
                 <li key={action.id}>
                     <Tooltip
@@ -15,7 +12,7 @@ const LayerControlBar = () => {
                         content={
                             <div className="flex flex-col">
                                 <span>{action.label}</span>
-                                <span className="text-xs opacity-60">{action.shortcut}</span>
+                                <span className="text-xs text-ink-muted">{action.shortcut}</span>
                             </div>
                         }
                     >
@@ -24,7 +21,7 @@ const LayerControlBar = () => {
                             title={action.label}
                             aria-label={action.label}
                             onClick={action.onClick}
-                            size={iconSize}
+                            size="chrome"
                         />
                     </Tooltip>
                 </li>

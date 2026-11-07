@@ -11,6 +11,7 @@ export interface UiSlice {
     zoomIn: () => void;
     zoomOut: () => void;
     zoomFit: () => void;
+    actualSize: () => void;
 }
 
 export const createUISlice: SliceCreator<UiSlice> = (set, get, store) => ({
@@ -52,6 +53,11 @@ export const createUISlice: SliceCreator<UiSlice> = (set, get, store) => ({
     zoomFit: () => {
         const canvas = get().canvas;
         if (!canvas) return;
+        // design board: "fit" = whole page on screen (CanvasBoard owns geometry, ADR Q2)
+        if ((get() as { boardMode?: string }).boardMode === 'design') {
+            (get() as { fitToScreen?: () => void }).fitToScreen?.();
+            return;
+        }
 
         const objs = canvas.getObjects().filter((o) => o.visible);
         if (objs.length === 0) {
@@ -108,6 +114,12 @@ export const createUISlice: SliceCreator<UiSlice> = (set, get, store) => ({
     actualSize: () => {
         const canvas = get().canvas;
         if (!canvas) return;
+        // design board: 100% on screen = zoom 1 / fit scale (CanvasBoard draws fit × zoom)
+        const st = get() as { boardMode?: string; scale?: number; setZoom?: (z: number) => void };
+        if (st.boardMode === 'design') {
+            st.setZoom?.(1 / (st.scale || 1));
+            return;
+        }
 
         canvas.setZoom(1);
 

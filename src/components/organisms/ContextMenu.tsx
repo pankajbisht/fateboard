@@ -40,12 +40,12 @@ export const ContextMenu = () => {
             {/* menu */}
             <div
                 className="fixed z-50 min-w-[220px] rounded-lg
-                   bg-white shadow-lg border border-stone-200 p-1"
+                   bg-surface shadow-lg border border-line p-1"
                 style={{ top: y, left: x }}
             >
                 {finalItems.map((item, i) => {
                     if (item.type === 'divider') {
-                        return <div key={item.id ?? i} className="my-1 h-px bg-stone-200" />;
+                        return <div key={item.id ?? i} className="my-1 h-px bg-surface-strong" />;
                     }
 
                     return (
@@ -59,7 +59,7 @@ export const ContextMenu = () => {
                             className="
                                 flex w-full items-center justify-between
                                 rounded-lg px-3 py-2 text-sm
-                                hover:bg-gray-100
+                                hover:bg-surface-muted
                                 disabled:opacity-40
                             "
                         >
@@ -69,7 +69,7 @@ export const ContextMenu = () => {
                             </span>
 
                             {item.shortcut && (
-                                <span className="text-xs text-gray-400">{item.shortcut}</span>
+                                <span className="text-xs text-ink-subtle">{item.shortcut}</span>
                             )}
                         </button>
                     );

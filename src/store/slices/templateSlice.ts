@@ -1,5 +1,5 @@
-import type { Canvas, FabricObject } from 'fabric';
-import { Circle, FabricImage, Line, Rect, Textbox } from 'fabric';
+import type { Canvas, FabricObject, IText } from 'fabric';
+import { Circle, FabricImage, Line, Point, Rect, Textbox } from 'fabric';
 
 import { SIZE_PRESETS } from '@/components/organisms/effects/sizePresets';
 import { DESIGN_TEMPLATES } from '@/components/organisms/effects/designTemplateData';
@@ -45,6 +45,13 @@ const ARTBOARD_COLOR = '#ffffff';
  * It does not resize or scale template content.
  */
 const CENTER_CONTENT_IN_ARTBOARD = true;
+
+/**
+ * Fabric 7 defaults originX/originY to 'center'. Template data, the artboard
+ * and the clip all use top-left coordinates, so every object created here
+ * must say so explicitly (BUG-008).
+ */
+const TOP_LEFT = { originX: 'left', originY: 'top' } as const;
 
 // ============================================================
 // TYPES / STATE
@@ -605,68 +612,91 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
 
             canvas.discardActiveObject();
 
-            canvas.clear();
+            function replaceWithTemplate() {
+                if (!canvas) return;
 
-            /**
-             * Reset previous clip path.
-             */
-            canvas.clipPath = undefined;
+                canvas.clear();
 
-            // ==================================================
-            // CREATE ARTBOARD
-            // ==================================================
+                /**
+                 * Reset previous clip path.
+                 */
+                canvas.clipPath = undefined;
 
-            const artboard = new Rect({
-                left: 0,
-                top: 0,
+                // ==================================================
+                // CREATE ARTBOARD
+                // ==================================================
 
-                width: preset.width,
+                const artboard = new Rect({
+                    ...TOP_LEFT,
 
-                height: preset.height,
+                    left: 0,
+                    top: 0,
 
-                fill: ARTBOARD_COLOR,
+                    width: preset.width,
 
-                selectable: false,
+                    height: preset.height,
 
-                evented: false,
+                    fill: ARTBOARD_COLOR,
 
-                hoverCursor: 'default',
+                    selectable: false,
 
-                objectCaching: false,
-            });
+                    evented: false,
 
-            ARTBOARD_OBJECTS.add(artboard);
+                    hoverCursor: 'default',
 
-            canvas.add(artboard);
+                    objectCaching: false,
+                });
 
-            // ==================================================
-            // ADD TEMPLATE OBJECTS
-            // ==================================================
+                ARTBOARD_OBJECTS.add(artboard);
 
-            objects.forEach((object) => {
-                canvas.add(object);
-            });
+                canvas.add(artboard);
 
-            // ==================================================
-            // ARTBOARD CLIP
-            // ==================================================
+                // ==================================================
+                // ADD TEMPLATE OBJECTS
+                // ==================================================
 
-            canvas.clipPath = new Rect({
-                left: 0,
-                top: 0,
+                objects.forEach((object) => {
+                    canvas.add(object);
+                });
 
-                width: preset.width,
+                // ==================================================
+                // ARTBOARD CLIP
+                // ==================================================
 
-                height: preset.height,
+                canvas.clipPath = new Rect({
+                    ...TOP_LEFT,
 
-                absolutePositioned: true,
+                    left: 0,
+                    top: 0,
 
-                selectable: false,
+                    width: preset.width,
 
-                evented: false,
+                    height: preset.height,
 
-                objectCaching: false,
-            });
+                    absolutePositioned: true,
+
+                    selectable: false,
+
+                    evented: false,
+
+                    objectCaching: false,
+                });
+            }
+
+            // ONE undo step (BUG-009, Q11): record any pending edit as its own step, then
+            // record nothing while the page is replaced, then commit the result once.
+            const history = get() as unknown as Partial<
+                Record<'saveState', (immediate?: boolean) => void> &
+                    Record<'pauseHistory' | 'resumeHistory', () => void>
+            >;
+            history.saveState?.(true);
+            history.pauseHistory?.();
+            try {
+                replaceWithTemplate();
+            } finally {
+                history.resumeHistory?.();
+            }
+            history.saveState?.(true);
 
             // ==================================================
             // UPDATE STATE
@@ -687,6 +717,20 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
             get().fitDesignToViewport();
 
             canvas.requestRenderAll();
+
+            const toastApi = get() as unknown as Partial<{
+                showToast: (o: {
+                    message: string;
+                    actionLabel?: string;
+                    onAction?: () => unknown;
+                }) => void;
+                undo: () => Promise<void>;
+            }>;
+            toastApi.showToast?.({
+                message: `Template “${template.name}” applied`,
+                actionLabel: 'Undo',
+                onAction: () => toastApi.undo?.(),
+            });
         } catch (error) {
             console.error('Failed to apply design template:', error);
         }
@@ -795,14 +839,7 @@ function centerObjectsOnArtboard(
     for (const object of objects) {
         const center = object.getCenterPoint();
 
-        object.setPositionByOrigin(
-            {
-                x: center.x + dx,
-                y: center.y + dy,
-            },
-            'center',
-            'center',
-        );
+        object.setPositionByOrigin(new Point(center.x + dx, center.y + dy), 'center', 'center');
 
         object.setCoords();
     }
@@ -878,7 +915,7 @@ async function createTemplateObject(object: DesignTemplateObject): Promise<Fabri
                 // --------------------------------------------
                 // FILL
                 // --------------------------------------------
-                else if (fit === 'fill') {
+                else if ((fit as string) === 'fill') {
                     scaleX = targetWidth / sourceWidth;
 
                     scaleY = targetHeight / sourceHeight;
@@ -912,6 +949,8 @@ async function createTemplateObject(object: DesignTemplateObject): Promise<Fabri
                 // --------------------------------------------
 
                 image.set({
+                    ...TOP_LEFT,
+
                     left: object.left + (targetWidth - scaledWidth) / 2,
 
                     top: object.top + (targetHeight - scaledHeight) / 2,
@@ -937,6 +976,8 @@ async function createTemplateObject(object: DesignTemplateObject): Promise<Fabri
 
                 if (fit === 'cover') {
                     image.clipPath = new Rect({
+                        ...TOP_LEFT,
+
                         left: object.left,
 
                         top: object.top,
@@ -971,6 +1012,8 @@ async function createTemplateObject(object: DesignTemplateObject): Promise<Fabri
 
         case 'text': {
             const text = new Textbox(object.text, {
+                ...TOP_LEFT,
+
                 left: object.left,
 
                 top: object.top,
@@ -1011,6 +1054,8 @@ async function createTemplateObject(object: DesignTemplateObject): Promise<Fabri
 
         case 'rect': {
             const rect = new Rect({
+                ...TOP_LEFT,
+
                 left: object.left,
 
                 top: object.top,
@@ -1047,6 +1092,8 @@ async function createTemplateObject(object: DesignTemplateObject): Promise<Fabri
 
         case 'circle': {
             const circle = new Circle({
+                ...TOP_LEFT,
+
                 left: object.left,
 
                 top: object.top,
@@ -1080,6 +1127,8 @@ async function createTemplateObject(object: DesignTemplateObject): Promise<Fabri
                 left: object.left,
 
                 top: object.top,
+
+                ...TOP_LEFT,
 
                 stroke: object.stroke ?? '#000000',
 

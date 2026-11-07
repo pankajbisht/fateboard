@@ -1,56 +1,59 @@
 function NodeToolHelp() {
     const sections = [
         {
-            title: 'What is a Node?',
+            title: 'What is a node?',
             content:
-                'A node is a visual block that represents a single idea, step, or component. Nodes are commonly used to build flows, diagrams, and structured relationships.',
+                'Every outline is made of nodes (anchor points) joined by straight or curved segments. The Node tool lets you reshape any shape or drawn path by moving its nodes and their curve handles.',
         },
         {
-            title: 'When to use',
+            title: 'Start editing',
             list: [
-                'Create flowcharts',
-                'Build mind maps',
-                'Design system or architecture diagrams',
-                'Model decision trees or processes',
+                'Pick the Node tool in the left toolbar (shortcut A)',
+                'Click a shape or a drawn path: its nodes appear (a shape that was already selected opens right away)',
+                'Click another shape to edit that one instead',
+                'From the Select tool, double-click a shape to edit its nodes; when you finish you are back in Select',
+                'Works on every shape in the Shapes panel (text shapes and sticky notes too: you reshape the outline, the text stays inside), lines and drawn paths. Plain text, images, groups, connectors and locked objects have no editable nodes',
             ],
         },
         {
-            title: 'How to create a node',
+            title: 'Edit nodes',
             list: [
-                'Select the Node Tool from the toolbar',
-                'Click anywhere on the canvas',
-                'A new node will be created at that position',
+                'Drag a node to move it; its curve handles move with it',
+                'Drag a round handle to bend the curve next to the node',
+                'Double-click the outline to add a node (the shape does not change until you move it)',
+                'Double-click a node, or press Delete / Backspace, to remove it',
+                'Alt + click a node to switch between a sharp corner and a smooth curve',
+                'Alt + drag a handle to bend one side only; Shift keeps a drag straight or at 45°',
+                'Arrow keys nudge the selected node (Shift = 10 px)',
             ],
         },
         {
-            title: 'Editing nodes',
-            list: [
-                'Drag nodes to reposition them',
-                'Resize nodes using the corner handles',
-                'Double-click a node to edit its text',
-            ],
-        },
-        {
-            title: 'Connecting nodes',
+            title: 'Node toolbar',
             content:
-                'Drag from a node’s connection handle to another node to create a link. Connections automatically adjust when nodes are moved.',
+                'While you edit, a bar floats above the shape. Every button acts on the selected node.',
+            list: [
+                'Add node / Delete node',
+                'Corner node (handles move on their own) or Smooth node (handles stay in line)',
+                'Straight segments / Curved segments on both sides of the node',
+                'Close path (join the two ends) or Open path at the node; Break path splits a path at the node',
+                'X / Y: type an exact position for the node',
+                'Cancel undoes every change since you started; Done keeps them',
+            ],
         },
         {
-            title: 'Best practices',
+            title: 'Finish',
             list: [
-                'Keep node labels short and clear',
-                'Align nodes to improve readability',
-                'Avoid crossing connections',
-                'Use color to group related nodes',
+                'Press Enter or Escape, or click an empty spot, to finish: the change is kept',
+                'Press Escape again, V, or pick another tool to go back to Select (H = Hand)',
+                'A shape you edit becomes a path. It keeps its name, colors and layer position',
             ],
         },
         {
             title: 'Related tools',
             list: [
-                'Selector Tool – Move and edit nodes',
-                'Shape Builder – Structured visual blocks',
-                'Text Tool – Labels and annotations',
-                'Hand Tool – Navigate the canvas',
+                'Select: move, resize and rotate whole objects',
+                'Draw: create freehand paths you can then reshape with the Node tool',
+                'Hand: pan around the canvas',
             ],
         },
     ];
@@ -58,23 +61,23 @@ function NodeToolHelp() {
     return (
         <div className="space-y-8 p-6">
             <header className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">Node Tool</h1>
-                <p className="text-gray-600">
-                    Create connected elements to represent flows, systems, and relationships.
+                <h1 className="text-3xl font-bold text-ink">Node Tool</h1>
+                <p className="text-ink-muted">
+                    Reshape shapes and drawn paths by moving their nodes and curve handles.
                 </p>
             </header>
 
             {sections.map((section) => (
                 <section
                     key={section.title}
-                    className="bg-gray-50 rounded-xl p-5 shadow-sm space-y-2"
+                    className="bg-surface-muted rounded-xl p-5 shadow-sm space-y-2"
                 >
-                    <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
+                    <h2 className="text-xl font-semibold text-ink">{section.title}</h2>
 
-                    {section.content && <p className="text-gray-700">{section.content}</p>}
+                    {section.content && <p className="text-ink">{section.content}</p>}
 
                     {section.list && (
-                        <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                        <ul className="list-disc pl-6 space-y-1 text-ink">
                             {section.list.map((item) => (
                                 <li key={item}>{item}</li>
                             ))}

@@ -51,8 +51,8 @@ function HandToolHelp() {
     return (
         <div className="space-y-8 p-6">
             <header className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">Hand Tool</h1>
-                <p className="text-gray-600">
+                <h1 className="text-3xl font-bold text-ink">Hand Tool</h1>
+                <p className="text-ink-muted">
                     Navigate the canvas smoothly without modifying any objects.
                 </p>
             </header>
@@ -60,14 +60,14 @@ function HandToolHelp() {
             {sections.map((section) => (
                 <section
                     key={section.title}
-                    className="bg-gray-50 rounded-xl p-5 shadow-sm space-y-2"
+                    className="bg-surface-muted rounded-xl p-5 shadow-sm space-y-2"
                 >
-                    <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
+                    <h2 className="text-xl font-semibold text-ink">{section.title}</h2>
 
-                    {section.content && <p className="text-gray-700">{section.content}</p>}
+                    {section.content && <p className="text-ink">{section.content}</p>}
 
                     {section.list && (
-                        <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                        <ul className="list-disc pl-6 space-y-1 text-ink">
                             {section.list.map((item) => (
                                 <li key={item}>{item}</li>
                             ))}

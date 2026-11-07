@@ -1,110 +1,122 @@
-const ORIGINS = {
-    tl: { x: 'left', y: 'top', left: '12%', top: '12%' },
-    tr: { x: 'right', y: 'top', left: '88%', top: '12%' },
-    c: { x: 'center', y: 'center', left: '50%', top: '50%' },
-    bl: { x: 'left', y: 'bottom', left: '12%', top: '88%' },
-    br: { x: 'right', y: 'bottom', left: '88%', top: '88%' },
+import clsx from 'clsx';
+import { useRef, type KeyboardEvent } from 'react';
+import { FOCUS_RING } from '../atoms/control.styles';
+
+export type OriginChoice = {
+    originX: 'left' | 'center' | 'right';
+    originY: 'top' | 'center' | 'bottom';
+    id: string;
 };
 
-export default function OriginSelector({ size = 24, value = 'c', onChange }) {
-    const active = ORIGINS[value];
-    const pivotSize = size * 0.34;
+/** The 9 standard anchor (reference) points, row by row. */
+export const ANCHOR_POINTS: (OriginChoice & { label: string })[] = [
+    { id: 'tl', originX: 'left', originY: 'top', label: 'Top left' },
+    { id: 't', originX: 'center', originY: 'top', label: 'Top' },
+    { id: 'tr', originX: 'right', originY: 'top', label: 'Top right' },
+    { id: 'l', originX: 'left', originY: 'center', label: 'Left' },
+    { id: 'c', originX: 'center', originY: 'center', label: 'Center' },
+    { id: 'r', originX: 'right', originY: 'center', label: 'Right' },
+    { id: 'bl', originX: 'left', originY: 'bottom', label: 'Bottom left' },
+    { id: 'b', originX: 'center', originY: 'bottom', label: 'Bottom' },
+    { id: 'br', originX: 'right', originY: 'bottom', label: 'Bottom right' },
+];
+
+const MOVE: Record<string, [number, number]> = {
+    ArrowLeft: [-1, 0],
+    ArrowRight: [1, 0],
+    ArrowUp: [0, -1],
+    ArrowDown: [0, 1],
+};
+
+/**
+ * Anchor point (reference point) for the transform fields: X / Y show this point, and
+ * rotation, width / height and flips keep it fixed. 3×3 grid, like Illustrator / Affinity.
+ * Arrow keys move around the grid.
+ */
+export default function OriginSelector({
+    size = 28,
+    value = 'c',
+    onChange,
+}: {
+    size?: number;
+    value?: string;
+    onChange?: (origin: OriginChoice) => void;
+}) {
+    const refs = useRef<(HTMLButtonElement | null)[]>([]);
+    const current = Math.max(
+        0,
+        ANCHOR_POINTS.findIndex((p) => p.id === value),
+    );
+
+    const pick = (i: number) => {
+        const { id, originX, originY } = ANCHOR_POINTS[i];
+        onChange?.({ id, originX, originY });
+    };
+
+    const onKey = (e: KeyboardEvent, i: number) => {
+        const d = MOVE[e.key];
+        if (!d) return;
+        e.preventDefault();
+        e.stopPropagation(); // arrows must not also nudge the selected object
+        const col = Math.min(2, Math.max(0, (i % 3) + d[0]));
+        const row = Math.min(2, Math.max(0, Math.floor(i / 3) + d[1]));
+        const next = row * 3 + col;
+        pick(next);
+        refs.current[next]?.focus();
+    };
+
+    // handles sit on the corners / edge midpoints of the box, like a real selection box
+    const inset = size / 6;
 
     return (
         <div
-            style={{
-                width: size,
-                height: size,
-                position: 'relative',
-                cursor: 'pointer',
-            }}
+            role="radiogroup"
+            aria-label="Anchor point"
+            title="Anchor point: X / Y show it; rotation, size and flip keep it in place"
+            className="relative grid shrink-0 grid-cols-3 grid-rows-3 rounded-md bg-surface-muted"
+            style={{ width: size, height: size }}
         >
-            {/* object bounds */}
-            <div
-                style={{
-                    position: 'absolute',
-                    inset: 2,
-                    borderRadius: 3,
-                    border: '1px solid #cbd5e1', // slate-300
-                    background: 'linear-gradient(#ffffff, #f8fafc)',
-                }}
+            <span
+                aria-hidden
+                data-box
+                className="pointer-events-none absolute rounded-[2px] border border-dashed border-ink-subtle"
+                style={{ inset }}
             />
 
-            {/* center guides */}
-            <div
-                style={{
-                    position: 'absolute',
-                    inset: '50% 4px auto 4px',
-                    height: 1,
-                    background: '#e2e8f0', // slate-200
-                }}
-            />
-            <div
-                style={{
-                    position: 'absolute',
-                    inset: '4px auto 4px 50%',
-                    width: 1,
-                    background: '#e2e8f0',
-                }}
-            />
-
-            {/* click zones */}
-            {Object.entries(ORIGINS).map(([id, o]) => (
-                <div
-                    key={id}
-                    onClick={() => onChange?.({ originX: o.x, originY: o.y, id })}
-                    style={{
-                        position: 'absolute',
-                        left: o.left,
-                        top: o.top,
-                        width: size * 0.45,
-                        height: size * 0.45,
-                        transform: 'translate(-50%,-50%)',
-                    }}
-                />
-            ))}
-
-            {/* pivot */}
-            {value === 'c' ? (
-                /* center pivot */
-                <div
-                    style={{
-                        position: 'absolute',
-                        left: active.left,
-                        top: active.top,
-                        width: pivotSize,
-                        height: pivotSize,
-                        borderRadius: '50%',
-                        background: '#ffffff',
-                        border: '2px solid #3b82f6', // blue-500
-                        boxShadow: `
-              0 1px 2px rgba(0,0,0,0.15),
-              0 0 0 3px rgba(59,130,246,0.15)
-            `,
-                        transform: 'translate(-50%,-50%)',
-                        transition: 'all 140ms ease',
-                    }}
-                />
-            ) : (
-                /* corner pivot */
-                <div
-                    style={{
-                        position: 'absolute',
-                        left: active.left,
-                        top: active.top,
-                        width: pivotSize,
-                        height: pivotSize,
-                        borderRadius: '50%',
-                        background: '#3b82f6',
-                        boxShadow: `
-              0 2px 4px rgba(0,0,0,0.2),
-              0 0 0 3px rgba(59,130,246,0.25)
-            `,
-                        transform: 'translate(-50%,-50%)',
-                        transition: 'all 140ms ease',
-                    }}
-                />
-            )}
+            {ANCHOR_POINTS.map((p, i) => {
+                const checked = i === current;
+                return (
+                    <button
+                        key={p.id}
+                        ref={(el) => {
+                            refs.current[i] = el;
+                        }}
+                        type="button"
+                        role="radio"
+                        aria-checked={checked}
+                        aria-label={p.label}
+                        title={p.label}
+                        tabIndex={checked ? 0 : -1}
+                        onClick={() => pick(i)}
+                        onKeyDown={(e) => onKey(e, i)}
+                        className={clsx(
+                            'group relative z-10 flex cursor-pointer items-center justify-center rounded-sm',
+                            FOCUS_RING,
+                        )}
+                    >
+                        <span
+                            aria-hidden
+                            data-handle
+                            className={clsx(
+                                'block rounded-[1.5px] border transition-all duration-100',
+                                checked
+                                    ? 'size-[7px] border-primary-600 bg-primary-500 shadow-[0_0_0_2px_color-mix(in_srgb,var(--color-primary-500)_25%,transparent)]'
+                                    : 'size-[5px] border-ink-subtle bg-surface group-hover:size-[6px] group-hover:border-primary-500',
+                            )}
+                        />
+                    </button>
+                );
+            })}
         </div>
     );
 }

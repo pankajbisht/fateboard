@@ -1,3 +1,4 @@
+import { BRAND } from '@/lib/theme';
 import * as fabric from 'fabric';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -28,7 +29,7 @@ export interface MultiStopGradientToolOptions {
 const HANDLE_RADIUS = 7;
 const STOP_RADIUS = 6;
 
-const ACCENT = '#6366f1';
+const ACCENT = BRAND.primary;
 
 const HIT_LINE_WIDTH = 16;
 

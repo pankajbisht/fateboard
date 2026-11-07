@@ -30,6 +30,20 @@ function getRefOffset(
     return new fabric.Point(dx * cos - dy * sin, dx * sin + dy * cos);
 }
 
+const MIRROR_X: Record<string, OriginX> = { left: 'right', center: 'center', right: 'left' };
+const MIRROR_Y: Record<string, OriginY> = { top: 'bottom', center: 'center', bottom: 'top' };
+const ANCHOR_ID: Record<string, string> = {
+    'left|top': 'tl',
+    'center|top': 't',
+    'right|top': 'tr',
+    'left|center': 'l',
+    'center|center': 'c',
+    'right|center': 'r',
+    'left|bottom': 'bl',
+    'center|bottom': 'b',
+    'right|bottom': 'br',
+};
+
 function getScaledSize(obj: fabric.Object) {
     return {
         width: (obj.width ?? 0) * Math.abs(obj.scaleX ?? 1),
@@ -48,8 +62,10 @@ export interface TransformSlice {
 
     updateFromFabric: (obj?: fabric.Object) => void;
     updateFabricFromStore: () => void;
+    /** Reflect across the anchor; the anchor selection follows to the mirrored point. */
     flipX: () => void;
     flipY: () => void;
+    _reflect: (axis: 'x' | 'y') => void;
     setTransform: (key: keyof Transform, value: number | string | boolean) => void;
     setOrigin: (origin: { originX: OriginX; originY: OriginY; id: string }) => void;
     setRadius: (rx?: number, ry?: number) => void;
@@ -66,7 +82,7 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get) => 
         flipX: false,
         flipY: false,
         originX: 'center',
-        originY: 'center', // NOTE: was `centerY` (typo). Update the Transform type too.
+        originY: 'center',
         id: 'c',
         rx: 0,
         ry: 0,
@@ -159,20 +175,67 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get) => 
     // Actions
     // -----------------------------------------------------------------------
     setTransform: (key, value) => {
-        const isBool = key === 'flipX' || key === 'flipY';
-        const parsed = isBool ? Boolean(value) : Number(value);
+        if (key === 'flipX' || key === 'flipY') {
+            if (Boolean(value) !== Boolean(get().transform[key]))
+                get()._reflect(key === 'flipX' ? 'x' : 'y');
+            return;
+        }
+        const parsed = Number(value);
         set((s) => ({ transform: { ...s.transform, [key]: parsed } }));
         get().updateFabricFromStore();
     },
 
-    flipX: () => {
-        set((s) => ({ transform: { ...s.transform, flipX: !s.transform.flipX } }));
-        get().updateFabricFromStore();
-    },
+    // Flip = reflect across the anchor (vertical line through it for X, horizontal for Y).
+    // The anchor keeps its canvas spot but is now the mirrored point of the object
+    // (top-left -> top-right), so X/Y don't change and flipping again restores the object.
+    flipX: () => get()._reflect('x'),
+    flipY: () => get()._reflect('y'),
 
-    flipY: () => {
-        set((s) => ({ transform: { ...s.transform, flipY: !s.transform.flipY } }));
-        get().updateFabricFromStore();
+    _reflect: (axis) => {
+        const { canvas } = get();
+        const obj = canvas?.getActiveObject();
+        if (!canvas || !obj || get()._isSyncing) return;
+        const t = get().transform;
+
+        set({ _isSyncing: true });
+        try {
+            const { width, height } = getScaledSize(obj);
+            const factor = axis === 'x' ? (FACTOR_X[t.originX] ?? 0) : (FACTOR_Y[t.originY] ?? 0);
+            // center moves 2 × (anchor offset) along the object's own axis
+            const a = ((obj.angle ?? 0) * Math.PI) / 180;
+            const dir =
+                axis === 'x'
+                    ? new fabric.Point(Math.cos(a), Math.sin(a))
+                    : new fabric.Point(-Math.sin(a), Math.cos(a));
+            const dist = 2 * factor * (axis === 'x' ? width : height);
+            const center = obj.getCenterPoint().add(dir.scalarMultiply(dist));
+
+            if (axis === 'x') obj.set('flipX', !obj.flipX);
+            else obj.set('flipY', !obj.flipY);
+            obj.setXY(center, 'center', 'center');
+            obj.setCoords();
+
+            const originX =
+                axis === 'x' ? (MIRROR_X[t.originX] ?? 'center') : (t.originX as OriginX);
+            const originY =
+                axis === 'y' ? (MIRROR_Y[t.originY] ?? 'center') : (t.originY as OriginY);
+            set((s) => ({
+                transform: {
+                    ...s.transform,
+                    originX,
+                    originY,
+                    id: ANCHOR_ID[`${originX}|${originY}`] ?? 'c',
+                    flipX: !!obj.flipX,
+                    flipY: !!obj.flipY,
+                },
+            }));
+
+            canvas.requestRenderAll();
+            canvas.fire('object:modified', { target: obj });
+        } finally {
+            set({ _isSyncing: false });
+        }
+        get().updateFromFabric(obj);
     },
 
     // Origin is a UI reference point only: the object doesn't change,
@@ -229,8 +292,7 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get) => 
             rect = active;
         } else if (active instanceof fabric.ActiveSelection) {
             rect = active.getObjects().find((o) => o instanceof fabric.Rect) as
-                | fabric.Rect
-                | undefined;
+                fabric.Rect | undefined;
         }
 
         set((s) => ({

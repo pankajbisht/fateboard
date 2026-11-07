@@ -1,3 +1,4 @@
+import type React from 'react';
 import ColorListToolHelp from '@/components/organisms/helpsection/ui/ColorListToolHelp';
 import HandToolHelp from '@/components/organisms/helpsection/ui/HandToolHelp';
 import NodeToolHelp from '@/components/organisms/helpsection/ui/NodeToolHelp';
@@ -9,8 +10,14 @@ import ShortcutTable from '@/components/organisms/helpsection/ui/ShortcutTable';
 import SelectorToolHelp from '@/components/organisms/helpsection/ui/SlectorToolHelp';
 import TextToolHelp from '@/components/organisms/helpsection/ui/TextToolHelp';
 import { useState } from 'react';
+import { Input } from '@/components/atoms/Input';
 
-const tools = [
+type HelpSectionProps = {
+    toggleSection?: (sectionId: string) => void;
+    expandedSections?: string[];
+};
+
+const tools: { id: string; label: string; component: React.ComponentType<HelpSectionProps> }[] = [
     { id: 'selector', label: 'Selector Tool', component: SelectorToolHelp },
     { id: 'pencil', label: 'Pencil Tool', component: PencilToolHelp },
     { id: 'node', label: 'Node Tool', component: NodeToolHelp },
@@ -35,14 +42,16 @@ export default function HelpPage() {
     };
 
     return (
-        <div className="flex h-full bg-gray-50 text-gray-800">
+        <div className="flex h-full bg-surface-muted text-ink">
             {/* Sidebar */}
-            <aside className="w-72 border-r border-gray-200 p-6 bg-white shadow-lg flex flex-col">
-                <h2 className="text-xl font-semibold mb-6 text-gray-900">Help Topics</h2>
-                <input
-                    type="text"
+            <aside className="w-72 border-r border-line p-6 bg-surface shadow-lg flex flex-col">
+                <h2 className="text-xl font-semibold mb-6 text-ink">Help Topics</h2>
+                <Input
+                    type="search"
+                    leadingIcon="magnifying-glass"
                     placeholder="Search topics..."
-                    className="mb-4 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    aria-label="Search topics"
+                    className="mb-4"
                     onChange={(e) => {
                         const query = e.target.value.toLowerCase();
                         const firstMatch = tools.find((tool) =>
@@ -55,10 +64,10 @@ export default function HelpPage() {
                     {tools.map((tool) => (
                         <li key={tool.id}>
                             <button
-                                className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 hover:bg-blue-100 hover:text-blue-900 ${
+                                className={`w-full text-left px-4 py-2 rounded-lg transition-colors duration-200 hover:bg-primary-100 hover:text-primary-ink ${
                                     tool.id === activeTool
-                                        ? 'bg-blue-200 text-blue-900 font-semibold shadow-inner'
-                                        : 'text-gray-700'
+                                        ? 'bg-primary-200 text-primary-ink font-semibold shadow-inner'
+                                        : 'text-ink'
                                 }`}
                                 onClick={() => setActiveTool(tool.id)}
                             >
@@ -70,15 +79,15 @@ export default function HelpPage() {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 overflow-y-auto p-8 bg-gray-50">
-                <div className="bg-white rounded-2xl shadow-md p-6 transition-all duration-300">
+            <main className="flex-1 overflow-y-auto p-8 bg-surface-muted">
+                <div className="bg-surface rounded-2xl shadow-md p-6 transition-all duration-300">
                     {ActiveComponent ? (
                         <ActiveComponent
                             toggleSection={toggleSection}
                             expandedSections={expandedSections}
                         />
                     ) : (
-                        <p className="text-gray-500">Select a topic from the left.</p>
+                        <p className="text-ink-muted">Select a topic from the left.</p>
                     )}
                 </div>
             </main>

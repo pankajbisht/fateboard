@@ -21,18 +21,31 @@ function enableTransform(obj: fabric.Object) {
     obj.setCoords();
 }
 
+/** Reads a file as a `data:` URL, so the image keeps a source that works after a reload. */
+function readAsDataURL(file: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(reader.error ?? new Error('Could not read the file'));
+        reader.readAsDataURL(file);
+    });
+}
+
 /**
- * Import an image file into the Fabric canvas
+ * Import an image file into the Fabric canvas.
+ *
+ * The image is loaded from a `data:` URL (BUG-121): Fabric saves `src` with the object, and a
+ * `blob:` URL dies with the tab, so autosave, project files and undo could not bring the photo back.
+ * The data URL lives in the project in IndexedDB (no localStorage quota, Q5).
  */
 export async function importImage(canvas: fabric.Canvas, file: File) {
     if (!canvas || !file) return;
 
     const { pageWidth, pageHeight, scale } = useStore.getState();
 
-    // Create a temporary URL for the image
-    const url = URL.createObjectURL(file);
-
     try {
+        const url = await readAsDataURL(file);
+
         // Load image (Fabric v6+ returns a Promise)
         const img: fabric.Image = await fabric.Image.fromURL(url);
 
@@ -63,9 +76,6 @@ export async function importImage(canvas: fabric.Canvas, file: File) {
         useStore.getState().setToolbar({ target: img });
         useStore.getState().syncFromObject(img);
     } catch (err) {
-        console.error('Image load failed', err);
-    } finally {
-        // Revoke URL after short delay
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        console.error('[import] image load failed', err);
     }
 }

@@ -3,16 +3,16 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
 
 // Mock heavy pages so mounting the router doesn't pull in large dependencies
-vi.mock('src/components/pages/Editor/Editor.tsx', () => ({
+vi.mock('@/components/pages/Editor/Editor.tsx', () => ({
     default: () => <div data-testid="editor-mock">Editor Page Mock</div>,
 }));
-vi.mock('src/components/pages/Setting/EditorSettingPage.tsx', () => ({
+vi.mock('@/components/pages/Setting/EditorSettingPage.tsx', () => ({
     default: () => <div data-testid="setting-mock">Setting Page Mock</div>,
 }));
-vi.mock('src/components/pages/NotFound/NotFoundPage.tsx', () => ({
+vi.mock('@/components/pages/NotFound/NotFoundPage.tsx', () => ({
     default: () => <div data-testid="notfound-mock">Not Found Mock</div>,
 }));
-vi.mock('src/components/pages/Command/CommandPalette.tsx', () => ({
+vi.mock('@/components/pages/Command/CommandPalette.tsx', () => ({
     default: () => <div data-testid="command-mock">Command Palette Mock</div>,
 }));
 
@@ -65,7 +65,7 @@ vi.mock('fabric', () => {
     };
 });
 
-import App from 'src/App';
+import App from '@/App';
 
 describe('App integration (single test)', () => {
     it('renders marketing site and navigates to editor when CTA clicked', async () => {
@@ -73,6 +73,8 @@ describe('App integration (single test)', () => {
 
         // Marketing page content should be visible
         expect(screen.getByText(/Draw the Fate/i)).toBeInTheDocument();
+        // BUG-132: the hero says what the product is, in words people search for
+        expect(screen.getByText(/free online whiteboard/i)).toBeInTheDocument();
 
         // Click the primary CTA to navigate to /draw
         const cta = screen.getByRole('button', { name: /Start Now/i });

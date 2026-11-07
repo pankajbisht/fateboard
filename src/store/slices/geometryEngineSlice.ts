@@ -180,7 +180,7 @@ export const geometryEngineSlice = (set, get, store) => ({
     BooleanNode: () => ({
         id: nanoid(),
         type: 'boolean',
-        inputs: { mode: 'unite', target },
+        inputs: { mode: 'unite', target: null },
 
         run: (geo, { mode, target }, helpers) => {
             paper.setup(new paper.Size(5000, 5000));

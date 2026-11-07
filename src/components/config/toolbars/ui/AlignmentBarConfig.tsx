@@ -1,4 +1,4 @@
-import { shortcut } from '@/lib/utils/isMac';
+import { Icon } from '@/components/atoms/Icon';
 import { useStore } from '@/store';
 
 export const AlignmentBarConfig = [
@@ -7,13 +7,11 @@ export const AlignmentBarConfig = [
         label: 'Align Left',
         name: 'Align Left',
         description: 'Align Left',
-        shortcut: shortcut('⌘+c', 'Ctrl+c'),
-        icon: <i className="fa-solid fa-align-left" />,
+        icon: <Icon name="align-objects-left" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().alignObjects('align-left'),
-        handler: ({ get, set }) => {
-            const { copy } = get();
-            copy();
+        handler: ({ get }) => {
+            get().alignObjects('align-left');
         },
     },
     {
@@ -21,13 +19,11 @@ export const AlignmentBarConfig = [
         label: 'Align Center',
         name: 'Align Center',
         description: 'Align Center',
-        shortcut: shortcut('⌘+x', 'Ctrl+x'),
-        icon: <i className="fa-solid fa-align-center" />,
+        icon: <Icon name="align-objects-center" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().alignObjects('align-hcenter'),
-        handler: ({ get, set }) => {
-            const { cut } = get();
-            cut();
+        handler: ({ get }) => {
+            get().alignObjects('align-hcenter');
         },
     },
     {
@@ -35,13 +31,11 @@ export const AlignmentBarConfig = [
         label: 'Align Right',
         name: 'Align Right',
         description: 'Align Right',
-        shortcut: shortcut('⌘+v', 'Ctrl+v'),
-        icon: <i className="fa-solid fa-align-right" />,
+        icon: <Icon name="align-objects-right" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().alignObjects('align-right'),
-        handler: ({ get, set }) => {
-            const { paste } = get();
-            paste();
+        handler: ({ get }) => {
+            get().alignObjects('align-right');
         },
     },
     {
@@ -49,13 +43,11 @@ export const AlignmentBarConfig = [
         label: 'Align Top',
         name: 'Align Top',
         description: 'Align Top',
-        shortcut: shortcut('⌘+D', 'Ctrl+D'),
-        icon: <i className="fa-solid fa-align-left rotate-90" />,
+        icon: <Icon name="align-objects-top" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().alignObjects('align-top'),
-        handler: ({ get, set }) => {
-            const { duplicate } = get();
-            duplicate();
+        handler: ({ get }) => {
+            get().alignObjects('align-top');
         },
     },
     {
@@ -63,13 +55,11 @@ export const AlignmentBarConfig = [
         label: 'Align Middle',
         name: 'Align Middle',
         description: 'Align Middle',
-        shortcut: shortcut('⌥+D', 'Alt+D'),
-        icon: <i className="fa-solid fa-align-center -rotate-90" />,
+        icon: <Icon name="align-objects-middle" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().alignObjects('align-vcenter'),
-        handler: ({ get, set }) => {
-            const { clone } = get();
-            clone();
+        handler: ({ get }) => {
+            get().alignObjects('align-vcenter');
         },
     },
     {
@@ -77,13 +67,11 @@ export const AlignmentBarConfig = [
         label: 'Align Bottom',
         name: 'Align Bottom',
         description: 'Align Bottom',
-        shortcut: shortcut('⌫', 'Backspace'),
-        icon: <i className="fa-solid fa-align-right rotate-90" />,
+        icon: <Icon name="align-objects-bottom" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().alignObjects('align-bottom'),
-        handler: ({ get, set }) => {
-            const { removeLayer } = get();
-            removeLayer();
+        handler: ({ get }) => {
+            get().alignObjects('align-bottom');
         },
     },
     {
@@ -91,13 +79,11 @@ export const AlignmentBarConfig = [
         label: 'Distribute Horizontally',
         name: 'Distribute Horizontally',
         description: 'Distribute Horizontally',
-        shortcut: shortcut('⌫', 'Backspace'),
-        icon: <i className="fa-solid fa-grip-lines-vertical" />,
+        icon: <Icon name="distribute-horizontal" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().alignObjects('distribute-h'),
-        handler: ({ get, set }) => {
-            const { removeLayer } = get();
-            removeLayer();
+        handler: ({ get }) => {
+            get().alignObjects('distribute-h');
         },
     },
     {
@@ -105,13 +91,11 @@ export const AlignmentBarConfig = [
         label: 'Distribute Vertically',
         name: 'Distribute Vertically',
         description: 'Distribute Vertically',
-        shortcut: shortcut('⌫', 'Backspace'),
-        icon: <i className="fa-solid fa-grip-lines" />,
+        icon: <Icon name="distribute-vertical" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().alignObjects('distribute-v'),
-        handler: ({ get, set }) => {
-            const { removeLayer } = get();
-            removeLayer();
+        handler: ({ get }) => {
+            get().alignObjects('distribute-v');
         },
     },
 ];

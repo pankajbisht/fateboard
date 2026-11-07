@@ -41,6 +41,35 @@ export function cssColorToHex(color: string): string | null {
     return a === b ? (a as string) : null;
 }
 
+let _px: CanvasRenderingContext2D | null = null;
+
+/**
+ * Tailwind 4 palette colors are oklch(...), which fabric.Color and <input type="color"> cannot read
+ * (the brush turned black). Rasterize one pixel to get plain #rrggbb. Returns null for
+ * translucent colors (keep those as they are) or when there is no 2D canvas (tests).
+ */
+export function toOpaqueHex(color: string): string | null {
+    if (typeof color !== 'string') return null;
+    if (/^#[0-9a-f]{6}$/i.test(color)) return color.toLowerCase();
+    try {
+        if (!_px) {
+            const c = document.createElement('canvas');
+            c.width = c.height = 1;
+            _px = c.getContext('2d', { willReadFrequently: true });
+        }
+        if (!_px) return null;
+        _px.clearRect(0, 0, 1, 1);
+        _px.fillStyle = '#000';
+        _px.fillStyle = color;
+        _px.fillRect(0, 0, 1, 1);
+        const d = _px.getImageData(0, 0, 1, 1).data;
+        if (!d || d[3] !== 255) return null;
+        return `#${[d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+    } catch {
+        return null;
+    }
+}
+
 /** Handles bg-red-500 AND single-word colors (bg-white, bg-black, bg-transparent) */
 export function tailwindBgToHex(bgClass: string): string | undefined {
     const [, color, shade] = bgClass.split('-');
@@ -116,10 +145,33 @@ export function collectPaintTargets(objects: any[], paint: 'fill' | 'stroke'): a
 }
 
 /* -------------------------------------------------------------------------- */
+/* Paint targets                                                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The right dock palette is the only color picker in the app. A panel that owns a color
+ * (text color, brush fill, connector line, page background...) shows a PaintTargetSwatch;
+ * clicking it registers a PaintTarget here, and the next palette pick goes to `apply`
+ * instead of the selection's fill / stroke / shadow.
+ */
+export type PaintTarget = {
+    id: string;
+    label: string;
+    /** current color, shown in the dock */
+    color?: string;
+    apply: (hex: string) => void;
+};
+
+/* -------------------------------------------------------------------------- */
 /* Slice methods (spread into createShapeStyleSlice)                          */
 /* -------------------------------------------------------------------------- */
 
 export const createColorMethods = (set: any, get: any) => ({
+    /** null = the palette paints `activePaint` (fill | stroke | shadow) */
+    paintTarget: null as PaintTarget | null,
+
+    setPaintTarget: (target: PaintTarget | null) => set({ paintTarget: target }),
+
     // 'solid' | 'gradient' - for the UI tab; kept in sync on selection (see createCanvasSlice)
     fillMode: 'solid',
 
@@ -223,9 +275,6 @@ export const createColorMethods = (set: any, get: any) => ({
      * must call setActivePaint('shadow') when it opens, and setActivePaint('fill') when it closes.
      */
     handleColorChange: (input: string) => {
-        const canvas = get().canvas;
-        if (!canvas) return;
-
         let color = input;
         if (typeof color === 'string' && color.startsWith('bg-')) {
             const hex = tailwindBgToHex(color);
@@ -233,8 +282,20 @@ export const createColorMethods = (set: any, get: any) => ({
             color = hex;
         }
 
-        const normalized = cssColorToHex(color);
-        if (!normalized) return;
+        const parsed = cssColorToHex(color);
+        if (!parsed) return;
+        const normalized = toOpaqueHex(parsed) ?? parsed;
+
+        // 0) A panel color (text, brush, connector, page...) is the target
+        const target: PaintTarget | null = get().paintTarget;
+        if (target) {
+            target.apply(normalized);
+            set({ paintTarget: { ...target, color: normalized } });
+            return;
+        }
+
+        const canvas = get().canvas;
+        if (!canvas) return;
 
         const paint: 'fill' | 'stroke' | 'shadow' = get().activePaint;
         const geditor = get().geditor;

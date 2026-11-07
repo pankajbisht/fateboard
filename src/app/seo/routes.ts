@@ -1,0 +1,86 @@
+/**
+ * One list of public routes and their search / social metadata (docs/ARCHITECTURE.md "SEO").
+ * Read by the build (`vite.config.ts` → `prerender.ts`: one static HTML file per route + sitemap) and by the app
+ * (`RouteSeo`: updates the head on client-side navigation). Pure data: no DOM, no imports (runs in Node too).
+ * The `/` entry must match `index.html` (guarded by `seo.test.ts`).
+ */
+
+export const SITE_URL = 'https://www.fateboard.com';
+
+export interface SeoRoute {
+    /** Router path, no trailing slash (`/` for the landing page). */
+    path: string;
+    title: string;
+    description: string;
+    /** false = `noindex` + left out of the sitemap (still prerendered so a direct visit is HTTP 200). */
+    index: boolean;
+    /** Crawlable fallback content shown before React mounts (and to no-JS crawlers). */
+    heading: string;
+    intro: string;
+}
+
+export const SEO_ROUTES: readonly SeoRoute[] = [
+    {
+        path: '/',
+        title: 'Free Online Whiteboard & Design Canvas | Fateboard',
+        description:
+            'Fateboard is a free online whiteboard and design canvas. Sketch, draw shapes, add text, brainstorm and mind map in your browser. No sign-up needed.',
+        index: true,
+        heading: 'Fateboard: free online whiteboard and design canvas',
+        intro: 'Sketch, draw shapes and arrows, add text, brainstorm and mind map on a blank canvas in your browser. Free, no sign-up needed.',
+    },
+    {
+        path: '/draw',
+        title: 'Draw Online: Free Whiteboard Editor | Fateboard',
+        description:
+            'Open a blank canvas and start drawing online. Brushes, shapes, arrows, text, pages, templates and animation, free in your browser.',
+        index: true,
+        heading: 'Draw online on a free whiteboard',
+        intro: 'A blank canvas with brushes, shapes, arrows, text, multiple pages, templates and keyframe animation. Your work is saved in your browser.',
+    },
+    {
+        path: '/help',
+        title: 'Help & Keyboard Shortcuts | Fateboard',
+        description:
+            'How to use Fateboard: tools, panels and every keyboard shortcut for drawing, shapes, text, layers, undo and export.',
+        index: true,
+        heading: 'Fateboard help and keyboard shortcuts',
+        intro: 'Learn the drawing tools, panels and keyboard shortcuts of the Fateboard online whiteboard.',
+    },
+    {
+        path: '/setting',
+        title: 'Settings | Fateboard',
+        description: 'Fateboard editor settings.',
+        index: false,
+        heading: 'Fateboard settings',
+        intro: 'Editor preferences for the Fateboard online whiteboard.',
+    },
+    {
+        path: '/command-palette',
+        title: 'Commands | Fateboard',
+        description: 'Search every Fateboard command.',
+        index: false,
+        heading: 'Fateboard commands',
+        intro: 'Search and run every Fateboard editor command.',
+    },
+];
+
+/** Shown for any path that is not a public route (share links, unknown URLs): never indexed. */
+export const FALLBACK_SEO: SeoRoute = {
+    path: '',
+    title: 'Fateboard',
+    description: 'Free online whiteboard and design canvas.',
+    index: false,
+    heading: 'Fateboard',
+    intro: 'Free online whiteboard and design canvas.',
+};
+
+const normalize = (pathname: string) => (pathname.replace(/\/+$/, '') || '/').toLowerCase();
+
+export function seoForPath(pathname: string): SeoRoute {
+    const path = normalize(pathname);
+    return SEO_ROUTES.find((r) => r.path === path) ?? FALLBACK_SEO;
+}
+
+export const canonicalUrl = (route: SeoRoute) =>
+    `${SITE_URL}${route.path === '/' ? '/' : route.path}`;

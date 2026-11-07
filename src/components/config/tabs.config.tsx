@@ -1,28 +1,47 @@
+import AnimationPanel from '../organisms/AnimationPanel';
 import { EffectsPanel } from '../organisms/effects';
 import ExportCanvas from '../organisms/effects/ui/ExportCanvas';
+import { PathEffects } from '../organisms/effects/ui/PathEffects';
+import { RepeatAlongPath } from '../organisms/effects/ui/RepeatAlongPath';
+import { RepeatRadially } from '../organisms/effects/ui/RepeatRadially';
 import TemplateGallery from '../organisms/effects/ui/TemplateGallery';
 import Filters from '../organisms/filter/ui/Filters';
+import { FillShadowPanel } from '../organisms/FillShadowPanel';
 
 export const TABS_CONFIG = [
     {
-        id: 'template',
-        label: 'Template',
-        icon: 'fa-solid fa-file-code',
+        id: 'appearance',
+        label: 'Fill & Shadow',
+        icon: 'palette',
         closable: false,
-        content: () => <TemplateGallery />,
+        content: () => <FillShadowPanel />,
     },
     {
-        id: 'effects',
-        label: 'Edit Tools',
-        icon: 'fa-solid fa-screwdriver-wrench',
+        id: 'tiling',
+        label: 'Tiling Tools',
+        icon: 'screwdriver-wrench',
         closable: false,
-        content: () => <EffectsPanel />,
+        content: () => <PathEffects />,
+    },
+    {
+        id: 'rotate',
+        label: 'Rotate Tools',
+        icon: 'rotate',
+        closable: false,
+        content: () => <RepeatRadially />,
     },
 
     {
+        id: 'along-path',
+        label: 'Along Path',
+        icon: 'screwdriver-wrench',
+        closable: false,
+        content: () => <RepeatAlongPath />,
+    },
+    {
         id: 'filter',
         label: 'Filter Tools',
-        icon: 'fa-solid fa-sliders',
+        icon: 'sliders',
         closable: false,
         content: () => <Filters />,
     },
@@ -30,35 +49,43 @@ export const TABS_CONFIG = [
     {
         id: 'export',
         label: 'Export',
-        icon: 'fa-solid fa-file-export',
+        icon: 'file-export',
         closable: false,
         content: () => <ExportCanvas />,
+    },
+
+    {
+        id: 'animate',
+        label: 'Animate',
+        icon: 'video',
+        closable: false,
+        content: () => <AnimationPanel />,
     },
     // {
     //     id: 'svgviewer',
     //     label: 'SVG Viewer',
-    //     icon: 'fa-solid fa-code',
+    //     icon: 'code',
     //     closable: false,
     //     content: () => <SVGViewer />,
     // },
     // {
     //     id: 'layer',
     //     label: 'Layers',
-    //     icon: 'fa-solid fa-layer-group',
+    //     icon: 'layer-group',
     //     closable: false,
     //     content: () => <div>Appearance</div>,
     // },
     // {
     //     id: 'align',
     //     label: 'Align and Distribute',
-    //     icon: 'fa-solid fa-align-left',
+    //     icon: 'align-left',
     //     closable: true,
     //     content: () => <div>Align and Distribute</div>,
     // },
     // {
     //     id: 'fill',
     //     label: 'Fill and Stroke',
-    //     icon: 'fa-solid fa-palette',
+    //     icon: 'palette',
     //     closable: true,
     //     content: () => <div>Fill and Stroke</div>,
     // },

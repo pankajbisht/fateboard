@@ -1,17 +1,18 @@
+import type { IconName } from '@/components/atoms/Icon';
 export const EFFECTS = [
     {
         id: 'tiling',
         label: 'Tiling',
-        icon: 'fa-solid fa-grip',
+        icon: 'grip',
     },
     {
         id: 'rotate',
         label: 'Rotate',
-        icon: 'fa-solid fa-rotate',
+        icon: 'rotate',
     },
     {
         id: 'along-path',
         label: 'Along Path',
-        icon: 'fa-solid fa-bezier-curve',
+        icon: 'bezier-curve',
     },
-] as const;
+] as const satisfies readonly { id: string; label: string; icon: IconName }[];

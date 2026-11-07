@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import RootLayout from '@/components/templates/RootLayout.tsx';
 import WhiteboardMarketingSite from '@/components/pages/web/WhiteboardMarketingSite';
 import EditorPage from '@/components/pages/Editor/Editor';
@@ -8,10 +8,12 @@ import SharePage from '@/components/pages/SharePage/SharePage';
 import HelpPage from '@/components/pages/HelpPage/HelpPage';
 import NotFound from '@/components/pages/NotFound/NotFoundPage';
 import { commandRegistry } from '@/components/config/commandConfig';
+import { RouteSeo } from '@/app/seo/RouteSeo';
 
 export function RootRouter() {
     return (
-        <HashRouter basename="/">
+        <BrowserRouter>
+            <RouteSeo />
             <Routes>
                 <Route element={<RootLayout />}>
                     <Route path="/" element={<WhiteboardMarketingSite />} />
@@ -27,6 +29,6 @@ export function RootRouter() {
 
                 <Route path="*" element={<NotFound />} />
             </Routes>
-        </HashRouter>
+        </BrowserRouter>
     );
 }

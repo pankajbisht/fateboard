@@ -13,13 +13,22 @@
  *  - Alt+drag a handle breaks the tangent. Shift constrains axis / 45deg.
  *  - Arrow keys nudge the selected node (Shift = 10px).
  *  - Enter / Escape / click outside = commit. cancel() reverts everything.
+ *  - The source object is hidden while editing by skipping its render (not `visible`), so an
+ *    autosave / page capture taken mid-edit still saves it as visible.
+ *  - Handle sizes and hit radii are in SCREEN px: they follow viewport zoom AND the CSS fit
+ *    scale of the design board (`screenScale`).
  *  - Handles, outline and markers are painted in `after:render`, so NO helper objects are
  *    added to the canvas (no layer-panel / history / JSON pollution). Only one temporary
  *    working path exists; use `isNodeEditorObject(obj)` to ignore it in your
  *    object:added / object:removed listeners.
  *  - The visual transform (angle, scale, skew, flip, origin, z-index, custom props) is preserved.
+ *  - Works on an object inside a Group too (the outline of a text shape): the working path gets the
+ *    child's full scene transform, and on commit the result goes back into the same group at the
+ *    same index (Fabric converts it into the group plane) and the group re-fits its bounds.
  */
+import { BRAND } from '@/lib/theme';
 import * as fabric from 'fabric';
+import { fitTextShape } from './createShapeSlice';
 
 /* ============================================================
    Types & constants
@@ -47,25 +56,46 @@ export interface NodeSelectionInfo {
     type: 'corner' | 'smooth';
     hasHandles: boolean;
     nodeCount: number;
+    /** Node position in canvas (scene) px, rounded to 0.01. */
+    x: number;
+    y: number;
+    /** Is the node's sub-path closed? */
+    closed: boolean;
+    /** Deleting keeps a valid path (closed >= 3 nodes, open >= 2). */
+    canDelete: boolean;
+    /** Break is possible: any node of a closed path, a middle node of an open one. */
+    canBreak: boolean;
 }
+
+export type NodeType = 'corner' | 'smooth';
+export type SegmentKind = 'line' | 'curve';
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
 
 export interface NodeEditorOptions {
     /** Custom props copied onto the new Path when a primitive (rect, circle...) is converted. */
     extraProps?: string[];
     onChange?: () => void;
     onSelectionChange?: (info: NodeSelectionInfo | null) => void;
-    onExit?: (result: fabric.FabricObject | null, committed: boolean) => void;
+    /**
+     * `point` (scene coords) is set when editing ended by a click outside the shape, so the caller
+     * can act on that click (the node tool starts editing the shape under it).
+     */
+    onExit?: (result: fabric.FabricObject | null, committed: boolean, point?: Pt) => void;
+    /** Outside click selects the object under the pointer (default true). The node tool turns it off. */
+    selectOnOutsideClick?: boolean;
 }
 
 interface ExitOptions {
     commit: boolean;
     select: boolean;
     event?: Event;
+    point?: Pt;
 }
 
 const EPS = 1e-6;
 const KAPPA = 0.5522847498307936;
-const ACCENT = '#2563eb';
+const ACCENT = BRAND.primary;
 const ANCHOR_SIZE = 8; // screen px
 const HANDLE_RADIUS = 4; // screen px
 const HIT_RADIUS = 9; // screen px
@@ -106,6 +136,18 @@ const INTERACTION_PROPS = [
     'moveCursor',
     'objectCaching',
 ] as const;
+
+/**
+ * Screen px per scene px: viewport zoom × the CSS scale of the canvas element (the design board
+ * shows the page scaled to fit, so 1 scene px can be 0.5 screen px).
+ */
+export function screenScale(canvas: fabric.Canvas): number {
+    const zoom = canvas.getZoom() || 1;
+    const rect = (canvas as any).upperCanvasEl?.getBoundingClientRect?.();
+    const width = canvas.getWidth();
+    const css = rect?.width && width ? rect.width / width : 1;
+    return zoom * (css > 0 && Number.isFinite(css) ? css : 1);
+}
 
 /** Objects created by the editor (so app-level listeners can ignore them). */
 const editorObjects = new WeakSet<object>();
@@ -423,7 +465,7 @@ export class PathNodeEditor {
     private drag: DragState | null = null;
     private dirty = false;
     private disposed = false;
-    private srcVisible: boolean;
+    private srcRender: { own: boolean; fn: unknown };
 
     // cached local<->scene mapping of the working path
     private m: number[] = [1, 0, 0, 1, 0, 0];
@@ -440,7 +482,9 @@ export class PathNodeEditor {
         source: fabric.FabricObject,
         options: NodeEditorOptions = {},
     ): PathNodeEditor | null {
-        if ((source as any).group || source instanceof fabric.ActiveSelection) return null;
+        const parent = (source as any).group;
+        if (source instanceof fabric.ActiveSelection || parent instanceof fabric.ActiveSelection)
+            return null;
         const geom = extractGeometry(source);
         if (!geom) return null;
         const subs = parseCommands(geom.commands);
@@ -460,7 +504,10 @@ export class PathNodeEditor {
         this.subs = subs;
         this.opts = options;
         this.extraProps = options.extraProps ?? ['id', 'name', 'data'];
-        this.srcVisible = source.visible;
+        this.srcRender = {
+            own: Object.prototype.hasOwnProperty.call(source, 'render'),
+            fn: (source as any).render,
+        };
 
         this.prevSelection = canvas.selection;
         this.prevSkipTargetFind = canvas.skipTargetFind;
@@ -469,21 +516,42 @@ export class PathNodeEditor {
         canvas.discardActiveObject();
 
         // Working copy: same transform & style, local coords = source local coords.
-        const center = source.getCenterPoint();
+        // Inside a group, the source's own props are relative to the group: use its scene matrix.
+        const scene = (source as any).group
+            ? (() => {
+                  const d = fabric.util.qrDecompose(source.calcTransformMatrix());
+                  return {
+                      scaleX: d.scaleX,
+                      scaleY: d.scaleY,
+                      angle: d.angle,
+                      skewX: d.skewX,
+                      skewY: d.skewY,
+                      flipX: false,
+                      flipY: false,
+                      left: d.translateX,
+                      top: d.translateY,
+                  };
+              })()
+            : (() => {
+                  const center = source.getCenterPoint();
+                  return {
+                      scaleX: source.scaleX,
+                      scaleY: source.scaleY,
+                      angle: source.angle,
+                      skewX: source.skewX,
+                      skewY: source.skewY,
+                      flipX: source.flipX,
+                      flipY: source.flipY,
+                      left: center.x,
+                      top: center.y,
+                  };
+              })();
         const wp = new fabric.Path(buildCommands(subs) as any, { objectCaching: false } as any);
         copyProps(source, wp, STYLE_PROPS);
         wp.set({
             originX: 'center',
             originY: 'center',
-            scaleX: source.scaleX,
-            scaleY: source.scaleY,
-            angle: source.angle,
-            skewX: source.skewX,
-            skewY: source.skewY,
-            flipX: source.flipX,
-            flipY: source.flipY,
-            left: center.x,
-            top: center.y,
+            ...scene,
             pathOffset: new fabric.Point(geom.offset.x, geom.offset.y),
             objectCaching: false,
             selectable: false,
@@ -495,8 +563,10 @@ export class PathNodeEditor {
         this.workingPath = wp;
         editorObjects.add(wp);
 
-        const index = canvas.getObjects().indexOf(source);
-        source.set('visible', false);
+        let top: any = source;
+        while (top.group) top = top.group;
+        const index = canvas.getObjects().indexOf(top);
+        this.hideSource();
         canvas.insertAt(index + 1, wp);
 
         // Recompute bbox / pivot so the model is the single source of truth.
@@ -521,6 +591,11 @@ export class PathNodeEditor {
     }
 
     /* ---------------- public API ---------------- */
+
+    /** The object being edited (still on the canvas, not drawn until the edit ends). */
+    get source(): fabric.FabricObject {
+        return this.src;
+    }
 
     commit() {
         this.finish({ commit: true, select: true });
@@ -548,6 +623,118 @@ export class PathNodeEditor {
         } else if (!this.makeSmooth(a)) {
             return false;
         }
+        this.afterEdit();
+        return true;
+    }
+
+    /** Splits the segment after the selected node (before it, at the end of an open path) in two. */
+    addNodeAfterSelected(): boolean {
+        const a = this.selected;
+        if (!a) return false;
+        const { prev, next } = this.neighbours(a);
+        const from = next ? a : prev;
+        if (!from) return false;
+        return this.insertNode({ sub: a.parent, index: a.parent.nodes.indexOf(from), t: 0.5 });
+    }
+
+    /** Corner = the two handles move independently; Smooth = they stay in line (adds handles). */
+    setSelectedType(type: NodeType): boolean {
+        const a = this.selected;
+        if (!a) return false;
+        if (type === 'smooth') {
+            if (!this.makeSmooth(a)) return false;
+        } else {
+            a.smooth = false;
+        }
+        this.afterEdit();
+        return true;
+    }
+
+    /**
+     * The two segments next to the selected node: 'line' removes their handles (straight lines),
+     * 'curve' turns straight ones into curves with handles at 1/3 and 2/3 (the shape stays the same).
+     */
+    setSelectedSegments(kind: SegmentKind): boolean {
+        const a = this.selected;
+        if (!a) return false;
+        const { prev, next } = this.neighbours(a);
+        const segments: Array<[Anchor, Anchor]> = [];
+        if (prev) segments.push([prev, a]);
+        if (next) segments.push([a, next]);
+        if (!segments.length) return false;
+
+        for (const [p, q] of segments) {
+            if (kind === 'line') {
+                p.outH = null;
+                q.inH = null;
+                p.smooth = false;
+                q.smooth = false;
+            } else if (!isCurve(p, q)) {
+                p.outH = lerp(p, q, 1 / 3);
+                q.inH = lerp(p, q, 2 / 3);
+            }
+        }
+        this.afterEdit();
+        return true;
+    }
+
+    /**
+     * Close: joins the two ends of the selected node's open sub-path.
+     * Open: cuts a closed sub-path at the selected node (the node becomes both ends).
+     */
+    setSelectedPathClosed(closed: boolean): boolean {
+        const a = this.selected;
+        if (!a) return false;
+        const sub = a.parent;
+        if (sub.closed === closed) return false;
+
+        if (closed) {
+            if (sub.nodes.length < 2) return false;
+            const first = sub.nodes[0];
+            const last = sub.nodes[sub.nodes.length - 1];
+            if (sub.nodes.length > 2 && dist(first, last) < EPS) {
+                first.inH = last.inH; // ends already touch: merge them
+                sub.nodes.pop();
+                if (this.selected === last) this.selected = first;
+            }
+            if (sub.nodes.length < 3 && !isCurve(sub.nodes[0], sub.nodes[sub.nodes.length - 1]))
+                return false; // two nodes and a straight line: nothing to close
+            sub.closed = true;
+        } else {
+            this.openAt(a);
+        }
+        this.afterEdit();
+        return true;
+    }
+
+    /** Closed path: open it at the node. Open path: split it in two at a middle node. */
+    breakAtSelected(): boolean {
+        const a = this.selected;
+        if (!a) return false;
+        const sub = a.parent;
+        if (sub.closed) return this.setSelectedPathClosed(false);
+
+        const i = sub.nodes.indexOf(a);
+        if (i <= 0 || i >= sub.nodes.length - 1) return false; // an end node: nothing to break
+
+        const tail: SubPath = { nodes: [], closed: false };
+        const end = makeAnchor(sub, a.x, a.y); // end of the first part
+        end.inH = a.inH;
+        tail.nodes = [a, ...sub.nodes.slice(i + 1)];
+        sub.nodes = [...sub.nodes.slice(0, i), end];
+        a.inH = null;
+        a.smooth = false;
+        tail.nodes.forEach((n) => (n.parent = tail));
+        this.subs.splice(this.subs.indexOf(sub) + 1, 0, tail);
+        this.afterEdit();
+        return true;
+    }
+
+    /** Moves the selected node (its handles follow) to canvas (scene) coordinates. */
+    moveSelectedTo(scene: Pt): boolean {
+        const a = this.selected;
+        if (!a || !Number.isFinite(scene.x) || !Number.isFinite(scene.y)) return false;
+        this.moveAnchor(a, this.tl(scene));
         this.afterEdit();
         return true;
     }
@@ -638,13 +825,34 @@ export class PathNodeEditor {
     private emitSelection() {
         const a = this.selected;
         if (!a) return this.opts.onSelectionChange?.(null);
+        const sub = a.parent;
+        const index = sub.nodes.indexOf(a);
+        const n = sub.nodes.length;
+        const scene = this.tc(a);
         this.opts.onSelectionChange?.({
-            index: a.parent.nodes.indexOf(a),
-            subPathIndex: this.subs.indexOf(a.parent),
+            index,
+            subPathIndex: this.subs.indexOf(sub),
             type: a.smooth ? 'smooth' : 'corner',
             hasHandles: !!(a.inH || a.outH),
-            nodeCount: a.parent.nodes.length,
+            nodeCount: n,
+            x: round2(scene.x),
+            y: round2(scene.y),
+            closed: sub.closed,
+            canDelete: n > (sub.closed ? 3 : 2),
+            canBreak: sub.closed || (index > 0 && index < n - 1),
         });
+    }
+
+    /** Cut a closed sub-path at `a`: it becomes the first node and a copy of it the last. */
+    private openAt(a: Anchor) {
+        const sub = a.parent;
+        const i = sub.nodes.indexOf(a);
+        const end = makeAnchor(sub, a.x, a.y);
+        end.inH = a.inH; // the closing segment now ends on the copy
+        a.inH = null;
+        a.smooth = false;
+        sub.nodes = [...sub.nodes.slice(i), ...sub.nodes.slice(0, i), end];
+        sub.closed = false;
     }
 
     private neighbours(a: Anchor) {
@@ -671,8 +879,9 @@ export class PathNodeEditor {
 
     /* ---------------- hit testing ---------------- */
 
+    /** Screen px per scene px (viewport zoom × design fit scale). */
     private zoom() {
-        return this.canvas.getZoom() || 1;
+        return screenScale(this.canvas);
     }
 
     private segmentTolerance() {
@@ -906,7 +1115,7 @@ export class PathNodeEditor {
         if (seg && seg.dist <= this.segmentTolerance()) return; // clicking the outline keeps editing
 
         // clicked elsewhere -> leave node mode (and pass the click on to whatever is below)
-        this.finish({ commit: true, select: false, event: e });
+        this.finish({ commit: true, select: false, event: e, point: p });
     }
 
     private onMouseMove(opt: any) {
@@ -1117,6 +1326,8 @@ export class PathNodeEditor {
         const wp = this.workingPath;
         let result: fabric.FabricObject = src;
 
+        const parent: fabric.Group | undefined = (src as any).group;
+
         if (opts.commit && this.dirty) {
             const center = wp.getCenterPoint();
 
@@ -1128,11 +1339,16 @@ export class PathNodeEditor {
                     height: wp.height,
                     pathOffset: new fabric.Point(wp.pathOffset.x, wp.pathOffset.y),
                 } as any);
-                src.setPositionByOrigin(center, 'center', 'center');
-                src.set('visible', this.srcVisible);
+                // a group child is positioned in the group's plane
+                const local = parent
+                    ? center.transform(fabric.util.invertTransform(parent.calcTransformMatrix()))
+                    : center;
+                src.setPositionByOrigin(local, 'center', 'center');
+                this.showSource();
                 src.dirty = true;
                 src.setCoords();
                 canvas.remove(wp);
+                if (parent) result = this.refitGroup(parent);
             } else {
                 // Primitive -> becomes a Path at the same z-index.
                 copyProps(src, wp, INTERACTION_PROPS);
@@ -1141,28 +1357,76 @@ export class PathNodeEditor {
                     originX: src.originX,
                     originY: src.originY,
                     excludeFromExport: !!(src as any).excludeFromExport,
-                    visible: this.srcVisible,
+                    visible: src.visible,
                 } as any);
                 wp.setPositionByOrigin(center, 'center', 'center');
                 wp.dirty = true;
                 wp.setCoords();
                 editorObjects.delete(wp);
-                canvas.remove(src);
-                result = wp;
+                this.showSource();
+                if (parent) {
+                    // swap inside the group; insertAt converts wp from the canvas plane
+                    canvas.remove(wp);
+                    const i = parent.getObjects().indexOf(src);
+                    parent.remove(src);
+                    parent.insertAt(Math.max(0, i), wp);
+                    if ((parent as any).__box === src) (parent as any).__box = wp;
+                    result = this.refitGroup(parent);
+                } else {
+                    canvas.remove(src);
+                    result = wp;
+                }
             }
             canvas.fire('object:modified', { target: result } as any);
         } else {
             // nothing changed (or cancelled): original stays exactly as it was
-            src.set('visible', this.srcVisible);
+            this.showSource();
             canvas.remove(wp);
+            if (parent) result = this.topLevel(parent);
         }
 
         if (opts.select) canvas.setActiveObject(result);
-        else if (opts.event) this.selectUnderPointer(opts.event);
+        else if (opts.event && this.opts.selectOnOutsideClick !== false)
+            this.selectUnderPointer(opts.event);
 
         canvas.requestRenderAll();
         this.opts.onSelectionChange?.(null);
-        this.opts.onExit?.(result, opts.commit && this.dirty);
+        this.opts.onExit?.(result, opts.commit && this.dirty, opts.point);
+    }
+
+    /** Skip drawing the source without changing any serialized property. */
+    private hideSource() {
+        (this.src as any).render = () => undefined;
+        this.markParentsDirty();
+    }
+
+    private showSource() {
+        if (this.srcRender.own) (this.src as any).render = this.srcRender.fn;
+        else delete (this.src as any).render;
+        this.markParentsDirty();
+    }
+
+    /** A cached group would keep drawing the old child. */
+    private markParentsDirty() {
+        for (let g: any = (this.src as any).group; g; g = g.group) g.set('dirty', true);
+    }
+
+    /** The outermost group (what sits on the canvas, gets selected and is saved). */
+    private topLevel(obj: fabric.FabricObject): fabric.FabricObject {
+        let top: any = obj;
+        while (top.group) top = top.group;
+        return top;
+    }
+
+    /** After a child changed: the group(s) re-fit their bounds (children keep their place). */
+    private refitGroup(parent: fabric.Group): fabric.FabricObject {
+        for (let g: any = parent; g; g = g.group) {
+            g.triggerLayout?.();
+            g.set('dirty', true);
+            g.setCoords();
+            g.getObjects().forEach((o: fabric.FabricObject) => o.setCoords()); // stale after layout
+        }
+        return this.topLevel(parent);
     }
 
     /** After an outside click we skipped target finding, so replay the selection ourselves. */
@@ -1179,47 +1443,274 @@ export class PathNodeEditor {
 }
 
 /* ============================================================
+   Node tool helpers
+============================================================ */
+
+/** Props a shape keeps when it becomes a path (identity, layers, links, animation). */
+const CARRY_PROPS = ['id', 'name', 'data', 'customId', 'customType', 'shapeId', 'animId', 'linkId'];
+
+/** Objects whose geometry must not be rewritten: connectors and their handles. */
+const NOT_EDITABLE_TYPES = new Set(['connector', 'connector-handle']);
+
+/**
+ * What the node tool edits for a clicked object: a text shape (shape + text group) edits its
+ * outline (`__box`), anything else edits itself. Null for a locked text shape.
+ */
+function nodeTarget(obj: any): any {
+    if (!obj?.isTextShape) return obj;
+    if (obj._locked) return null;
+    return (
+        obj.__box ??
+        obj.getObjects?.().find((o: any) => o !== obj.__text && !(o instanceof fabric.Textbox)) ??
+        null
+    );
+}
+
+/** Can the node tool edit this object? (Unsupported geometry is rejected later by `start`.) */
+function isEditable(obj: any): boolean {
+    return (
+        !!obj &&
+        obj.visible !== false &&
+        obj.evented !== false &&
+        !obj.excludeFromExport &&
+        !obj._locked &&
+        (!obj.group || !!obj.group.isTextShape) &&
+        !NOT_EDITABLE_TYPES.has(obj.customType) &&
+        !isNodeEditorObject(obj) &&
+        extractGeometry(obj) !== null
+    );
+}
+
+/**
+ * The editable object under a scene point: the TOPMOST object hit, or null when the topmost hit
+ * cannot be edited (a click on text never edits the shape behind it).
+ */
+function editableAt(canvas: fabric.Canvas, point: Pt, skip?: unknown): fabric.FabricObject | null {
+    const p = new fabric.Point(point.x, point.y);
+    const objects = canvas.getObjects();
+    for (let i = objects.length - 1; i >= 0; i--) {
+        const obj: any = objects[i];
+        if (obj === skip || isNodeEditorObject(obj) || obj.visible === false) continue;
+        if (obj.excludeFromExport) continue;
+        if (!obj.containsPoint?.(p)) continue;
+        if (obj.evented === false) return null;
+        const target = nodeTarget(obj);
+        return isEditable(target) ? target : null;
+    }
+    return null;
+}
+
+/** Text shape after its outline changed: centre the text on the outline, then re-wrap it. */
+function refitText(group: any) {
+    const box = group.__box;
+    const text = group.__text;
+    if (box && text) {
+        const c = box.getRelativeCenterPoint(); // group plane, like the text's left / top
+        text.setPositionByOrigin(c, 'center', 'center');
+        text.setCoords();
+    }
+    fitTextShape(group);
+}
+
+/** The topmost selectable object under a scene point (for selecting after an edit). */
+function objectAt(canvas: fabric.Canvas, point: Pt): fabric.FabricObject | null {
+    const p = new fabric.Point(point.x, point.y);
+    const objects = canvas.getObjects();
+    for (let i = objects.length - 1; i >= 0; i--) {
+        const obj: any = objects[i];
+        if (isNodeEditorObject(obj) || obj.visible === false || obj.excludeFromExport) continue;
+        if (obj.selectable === false || obj.evented === false) continue;
+        if (obj.containsPoint?.(p)) return obj;
+    }
+    return null;
+}
+
+const scenePointOf = (opt: any): Pt | null => {
+    const p = opt?.scenePoint ?? opt?.absolutePointer ?? opt?.pointer;
+    return p ? { x: p.x, y: p.y } : null;
+};
+
+const NODE_TOOL_CURSOR = 'crosshair';
+const EDITABLE_HOVER_CURSOR = 'pointer';
+
+/* ============================================================
    Zustand slice
    (set / get are the usual zustand setters; `canvas` lives in the store)
+
+   Node tool (activeTool === 'node'): the canvas slice turns off Fabric selection; this slice
+   listens for clicks: click a shape / path to edit its nodes, click another one to switch,
+   click empty canvas to finish, Escape (nothing in edit) = back to Select. Leaving the tool
+   commits the edit.
+
+   From Select: double-click a shape = node tool on it; the edit then ends back in Select
+   (Enter / Escape / Done keep it selected; a click away selects what is under the pointer).
 ============================================================ */
-export const createNodeEditorSlice = (set: any, get: any) => ({
-    nodeMode: false,
-    /** The temporary working path while editing (null otherwise). */
-    activePath: null as fabric.Path | null,
-    nodeEditor: null as PathNodeEditor | null,
-    selectedNode: null as NodeSelectionInfo | null,
+export const createNodeEditorSlice = (set: any, get: any, store?: any) => {
+    /** The current edit was opened by a double-click in Select: finishing it returns to Select. */
+    let returnToSelect = false;
 
-    enterNodeMode: () => {
+    /** Starts editing `obj` (commits any edit in progress). Returns true when editing started. */
+    const startEditing = (obj: fabric.FabricObject | null | undefined): boolean => {
         const { canvas, nodeEditor } = get();
-        if (!canvas) return;
+        if (!canvas) return false;
         nodeEditor?.commit();
+        obj = nodeTarget(obj);
+        if (!obj || obj instanceof fabric.ActiveSelection || !isEditable(obj)) return false;
 
-        const active = canvas.getActiveObject();
-        if (!active || active instanceof fabric.ActiveSelection) return;
+        const inTool = get().activeTool === 'node';
+        if (inTool) canvas.defaultCursor = NODE_TOOL_CURSOR; // what the editor restores on exit
 
-        const editor = PathNodeEditor.start(canvas, active, {
+        const editor = PathNodeEditor.start(canvas, obj, {
+            extraProps: CARRY_PROPS,
+            selectOnOutsideClick: !inTool,
             onSelectionChange: (info) => set({ selectedNode: info }),
-            onExit: () =>
-                set({ nodeMode: false, activePath: null, nodeEditor: null, selectedNode: null }),
+            onExit: (result, committed, point) => {
+                set({ nodeMode: false, activePath: null, nodeEditor: null, selectedNode: null });
+                // text shape: the text re-centres on the new outline and re-wraps to its width
+                if (committed && (result as any)?.isTextShape) refitText(result);
+
+                const back = returnToSelect;
+                returnToSelect = false;
+                if (get().activeTool !== 'node') return; // the tool changed: nothing more to do
+
+                if (back) {
+                    // opened by a double-click in Select: go back there
+                    get().setActiveTool?.('select');
+                    if (point) {
+                        const hit = objectAt(canvas, point);
+                        if (hit) canvas.setActiveObject(hit);
+                        else canvas.discardActiveObject();
+                        canvas.requestRenderAll();
+                    }
+                    return;
+                }
+                // node tool: the click that ended the edit may land on another shape -> edit it
+                if (point) startEditing(editableAt(canvas, point));
+            },
         });
-        if (!editor) return; // unsupported object type (text, image, group...)
+        if (!editor) return false; // unsupported object type (text, image, group...)
 
         set({ nodeMode: true, activePath: editor.workingPath, nodeEditor: editor });
-    },
+        return true;
+    };
 
-    /** Kept for backwards compatibility: the canvas argument is no longer needed. */
-    exitNodeMode: (_canvas?: fabric.Canvas) => {
-        get().nodeEditor?.commit();
-    },
+    /* ---- node tool listeners (attached while activeTool === 'node') ---- */
+    let detachTool: (() => void) | null = null;
 
-    cancelNodeMode: () => {
-        get().nodeEditor?.cancel();
-    },
+    const attachTool = (canvas: fabric.Canvas) => {
+        detachTool?.();
 
-    addNodeAt: (_canvas: fabric.Canvas | undefined, x: number, y: number) =>
-        get().nodeEditor?.addNodeAtPoint({ x, y }) ?? false,
+        const onDown = (opt: any) => {
+            if (get().nodeEditor || opt?.e?.button) return; // the editor handles its own clicks
+            const point = scenePointOf(opt);
+            if (!point) return;
+            if (!startEditing(editableAt(canvas, point))) canvas.discardActiveObject();
+        };
+        const onMove = (opt: any) => {
+            if (get().nodeEditor) return;
+            const point = scenePointOf(opt);
+            canvas.defaultCursor =
+                point && editableAt(canvas, point) ? EDITABLE_HOVER_CURSOR : NODE_TOOL_CURSOR;
+        };
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key !== 'Escape' || get().nodeEditor) return;
+            const t = e.target as HTMLElement | null;
+            if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
+            get().setActiveTool?.('select');
+        };
 
-    deleteSelectedNode: () => get().nodeEditor?.deleteSelected() ?? false,
+        const offs = [canvas.on('mouse:down', onDown), canvas.on('mouse:move', onMove)];
+        window.addEventListener('keydown', onKey);
+        detachTool = () => {
+            offs.forEach((off) => off());
+            window.removeEventListener('keydown', onKey);
+            detachTool = null;
+        };
+    };
 
-    toggleSelectedNodeType: () => get().nodeEditor?.toggleSelectedType() ?? false,
-});
+    /* ---- double-click in Select = edit nodes (attached for the canvas' lifetime) ---- */
+    let detachDblClick: (() => void) | null = null;
+    const attachDblClick = (canvas: fabric.Canvas) => {
+        detachDblClick?.();
+        const onDblClick = (opt: any) => {
+            if (get().activeTool !== 'select' || get().nodeEditor) return;
+            const target = opt?.target;
+            // text shapes: a double-click edits their text (canvas slice); plain text too
+            if (!target || target.isTextShape || !isEditable(nodeTarget(target))) return;
+            canvas.setActiveObject(target);
+            returnToSelect = true;
+            get().setActiveTool?.('node'); // edits the active object
+            if (!get().nodeEditor) returnToSelect = false;
+        };
+        const off = canvas.on('mouse:dblclick', onDblClick);
+        detachDblClick = () => {
+            off();
+            detachDblClick = null;
+        };
+    };
+
+    // Follow the tool and the canvas (mode switches replace the canvas).
+    store?.subscribe?.((state: any, prevState: any) => {
+        if (state.canvas !== prevState.canvas) {
+            if (state.canvas) attachDblClick(state.canvas);
+            else detachDblClick?.();
+        }
+        if (state.activeTool === prevState.activeTool && state.canvas === prevState.canvas) return;
+        const wasNode = prevState.activeTool === 'node';
+        const isNode = state.activeTool === 'node' && !!state.canvas;
+
+        if (wasNode && state.activeTool !== 'node') state.nodeEditor?.commit();
+        if (!isNode) {
+            detachTool?.();
+            return;
+        }
+        if (!detachTool || state.canvas !== prevState.canvas) attachTool(state.canvas);
+    });
+
+    return {
+        nodeMode: false,
+        /** The temporary working path while editing (null otherwise). */
+        activePath: null as fabric.Path | null,
+        nodeEditor: null as PathNodeEditor | null,
+        selectedNode: null as NodeSelectionInfo | null,
+
+        /** Edits the selected object's nodes (no-op for text, images, groups, locked objects). */
+        enterNodeMode: () => {
+            const canvas = get().canvas;
+            if (!canvas) return;
+            startEditing(canvas.getActiveObject());
+        },
+
+        /** Kept for backwards compatibility: the canvas argument is no longer needed. */
+        exitNodeMode: (_canvas?: fabric.Canvas) => {
+            get().nodeEditor?.commit();
+        },
+
+        cancelNodeMode: () => {
+            get().nodeEditor?.cancel();
+        },
+
+        addNodeAt: (_canvas: fabric.Canvas | undefined, x: number, y: number) =>
+            get().nodeEditor?.addNodeAtPoint({ x, y }) ?? false,
+
+        deleteSelectedNode: () => get().nodeEditor?.deleteSelected() ?? false,
+
+        toggleSelectedNodeType: () => get().nodeEditor?.toggleSelectedType() ?? false,
+
+        /* ---- node toolbar ---- */
+        /** Adds a node in the middle of the segment after the selected node. */
+        addNodeToPath: (): boolean => get().nodeEditor?.addNodeAfterSelected() ?? false,
+        setSelectedNodeType: (type: NodeType): boolean =>
+            get().nodeEditor?.setSelectedType(type) ?? false,
+        /** Segments next to the selected node: straight lines or curves. */
+        setSelectedSegments: (kind: SegmentKind): boolean =>
+            get().nodeEditor?.setSelectedSegments(kind) ?? false,
+        /** Close / open the selected node's sub-path. */
+        setPathClosed: (closed: boolean): boolean =>
+            get().nodeEditor?.setSelectedPathClosed(closed) ?? false,
+        breakPathAtSelectedNode: (): boolean => get().nodeEditor?.breakAtSelected() ?? false,
+        /** x / y in canvas (document) px. */
+        moveSelectedNode: (x: number, y: number): boolean =>
+            get().nodeEditor?.moveSelectedTo({ x, y }) ?? false,
+    };
+};

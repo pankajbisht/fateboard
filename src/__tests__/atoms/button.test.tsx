@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { vi } from 'vitest';
-import { Button } from 'src/components/atoms/Button';
+import { Button } from '@/components/atoms/Button';
 
 describe('Button atom', () => {
     it('renders children and fires onClick', () => {

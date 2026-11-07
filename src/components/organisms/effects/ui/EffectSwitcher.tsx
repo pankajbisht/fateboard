@@ -1,3 +1,4 @@
+import { Icon } from '@/components/atoms/Icon';
 import { useRef } from 'react';
 import { EFFECTS } from './Effect.config';
 import type { EffectType } from './EffectsPanel';
@@ -27,25 +28,25 @@ export const EffectSwitcher = ({
                 className="
           list-none flex items-center justify-between
           px-3 py-2
-          bg-neutral-50
-          border border-neutral-300
+          bg-surface-muted
+          border border-line-strong
           rounded-md
           cursor-pointer
-          hover:bg-neutral-100
+          hover:bg-surface-muted
         "
             >
                 <div className="flex items-center gap-2">
-                    <i className={`${active.icon} text-neutral-600`} />
+                    <Icon name={active.icon} className="text-ink-muted" />
                     <span className="text-sm font-medium">{active.label}</span>
                 </div>
 
-                <i className="fa-solid fa-chevron-down text-xs text-neutral-500 transition-transform" />
+                <Icon name="chevron-down" className="text-xs text-ink-muted transition-transform" />
             </summary>
 
             <div
                 className="
           absolute z-30 mt-1 w-full
-          bg-white border border-neutral-200
+          bg-surface border border-line
           rounded-md shadow-lg
         "
             >
@@ -55,11 +56,11 @@ export const EffectSwitcher = ({
                         onClick={() => handleSelect(effect.id)}
                         className={`
               w-full flex items-center gap-2 px-3 py-2 text-sm
-              hover:bg-blue-50
-              ${effect.id === value ? 'bg-blue-100 text-blue-700 font-medium' : 'text-neutral-700'}
+              hover:bg-primary-50
+              ${effect.id === value ? 'bg-primary-100 text-primary-ink font-medium' : 'text-ink'}
             `}
                     >
-                        <i className={effect.icon} />
+                        <Icon name={effect.icon} />
                         {effect.label}
                     </button>
                 ))}

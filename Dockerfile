@@ -1,17 +1,17 @@
-FROM node:21
+# Same Node as .nvmrc / package.json engines
+FROM node:26.13.0-slim
 
 WORKDIR /app
 
 # Copy and install dependencies
-COPY package*.json ./
-RUN npm install
+COPY package*.json .npmrc ./
+RUN npm ci
 
 # Copy all project files
 COPY . .
 
 # Build the Vite app
-# RUN npm run build
-RUN npm run build:no-check
+RUN npm run build
 
 # Expose Vite's preview server port
 EXPOSE 4173

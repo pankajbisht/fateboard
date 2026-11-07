@@ -1,6 +1,5 @@
 import Brand from '../../atoms/Brand';
 import { useNavigate } from 'react-router-dom';
-import { usePageTitle } from '../../../lib/utils/usePageTitle';
 import ImageSlider from './ImageSlider';
 import MiniWhiteboard from './MiniWhiteboard';
 
@@ -9,8 +8,6 @@ import MiniWhiteboard from './MiniWhiteboard';
 ========================================================= */
 
 export default function WhiteboardMarketingSite() {
-    usePageTitle('Online Whiteboard | Fateboard');
-
     const navigate = useNavigate();
 
     const handleStartDrawing = () => {
@@ -191,7 +188,7 @@ export default function WhiteboardMarketingSite() {
                         <button
                             type="button"
                             onClick={() => scrollToSection('features')}
-                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 sm:block"
+                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
                         >
                             Features
                         </button>
@@ -199,7 +196,7 @@ export default function WhiteboardMarketingSite() {
                         <button
                             type="button"
                             onClick={() => scrollToSection('interactive')}
-                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 sm:block"
+                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
                         >
                             Demo
                         </button>
@@ -207,7 +204,7 @@ export default function WhiteboardMarketingSite() {
                         <button
                             type="button"
                             onClick={() => scrollToSection('process')}
-                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-indigo-50 hover:text-indigo-600 sm:block"
+                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
                         >
                             Action
                         </button>
@@ -215,7 +212,7 @@ export default function WhiteboardMarketingSite() {
                         <button
                             type="button"
                             onClick={handleStartDrawing}
-                            className="ml-1 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition-all duration-300 hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-xl"
+                            className="ml-1 rounded-xl bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-200 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-xl"
                         >
                             Start Drawing
                         </button>
@@ -229,7 +226,7 @@ export default function WhiteboardMarketingSite() {
                 HERO
             ===================================================== */}
 
-            <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 to-indigo-600 text-white">
+            <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-600 text-white">
                 {/* Decorative shapes */}
                 <div className="pointer-events-none absolute inset-0 overflow-hidden">
                     <div className="animate-float absolute left-[8%] top-[18%] h-16 w-16 rounded-2xl border border-white/20 bg-white/10 backdrop-blur-sm" />
@@ -252,15 +249,16 @@ export default function WhiteboardMarketingSite() {
                             Draw the Fate.
                         </h1>
 
-                        <p className="animate-fade-up mx-auto mt-7 max-w-2xl text-base leading-7 text-blue-50 sm:text-xl sm:leading-8">
-                            Just start with a blank canvas and the freedom to move the draw fate.
+                        <p className="animate-fade-up mx-auto mt-7 max-w-2xl text-base leading-7 text-primary-50 sm:text-xl sm:leading-8">
+                            A free online whiteboard and design canvas. Sketch, draw shapes, add
+                            text and brainstorm right in your browser, no sign-up needed.
                         </p>
 
                         <div className="animate-fade-up mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row">
                             <button
                                 type="button"
                                 onClick={handleStartDrawing}
-                                className="group rounded-2xl bg-white px-7 py-3.5 font-bold text-indigo-600 shadow-2xl shadow-indigo-950/20 transition duration-300 hover:-translate-y-1 hover:shadow-3xl"
+                                className="group rounded-2xl bg-white px-7 py-3.5 font-bold text-primary-600 shadow-2xl shadow-primary-950/20 transition duration-300 hover:-translate-y-1 hover:shadow-3xl"
                             >
                                 Start Now
                                 <span className="ml-2 inline-block transition-transform duration-300 group-hover:translate-x-1">
@@ -289,13 +287,13 @@ export default function WhiteboardMarketingSite() {
                                 </div>
 
                                 <div className="grid grid-cols-3 gap-4">
-                                    <div className="h-28 rounded-2xl bg-indigo-50" />
+                                    <div className="h-28 rounded-2xl bg-primary-50" />
 
-                                    <div className="flex h-28 items-center justify-center rounded-2xl border-2 border-dashed border-indigo-200">
-                                        <div className="h-14 w-14 rounded-full border-4 border-indigo-500" />
+                                    <div className="flex h-28 items-center justify-center rounded-2xl border-2 border-dashed border-primary-200">
+                                        <div className="h-14 w-14 rounded-full border-4 border-primary-500" />
                                     </div>
 
-                                    <div className="h-28 rounded-2xl bg-blue-50" />
+                                    <div className="h-28 rounded-2xl bg-primary-50" />
                                 </div>
                             </div>
                         </div>
@@ -310,7 +308,7 @@ export default function WhiteboardMarketingSite() {
             <section id="features" className="scroll-mt-24 bg-white py-24 sm:py-28">
                 <div className="mx-auto max-w-7xl px-5 sm:px-8">
                     <div className="mx-auto max-w-2xl text-center">
-                        <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+                        <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary-600">
                             Key Features
                         </p>
 
@@ -328,12 +326,12 @@ export default function WhiteboardMarketingSite() {
                         {features.map((feature, index) => (
                             <div
                                 key={feature.title}
-                                className="group rounded-3xl border border-gray-200 bg-white p-7 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-100"
+                                className="group rounded-3xl border border-gray-200 bg-white p-7 shadow-sm transition-all duration-500 hover:-translate-y-2 hover:border-primary-200 hover:shadow-2xl hover:shadow-primary-100"
                                 style={{
                                     animationDelay: `${index * 100}ms`,
                                 }}
                             >
-                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-2xl text-indigo-600 transition duration-500 group-hover:rotate-6 group-hover:scale-110">
+                                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50 text-2xl text-primary-600 transition duration-500 group-hover:rotate-6 group-hover:scale-110">
                                     {feature.icon}
                                 </div>
 
@@ -345,7 +343,7 @@ export default function WhiteboardMarketingSite() {
                                     {feature.description}
                                 </p>
 
-                                <div className="mt-7 h-1 w-10 rounded-full bg-indigo-600 transition-all duration-500 group-hover:w-20" />
+                                <div className="mt-7 h-1 w-10 rounded-full bg-primary-600 transition-all duration-500 group-hover:w-20" />
                             </div>
                         ))}
                     </div>
@@ -363,13 +361,13 @@ export default function WhiteboardMarketingSite() {
                 <div className="mx-auto max-w-7xl px-5 sm:px-8">
                     <div className="grid items-center gap-14 lg:grid-cols-[.8fr_1.2fr]">
                         <div>
-                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary-600">
                                 Try Fateboard
                             </p>
 
                             <h2 className="mt-4 text-3xl font-bold tracking-tight text-gray-900 sm:text-5xl">
                                 Don't just look at it.
-                                <span className="block text-indigo-600">Try it.</span>
+                                <span className="block text-primary-600">Try it.</span>
                             </h2>
 
                             <p className="mt-6 max-w-lg text-base leading-7 text-gray-500">
@@ -380,7 +378,7 @@ export default function WhiteboardMarketingSite() {
                             <button
                                 type="button"
                                 onClick={handleStartDrawing}
-                                className="mt-8 rounded-xl bg-indigo-600 px-6 py-3 font-semibold text-white shadow-lg shadow-indigo-200 transition duration-300 hover:-translate-y-1 hover:bg-indigo-700"
+                                className="mt-8 rounded-xl bg-primary-600 px-6 py-3 font-semibold text-white shadow-lg shadow-primary-200 transition duration-300 hover:-translate-y-1 hover:bg-primary-700"
                             >
                                 Open Full Whiteboard →
                             </button>
@@ -399,7 +397,7 @@ export default function WhiteboardMarketingSite() {
                 <div className="mx-auto max-w-7xl px-5 sm:px-8">
                     <div className="grid gap-14 lg:grid-cols-[.8fr_1.2fr]">
                         <div>
-                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary-600">
                                 One canvas. Many possibilities.
                             </p>
 
@@ -417,14 +415,14 @@ export default function WhiteboardMarketingSite() {
                             {useCases.map((item, index) => (
                                 <div
                                     key={item.number}
-                                    className="group border-t border-gray-200 py-7 transition duration-300 hover:border-indigo-300"
+                                    className="group border-t border-gray-200 py-7 transition duration-300 hover:border-primary-300"
                                 >
                                     <div className="flex items-start justify-between">
-                                        <span className="text-sm font-bold text-indigo-600">
+                                        <span className="text-sm font-bold text-primary-600">
                                             {item.number}
                                         </span>
 
-                                        <span className="text-gray-300 transition duration-300 group-hover:-translate-y-1 group-hover:text-indigo-400">
+                                        <span className="text-gray-300 transition duration-300 group-hover:-translate-y-1 group-hover:text-primary-400">
                                             ↗
                                         </span>
                                     </div>
@@ -453,7 +451,7 @@ export default function WhiteboardMarketingSite() {
             >
                 <div className="mx-auto max-w-7xl px-5 sm:px-8">
                     <div className="mx-auto max-w-2xl text-center">
-                        <p className="text-sm font-bold uppercase tracking-[0.2em] text-indigo-600">
+                        <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary-600">
                             See It In Action
                         </p>
 
@@ -489,7 +487,7 @@ export default function WhiteboardMarketingSite() {
                                 },
                             ].map((item) => (
                                 <div key={item.number} className="group flex gap-5">
-                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-sm font-bold text-white shadow-lg shadow-indigo-200 transition duration-300 group-hover:scale-110">
+                                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-sm font-bold text-white shadow-lg shadow-primary-200 transition duration-300 group-hover:scale-110">
                                         {item.number}
                                     </div>
 
@@ -515,11 +513,11 @@ export default function WhiteboardMarketingSite() {
 
             <section className="bg-white py-24 sm:py-28">
                 <div className="mx-auto max-w-7xl px-5 sm:px-8">
-                    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-600 px-7 py-14 text-white sm:px-14">
+                    <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-primary-600 to-primary-600 px-7 py-14 text-white sm:px-14">
                         <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
 
                         <div className="relative">
-                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-blue-100">
+                            <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary-100">
                                 The journey continues
                             </p>
 
@@ -527,7 +525,7 @@ export default function WhiteboardMarketingSite() {
                                 Fateboard is just getting started.
                             </h2>
 
-                            <p className="mt-5 max-w-2xl leading-7 text-blue-100">
+                            <p className="mt-5 max-w-2xl leading-7 text-primary-100">
                                 More creative tools are on the way. The goal is simple — make visual
                                 thinking easier.
                             </p>
@@ -564,7 +562,7 @@ export default function WhiteboardMarketingSite() {
 
             <section className="bg-gray-50 py-24 sm:py-28">
                 <div className="mx-auto max-w-3xl px-5 text-center sm:px-8">
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-600 text-2xl text-white shadow-xl shadow-indigo-200">
+                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-600 text-2xl text-white shadow-xl shadow-primary-200">
                         ✦
                     </div>
 
@@ -579,7 +577,7 @@ export default function WhiteboardMarketingSite() {
                     <button
                         type="button"
                         onClick={handleStartDrawing}
-                        className="mt-8 rounded-2xl bg-indigo-600 px-8 py-4 font-bold text-white shadow-xl shadow-indigo-200 transition duration-300 hover:-translate-y-1 hover:bg-indigo-700 hover:shadow-2xl"
+                        className="mt-8 rounded-2xl bg-primary-600 px-8 py-4 font-bold text-white shadow-xl shadow-primary-200 transition duration-300 hover:-translate-y-1 hover:bg-primary-700 hover:shadow-2xl"
                     >
                         Start Drawing →
                     </button>

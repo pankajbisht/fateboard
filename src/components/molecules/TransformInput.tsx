@@ -4,51 +4,30 @@ type TransformInputProps = {
     label: string;
     value?: number | string;
     disabled?: boolean;
-    onChange?: (val: any) => void;
+    onChange?: (val: number) => void;
     max?: number | string;
+    /** Accessible name when the visible label is ambiguous. */
+    ariaLabel?: string;
 };
 
-export const TransformInput = ({ label, value, disabled, onChange, max }: TransformInputProps) => {
-    const handleChange = (e) => {
-        const raw = e; // e.target.value
-
-        // 🔥 Allow clearing
-        if (raw === '') {
-            onChange?.('');
-            return;
-        }
-
-        const num = Number(raw);
-        if (Number.isNaN(num)) return;
-
-        if (typeof max === 'number' && num > max) return;
-
-        onChange?.(num);
-
-        // // Ensure empty input doesn't force NaN
-        // if (raw === '') {
-        //     onChange(0);
-        //     return;
-        // }
-
-        // let num = parseInt(String(raw), 10);
-        // if (isNaN(num)) num = 0;
-
-        // onChange(num == 0 ? '' : num);
-    };
-
-    const onKeyDownHandler = (e) => {
-        if (e.key === '.' || e.key === 'e') e.preventDefault();
-    };
-
-    return (
-        <LabeledInput
-            label={label}
-            value={value ?? 0}
-            onChange={handleChange}
-            disabled={disabled}
-            onKeyDown={onKeyDownHandler}
-            max={max}
-        />
-    );
-};
+/**
+ * Labelled number field (effect panels, footer stroke width). Typing edits a draft that is
+ * applied on Enter / blur; empty or invalid input reverts; values are clamped to [0, max].
+ */
+export const TransformInput = ({
+    label,
+    value,
+    disabled,
+    onChange,
+    max,
+    ariaLabel,
+}: TransformInputProps) => (
+    <LabeledInput
+        label={label}
+        ariaLabel={ariaLabel}
+        value={value ?? 0}
+        onChange={onChange}
+        disabled={disabled}
+        max={max}
+    />
+);

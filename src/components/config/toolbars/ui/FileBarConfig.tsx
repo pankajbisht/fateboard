@@ -1,5 +1,7 @@
+import { Icon } from '@/components/atoms/Icon';
 import { shortcut } from '@/lib/utils/isMac';
 import { useStore } from '@/store';
+import { newBoard, openBoardFile, saveBoardFile } from '../fileActions';
 
 export const FileBarConfig = [
     {
@@ -8,12 +10,11 @@ export const FileBarConfig = [
         title: 'Create New Board',
         description: 'New File',
         shortcut: shortcut('⌘N', 'Ctrl+n'),
-        icon: <i className="fa-solid fa-file" />,
+        icon: <Icon name="file" />,
         when: () => useStore.getState().hasSelection,
-        onClick: () => useStore.getState().clearBoard(),
-        handler: ({ get, set }) => {
-            const { clearBoard } = get();
-            clearBoard();
+        onClick: () => newBoard(),
+        handler: () => {
+            void newBoard();
         },
     },
     {
@@ -22,13 +23,12 @@ export const FileBarConfig = [
         title: 'Open Board',
         description: 'Open Board',
         shortcut: shortcut('⌘O', 'Ctrl+o'),
-        icon: <i className="fa-regular fa-folder-open" />,
+        icon: <Icon name="folder-open" />,
         when: () => useStore.getState().hasSelection,
-        onClick: () => {},
-        handler: ({ get, set }) => {
-            const { clearBoard } = get();
-            clearBoard();
-        },
+        // FileBar replaces onClick with its own hidden input; the keyboard command uses openBoardFile().
+        // BUG-040: this handler used to call clearBoard(), so Ctrl/⌘+O deleted the board.
+        onClick: () => openBoardFile(),
+        handler: () => openBoardFile(),
     },
     {
         id: 'save',
@@ -36,12 +36,10 @@ export const FileBarConfig = [
         title: 'Save Board',
         description: 'Save Board',
         shortcut: shortcut('⌘S', 'Ctrl+s'),
-        icon: <i className="fa-regular fa-floppy-disk" />,
+        icon: <Icon name="floppy-disk" />,
         when: () => useStore.getState().hasSelection,
-        onClick: () => useStore.getState().saveBoard(),
-        handler: ({ get, set }) => {
-            const { clearBoard } = get();
-            clearBoard();
-        },
+        onClick: () => saveBoardFile(),
+        // BUG-040: this handler used to call clearBoard(), so Ctrl/⌘+S deleted the board.
+        handler: () => saveBoardFile(),
     },
 ];

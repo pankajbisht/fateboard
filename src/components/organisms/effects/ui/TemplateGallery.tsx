@@ -1,3 +1,6 @@
+import { Select } from '@/components/atoms/Select';
+import { Badge } from '@/components/atoms/Badge';
+import { Icon } from '@/components/atoms/Icon';
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -5,6 +8,9 @@ import { SIZE_PRESETS } from '../sizePresets';
 import { useStore } from '@/store';
 import type { DesignTemplate, DesignTemplateCategory } from '../designTemplate.types';
 import Button from '@/components/atoms/Button';
+import { IconButton } from '@/components/atoms/IconButton';
+import { Input } from '@/components/atoms/Input';
+import { Chip } from '@/components/atoms/Chip';
 
 /* -------------------------------------------------------------------------- */
 /* Constants & helpers                                                        */
@@ -185,72 +191,47 @@ export default function TemplateGallery({ className = '', loading = false }: Tem
     };
 
     return (
-        <section className={`flex h-full min-h-0 flex-col bg-white ${className}`}>
+        <section className={`flex h-full min-h-0 flex-col bg-surface ${className}`}>
             {
                 // <Button onClick={getTemplateCode}>Convert<Button>
             }
             {/* Header */}
-            <div className="shrink-0 border-b border-gray-200 bg-white">
-                <div className="px-5 pb-4 pt-5">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="flex min-w-0 items-center gap-2.5">
-                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-                                <i className="fa-solid fa-layer-group text-sm" aria-hidden />
-                            </div>
-
-                            <div>
-                                <h2 className="text-[15px] font-semibold text-gray-900">
-                                    Design Templates
-                                </h2>
-                                <p className="mt-0.5 text-xs text-gray-500">
-                                    Start with a professionally designed layout
-                                </p>
-                            </div>
-                        </div>
-
-                        <div
-                            className="hidden shrink-0 items-center gap-1.5 rounded-lg bg-gray-50 px-2.5 py-1.5 text-[11px] font-medium text-gray-500 sm:flex"
-                            aria-live="polite"
-                        >
-                            <i className="fa-solid fa-star text-[10px]" aria-hidden />
-                            <span>
-                                {count} {count === 1 ? 'template' : 'templates'}
-                            </span>
-                        </div>
-                    </div>
-
+            <div className="shrink-0 border-b border-line bg-surface">
+                <div className="px-4 pb-3 pt-4">
                     {/* Search */}
-                    <div className="relative mt-4">
-                        <i
-                            className="fa-solid fa-magnifying-glass pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400"
-                            aria-hidden
-                        />
+                    <div className="flex items-center gap-2">
+                        <div className="relative min-w-0 flex-1">
+                            <Input
+                                type="search"
+                                leadingIcon="magnifying-glass"
+                                value={searchInput}
+                                onChange={(event) => setSearchInput(event.target.value)}
+                                placeholder="Search templates..."
+                                aria-label="Search templates"
+                                className="[&_input]:pr-8 [&_input::-webkit-search-cancel-button]:appearance-none"
+                            />
 
-                        <input
-                            type="search"
-                            value={searchInput}
-                            onChange={(event) => setSearchInput(event.target.value)}
-                            placeholder="Search templates..."
-                            aria-label="Search templates"
-                            className="h-10 w-full rounded-xl border border-gray-200 bg-gray-50 pl-9 pr-9 text-[13px] text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-300 focus:bg-white focus:ring-2 focus:ring-indigo-100 [&::-webkit-search-cancel-button]:appearance-none"
-                        />
-
-                        {searchInput && (
-                            <button
-                                type="button"
-                                onClick={clearSearch}
-                                className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-gray-400 transition hover:bg-gray-200 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400"
-                                aria-label="Clear search"
-                            >
-                                <i className="fa-solid fa-xmark text-[11px]" aria-hidden />
-                            </button>
-                        )}
+                            {searchInput && (
+                                <IconButton
+                                    size="sm"
+                                    icon={<Icon name="xmark" />}
+                                    onClick={clearSearch}
+                                    className="absolute right-1 top-1/2 -translate-y-1/2"
+                                    aria-label="Clear search"
+                                />
+                            )}
+                        </div>
+                        <span aria-live="polite">
+                            <Badge>
+                                {count} {count === 1 ? 'template' : 'templates'}
+                            </Badge>
+                        </span>
                     </div>
                 </div>
 
                 {/* Category filters */}
                 <div
-                    className="flex items-center gap-2 overflow-x-auto px-5 pb-4"
+                    className="flex items-center gap-1.5 overflow-x-auto px-4 pb-3"
                     role="group"
                     aria-label="Filter by category"
                 >
@@ -258,67 +239,44 @@ export default function TemplateGallery({ className = '', loading = false }: Tem
                         const active = designTemplateCategory === category;
 
                         return (
-                            <button
+                            <Chip
                                 key={category}
-                                type="button"
-                                aria-pressed={active}
+                                active={active}
                                 onClick={() => setDesignTemplateCategory(category)}
-                                className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
-                                    active
-                                        ? 'bg-gray-900 text-white shadow-sm'
-                                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:text-gray-900'
-                                }`}
                             >
                                 {category}
-                            </button>
+                            </Chip>
                         );
                     })}
                 </div>
 
                 {/* Secondary filters */}
-                <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-5 py-3">
+                <div className="flex items-center justify-between gap-3 border-t border-line px-4 py-2.5">
                     <div className="flex min-w-0 items-center gap-2">
-                        <label
-                            htmlFor="template-size-filter"
-                            className="shrink-0 text-[11px] font-medium uppercase tracking-wide text-gray-500"
-                        >
-                            Size
-                        </label>
-
-                        <select
-                            id="template-size-filter"
+                        <span className="shrink-0 text-label uppercase text-ink-subtle">Size</span>
+                        <Select
+                            aria-label="Template size"
+                            size="sm"
+                            block={false}
                             value={designTemplateSizeId}
-                            onChange={(event) => setDesignTemplateSize(event.target.value)}
-                            className="h-8 min-w-0 max-w-[180px] rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-medium text-gray-700 outline-none transition focus:border-indigo-300 focus:ring-2 focus:ring-indigo-100"
-                        >
-                            <option value="All">All sizes</option>
-
-                            {SIZE_PRESETS.map((preset) => (
-                                <option key={preset.id} value={preset.id}>
-                                    {preset.label}
-                                </option>
-                            ))}
-                        </select>
+                            onChange={(v) => setDesignTemplateSize(v)}
+                            options={[
+                                { value: 'All', label: 'All sizes' },
+                                ...SIZE_PRESETS.map((preset) => ({
+                                    value: preset.id,
+                                    label: preset.label,
+                                })),
+                            ]}
+                        />
                     </div>
 
-                    <button
-                        type="button"
-                        aria-pressed={showFavorites}
+                    <Chip
+                        active={showFavorites}
+                        icon="heart"
                         onClick={() => setShowFavorites((value) => !value)}
-                        className={`flex h-8 shrink-0 items-center gap-1.5 rounded-lg border px-2.5 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
-                            showFavorites
-                                ? 'border-red-200 bg-red-50 text-red-500'
-                                : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                        }`}
                     >
-                        <i
-                            className={`${
-                                showFavorites ? 'fa-solid fa-heart' : 'fa-regular fa-heart'
-                            } text-[11px]`}
-                            aria-hidden
-                        />
-                        <span>Favorites</span>
-                    </button>
+                        Favorites
+                    </Chip>
                 </div>
             </div>
 
@@ -327,7 +285,7 @@ export default function TemplateGallery({ className = '', loading = false }: Tem
                 {applyError && !selectedTemplate && (
                     <div
                         role="alert"
-                        className="mx-5 mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600"
+                        className="mx-4 mt-4 rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger"
                     >
                         {applyError}
                     </div>
@@ -342,7 +300,7 @@ export default function TemplateGallery({ className = '', loading = false }: Tem
                         onClear={clearAllFilters}
                     />
                 ) : (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-4 p-5">
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-3 p-4">
                         {filteredTemplates.map((template) => (
                             <TemplateCard
                                 key={template.id}
@@ -396,14 +354,14 @@ function TemplateImage({ src, alt, fill = false, className = '' }: TemplateImage
     if (failed) {
         return (
             <div
-                className={`flex flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 ${
+                className={`flex flex-col items-center justify-center bg-gradient-to-br from-surface-muted to-surface-strong ${
                     fill ? 'absolute inset-0' : 'min-h-[240px] w-full min-w-[240px]'
                 }`}
             >
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-gray-400 shadow-sm">
-                    <i className="fa-solid fa-image text-sm" aria-hidden />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-surface text-ink-subtle shadow-sm">
+                    <Icon name="image" className="text-sm" />
                 </div>
-                <span className="mt-2 text-[11px] font-medium text-gray-500">
+                <span className="mt-2 text-[11px] font-medium text-ink-muted">
                     Preview unavailable
                 </span>
             </div>
@@ -449,9 +407,9 @@ function TemplateCard({
     const tags = template.tags ?? [];
 
     return (
-        <div className="group min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-lg">
+        <div className="group min-w-0 overflow-hidden rounded-lg border border-line bg-surface shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:shadow-lg">
             {/* Preview: fixed ratio so every card in a row has the same height */}
-            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-gray-100">
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-t-2xl bg-surface-muted">
                 <TemplateImage fill src={template.thumbnail} alt="" className="object-contain" />
 
                 {/* Whole-area preview trigger (a real button, keyboard accessible) */}
@@ -459,7 +417,7 @@ function TemplateCard({
                     type="button"
                     onClick={onPreview}
                     aria-label={`Preview ${template.name}`}
-                    className="absolute inset-0 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-indigo-400"
+                    className="absolute inset-0 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary-400"
                 />
 
                 {/* Hover overlay */}
@@ -467,8 +425,8 @@ function TemplateCard({
 
                 {/* Featured */}
                 {template.featured && (
-                    <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1 rounded-md bg-white/95 px-2 py-1 text-[11px] font-semibold text-gray-700 shadow-sm backdrop-blur">
-                        <i className="fa-solid fa-star text-[10px] text-indigo-500" aria-hidden />
+                    <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1 rounded-md bg-surface/95 px-2 py-1 text-[11px] font-semibold text-ink shadow-sm backdrop-blur">
+                        <Icon name="star" filled className="text-[10px] text-primary-500" />
                         Featured
                     </div>
                 )}
@@ -479,24 +437,19 @@ function TemplateCard({
                     aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                     aria-pressed={isFavorite}
                     onClick={onFavorite}
-                    className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
+                    className={`absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full backdrop-blur-md transition focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-400 ${
                         isFavorite
-                            ? 'bg-white text-red-500 shadow-sm'
-                            : 'bg-black/35 text-white opacity-0 hover:bg-white hover:text-red-500 group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100'
+                            ? 'bg-surface text-danger shadow-sm'
+                            : 'bg-black/35 text-white opacity-0 hover:bg-surface hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100'
                     }`}
                 >
-                    <i
-                        className={`${
-                            isFavorite ? 'fa-solid fa-heart' : 'fa-regular fa-heart'
-                        } text-xs`}
-                        aria-hidden
-                    />
+                    <Icon name="heart" filled={isFavorite} className="text-xs" />
                 </button>
 
                 {/* Preview hint (visual only; the button above handles the click) */}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 flex justify-center p-3 opacity-0 transition duration-200 group-hover:opacity-100 group-focus-within:opacity-100">
-                    <span className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-[11px] font-semibold text-gray-800 shadow-lg">
-                        <i className="fa-solid fa-image text-[11px]" aria-hidden />
+                    <span className="flex items-center gap-1.5 rounded-lg bg-surface px-3 py-2 text-[11px] font-semibold text-ink shadow-lg">
+                        <Icon name="image" className="text-[11px]" />
                         Preview
                     </span>
                 </div>
@@ -504,20 +457,18 @@ function TemplateCard({
 
             {/* Content */}
             <div className="p-3.5">
-                <h3 className="truncate text-[13px] font-semibold text-gray-900">
-                    {template.name}
-                </h3>
+                <h3 className="truncate text-[13px] font-semibold text-ink">{template.name}</h3>
 
-                <div className="mt-1 flex items-center gap-1.5 text-[11px] text-gray-500">
+                <div className="mt-1 flex items-center gap-1.5 text-[11px] text-ink-muted">
                     <span>{template.category}</span>
-                    <span className="text-gray-300" aria-hidden>
+                    <span className="text-ink-subtle" aria-hidden>
                         •
                     </span>
                     <span>{sizeLabel}</span>
                 </div>
 
                 {template.description && (
-                    <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-gray-500">
+                    <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-ink-muted">
                         {template.description}
                     </p>
                 )}
@@ -527,7 +478,7 @@ function TemplateCard({
                         {tags.slice(0, 2).map((tag) => (
                             <span
                                 key={tag}
-                                className="truncate rounded-md bg-gray-50 px-2 py-1 text-[11px] font-medium text-gray-500"
+                                className="truncate rounded-md bg-surface-muted px-2 py-1 text-[11px] font-medium text-ink-muted"
                             >
                                 {tag}
                             </span>
@@ -540,15 +491,12 @@ function TemplateCard({
                     onClick={onUse}
                     disabled={disabled}
                     aria-busy={applying}
-                    className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-gray-900 text-[11px] font-semibold text-white transition hover:bg-gray-800 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-primary-600 text-[11px] font-semibold text-white transition hover:bg-primary-700 active:scale-[0.98] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-400 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    <i
-                        className={`${
-                            applying
-                                ? 'fa-solid fa-spinner fa-spin'
-                                : 'fa-solid fa-wand-magic-sparkles'
-                        } text-[11px]`}
-                        aria-hidden
+                    <Icon
+                        name={applying ? 'spinner' : 'wand-magic-sparkles'}
+                        spin={applying}
+                        className="text-[11px]"
                     />
                     {applying ? 'Applying…' : 'Use template'}
                 </button>
@@ -571,13 +519,13 @@ function GallerySkeleton() {
             {Array.from({ length: 8 }).map((_, index) => (
                 <div
                     key={index}
-                    className="animate-pulse overflow-hidden rounded-2xl border border-gray-200 bg-white"
+                    className="animate-pulse overflow-hidden rounded-lg border border-line bg-surface"
                 >
-                    <div className="aspect-[4/3] w-full bg-gray-100" />
+                    <div className="aspect-[4/3] w-full bg-surface-muted" />
                     <div className="space-y-2 p-3.5">
-                        <div className="h-3 w-2/3 rounded bg-gray-100" />
-                        <div className="h-3 w-1/3 rounded bg-gray-100" />
-                        <div className="mt-3 h-9 w-full rounded-lg bg-gray-100" />
+                        <div className="h-3 w-2/3 rounded bg-surface-muted" />
+                        <div className="h-3 w-1/3 rounded bg-surface-muted" />
+                        <div className="mt-3 h-9 w-full rounded-lg bg-surface-muted" />
                     </div>
                 </div>
             ))}
@@ -599,18 +547,13 @@ function EmptyState({ search, favorites, onClear }: EmptyStateProps) {
     return (
         <div className="flex h-full min-h-[400px] items-center justify-center p-8">
             <div className="max-w-sm text-center">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
-                    <i
-                        className={`fa-solid ${
-                            favorites ? 'fa-heart' : 'fa-magnifying-glass'
-                        } text-lg`}
-                        aria-hidden
-                    />
+                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg bg-surface-muted text-ink-subtle">
+                    <Icon name={favorites ? 'heart' : 'magnifying-glass'} className="text-lg" />
                 </div>
 
-                <h3 className="mt-4 text-sm font-semibold text-gray-900">No templates found</h3>
+                <h3 className="mt-4 text-sm font-semibold text-ink">No templates found</h3>
 
-                <p className="mt-1.5 text-xs leading-relaxed text-gray-500">
+                <p className="mt-1.5 text-xs leading-relaxed text-ink-muted">
                     {favorites
                         ? 'You have not saved any templates to your favorites yet.'
                         : search
@@ -621,7 +564,7 @@ function EmptyState({ search, favorites, onClear }: EmptyStateProps) {
                 <button
                     type="button"
                     onClick={onClear}
-                    className="mt-4 rounded-lg bg-gray-900 px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-gray-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400"
+                    className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-[11px] font-semibold text-white transition hover:bg-primary-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-400"
                 >
                     Clear filters
                 </button>
@@ -723,10 +666,10 @@ function TemplatePreviewModal({
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
-                className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-y-auto rounded-2xl bg-white shadow-2xl md:flex-row md:overflow-hidden"
+                className="flex max-h-[90vh] w-full max-w-5xl flex-col overflow-y-auto rounded-lg bg-surface shadow-2xl md:flex-row md:overflow-hidden"
             >
                 {/* Large preview */}
-                <div className="flex min-h-[200px] min-w-0 flex-1 items-center justify-center bg-gray-100 p-4 md:p-6">
+                <div className="flex min-h-[200px] min-w-0 flex-1 items-center justify-center bg-surface-muted p-4 md:p-6">
                     <div className="relative max-h-full max-w-full overflow-hidden rounded-xl shadow-lg">
                         <TemplateImage
                             src={template.preview ?? template.thumbnail}
@@ -737,10 +680,10 @@ function TemplatePreviewModal({
                 </div>
 
                 {/* Details */}
-                <div className="flex w-full shrink-0 flex-col border-t border-gray-200 bg-white md:w-[320px] md:border-l md:border-t-0">
+                <div className="flex w-full shrink-0 flex-col border-t border-line bg-surface md:w-[320px] md:border-l md:border-t-0">
                     {/* Header */}
-                    <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
-                        <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+                    <div className="flex items-center justify-between border-b border-line px-5 py-4">
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
                             Template details
                         </span>
 
@@ -748,23 +691,23 @@ function TemplatePreviewModal({
                             ref={closeButtonRef}
                             type="button"
                             onClick={onClose}
-                            className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400"
+                            className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-subtle transition hover:bg-surface-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-400"
                             aria-label="Close preview"
                         >
-                            <i className="fa-solid fa-xmark text-sm" aria-hidden />
+                            <Icon name="xmark" className="text-sm" />
                         </button>
                     </div>
 
                     {/* Body */}
                     <div className="min-h-0 flex-1 p-5 md:overflow-y-auto">
                         <div className="flex items-center gap-2">
-                            <span className="rounded-md bg-indigo-50 px-2 py-1 text-[11px] font-semibold text-indigo-600">
+                            <span className="rounded-md bg-primary-50 px-2 py-1 text-[11px] font-semibold text-primary-ink">
                                 {template.category}
                             </span>
 
                             {template.featured && (
-                                <span className="flex items-center gap-1 rounded-md bg-amber-50 px-2 py-1 text-[11px] font-semibold text-amber-600">
-                                    <i className="fa-solid fa-star text-[10px]" aria-hidden />
+                                <span className="flex items-center gap-1 rounded-md bg-accent-100 px-2 py-1 text-[11px] font-semibold text-accent-700">
+                                    <Icon name="star" filled className="text-[10px]" />
                                     Featured
                                 </span>
                             )}
@@ -772,42 +715,42 @@ function TemplatePreviewModal({
 
                         <h2
                             id={titleId}
-                            className="mt-3 text-lg font-semibold tracking-tight text-gray-900"
+                            className="mt-3 text-lg font-semibold tracking-tight text-ink"
                         >
                             {template.name}
                         </h2>
 
                         {template.description && (
-                            <p className="mt-2 text-xs leading-relaxed text-gray-500">
+                            <p className="mt-2 text-xs leading-relaxed text-ink-muted">
                                 {template.description}
                             </p>
                         )}
 
                         {/* Size */}
-                        <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-3.5">
+                        <div className="mt-6 rounded-xl border border-line bg-surface-muted p-3.5">
                             <div className="flex items-center justify-between">
-                                <span className="text-[11px] font-medium uppercase tracking-wide text-gray-500">
+                                <span className="text-[11px] font-medium uppercase tracking-wide text-ink-muted">
                                     Canvas size
                                 </span>
-                                <i
-                                    className="fa-solid fa-ruler-combined text-[11px] text-gray-400"
-                                    aria-hidden
+                                <Icon
+                                    name="ruler-combined"
+                                    className="text-[11px] text-ink-subtle"
                                 />
                             </div>
 
-                            <div className="mt-1.5 text-sm font-semibold text-gray-800">
-                                {sizeLabel}
-                            </div>
+                            <div className="mt-1.5 text-sm font-semibold text-ink">{sizeLabel}</div>
 
                             {preset && (
-                                <div className="mt-1 text-[11px] text-gray-500">{preset.label}</div>
+                                <div className="mt-1 text-[11px] text-ink-muted">
+                                    {preset.label}
+                                </div>
                             )}
                         </div>
 
                         {/* Tags */}
                         {tags.length > 0 && (
                             <div className="mt-5">
-                                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
                                     Tags
                                 </div>
 
@@ -815,7 +758,7 @@ function TemplatePreviewModal({
                                     {tags.map((tag) => (
                                         <span
                                             key={tag}
-                                            className="rounded-md bg-gray-100 px-2 py-1 text-[11px] font-medium text-gray-600"
+                                            className="rounded-md bg-surface-muted px-2 py-1 text-[11px] font-medium text-ink-muted"
                                         >
                                             {tag}
                                         </span>
@@ -825,20 +768,17 @@ function TemplatePreviewModal({
                         )}
 
                         {/* Editable info */}
-                        <div className="mt-5 rounded-xl border border-indigo-100 bg-indigo-50/50 p-3.5">
+                        <div className="mt-5 rounded-xl border border-primary-100 bg-primary-50/50 p-3.5">
                             <div className="flex items-start gap-2.5">
-                                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-indigo-100 text-indigo-600">
-                                    <i
-                                        className="fa-solid fa-pen-to-square text-[11px]"
-                                        aria-hidden
-                                    />
+                                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary-100 text-primary-ink">
+                                    <Icon name="pen-to-square" className="text-[11px]" />
                                 </div>
 
                                 <div>
-                                    <div className="text-xs font-semibold text-gray-800">
+                                    <div className="text-xs font-semibold text-ink">
                                         Fully editable
                                     </div>
-                                    <p className="mt-1 text-[11px] leading-relaxed text-gray-500">
+                                    <p className="mt-1 text-[11px] leading-relaxed text-ink-muted">
                                         Text, images, shapes and other elements can be edited after
                                         applying the template.
                                     </p>
@@ -848,11 +788,11 @@ function TemplatePreviewModal({
                     </div>
 
                     {/* Footer */}
-                    <div className="border-t border-gray-100 p-4">
+                    <div className="border-t border-line p-4">
                         {error && (
                             <div
                                 role="alert"
-                                className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600"
+                                className="mb-3 rounded-lg border border-danger/30 bg-danger/10 px-3 py-2 text-xs text-danger"
                             >
                                 {error}
                             </div>
@@ -863,15 +803,12 @@ function TemplatePreviewModal({
                             onClick={onUse}
                             disabled={disabled}
                             aria-busy={applying}
-                            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-gray-900 text-xs font-semibold text-white shadow-sm transition hover:bg-gray-800 active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-400 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary-600 text-xs font-semibold text-white shadow-sm transition hover:bg-primary-700 active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-400 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            <i
-                                className={`${
-                                    applying
-                                        ? 'fa-solid fa-spinner fa-spin'
-                                        : 'fa-solid fa-wand-magic-sparkles'
-                                } text-[11px]`}
-                                aria-hidden
+                            <Icon
+                                name={applying ? 'spinner' : 'wand-magic-sparkles'}
+                                spin={applying}
+                                className="text-[11px]"
                             />
                             {applying ? 'Applying…' : 'Use this template'}
                         </button>
@@ -880,18 +817,13 @@ function TemplatePreviewModal({
                             type="button"
                             onClick={onFavorite}
                             aria-pressed={isFavorite}
-                            className={`mt-2 flex h-9 w-full items-center justify-center gap-2 rounded-xl border text-[11px] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-400 ${
+                            className={`mt-2 flex h-9 w-full items-center justify-center gap-2 rounded-xl border text-[11px] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary-400 ${
                                 isFavorite
-                                    ? 'border-red-200 bg-red-50 text-red-500 hover:bg-red-100'
-                                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+                                    ? 'border-danger/30 bg-danger/10 text-danger hover:bg-danger/15'
+                                    : 'border-line bg-surface text-ink-muted hover:bg-surface-muted'
                             }`}
                         >
-                            <i
-                                className={`${
-                                    isFavorite ? 'fa-solid fa-heart' : 'fa-regular fa-heart'
-                                } text-[11px]`}
-                                aria-hidden
-                            />
+                            <Icon name="heart" filled={isFavorite} className="text-[11px]" />
                             {isFavorite ? 'Saved to favorites' : 'Save to favorites'}
                         </button>
                     </div>

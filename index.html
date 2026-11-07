@@ -3,81 +3,124 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" href="/fateicon.svg" type="image/svg+xml" />
-        <link rel="icon" href="/fateicon-96.png" type="image/png" sizes="96x96" />
-        <title>Online Whiteboard | Fateboard</title>
+        <!-- The SEO fallback in #fateboard is for crawlers / no-JS visitors only. With JavaScript it is
+             hidden before first paint, so a refresh never flashes it while the app bundle loads. -->
+        <script>
+            document.documentElement.classList.add('js');
+        </script>
+        <style>
+            html.js #fateboard > [data-seo-fallback] {
+                display: none;
+            }
+        </style>
+        <title>Free Online Whiteboard &amp; Design Canvas | Fateboard</title>
         <meta
             name="description"
-            content="Interactive web-based whiteboard for real-time collaboration, brainstorming, and idea sharing.
-    Work together seamlessly with live drawing, notes, and team interaction."
+            content="Fateboard is a free online whiteboard and design canvas. Sketch, draw shapes, add text, brainstorm and mind map in your browser. No sign-up needed."
         />
-        <meta name="keywords" content="whiteboard, online drawing, collaboration, sketch" />
         <meta name="author" content="Fateboard" />
-        <meta name="robots" content="index, follow" />
-
-        <!-- Open Graph / Social Media -->
-        <meta property="og:title" content="My Whiteboard App" />
-        <meta property="og:description" content="Draw, collaborate, and share ideas online." />
-        <meta property="og:type" content="website" />
-        <meta property="og:image" content="/fateicon.svg" />
-        <meta property="og:url" content="https://www.fateboard.com/" />
-
+        <meta name="robots" content="index, follow, max-image-preview:large" />
         <link rel="canonical" href="https://www.fateboard.com/" />
+        <meta name="theme-color" content="#0a60d6" />
 
-        <link
-            href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap"
-            rel="stylesheet"
-        />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap"
-            rel="stylesheet"
-        />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&display=swap"
-            rel="stylesheet"
-        />
-        <link
-            href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap"
-            rel="stylesheet"
-        />
+        <link rel="icon" href="/fateicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/fateicon-96.png" type="image/png" sizes="96x96" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
 
-        <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+        <!-- Open Graph / social previews (absolute raster image: scrapers do not render SVG) -->
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Fateboard" />
+        <meta property="og:locale" content="en_US" />
+        <meta property="og:url" content="https://www.fateboard.com/" />
+        <meta property="og:title" content="Fateboard: Free Online Whiteboard &amp; Design Canvas" />
+        <meta
+            property="og:description"
+            content="Sketch, draw shapes, add text and brainstorm on a free canvas in your browser. No sign-up needed."
+        />
+        <meta property="og:image" content="https://www.fateboard.com/og-image.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="The Fateboard editor with a night-sky drawing on the canvas" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Fateboard: Free Online Whiteboard &amp; Design Canvas" />
+        <meta
+            name="twitter:description"
+            content="Sketch, draw shapes, add text and brainstorm on a free canvas in your browser. No sign-up needed."
+        />
+        <meta name="twitter:image" content="https://www.fateboard.com/og-image.png" />
 
+        <!-- Fonts: one request + preconnect (render-blocking CSS hurts Core Web Vitals). Only used faces download. -->
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
+            href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Comic+Neue:wght@400;700&family=Fredoka+One&family=Patrick+Hand&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
             rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"
         />
 
         <script type="application/ld+json">
             {
                 "@context": "https://schema.org",
-                "@type": "SoftwareApplication",
-                "name": "Online Whiteboard",
-                "operatingSystem": "Web",
-                "applicationCategory": "Productivity",
-                "offers": {
-                    "@type": "Offer",
-                    "price": "0"
-                },
-                "url": "https://www.fateboard.com/",
-                "description": "Free online whiteboard for math notes, brainstorming, and real-time collaboration."
+                "@graph": [
+                    {
+                        "@type": "WebSite",
+                        "@id": "https://www.fateboard.com/#website",
+                        "name": "Fateboard",
+                        "url": "https://www.fateboard.com/",
+                        "inLanguage": "en"
+                    },
+                    {
+                        "@type": "WebApplication",
+                        "name": "Fateboard",
+                        "alternateName": "Fateboard Online Whiteboard",
+                        "url": "https://www.fateboard.com/",
+                        "image": "https://www.fateboard.com/og-image.png",
+                        "description": "Free online whiteboard and design canvas. Sketch, draw shapes, add text, brainstorm and mind map in your browser.",
+                        "applicationCategory": "DesignApplication",
+                        "operatingSystem": "Any (web browser)",
+                        "browserRequirements": "Requires JavaScript and a modern browser",
+                        "isAccessibleForFree": true,
+                        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+                        "featureList": [
+                            "Freehand drawing and brushes",
+                            "Shapes and arrows",
+                            "Text and fonts",
+                            "Multiple pages",
+                            "Templates",
+                            "Keyframe animation",
+                            "Export to image and video"
+                        ],
+                        "isPartOf": { "@id": "https://www.fateboard.com/#website" }
+                    }
+                ]
             }
-        </script>
-
-        <!-- Google Analytics -->
-        <script async src="https://www.googletagmanager.com/gtag/js?id=%VITE_GA_ID%"></script>
-        <script>
-            window.dataLayer = window.dataLayer || [];
-            function gtag() {
-                dataLayer.push(arguments);
-            }
-            gtag('js', new Date());
-            gtag('config', '%VITE_GA_ID%');
         </script>
     </head>
     <body>
-        <div id="fateboard"></div>
+        <!-- Static fallback for crawlers / no-JS visitors; React's createRoot replaces it on mount.
+             The build rewrites the h1 + data-seo="intro" per route (src/app/seo/prerender.ts). -->
+        <div id="fateboard">
+            <main
+                data-seo-fallback
+                style="max-width: 40rem; margin: 15vh auto; padding: 0 16px; font-family: system-ui, sans-serif; line-height: 1.6; color: #1f2937"
+            >
+                <h1 style="color: #0a60d6; font-size: 2rem; font-weight: 800; line-height: 1.2">Fateboard: free online whiteboard and design canvas</h1>
+                <p data-seo="intro">
+                    Sketch, draw shapes and arrows, add text, brainstorm and mind map on a blank
+                    canvas in your browser. Free, no sign-up needed.
+                </p>
+                <ul style="list-style: disc; padding-left: 1.5rem; margin: 1rem 0">
+                    <li>Freehand drawing with brushes</li>
+                    <li>Shapes, arrows and text</li>
+                    <li>Multiple pages and ready-made templates</li>
+                    <li>Keyframe animation</li>
+                    <li>Export your board as an image or video</li>
+                </ul>
+                <p><a href="/draw" style="color: #0a60d6; text-decoration: underline">Open the whiteboard</a></p>
+                <noscript>Fateboard needs JavaScript to run. Please enable it in your browser.</noscript>
+            </main>
+        </div>
         <div id="fateboard-portal"></div>
-        <script type="module" src="/src/main.jsx"></script>
+        <script type="module" src="/src/main.tsx"></script>
     </body>
 </html>

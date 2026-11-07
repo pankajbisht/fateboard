@@ -5,9 +5,11 @@ import { useSearch } from '@/hooks/useSearch';
 import { commandMatcher } from '@/lib/utils/commandMatcher';
 import React from 'react';
 
-const CommandListItem = React.memo(function ({ cmd }) {
+type PaletteCommand = { id: string; title?: string; shortcut?: string };
+
+const CommandListItem = React.memo(function CommandListItem({ cmd }: { cmd: PaletteCommand }) {
     return (
-        <div className="flex justify-between items-center p-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+        <div className="flex justify-between items-center p-2 rounded-lg hover:bg-surface-muted cursor-pointer">
             <span>{cmd.title}</span>
             {cmd.shortcut}
         </div>
@@ -15,13 +17,16 @@ const CommandListItem = React.memo(function ({ cmd }) {
 });
 
 function NoCommandFound() {
-    return <p className="p-2 text-gray-500 text-sm">No command found</p>;
+    return <p className="p-2 text-ink-muted text-sm">No command found</p>;
 }
 
-export default function CommandPalette({ commands }) {
+export default function CommandPalette({ commands }: { commands: PaletteCommand[] }) {
     const { query, setQuery, filteredItems } = useSearch(commands, commandMatcher);
 
-    const renderCommandItem = React.useCallback((cmd) => <CommandListItem cmd={cmd} />, []);
+    const renderCommandItem = React.useCallback(
+        (cmd: PaletteCommand) => <CommandListItem cmd={cmd} />,
+        [],
+    );
 
     return (
         <div className="flex justify-center items-start pt-2">

@@ -1,415 +1,464 @@
-import { useRef, useState } from 'react';
-import { Palette } from '../molecules/Palette';
+import { Icon } from '@/components/atoms/Icon';
+import {
+    useEffect,
+    useLayoutEffect,
+    useMemo,
+    useRef,
+    useState,
+    type KeyboardEvent as ReactKeyboardEvent,
+} from 'react';
 import { useStore } from '../../store';
-import { ColorSlider } from '../atoms/ColorSlider';
+import { toOpaqueHex } from '@/store/slices/colorSystemFixes';
+import {
+    PALETTE_BASICS,
+    PALETTE_FAMILIES,
+    PALETTE_SHADES,
+    type PaletteSwatch,
+} from '@/lib/palette';
+import { Swatch, type SwatchState } from '../atoms/Swatch';
+import { IconButton } from '../atoms/IconButton';
 import { Tooltip } from '../molecules/Tooltip';
+import { ColorPickerPopover } from './ColorPickerPopover';
+import { normalizeHex } from '@/lib/colorMath';
 
-const colorsMap = {
-    red: [
-        'bg-red-50',
-        'bg-red-100',
-        'bg-red-200',
-        'bg-red-300',
-        'bg-red-400',
-        'bg-red-500',
-        'bg-red-600',
-        'bg-red-700',
-        'bg-red-800',
-        'bg-red-900',
-    ],
-    orange: [
-        'bg-orange-50',
-        'bg-orange-100',
-        'bg-orange-200',
-        'bg-orange-300',
-        'bg-orange-400',
-        'bg-orange-500',
-        'bg-orange-600',
-        'bg-orange-700',
-        'bg-orange-800',
-        'bg-orange-900',
-    ],
-    amber: [
-        'bg-amber-50',
-        'bg-amber-100',
-        'bg-amber-200',
-        'bg-amber-300',
-        'bg-amber-400',
-        'bg-amber-500',
-        'bg-amber-600',
-        'bg-amber-700',
-        'bg-amber-800',
-        'bg-amber-900',
-    ],
-    yellow: [
-        'bg-yellow-50',
-        'bg-yellow-100',
-        'bg-yellow-200',
-        'bg-yellow-300',
-        'bg-yellow-400',
-        'bg-yellow-500',
-        'bg-yellow-600',
-        'bg-yellow-700',
-        'bg-yellow-800',
-        'bg-yellow-900',
-    ],
-    lime: [
-        'bg-lime-50',
-        'bg-lime-100',
-        'bg-lime-200',
-        'bg-lime-300',
-        'bg-lime-400',
-        'bg-lime-500',
-        'bg-lime-600',
-        'bg-lime-700',
-        'bg-lime-800',
-        'bg-lime-900',
-    ],
-    green: [
-        'bg-green-50',
-        'bg-green-100',
-        'bg-green-200',
-        'bg-green-300',
-        'bg-green-400',
-        'bg-green-500',
-        'bg-green-600',
-        'bg-green-700',
-        'bg-green-800',
-        'bg-green-900',
-    ],
-    emerald: [
-        'bg-emerald-50',
-        'bg-emerald-100',
-        'bg-emerald-200',
-        'bg-emerald-300',
-        'bg-emerald-400',
-        'bg-emerald-500',
-        'bg-emerald-600',
-        'bg-emerald-700',
-        'bg-emerald-800',
-        'bg-emerald-900',
-    ],
-    teal: [
-        'bg-teal-50',
-        'bg-teal-100',
-        'bg-teal-200',
-        'bg-teal-300',
-        'bg-teal-400',
-        'bg-teal-500',
-        'bg-teal-600',
-        'bg-teal-700',
-        'bg-teal-800',
-        'bg-teal-900',
-    ],
-    cyan: [
-        'bg-cyan-50',
-        'bg-cyan-100',
-        'bg-cyan-200',
-        'bg-cyan-300',
-        'bg-cyan-400',
-        'bg-cyan-500',
-        'bg-cyan-600',
-        'bg-cyan-700',
-        'bg-cyan-800',
-        'bg-cyan-900',
-    ],
-    sky: [
-        'bg-sky-50',
-        'bg-sky-100',
-        'bg-sky-200',
-        'bg-sky-300',
-        'bg-sky-400',
-        'bg-sky-500',
-        'bg-sky-600',
-        'bg-sky-700',
-        'bg-sky-800',
-        'bg-sky-900',
-    ],
-    blue: [
-        'bg-blue-50',
-        'bg-blue-100',
-        'bg-blue-200',
-        'bg-blue-300',
-        'bg-blue-400',
-        'bg-blue-500',
-        'bg-blue-600',
-        'bg-blue-700',
-        'bg-blue-800',
-        'bg-blue-900',
-    ],
-    indigo: [
-        'bg-indigo-50',
-        'bg-indigo-100',
-        'bg-indigo-200',
-        'bg-indigo-300',
-        'bg-indigo-400',
-        'bg-indigo-500',
-        'bg-indigo-600',
-        'bg-indigo-700',
-        'bg-indigo-800',
-        'bg-indigo-900',
-    ],
-    violet: [
-        'bg-violet-50',
-        'bg-violet-100',
-        'bg-violet-200',
-        'bg-violet-300',
-        'bg-violet-400',
-        'bg-violet-500',
-        'bg-violet-600',
-        'bg-violet-700',
-        'bg-violet-800',
-        'bg-violet-900',
-    ],
-    purple: [
-        'bg-purple-50',
-        'bg-purple-100',
-        'bg-purple-200',
-        'bg-purple-300',
-        'bg-purple-400',
-        'bg-purple-500',
-        'bg-purple-600',
-        'bg-purple-700',
-        'bg-purple-800',
-        'bg-purple-900',
-    ],
-    fuchsia: [
-        'bg-fuchsia-50',
-        'bg-fuchsia-100',
-        'bg-fuchsia-200',
-        'bg-fuchsia-300',
-        'bg-fuchsia-400',
-        'bg-fuchsia-500',
-        'bg-fuchsia-600',
-        'bg-fuchsia-700',
-        'bg-fuchsia-800',
-        'bg-fuchsia-900',
-    ],
-    pink: [
-        'bg-pink-50',
-        'bg-pink-100',
-        'bg-pink-200',
-        'bg-pink-300',
-        'bg-pink-400',
-        'bg-pink-500',
-        'bg-pink-600',
-        'bg-pink-700',
-        'bg-pink-800',
-        'bg-pink-900',
-    ],
-    rose: [
-        'bg-rose-50',
-        'bg-rose-100',
-        'bg-rose-200',
-        'bg-rose-300',
-        'bg-rose-400',
-        'bg-rose-500',
-        'bg-rose-600',
-        'bg-rose-700',
-        'bg-rose-800',
-        'bg-rose-900',
-    ],
-    slate: [
-        'bg-slate-50',
-        'bg-slate-100',
-        'bg-slate-200',
-        'bg-slate-300',
-        'bg-slate-400',
-        'bg-slate-500',
-        'bg-slate-600',
-        'bg-slate-700',
-        'bg-slate-800',
-        'bg-slate-900',
-    ],
-    gray: [
-        'bg-gray-50',
-        'bg-gray-100',
-        'bg-gray-200',
-        'bg-gray-300',
-        'bg-gray-400',
-        'bg-gray-500',
-        'bg-gray-600',
-        'bg-gray-700',
-        'bg-gray-800',
-        'bg-gray-900',
-    ],
-    zinc: [
-        'bg-zinc-50',
-        'bg-zinc-100',
-        'bg-zinc-200',
-        'bg-zinc-300',
-        'bg-zinc-400',
-        'bg-zinc-500',
-        'bg-zinc-600',
-        'bg-zinc-700',
-        'bg-zinc-800',
-        'bg-zinc-900',
-    ],
-    neutral: [
-        'bg-neutral-50',
-        'bg-neutral-100',
-        'bg-neutral-200',
-        'bg-neutral-300',
-        'bg-neutral-400',
-        'bg-neutral-500',
-        'bg-neutral-600',
-        'bg-neutral-700',
-        'bg-neutral-800',
-        'bg-neutral-900',
-    ],
-    stone: [
-        'bg-stone-50',
-        'bg-stone-100',
-        'bg-stone-200',
-        'bg-stone-300',
-        'bg-stone-400',
-        'bg-stone-500',
-        'bg-stone-600',
-        'bg-stone-700',
-        'bg-stone-800',
-        'bg-stone-900',
-    ],
-};
+/** The color the palette paints right now: a panel target, else the active fill / stroke / shadow. */
+function useCurrentPaintColor(): string {
+    const paintTarget = useStore((s) => s.paintTarget);
+    const activePaint = useStore((s) => s.activePaint);
+    const fill = useStore((s) => s.fill);
+    const stroke = useStore((s) => s.stroke);
+    const shadowColor = useStore((s) => s.shadowColor) as string | undefined;
+    return (
+        (paintTarget
+            ? paintTarget.color
+            : activePaint === 'stroke'
+              ? stroke
+              : activePaint === 'shadow'
+                ? shadowColor
+                : fill) ?? ''
+    );
+}
 
-function StrokeRemover({ onClick }: { onClick?: () => void }) {
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            onClick?.();
+/** Swatch id -> #rrggbb (Tailwind 4 colors are oklch; rasterized once per mount). */
+function useSwatchHex(): Map<string, string> {
+    return useMemo(() => {
+        const map = new Map<string, string>();
+        const all = [...PALETTE_BASICS, ...PALETTE_FAMILIES.flatMap((f) => f.shades)];
+        for (const sw of all) {
+            const hex = toOpaqueHex(sw.css);
+            if (hex) map.set(sw.id, hex);
+        }
+        return map;
+    }, []);
+}
+
+/** Name + hex for each swatch, and a ring on the exact current color. */
+function useSwatchState() {
+    const current = toOpaqueHex(useCurrentPaintColor()) ?? '';
+    const hexOf = useSwatchHex();
+    const is = (sw: PaletteSwatch) => !!current && hexOf.get(sw.id) === current;
+    return {
+        label: (sw: PaletteSwatch) => {
+            const hex = hexOf.get(sw.id);
+            return hex ? `${sw.label} · ${hex}` : sw.label;
+        },
+        swatch: (sw: PaletteSwatch): SwatchState => (is(sw) ? 'active' : 'none'),
+    };
+}
+
+/** Square 1-swatch box used by every item in the tools column (follows Settings > Icon size). */
+const TOOL_BOX =
+    'flex size-[var(--ui-swatch)] shrink-0 items-center justify-center border border-line-strong text-[10px] text-ink-muted hover:bg-surface-muted [&_svg]:size-[70%]';
+
+/**
+ * The palette's non-swatch tools: all shades, custom picker, hex, eyedropper. Rendered by
+ * DockRoot in the column left of the palette, next to Remove stroke / Remove fill, so the
+ * palette column holds only colors. What the palette paints is chosen with the footer
+ * Fill/Stroke tiles or a panel's PaintTargetSwatch.
+ */
+export function PaletteTools() {
+    const handleColorChange = useStore((s) => s.handleColorChange);
+    const commitRecentColor = useStore((s) => s.commitRecentColor) as
+        ((c: string) => void) | undefined;
+    const current = useCurrentPaintColor();
+
+    // one popover at a time; fixed position (the dock column scrolls and would clip it)
+    const [open, setOpen] = useState<null | 'grid' | 'picker' | 'hex'>(null);
+    const gridButton = useRef<HTMLButtonElement | null>(null);
+    const pickerButton = useRef<HTMLButtonElement | null>(null);
+    const hexButton = useRef<HTMLButtonElement | null>(null);
+    const picked = useRef<string | null>(null);
+    const toggle = (which: 'grid' | 'picker' | 'hex') => {
+        if (open === 'picker' || open === 'hex') closePicker(false);
+        setOpen((o) => (o === which ? null : which));
+    };
+
+    const currentHex = normalizeHex(current) ?? '#000000';
+    const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window;
+
+    // the picker applies live; the final color goes to Recent once, when it closes
+    const closePicker = (refocus: boolean) => {
+        const opener = open === 'hex' ? hexButton.current : pickerButton.current;
+        if (picked.current) commitRecentColor?.(picked.current);
+        picked.current = null;
+        setOpen(null);
+        if (refocus) opener?.focus();
+    };
+
+    const eyedrop = async () => {
+        try {
+            const res = await new (
+                window as unknown as {
+                    EyeDropper: new () => { open: () => Promise<{ sRGBHex: string }> };
+                }
+            ).EyeDropper().open();
+            handleColorChange(res.sRGBHex);
+            commitRecentColor?.(res.sRGBHex);
+        } catch {
+            /* cancelled */
         }
     };
 
+    const pressed = (which: typeof open) =>
+        open === which ? 'ring-2 ring-primary-500 ring-offset-1 ring-offset-surface' : '';
+
     return (
-        <div
-            role="button"
-            tabIndex={0}
-            onClick={onClick}
-            onKeyDown={handleKeyDown}
-            title="Remove stroke"
-            className="
-                group relative
-                ml-px mb-px
-                h-5 w-5
-                cursor-pointer
-                border border-dashed border-stone-400
-                hover:border-red-500
-                hover:bg-red-50
-                focus:outline-none
-            "
-        >
-            <span
-                className="
-                    absolute inset-0
-                    before:absolute
-                    before:left-1/2
-                    before:top-1/2
-                    before:h-px
-                    before:w-[120%]
-                    before:-translate-x-1/2
-                    before:-translate-y-1/2
-                    before:-rotate-45
-                    before:bg-stone-500
-                    group-hover:before:bg-red-500
-                "
-            />
+        <div className="relative flex flex-col items-center gap-[3px] border-b border-line pb-[3px]">
+            <Tooltip content="All colors" position="left">
+                <button
+                    ref={gridButton}
+                    type="button"
+                    data-dock-box
+                    aria-label="All colors"
+                    aria-haspopup="dialog"
+                    aria-expanded={open === 'grid'}
+                    onClick={() => toggle('grid')}
+                    className={`${TOOL_BOX} ${open === 'grid' ? 'bg-primary-50 text-primary-ink dark:bg-primary-500/20' : ''}`}
+                >
+                    <Icon name="table-cells-large" />
+                </button>
+            </Tooltip>
+
+            <Tooltip content="Custom color" position="left">
+                <button
+                    ref={pickerButton}
+                    type="button"
+                    data-dock-box
+                    aria-label="Custom color"
+                    aria-haspopup="dialog"
+                    aria-expanded={open === 'picker'}
+                    onClick={() => toggle('picker')}
+                    className={`${TOOL_BOX} ${pressed('picker')}`}
+                    style={{
+                        background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)',
+                    }}
+                />
+            </Tooltip>
+
+            <Tooltip content="Hex color" position="left">
+                <button
+                    ref={hexButton}
+                    type="button"
+                    data-dock-box
+                    aria-label="Enter a hex color"
+                    aria-haspopup="dialog"
+                    aria-expanded={open === 'hex'}
+                    onClick={() => toggle('hex')}
+                    className={`${TOOL_BOX} ${pressed('hex')}`}
+                >
+                    #
+                </button>
+            </Tooltip>
+
+            {hasEyeDropper && (
+                <Tooltip content="Pick from screen" position="left">
+                    <button
+                        type="button"
+                        data-dock-box
+                        aria-label="Pick a color from the screen"
+                        onClick={eyedrop}
+                        className={TOOL_BOX}
+                    >
+                        <Icon name="eye-dropper" />
+                    </button>
+                </Tooltip>
+            )}
+
+            {(open === 'picker' || open === 'hex') && (
+                <ColorPickerPopover
+                    anchor={open === 'hex' ? hexButton.current : pickerButton.current}
+                    color={currentHex}
+                    focusHex={open === 'hex'}
+                    onChange={(hex) => {
+                        picked.current = hex;
+                        handleColorChange(hex);
+                    }}
+                    onClose={closePicker}
+                />
+            )}
+
+            {open === 'grid' && (
+                <PaletteGrid
+                    anchor={gridButton.current}
+                    onClose={(refocus) => {
+                        setOpen(null);
+                        if (refocus) gridButton.current?.focus();
+                    }}
+                />
+            )}
         </div>
     );
 }
 
-function FillRemover({ onClick }: { onClick?: () => void }) {
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+/**
+ * Every palette color at once: one row per family, shades light -> dark (plus White / Black).
+ * Opens left of the dock from the "All colors" tool. Stays open while you try colors;
+ * Escape, a click outside or the button closes it. Arrow keys move between swatches.
+ */
+function PaletteGrid({
+    anchor,
+    onClose,
+}: {
+    anchor: HTMLElement | null;
+    onClose: (refocus: boolean) => void;
+}) {
+    const handleColorChange = useStore((s) => s.handleColorChange);
+    const state = useSwatchState();
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+
+    const rows: { id: string; label: string; swatches: PaletteSwatch[] }[] = [
+        { id: 'basic', label: 'Basic', swatches: PALETTE_BASICS },
+        ...PALETTE_FAMILIES.map((f) => ({ id: f.id, label: f.label, swatches: f.shades })),
+    ];
+
+    // place left of the dock, top aligned with the button, kept inside the window.
+    // Until placed it renders with opacity 0 (not visibility:hidden, which cannot take focus).
+    useLayoutEffect(() => {
+        const el = ref.current;
+        if (!el || !anchor) return;
+        const a = anchor.getBoundingClientRect();
+        const h = el.offsetHeight;
+        setPos({
+            top: Math.max(8, Math.min(a.top, window.innerHeight - h - 8)),
+            right: window.innerWidth - a.left + 6,
+        });
+    }, [anchor]);
+
+    // focus the current color (or the first swatch) when opened
+    useEffect(() => {
+        const el = ref.current;
+        const target =
+            el?.querySelector<HTMLButtonElement>('[aria-pressed="true"]') ??
+            el?.querySelector<HTMLButtonElement>('[data-r]');
+        target?.focus({ preventScroll: true });
+    }, []);
+
+    // close on a click outside (the toggle button handles its own click)
+    useEffect(() => {
+        const onDown = (e: PointerEvent) => {
+            const t = e.target as Node;
+            if (ref.current?.contains(t) || anchor?.contains(t)) return;
+            onClose(false);
+        };
+        document.addEventListener('pointerdown', onDown, true);
+        return () => document.removeEventListener('pointerdown', onDown, true);
+    }, [anchor, onClose]);
+
+    // Escape from anywhere while open (Safari does not focus a button on click, so the key may
+    // never reach the dialog's own handler). Skipped when the dialog already handled it.
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key !== 'Escape' || e.defaultPrevented) return;
             e.preventDefault();
-            onClick?.();
+            onClose(!!ref.current?.contains(document.activeElement));
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, [onClose]);
+
+    const onKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+        e.stopPropagation(); // arrows / Delete here must not reach canvas shortcuts
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            onClose(true);
+            return;
         }
+        const step = {
+            ArrowLeft: [0, -1],
+            ArrowRight: [0, 1],
+            ArrowUp: [-1, 0],
+            ArrowDown: [1, 0],
+        }[e.key];
+        const from = (e.target as HTMLElement).closest<HTMLElement>('[data-r]');
+        if (!step || !from) return;
+        e.preventDefault();
+        const r = Math.max(0, Math.min(rows.length - 1, Number(from.dataset.r) + step[0]));
+        const c = Math.max(
+            0,
+            Math.min(rows[r].swatches.length - 1, Number(from.dataset.c) + step[1]),
+        );
+        ref.current?.querySelector<HTMLElement>(`[data-r="${r}"][data-c="${c}"]`)?.focus();
     };
 
     return (
         <div
-            role="button"
-            tabIndex={0}
-            onClick={onClick}
-            onKeyDown={handleKeyDown}
-            title="Remove fill"
-            className="
-                group relative
-                ml-px mb-px
-                h-5 w-5
-                cursor-pointer
-                border border-dashed border-stone-400
-                hover:border-red-500
-                hover:bg-red-50
-                focus:outline-none
-            "
+            ref={ref}
+            role="dialog"
+            aria-label="All colors"
+            onKeyDown={onKeyDown}
+            className="fixed z-[9999] rounded-lg border border-line bg-surface p-3 shadow-lg"
+            style={pos ?? { top: 8, right: 8, opacity: 0 }}
         >
-            <span
-                className="
-                    absolute inset-0
-                    before:absolute
-                    before:left-1/2
-                    before:top-1/2
-                    before:h-px
-                    before:w-[120%]
-                    before:-translate-x-1/2
-                    before:-translate-y-1/2
-                    before:-rotate-45
-                    before:bg-stone-500
-                    group-hover:before:bg-red-500
-                "
-            />
+            <div className="mb-2 flex items-center justify-between gap-4">
+                <span className="text-xs font-semibold text-title">All colors</span>
+                <IconButton
+                    size="sm"
+                    icon={<Icon name="xmark" />}
+                    aria-label="Close all colors"
+                    onClick={() => onClose(true)}
+                />
+            </div>
+            <div
+                className="grid items-center gap-[3px]"
+                style={{
+                    gridTemplateColumns: `auto repeat(${PALETTE_SHADES.length}, var(--ui-swatch))`,
+                }}
+            >
+                <span />
+                {PALETTE_SHADES.map((shade) => (
+                    <span
+                        key={shade}
+                        aria-hidden
+                        className="text-center text-[9px] leading-4 tabular-nums text-ink-subtle"
+                    >
+                        {shade}
+                    </span>
+                ))}
+                {rows.map((row, r) => (
+                    <div key={row.id} role="group" aria-label={row.label} className="contents">
+                        <span aria-hidden className="pr-2 text-[11px] leading-none text-ink-muted">
+                            {row.label}
+                        </span>
+                        {row.swatches.map((sw, c) => (
+                            <Swatch
+                                key={sw.id}
+                                data-r={r}
+                                data-c={c}
+                                color={sw.css}
+                                label={state.label(sw)}
+                                state={state.swatch(sw)}
+                                onClick={() => handleColorChange(sw.value)}
+                            />
+                        ))}
+                        {/* basic row is short: keep the grid aligned */}
+                        {Array.from(
+                            { length: PALETTE_SHADES.length - row.swatches.length },
+                            (_, i) => (
+                                <span key={`pad-${i}`} aria-hidden />
+                            ),
+                        )}
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
 
+/**
+ * Recently used colors (newest first, max 8, kept in memory only). Rendered by DockRoot at the
+ * bottom of the left column.
+ */
+export function RecentColors() {
+    const handleColorChange = useStore((s) => s.handleColorChange);
+    const recentColors = useStore((s) => s.recentColors) as string[] | undefined;
+    const commitRecentColor = useStore((s) => s.commitRecentColor) as
+        ((c: string) => void) | undefined;
+
+    if (!recentColors?.length) return null;
+
+    return (
+        <div
+            className="mt-[3px] flex flex-col items-center gap-[3px] border-t border-line pt-[3px]"
+            aria-label="Recent colors"
+        >
+            {recentColors.map((c) => (
+                <button
+                    key={c}
+                    type="button"
+                    data-dock-box
+                    aria-label={`Use recent color ${c}`}
+                    title={c}
+                    onClick={() => {
+                        handleColorChange(c);
+                        commitRecentColor?.(c);
+                    }}
+                    className="size-[var(--ui-swatch)] shrink-0 border border-line-strong"
+                    style={{ backgroundColor: c }}
+                />
+            ))}
+        </div>
+    );
+}
+
+/**
+ * The palette strip: White, Black, then every shade of every family (each family dark -> light,
+ * a small gap between families). "All colors" shows the same colors as a grid.
+ */
 export const ColorPicker = () => {
-    const [bgColors] = useState([
-        'red',
-        'orange',
-        'amber',
-        'yellow',
-        'lime',
-        'green',
-        'emerald',
-        'teal',
-        'cyan',
-        'sky',
-        'blue',
-        'indigo',
-        'violet',
-        'purple',
-        'fuchsia',
-        'pink',
-        'rose',
-        'slate',
-        'gray',
-        'zinc',
-        'neutral',
-        'stone',
-    ]);
+    const handleColorChange = useStore((s) => s.handleColorChange);
+    const state = useSwatchState();
+    const ref = useRef<HTMLDivElement | null>(null);
+    const current = toOpaqueHex(useCurrentPaintColor()) ?? '';
 
-    const scrollRef = useRef<HTMLDivElement | null>(null);
-
-    const { handleColorChange, fill, setStrokeWidthN } = useStore();
+    // the strip is long: center the current color when it changes and is off screen
+    // (no jump when it is already fully visible, ring included)
+    useEffect(() => {
+        const el = ref.current?.querySelector<HTMLElement>('[aria-pressed="true"]');
+        const scroller = ref.current?.parentElement;
+        if (!el || !scroller) return;
+        const a = el.getBoundingClientRect();
+        const v = scroller.getBoundingClientRect();
+        const RING = 4;
+        if (a.top - RING >= v.top && a.bottom + RING <= v.bottom) return;
+        el.scrollIntoView?.({ block: 'center' });
+    }, [current]);
 
     return (
-        <div className="flex w-8 flex-col bg-white">
-            <Tooltip content="Remove Stroke">
-                <StrokeRemover onClick={() => setStrokeWidthN(0)} />
-            </Tooltip>
-
-            <Palette
-                scrollRef={scrollRef}
-                fill={fill}
-                bgColors={bgColors}
-                colorsMap={colorsMap}
-                onClick={handleColorChange}
-            />
-
-            <Tooltip content="Remove Fill">
-                <FillRemover onClick={() => handleColorChange('rgba(0,0,0,0)')} />
-            </Tooltip>
-
-            <ColorSlider scrollRef={scrollRef} />
+        <div
+            ref={ref}
+            data-testid="color-palette"
+            role="group"
+            aria-label="Color palette"
+            className="flex flex-col items-center gap-[3px] bg-surface"
+        >
+            {PALETTE_BASICS.map((sw) => (
+                <Swatch
+                    key={sw.id}
+                    color={sw.css}
+                    label={state.label(sw)}
+                    state={state.swatch(sw)}
+                    onClick={() => handleColorChange(sw.value)}
+                />
+            ))}
+            {PALETTE_FAMILIES.map((f) => (
+                <div
+                    key={f.id}
+                    role="group"
+                    aria-label={f.label}
+                    className="mt-[3px] flex flex-col items-center gap-[3px] border-t border-line pt-[6px]"
+                >
+                    {[...f.shades].reverse().map((sw) => (
+                        <Swatch
+                            key={sw.id}
+                            color={sw.css}
+                            label={state.label(sw)}
+                            state={state.swatch(sw)}
+                            onClick={() => handleColorChange(sw.value)}
+                        />
+                    ))}
+                </div>
+            ))}
         </div>
     );
 };

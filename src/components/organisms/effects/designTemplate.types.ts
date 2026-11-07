@@ -1,10 +1,5 @@
 export type DesignTemplateCategory =
-    | 'YouTube'
-    | 'Instagram'
-    | 'Social'
-    | 'Poster'
-    | 'Presentation'
-    | 'Marketing';
+    'YouTube' | 'Instagram' | 'Social' | 'Poster' | 'Presentation' | 'Marketing';
 
 export type DesignTemplateObject =
     | DesignTemplateImage

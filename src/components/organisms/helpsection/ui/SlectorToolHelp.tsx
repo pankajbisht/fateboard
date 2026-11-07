@@ -72,8 +72,8 @@ function SelectorToolHelp() {
     return (
         <div className="space-y-8 p-6">
             <header className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">Selector Tool</h1>
-                <p className="text-gray-600">
+                <h1 className="text-3xl font-bold text-ink">Selector Tool</h1>
+                <p className="text-ink-muted">
                     Use the Selector Tool to select, move, resize, group, and organize objects on
                     the canvas.
                 </p>
@@ -82,12 +82,12 @@ function SelectorToolHelp() {
             {sections.map((sec) => (
                 <section
                     key={sec.title}
-                    className="bg-gray-50 p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow space-y-2"
+                    className="bg-surface-muted p-5 rounded-xl shadow-sm hover:shadow-md transition-shadow space-y-2"
                 >
-                    <h2 className="text-xl font-semibold text-gray-800">{sec.title}</h2>
-                    {sec.content && <p className="text-gray-700">{sec.content}</p>}
+                    <h2 className="text-xl font-semibold text-ink">{sec.title}</h2>
+                    {sec.content && <p className="text-ink">{sec.content}</p>}
                     {sec.list && (
-                        <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                        <ul className="list-disc pl-6 space-y-1 text-ink">
                             {sec.list.map((item) => (
                                 <li key={item}>{item}</li>
                             ))}

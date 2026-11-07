@@ -1,3 +1,4 @@
+import { Icon } from '@/components/atoms/Icon';
 import { useEffect, useState } from 'react';
 
 import clsx from 'clsx';
@@ -53,19 +54,19 @@ export const ColorSlider: React.FC<ColorSliderProps> = ({ scrollRef, className =
     return (
         <div className={clsx('flex flex-col', className)}>
             <button
-                className="h-5 w-5 flex items-center justify-center hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-5 w-5 flex items-center justify-center hover:bg-surface-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 disabled={!canScrollUp}
                 onClick={() => scroll(-20)}
             >
-                <i className="fa-solid fa-chevron-up"></i>
+                <Icon name="chevron-up" />
             </button>
 
             <button
-                className="h-5 w-5 flex items-center justify-center hover:bg-stone-200 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="h-5 w-5 flex items-center justify-center hover:bg-surface-strong transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 disabled={!canScrollDown}
                 onClick={() => scroll(20)}
             >
-                <i className="fa-solid fa-chevron-down"></i>
+                <Icon name="chevron-down" />
             </button>
         </div>
     );

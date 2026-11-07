@@ -7,6 +7,9 @@ export type Transform = {
     flipX: boolean;
     flipY: boolean;
     originX: string;
-    centerY: string;
+    originY: string;
     id: string;
+    /** corner radius, only meaningful for Rect */
+    rx: number;
+    ry: number;
 };

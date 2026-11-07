@@ -1,9 +1,18 @@
+import { type TMat2D } from 'fabric';
+import { whenImagesReady } from '@/lib/imageReady';
+import { serializeCanvas } from '@/lib/serialization';
 import { useStore } from '@/store';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import DockTemplate from '@/components/templates/Dock.template';
-import Dropdown from '@/components/atoms/Dropdown';
-import Button from '@/components/atoms/Button';
 import Input from '@/components/atoms/Input';
+import { Icon } from '@/components/atoms/Icon';
+import { Select } from '@/components/atoms/Select';
+import { Badge } from '@/components/atoms/Badge';
+import { Field } from '@/components/molecules/Field';
+import { SliderField } from '@/components/molecules/LabeledSlider';
+import LabeledToggle from '@/components/molecules/LabeledToggle';
+import { PanelSection } from '@/components/molecules/PanelSection';
+import { SegmentedControl } from '@/components/molecules/SegmentedControl';
+import { PanelAction } from '@/components/molecules/PanelAction';
 
 /* ---------------------------------------------------------
  * CONSTANTS
@@ -112,25 +121,13 @@ const PREVIEW_ZOOM_OPTIONS = [
 
 const MAX_RENDER_SIZE = 8192;
 
-/* Custom properties that must survive canvas.toJSON() */
-const JSON_PROPS = [
-    'id',
-    'name',
-    'excludeFromCrop',
-    'excludeFromExport',
-    'selectable',
-    'evented',
-    'lockMovementX',
-    'lockMovementY',
-];
-
 const CANVAS_EVENTS = [
     'object:added',
     'object:removed',
     'object:modified',
     'text:changed',
     'canvas:cleared',
-];
+] as const;
 
 const CHECKERBOARD_STYLE = {
     backgroundColor: '#ffffff',
@@ -159,16 +156,8 @@ const sanitizeFileName = (name) => {
     return cleaned || 'drawing';
 };
 
-const loadImage = (src) =>
-    new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => reject(new Error('Could not load the rendered image.'));
-        img.src = src;
-    });
-
-const canvasToBlob = (canvasEl, type, quality) =>
-    new Promise((resolve, reject) => {
+const canvasToBlob = (canvasEl: HTMLCanvasElement, type: string, quality?: number) =>
+    new Promise<Blob>((resolve, reject) => {
         canvasEl.toBlob(
             (blob) => (blob ? resolve(blob) : reject(new Error('Could not encode the image.'))),
             type,
@@ -197,16 +186,6 @@ const friendlyError = (error) => {
 
     return (error && error.message) || 'Something went wrong while exporting.';
 };
-
-const LABEL_CLASS = 'flex items-center gap-1 text-[11px] text-gray-500';
-
-/* Local field wrapper so every setting label shares one style. */
-const Field = ({ label, children }) => (
-    <div>
-        <div className={`mb-1.5 ${LABEL_CLASS}`}>{label}</div>
-        {children}
-    </div>
-);
 
 /* ---------------------------------------------------------
  * COMPONENT
@@ -286,7 +265,10 @@ const ExportCanvas = () => {
         canvas
             .getObjects()
             .filter(
-                (object) => object.visible && !object.excludeFromCrop && !object.excludeFromExport,
+                (object) =>
+                    object.visible &&
+                    !(object as typeof object & { excludeFromCrop?: boolean }).excludeFromCrop &&
+                    !object.excludeFromExport,
             );
 
     /* Returns null when there is nothing to export. */
@@ -312,7 +294,7 @@ const ExportCanvas = () => {
         let maxY = -Infinity;
 
         objects.forEach((object) => {
-            const bounds = object.getBoundingRect(true, true);
+            const bounds = object.getBoundingRect(); // Fabric 6+: always absolute, no arguments
 
             minX = Math.min(minX, bounds.left);
             minY = Math.min(minY, bounds.top);
@@ -334,25 +316,10 @@ const ExportCanvas = () => {
      * IMAGE LOADING
      * ------------------------------------------------------- */
 
+    // filtered images draw from a <canvas>: only a source <img> still downloading is waited for
     const waitForImages = async () => {
         if (!canvas) return;
-
-        const promises = canvas.getObjects().map((object) => {
-            if (object.type !== 'image' || !object.getElement) {
-                return Promise.resolve();
-            }
-
-            const element = object.getElement();
-
-            if (!element || element.complete) return Promise.resolve();
-
-            return new Promise((resolve) => {
-                element.addEventListener('load', resolve, { once: true });
-                element.addEventListener('error', resolve, { once: true });
-            });
-        });
-
-        await Promise.all(promises);
+        await whenImagesReady(canvas.getObjects());
     };
 
     /* -------------------------------------------------------
@@ -365,7 +332,7 @@ const ExportCanvas = () => {
      * ------------------------------------------------------- */
 
     const withCleanCanvas = (fn) => {
-        const vpt = canvas.viewportTransform ? [...canvas.viewportTransform] : null;
+        const vpt = canvas.viewportTransform ? ([...canvas.viewportTransform] as TMat2D) : null;
         const previousBackground = canvas.backgroundColor;
         const hidden = [];
 
@@ -469,19 +436,16 @@ const ExportCanvas = () => {
             ),
         );
 
-        const dataUrl = withCleanCanvas(() =>
-            canvas.toDataURL({
-                format: 'png',
-                quality: 1,
+        // Render straight to a canvas element: no PNG encode + decode round trip (was the
+        // slowest step of every export / preview on large images).
+        const image = withCleanCanvas(() =>
+            canvas.toCanvasElement(multiplier, {
                 left: src.left,
                 top: src.top,
                 width: src.width,
                 height: src.height,
-                multiplier,
             }),
         );
-
-        const image = await loadImage(dataUrl);
 
         const output = document.createElement('canvas');
 
@@ -521,8 +485,8 @@ const ExportCanvas = () => {
 
         let svg = withCleanCanvas(() =>
             canvas.toSVG({
-                width,
-                height,
+                width: String(width),
+                height: String(height),
                 viewBox: {
                     x: bounds.left,
                     y: bounds.top,
@@ -739,7 +703,8 @@ const ExportCanvas = () => {
 
                 blob = new Blob([svg], { type: 'image/svg+xml' });
             } else if (format === 'json') {
-                const json = JSON.stringify(canvas.toJSON(JSON_PROPS), null, 2);
+                // one serialize path (BUG-003): every custom prop, animated objects at rest (BUG-011)
+                const json = JSON.stringify(serializeCanvas(canvas), null, 2);
 
                 blob = new Blob([json], { type: 'application/json' });
             }
@@ -801,539 +766,416 @@ const ExportCanvas = () => {
      * ------------------------------------------------------- */
 
     return (
-        <DockTemplate title="Export">
-            <div className="flex h-full min-h-0 flex-col bg-white">
-                {/* =====================================================
+        <>
+            {/* =====================================================
             SETTINGS
         ====================================================== */}
 
-                <div className="shrink-0 space-y-4 border-b border-gray-100">
-                    {/* SIZE */}
+            <PanelSection title="Settings">
+                {/* SIZE */}
 
-                    <Field label="Size">
-                        <Dropdown
-                            value={sizePreset}
-                            options={PRESET_OPTIONS}
-                            onChange={handlePresetChange}
+                <Field label="Size">
+                    <Select
+                        aria-label="Size"
+                        value={sizePreset}
+                        options={PRESET_OPTIONS}
+                        onChange={handlePresetChange}
+                    />
+                </Field>
+
+                {/* CUSTOM */}
+
+                {sizePreset === 'custom' && (
+                    <div className="grid grid-cols-2 gap-2.5">
+                        <Input
+                            type="number"
+                            value={width}
+                            min={1}
+                            max={MAX_RENDER_SIZE}
+                            onChange={(e) =>
+                                setWidth(clamp(Number(e.target.value) || 1, 1, MAX_RENDER_SIZE))
+                            }
+                            placeholder="Width"
+                            label="Width (px)"
+                        />
+
+                        <Input
+                            type="number"
+                            value={height}
+                            min={1}
+                            max={MAX_RENDER_SIZE}
+                            onChange={(e) =>
+                                setHeight(clamp(Number(e.target.value) || 1, 1, MAX_RENDER_SIZE))
+                            }
+                            placeholder="Height"
+                            label="Height (px)"
+                        />
+                    </div>
+                )}
+
+                {/* FORMAT + SCALING */}
+
+                <div className="grid grid-cols-2 gap-3">
+                    <Field label="Format">
+                        <Select<string>
+                            aria-label="Format"
+                            value={format}
+                            options={FORMAT_OPTIONS}
+                            onChange={setFormat}
                         />
                     </Field>
 
-                    {/* CUSTOM */}
-
-                    {sizePreset === 'custom' && (
-                        <div className="grid grid-cols-2 gap-2.5">
-                            <Input
-                                type="number"
-                                value={width}
-                                min={1}
-                                max={MAX_RENDER_SIZE}
-                                onChange={(e) =>
-                                    setWidth(clamp(Number(e.target.value) || 1, 1, MAX_RENDER_SIZE))
-                                }
-                                placeholder="Width"
-                            />
-
-                            <Input
-                                type="number"
-                                value={height}
-                                min={1}
-                                max={MAX_RENDER_SIZE}
-                                onChange={(e) =>
-                                    setHeight(
-                                        clamp(Number(e.target.value) || 1, 1, MAX_RENDER_SIZE),
-                                    )
-                                }
-                                placeholder="Height"
-                            />
-                        </div>
-                    )}
-
-                    {/* FORMAT + SCALING */}
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <Field label="Format">
-                            <Dropdown
-                                value={format}
-                                options={FORMAT_OPTIONS}
-                                onChange={setFormat}
-                            />
-                        </Field>
-
-                        <Field label="Scaling">
-                            <Dropdown
-                                value={scaling}
-                                options={SCALING_OPTIONS}
-                                onChange={setScaling}
-                            />
-                        </Field>
-                    </div>
-
-                    {/* QUALITY */}
-
-                    {isRaster && (
-                        <Field label="Quality">
-                            <Dropdown
-                                value={String(quality)}
-                                options={QUALITY_OPTIONS}
-                                onChange={(value) => setQuality(Number(value))}
-                            />
-                        </Field>
-                    )}
-
-                    {/* JPEG COMPRESSION */}
-
-                    {format === 'jpeg' && (
-                        <div>
-                            <div className={`mb-1.5 justify-between ${LABEL_CLASS}`}>
-                                <label htmlFor="export-jpeg-quality">JPEG compression</label>
-                                <span>{Math.round(jpegQuality * 100)}%</span>
-                            </div>
-
-                            <input
-                                id="export-jpeg-quality"
-                                type="range"
-                                min={50}
-                                max={100}
-                                step={1}
-                                value={Math.round(jpegQuality * 100)}
-                                onChange={(e) => setJpegQuality(Number(e.target.value) / 100)}
-                                className="w-full accent-gray-900"
-                            />
-                        </div>
-                    )}
-
-                    {/* BACKGROUND */}
-
-                    {showBackground && (
-                        <div>
-                            <div className={`mb-2 ${LABEL_CLASS}`}>Background</div>
-
-                            <div className="grid grid-cols-3 gap-2">
-                                {BACKGROUND_OPTIONS.map((option) => {
-                                    const active = background === option.value;
-                                    const isTransparent = option.value === 'transparent';
-
-                                    return (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            aria-pressed={active}
-                                            onClick={() => setBackground(option.value)}
-                                            className={`flex items-center gap-2 rounded-lg border px-1.5 py-2 transition ${
-                                                active
-                                                    ? 'border-gray-900 bg-gray-50'
-                                                    : 'border-gray-200 bg-white hover:bg-gray-50'
-                                            }`}
-                                        >
-                                            <span
-                                                className={`relative h-3 w-3 shrink-0 overflow-hidden rounded-md border ${
-                                                    active ? 'border-gray-500' : 'border-gray-200'
-                                                }`}
-                                                style={
-                                                    isTransparent
-                                                        ? {
-                                                              backgroundColor: '#fff',
-                                                              backgroundImage:
-                                                                  'linear-gradient(45deg,#e5e7eb 25%,transparent 25%),linear-gradient(-45deg,#e5e7eb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e5e7eb 75%),linear-gradient(-45deg,transparent 75%,#e5e7eb 75%)',
-                                                              backgroundSize: '8px 8px',
-                                                              backgroundPosition:
-                                                                  '0 0,0 4px,4px -4px,-4px 0',
-                                                          }
-                                                        : { backgroundColor: option.value }
-                                                }
-                                            />
-
-                                            <span className="text-[7px] font-medium text-gray-600">
-                                                {option.label}
-                                            </span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            {format === 'jpeg' && background === 'transparent' && (
-                                <div className="mt-1.5 text-[9px] text-gray-400">
-                                    JPEG does not support transparency. White will be used
-                                    automatically.
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* CROP */}
-
-                    {format !== 'json' && (
-                        <div className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/70 px-3 py-2.5">
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[12px] font-medium text-gray-800">
-                                        Crop to content
-                                    </span>
-
-                                    {cropToContent && (
-                                        <span className="rounded-md bg-gray-200 px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-gray-500">
-                                            On
-                                        </span>
-                                    )}
-                                </div>
-
-                                <div className="mt-0.5 text-[10px] text-gray-400">
-                                    Remove unused canvas space
-                                </div>
-                            </div>
-
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={cropToContent}
-                                aria-label="Crop to content"
-                                onClick={() => setCropToContent((prev) => !prev)}
-                                className={`relative flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-1 ${
-                                    cropToContent ? 'bg-gray-900' : 'bg-gray-300'
-                                }`}
-                            >
-                                <span
-                                    className={`block h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.25)] transition-transform duration-200 ease-out ${
-                                        cropToContent ? 'translate-x-5' : 'translate-x-0'
-                                    }`}
-                                />
-                            </button>
-                        </div>
-                    )}
-                    {/* FILE NAME */}
-
-                    <div>
-                        <div className={`mb-1.5 ${LABEL_CLASS}`}>File name</div>
-
-                        <Input
-                            value={fileName}
-                            onChange={(e) => setFileName(e.target.value)}
-                            placeholder="drawing"
+                    <Field label="Scaling">
+                        <Select<string>
+                            aria-label="Scaling"
+                            value={scaling}
+                            options={SCALING_OPTIONS}
+                            onChange={setScaling}
                         />
-                    </div>
+                    </Field>
                 </div>
 
-                {/* =====================================================
+                {/* QUALITY */}
+
+                {isRaster && (
+                    <Field label="Quality">
+                        <Select
+                            aria-label="Quality"
+                            value={String(quality)}
+                            options={QUALITY_OPTIONS}
+                            onChange={(value) => setQuality(Number(value))}
+                        />
+                    </Field>
+                )}
+
+                {/* JPEG COMPRESSION */}
+
+                {format === 'jpeg' && (
+                    <SliderField
+                        label="JPEG compression"
+                        min={50}
+                        max={100}
+                        step={1}
+                        unit="%"
+                        value={Math.round(jpegQuality * 100)}
+                        onChange={(v) => setJpegQuality(v / 100)}
+                    />
+                )}
+
+                {/* BACKGROUND */}
+
+                {showBackground && (
+                    <Field label="Background">
+                        <div className="grid grid-cols-2 gap-2">
+                            {BACKGROUND_OPTIONS.map((option) => {
+                                const active = background === option.value;
+                                const isTransparent = option.value === 'transparent';
+
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type="button"
+                                        aria-pressed={active}
+                                        onClick={() => setBackground(option.value)}
+                                        className={`flex h-8 items-center gap-2 rounded-md border px-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/60 ${
+                                            active
+                                                ? 'border-primary-500 bg-primary-50'
+                                                : 'border-line-strong bg-surface hover:bg-surface-muted'
+                                        }`}
+                                    >
+                                        <span
+                                            className={`relative h-3.5 w-3.5 shrink-0 overflow-hidden rounded-sm border ${
+                                                active ? 'border-primary-500' : 'border-line'
+                                            }`}
+                                            style={
+                                                isTransparent
+                                                    ? {
+                                                          backgroundColor: '#fff',
+                                                          backgroundImage:
+                                                              'linear-gradient(45deg,#e5e7eb 25%,transparent 25%),linear-gradient(-45deg,#e5e7eb 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#e5e7eb 75%),linear-gradient(-45deg,transparent 75%,#e5e7eb 75%)',
+                                                          backgroundSize: '8px 8px',
+                                                          backgroundPosition:
+                                                              '0 0,0 4px,4px -4px,-4px 0',
+                                                      }
+                                                    : { backgroundColor: option.value }
+                                            }
+                                        />
+
+                                        <span className="text-xs font-medium text-ink">
+                                            {option.label}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {format === 'jpeg' && background === 'transparent' && (
+                            <p className="text-caption text-ink-subtle">
+                                JPEG does not support transparency. White will be used
+                                automatically.
+                            </p>
+                        )}
+                    </Field>
+                )}
+
+                {/* CROP */}
+
+                {format !== 'json' && (
+                    <LabeledToggle
+                        label="Crop to content"
+                        hint="Remove unused canvas space"
+                        checked={cropToContent}
+                        onChange={setCropToContent}
+                    />
+                )}
+                {/* FILE NAME */}
+
+                <Input
+                    label="File name"
+                    value={fileName}
+                    onChange={(e) => setFileName(e.target.value)}
+                    placeholder="drawing"
+                />
+            </PanelSection>
+
+            {/* =====================================================
             PREVIEW
         ====================================================== */}
 
-                <div className="min-h-0 flex-1 overflow-y-auto bg-gray-50/60 py-4">
-                    {/* HEADER */}
+            <PanelSection
+                title="Preview"
+                actions={
+                    <>
+                        {previewLoading && <Icon name="spinner" spin className="text-ink-subtle" />}
+                        <Badge>{format.toUpperCase()}</Badge>
+                        <Badge>{megapixels} MP</Badge>
+                    </>
+                }
+            >
+                {/* PREVIEW CARD */}
 
-                    <div className="flex items-center justify-between pb-4">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[13px] font-semibold text-gray-900">
-                                    Preview
-                                </span>
+                <div>
+                    <div className="overflow-hidden rounded-lg border border-line bg-surface">
+                        {/* TOOLBAR */}
 
-                                {previewLoading && (
-                                    <span className="h-3 w-3 animate-spin rounded-full border border-gray-300 border-t-gray-800" />
+                        <div className="flex items-center justify-between border-b border-line px-3 py-2">
+                            <span className="text-label uppercase text-ink-subtle">Zoom</span>
+                            <SegmentedControl
+                                aria-label="Preview zoom"
+                                size="sm"
+                                block={false}
+                                value={previewZoom}
+                                onChange={setPreviewZoom}
+                                options={PREVIEW_ZOOM_OPTIONS}
+                            />
+                        </div>
+
+                        {/* STAGE */}
+
+                        <div
+                            ref={stageRef}
+                            className="relative flex min-h-[240px] overflow-auto bg-surface-muted p-4"
+                        >
+                            <div className="m-auto">
+                                {format === 'json' ? (
+                                    <div className="flex flex-col items-center text-center">
+                                        <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-line bg-surface shadow-sm">
+                                            <svg
+                                                width="25"
+                                                height="25"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="1.5"
+                                                className="text-ink-muted"
+                                                aria-hidden="true"
+                                            >
+                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                                <path d="M14 2v6h6" />
+                                                <path d="M8 13h8" />
+                                                <path d="M8 17h6" />
+                                            </svg>
+                                        </div>
+
+                                        <div className="mt-3 text-[13px] font-semibold text-ink">
+                                            JSON document
+                                        </div>
+
+                                        <div className="mt-1 max-w-[220px] text-caption leading-relaxed text-ink-subtle">
+                                            Your canvas structure will be exported as editable JSON.
+                                        </div>
+                                    </div>
+                                ) : error ? (
+                                    <div className="flex max-w-[260px] flex-col items-center text-center">
+                                        <div className="text-xs font-semibold text-danger">
+                                            Preview unavailable
+                                        </div>
+
+                                        <div className="mt-1 text-caption leading-relaxed text-ink-muted">
+                                            {error}
+                                        </div>
+                                    </div>
+                                ) : previewLoading && !preview ? (
+                                    <div className="flex flex-col items-center">
+                                        <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-line bg-surface shadow-sm">
+                                            <Icon
+                                                name="spinner"
+                                                spin
+                                                className="text-lg text-ink-subtle"
+                                            />
+                                        </div>
+
+                                        <span className="mt-3 text-caption font-medium text-ink-muted">
+                                            Preparing preview…
+                                        </span>
+                                    </div>
+                                ) : preview ? (
+                                    <div
+                                        className="relative overflow-hidden rounded-lg border border-line-strong shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+                                        style={previewFrameStyle}
+                                    >
+                                        {/* CHECKERBOARD */}
+
+                                        <div
+                                            className="absolute inset-0"
+                                            style={CHECKERBOARD_STYLE}
+                                        />
+
+                                        <img
+                                            src={preview}
+                                            alt="Export preview"
+                                            draggable="false"
+                                            className={`relative block h-full w-full object-contain transition-opacity ${
+                                                previewLoading ? 'opacity-60' : 'opacity-100'
+                                            }`}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center text-center">
+                                        <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-line bg-surface shadow-sm">
+                                            <svg
+                                                width="25"
+                                                height="25"
+                                                viewBox="0 0 24 24"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                strokeWidth="1.5"
+                                                className="text-ink-subtle"
+                                                aria-hidden="true"
+                                            >
+                                                <rect x="3" y="3" width="18" height="18" rx="2" />
+                                                <circle cx="8.5" cy="8.5" r="1.5" />
+                                                <path d="m21 15-5-5L5 21" />
+                                            </svg>
+                                        </div>
+
+                                        <div className="mt-3 text-[13px] font-medium text-ink-muted">
+                                            Nothing to preview
+                                        </div>
+
+                                        <div className="mt-1 max-w-[220px] text-caption leading-relaxed text-ink-subtle">
+                                            Add content to your canvas to see the exported result.
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-
-                            <div className="mt-0.5 text-[10px] text-gray-400">
-                                Final export appearance
-                            </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5">
-                            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 text-[9px] font-bold uppercase text-gray-600 shadow-sm">
-                                {format}
-                            </span>
+                        {/* PREVIEW FOOTER */}
 
-                            <span className="rounded-md border border-gray-200 bg-white px-2 py-1 text-[9px] font-medium text-gray-500 shadow-sm">
-                                {megapixels} MP
-                            </span>
-                        </div>
-                    </div>
+                        <div className="flex items-center justify-between border-t border-line px-3 py-2.5">
+                            <div className="flex items-center gap-2">
+                                <span
+                                    className={`h-1.5 w-1.5 rounded-full ${
+                                        error
+                                            ? 'bg-danger'
+                                            : previewLoading
+                                              ? 'bg-line-strong'
+                                              : 'bg-success'
+                                    }`}
+                                />
 
-                    {/* PREVIEW CARD */}
-
-                    <div className="pb-4">
-                        <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-                            {/* TOOLBAR */}
-
-                            <div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
-                                <div className="flex items-center gap-2">
-                                    <div className="flex gap-1">
-                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                                        <span className="h-1.5 w-1.5 rounded-full bg-gray-300" />
-                                    </div>
-
-                                    <span className="text-[9px] font-semibold uppercase tracking-wider text-gray-400">
-                                        Preview canvas
-                                    </span>
-                                </div>
-
-                                {/* ZOOM */}
-
-                                <div className="flex items-center rounded-lg border border-gray-200 bg-gray-50 p-0.5">
-                                    {PREVIEW_ZOOM_OPTIONS.map((option) => {
-                                        const active = previewZoom === option.value;
-
-                                        return (
-                                            <button
-                                                key={option.value}
-                                                type="button"
-                                                aria-pressed={active}
-                                                onClick={() => setPreviewZoom(option.value)}
-                                                className={`rounded-md px-2 py-1 text-[9px] font-medium transition ${
-                                                    active
-                                                        ? 'bg-white text-gray-800 shadow-sm'
-                                                        : 'text-gray-400 hover:text-gray-600'
-                                                }`}
-                                            >
-                                                {option.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* STAGE */}
-
-                            <div
-                                ref={stageRef}
-                                className="relative flex min-h-[300px] overflow-auto bg-[#f3f4f6] p-5"
-                            >
-                                <div className="m-auto">
-                                    {format === 'json' ? (
-                                        <div className="flex flex-col items-center text-center">
-                                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 bg-white shadow-sm">
-                                                <svg
-                                                    width="25"
-                                                    height="25"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="1.5"
-                                                    className="text-gray-500"
-                                                    aria-hidden="true"
-                                                >
-                                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                                                    <path d="M14 2v6h6" />
-                                                    <path d="M8 13h8" />
-                                                    <path d="M8 17h6" />
-                                                </svg>
-                                            </div>
-
-                                            <div className="mt-3 text-[13px] font-semibold text-gray-700">
-                                                JSON document
-                                            </div>
-
-                                            <div className="mt-1 max-w-[220px] text-[10px] leading-relaxed text-gray-400">
-                                                Your canvas structure will be exported as editable
-                                                JSON.
-                                            </div>
-                                        </div>
-                                    ) : error ? (
-                                        <div className="flex max-w-[260px] flex-col items-center text-center">
-                                            <div className="text-[13px] font-semibold text-red-600">
-                                                Preview unavailable
-                                            </div>
-
-                                            <div className="mt-1 text-[10px] leading-relaxed text-gray-500">
-                                                {error}
-                                            </div>
-                                        </div>
-                                    ) : previewLoading && !preview ? (
-                                        <div className="flex flex-col items-center">
-                                            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-gray-200 bg-white shadow-sm">
-                                                <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-200 border-t-gray-800" />
-                                            </div>
-
-                                            <span className="mt-3 text-[10px] font-medium text-gray-500">
-                                                Preparing preview…
-                                            </span>
-                                        </div>
-                                    ) : preview ? (
-                                        <div
-                                            className="relative overflow-hidden rounded-lg border border-gray-300 shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
-                                            style={previewFrameStyle}
-                                        >
-                                            {/* CHECKERBOARD */}
-
-                                            <div
-                                                className="absolute inset-0"
-                                                style={CHECKERBOARD_STYLE}
-                                            />
-
-                                            <img
-                                                src={preview}
-                                                alt="Export preview"
-                                                draggable="false"
-                                                className={`relative block h-full w-full object-contain transition-opacity ${
-                                                    previewLoading ? 'opacity-60' : 'opacity-100'
-                                                }`}
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center text-center">
-                                            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-200 bg-white shadow-sm">
-                                                <svg
-                                                    width="25"
-                                                    height="25"
-                                                    viewBox="0 0 24 24"
-                                                    fill="none"
-                                                    stroke="currentColor"
-                                                    strokeWidth="1.5"
-                                                    className="text-gray-400"
-                                                    aria-hidden="true"
-                                                >
-                                                    <rect
-                                                        x="3"
-                                                        y="3"
-                                                        width="18"
-                                                        height="18"
-                                                        rx="2"
-                                                    />
-                                                    <circle cx="8.5" cy="8.5" r="1.5" />
-                                                    <path d="m21 15-5-5L5 21" />
-                                                </svg>
-                                            </div>
-
-                                            <div className="mt-3 text-[13px] font-medium text-gray-600">
-                                                Nothing to preview
-                                            </div>
-
-                                            <div className="mt-1 max-w-[220px] text-[10px] leading-relaxed text-gray-400">
-                                                Add content to your canvas to see the exported
-                                                result.
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {/* PREVIEW FOOTER */}
-
-                            <div className="flex items-center justify-between border-t border-gray-100 px-3 py-2.5">
-                                <div className="flex items-center gap-2">
-                                    <span
-                                        className={`h-1.5 w-1.5 rounded-full ${
-                                            error
-                                                ? 'bg-red-500'
-                                                : previewLoading
-                                                  ? 'bg-gray-300'
-                                                  : 'bg-green-500'
-                                        }`}
-                                    />
-
-                                    <span className="text-[9px] font-medium text-gray-500">
-                                        {error ? 'Error' : previewLoading ? 'Updating' : 'Ready'}
-                                    </span>
-                                </div>
-
-                                <div className="flex items-center gap-2 text-[9px] font-medium text-gray-400">
-                                    <span>{scaling.toUpperCase()}</span>
-                                    <span>•</span>
-                                    <span>
-                                        {width} × {height}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* =================================================
-              EXPORT DETAILS
-          ================================================== */}
-
-                    <div className="pb-4">
-                        <div className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
-                            Export details
-                        </div>
-
-                        <div className="space-y-1.5">
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] text-gray-400">Preset</span>
-                                <span className="text-[11px] font-medium text-gray-700">
-                                    {currentPreset?.label || 'Custom'}
+                                <span className="text-caption font-medium text-ink-muted">
+                                    {error ? 'Error' : previewLoading ? 'Updating' : 'Ready'}
                                 </span>
                             </div>
 
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] text-gray-400">Output</span>
-                                <span className="text-[11px] font-medium text-gray-700">
-                                    {isRaster
-                                        ? `${renderWidth} × ${renderHeight}`
-                                        : `${width} × ${height}`}
-                                </span>
-                            </div>
-
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] text-gray-400">Base size</span>
-                                <span className="text-[11px] font-medium text-gray-700">
+                            <div className="flex items-center gap-2 text-caption font-medium text-ink-subtle">
+                                <span>{scaling.toUpperCase()}</span>
+                                <span>•</span>
+                                <span>
                                     {width} × {height}
                                 </span>
                             </div>
-
-                            <div className="flex items-center justify-between">
-                                <span className="text-[11px] text-gray-400">Quality</span>
-                                <span className="text-[11px] font-medium text-gray-700">
-                                    {isRaster
-                                        ? `${currentQuality?.label.split(' · ')[1] || `${outputScale}×`}${
-                                              outputScale < Number(quality) ? ' (capped)' : ''
-                                          }`
-                                        : 'Vector'}
-                                </span>
-                            </div>
                         </div>
                     </div>
                 </div>
 
-                {/* =====================================================
+                {/* =================================================
+              EXPORT DETAILS
+          ================================================== */}
+            </PanelSection>
+
+            <PanelSection title="Export details">
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-ink-muted">Preset</span>
+                        <span className="text-xs font-medium tabular-nums text-ink">
+                            {currentPreset?.label || 'Custom'}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-ink-muted">Output</span>
+                        <span className="text-xs font-medium tabular-nums text-ink">
+                            {isRaster ? `${renderWidth} × ${renderHeight}` : `${width} × ${height}`}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-ink-muted">Base size</span>
+                        <span className="text-xs font-medium tabular-nums text-ink">
+                            {width} × {height}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs text-ink-muted">Quality</span>
+                        <span className="text-xs font-medium tabular-nums text-ink">
+                            {isRaster
+                                ? `${currentQuality?.label.split(' · ')[1] || `${outputScale}×`}${
+                                      outputScale < Number(quality) ? ' (capped)' : ''
+                                  }`
+                                : 'Vector'}
+                        </span>
+                    </div>
+                </div>
+            </PanelSection>
+
+            {/* =====================================================
             EXPORT BUTTON
         ====================================================== */}
 
-                <div className="shrink-0 border-t border-gray-200 bg-white p-3">
-                    {error && format !== 'json' && (
-                        <div
-                            role="alert"
-                            className="mb-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[10px] leading-relaxed text-red-700"
-                        >
-                            {error}
-                        </div>
-                    )}
-
-                    <Button
-                        className="h-10 w-full"
-                        onClick={handleExport}
-                        disabled={isExporting || !canvas}
+            <div className="flex flex-col gap-2">
+                {error && format !== 'json' && (
+                    <div
+                        role="alert"
+                        className="rounded-md border border-danger/30 bg-danger/10 px-3 py-2 text-caption text-danger"
                     >
-                        {isExporting ? (
-                            <div className="flex items-center justify-center gap-2">
-                                <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                        {error}
+                    </div>
+                )}
 
-                                <span>Exporting…</span>
-                            </div>
-                        ) : (
-                            <div className="flex items-center justify-center gap-2">
-                                <svg
-                                    width="16"
-                                    height="16"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    strokeWidth="2"
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    aria-hidden="true"
-                                >
-                                    <path d="M12 3v12" />
-                                    <path d="m7 10 5 5 5-5" />
-                                    <path d="M5 21h14" />
-                                </svg>
-
-                                <span>Export {format.toUpperCase()}</span>
-                            </div>
-                        )}
-                    </Button>
-                </div>
+                <PanelAction
+                    icon="download"
+                    loading={isExporting}
+                    onClick={handleExport}
+                    disabled={!canvas}
+                >
+                    {isExporting ? 'Exporting…' : `Export ${format.toUpperCase()}`}
+                </PanelAction>
             </div>
-        </DockTemplate>
+        </>
     );
 };
 

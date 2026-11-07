@@ -1,233 +1,565 @@
+import LabeledToggle from '@/components/molecules/LabeledToggle';
+import { BRAND } from '@/lib/theme';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import * as fabric from 'fabric';
 import { useStore } from '@/store';
-import { useEffect, useState } from 'react';
 import { EffectSection } from './EffectSection';
 import { TransformInput } from '@/components/molecules/TransformInput';
-import * as fabric from 'fabric';
+import { SegmentedControl } from '@/components/molecules/SegmentedControl';
+import { SliderField } from '@/components/molecules/LabeledSlider';
+import { Button } from '@/components/atoms/Button';
+import {
+    DEFAULT_ALONG_PATH,
+    GUIDE_PRESETS,
+    createGuide,
+    isGuideCandidate,
+    isPanelGuide,
+    sampleAlongPath,
+    toGuidePath,
+    type AlongPathOptions,
+    type PathSample,
+} from '@/lib/pathRepeat';
 
-export const addDemoPaths = (canvas: fabric.Canvas) => {
-    if (!canvas || canvas.getObjects('path').length) return;
-
-    const cx = canvas.getWidth() / 2;
-    const cy = canvas.getHeight() / 2;
-
-    // const paths = [
-    //   new fabric.Path("M 0 0 L 300 0", { left: cx - 150, top: cy - 120 }),
-    //   new fabric.Path("M 0 0 C 100 -150 200 150 300 0", { left: cx - 150, top: cy }),
-    //   new fabric.Path("M 0 0 Q 150 -200 300 0", { left: cx - 150, top: cy + 140 }),
-    // ];
-    const r = 120;
-
-    const paths = [
-        // Line
-        new fabric.Path('M 0 0 L 300 0', { left: cx - 150, top: cy - 180 }),
-
-        // Cubic curve
-        new fabric.Path('M 0 0 C 100 -150 200 150 300 0', { left: cx - 150, top: cy - 90 }),
-
-        // Quadratic
-        new fabric.Path('M 0 0 Q 150 -200 300 0', { left: cx - 150, top: cy }),
-
-        // Wave
-        new fabric.Path('M 0 0 Q 50 -50 100 0 T 200 0 T 300 0', {
-            left: cx - 150,
-            top: cy + 90,
-        }),
-
-        // Zig-zag
-        new fabric.Path('M 0 0 L 50 -50 L 100 50 L 150 -50 L 200 50 L 250 -50 L 300 0', {
-            left: cx - 150,
-            top: cy + 180,
-        }),
-
-        // 🔵 Circle
-        new fabric.Path(
-            `
-      M ${r} 0
-      C ${r} ${r * 0.5523} ${r * 0.5523} ${r} 0 ${r}
-      C ${-r * 0.5523} ${r} ${-r} ${r * 0.5523} ${-r} 0
-      C ${-r} ${-r * 0.5523} ${-r * 0.5523} ${-r} 0 ${-r}
-      C ${r * 0.5523} ${-r} ${r} ${-r * 0.5523} ${r} 0
-      Z
-      `,
-            { left: cx, top: cy + 300 },
-        ),
-
-        // 🟠 Semi-circle
-        new fabric.Path(
-            `
-      M ${-r} 0
-      C ${-r} ${-r * 0.5523} ${-r * 0.5523} ${-r} 0 ${-r}
-      C ${r * 0.5523} ${-r} ${r} ${-r * 0.5523} ${r} 0
-      `,
-            { left: cx - r, top: cy + 460 },
-        ),
-    ];
-
-    paths.forEach((p) => {
-        p.set({
-            stroke: '#3b82f6',
-            fill: '',
-            strokeWidth: 2,
-
-            // hidden until selected
-            visible: false,
-            selectable: false,
-            evented: false,
-
-            objectCaching: false,
-            uid: crypto.randomUUID(), // unique id for dropdown
-        });
-
-        canvas.add(p);
-    });
-
-    canvas.requestRenderAll();
-};
-
-function showOnlyPath(canvas: fabric.Canvas, active?: fabric.Path) {
-    canvas.getObjects('path').forEach((p) => {
-        p.set({
-            visible: p === active,
-            selectable: p === active,
-            evented: p === active,
-            opacity: p === active ? 1 : 0,
-        });
-    });
-
-    canvas.requestRenderAll();
-}
-
-function getWorldPointOnPath(path: fabric.Path, distance: number) {
-    const localPoint = fabric.util.getPointOnPath(path.path, distance);
-    const matrix = path.calcTransformMatrix();
-    const worldPoint = fabric.util.transformPoint(
-        new fabric.Point(localPoint.x, localPoint.y),
-        matrix,
-    );
-
-    const p2 = fabric.util.getPointOnPath(path.path, distance + 0.1);
-    const worldPoint2 = fabric.util.transformPoint(new fabric.Point(p2.x, p2.y), matrix);
-
-    const angle = Math.atan2(worldPoint2.y - worldPoint.y, worldPoint2.x - worldPoint.x);
-
-    return { x: worldPoint.x, y: worldPoint.y, angle };
-}
-
-export const repeatAlongPath = async (
-    obj: fabric.Object,
-    path: fabric.Path,
-    spacing = 30,
-    options: { rotateAlongPath?: boolean } = { rotateAlongPath: true },
-) => {
-    const canvas = obj.canvas || path.canvas;
-    if (!canvas) return;
-
-    const segments = fabric.util.getPathSegmentsInfo(path.path);
-    const totalLength = segments.at(-1)?.length || 0;
-    if (!totalLength) return;
-
-    canvas.discardActiveObject();
-
-    for (let d = spacing; d <= totalLength; d += spacing) {
-        const { x, y, angle } = getWorldPointOnPath(path, d);
-
-        const clone = await obj.clone();
-
-        clone.set({
-            left: x,
-            top: y,
-            originX: 'center',
-            originY: 'center',
-            angle: options.rotateAlongPath ? (angle * 180) / Math.PI : obj.angle,
-        });
-
-        canvas.add(clone);
-    }
-
-    canvas.requestRenderAll();
-};
-
-export const RepeatAlongPath = () => {
-    const { canvas } = useStore();
-    const activeObject = canvas?.getActiveObject();
-
-    const [spacing, setSpacing] = useState(30);
-    const [rotateAlongPath, setRotateAlongPath] = useState(true);
-
-    const paths = (canvas?.getObjects('path') || []) as fabric.Path[];
-    const [selectedPath, setSelectedPath] = useState<fabric.Path | null>(null);
-
-    // create demo paths once
+/* --------------------------------- hooks ---------------------------------- */
+/** Re-renders when the canvas selection changes (canvas.getActiveObject() alone is not reactive). */
+const useActiveObject = (canvas: fabric.Canvas | null) => {
+    const [active, setActive] = useState<fabric.Object | null>(null);
     useEffect(() => {
         if (!canvas) return;
-        addDemoPaths(canvas);
-
+        const sync = () => setActive(canvas.getActiveObject() ?? null);
+        sync();
+        canvas.on('selection:created', sync);
+        canvas.on('selection:updated', sync);
+        canvas.on('selection:cleared', sync);
         return () => {
-            // cleanup on unmount
-            canvas.getObjects('path').forEach((p) => canvas.remove(p));
+            canvas.off('selection:created', sync);
+            canvas.off('selection:updated', sync);
+            canvas.off('selection:cleared', sync);
+        };
+    }, [canvas]);
+    return active;
+};
+
+/** Bumps a counter while `target` is being moved / scaled / rotated so previews stay live. */
+const useTransformRevision = (canvas: fabric.Canvas | null, target: fabric.Object | null) => {
+    const [rev, setRev] = useState(0);
+    useEffect(() => {
+        if (!canvas || !target) return;
+        let raf = 0;
+        const bump = (e: any) => {
+            if (e?.target !== target) return;
+            cancelAnimationFrame(raf);
+            raf = requestAnimationFrame(() => setRev((r) => r + 1));
+        };
+        const events = [
+            'object:moving',
+            'object:scaling',
+            'object:rotating',
+            'object:skewing',
+            'object:modified',
+        ] as const;
+        events.forEach((ev) => canvas.on(ev, bump));
+        return () => {
+            cancelAnimationFrame(raf);
+            events.forEach((ev) => canvas.off(ev, bump));
+        };
+    }, [canvas, target]);
+    return rev;
+};
+
+/* ------------------------------ small controls ----------------------------- */
+const num = (v: unknown, fallback: number) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+};
+
+/** Sub-heading inside the section: same label style as PanelSection titles, with a hairline. */
+const Heading = ({ children }: { children: React.ReactNode }) => (
+    <div className="mt-1 border-t border-line pt-3 text-label uppercase text-ink-subtle">
+        {children}
+    </div>
+);
+
+/* ------------------------------- style presets ------------------------------ */
+const STYLES: { id: string; label: string; patch: Partial<AlongPathOptions> }[] = [
+    { id: 'border', label: 'Border', patch: {} },
+    {
+        id: 'footsteps',
+        label: 'Footsteps',
+        patch: { alternateSide: true, alternateFlip: true, sideOffset: 14 },
+    },
+    {
+        id: 'taper',
+        label: 'Taper',
+        patch: { scaleStart: 1, scaleEnd: 0.2, opacityStart: 1, opacityEnd: 0.3 },
+    },
+    {
+        id: 'scatter',
+        label: 'Scatter',
+        patch: { rotate: 'random', jitterPosition: 12, jitterScale: 0.3 },
+    },
+];
+
+const MAX_PREVIEW = 1500;
+
+/* -------------------------------- component -------------------------------- */
+export const RepeatAlongPath = () => {
+    const canvas = useStore((s: any) => s.canvas) as fabric.Canvas | null;
+    const addObject = useStore((s: any) => s.addObject);
+    const removeObject = useStore((s: any) => s.removeObject);
+    const repeatAlongPath = useStore((s: any) => s.repeatAlongPath);
+
+    const active = useActiveObject(canvas);
+
+    const [guide, setGuide] = useState<fabric.Object | null>(null);
+    const [opts, setOpts] = useState<AlongPathOptions>(DEFAULT_ALONG_PATH);
+    const [preview, setPreview] = useState(true);
+    const [group, setGroup] = useState(false);
+    const [useOriginal, setUseOriginal] = useState(true);
+    const [deleteGuide, setDeleteGuide] = useState(false);
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const patch = (p: Partial<AlongPathOptions>) => setOpts((o) => ({ ...o, ...p }));
+
+    // the object to repeat = current selection, as long as it is a single object and not the path itself
+    const source =
+        active &&
+        active !== guide &&
+        !(active instanceof fabric.ActiveSelection) &&
+        !isPanelGuide(active)
+            ? active
+            : null;
+    const multiSelected = active instanceof fabric.ActiveSelection;
+    const canUseAsGuide =
+        !!active && active !== guide && isGuideCandidate(active) && !multiSelected;
+
+    const guideRev = useTransformRevision(canvas, guide);
+    const sourceRev = useTransformRevision(canvas, source);
+
+    // forget the guide if it was deleted from the canvas
+    useEffect(() => {
+        if (!canvas || !guide) return;
+        const onRemoved = (e: any) => e.target === guide && setGuide(null);
+        canvas.on('object:removed', onRemoved);
+        return () => canvas.off('object:removed', onRemoved);
+    }, [canvas, guide]);
+
+    // on unmount remove only the guides THIS panel created (never the user's own paths)
+    const removeRef = useRef(removeObject);
+    removeRef.current = removeObject;
+    useEffect(() => {
+        if (!canvas) return;
+        return () => {
+            canvas
+                .getObjects()
+                .filter(isPanelGuide)
+                .forEach((o) => {
+                    if (removeRef.current) removeRef.current(o);
+                    else canvas.remove(o);
+                });
             canvas.requestRenderAll();
         };
     }, [canvas]);
 
-    // auto-select first path once
+    /* ------------------------------ sampling ------------------------------ */
+    const guidePath = useMemo(() => (guide ? toGuidePath(guide) : null), [guide, guideRev]);
+    const result = useMemo(
+        () =>
+            guidePath ? sampleAlongPath(guidePath, opts, source?.angle ?? 0, MAX_PREVIEW) : null,
+        [guidePath, opts, source, sourceRev],
+    );
+
+    /* ----------------------------- live preview ---------------------------- */
+    // Drawn straight onto the canvas after each render: nothing is added to the canvas,
+    // the store, undo history or exports.
+    const previewRef = useRef<{ samples: PathSample[]; w: number; h: number } | null>(null);
+
     useEffect(() => {
-        if (!selectedPath && paths.length) {
-            const first = paths[0];
-            setSelectedPath(first);
-            showOnlyPath(canvas, first);
+        if (!canvas) return;
+        const draw = ({ ctx }: { ctx: CanvasRenderingContext2D }) => {
+            const data = previewRef.current;
+            if (!data) return;
+            const v = canvas.viewportTransform;
+            const zoom = canvas.getZoom() || 1;
+            const skip = Math.ceil(data.samples.length / 600); // draw at most ~600 ghosts
+            ctx.save();
+            ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
+            ctx.strokeStyle = BRAND.primary;
+            ctx.fillStyle = BRAND.primary;
+            ctx.lineWidth = 1 / zoom;
+            for (let i = 0; i < data.samples.length; i += skip) {
+                const s = data.samples[i];
+                ctx.save();
+                ctx.translate(s.x, s.y);
+                ctx.rotate((s.angle * Math.PI) / 180);
+                ctx.globalAlpha = 0.25 + 0.5 * s.opacity;
+                ctx.strokeRect(
+                    (-data.w * s.scale) / 2,
+                    (-data.h * s.scale) / 2,
+                    data.w * s.scale,
+                    data.h * s.scale,
+                );
+                ctx.beginPath();
+                ctx.arc(0, 0, 2 / zoom, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+            ctx.restore();
+        };
+        canvas.on('after:render', draw as any);
+        return () => {
+            canvas.off('after:render', draw as any);
+            previewRef.current = null;
+            canvas.requestRenderAll();
+        };
+    }, [canvas]);
+
+    useEffect(() => {
+        previewRef.current =
+            preview && result?.samples.length
+                ? {
+                      samples: result.samples,
+                      w: source ? source.getScaledWidth() : 10,
+                      h: source ? source.getScaledHeight() : 10,
+                  }
+                : null;
+        canvas?.requestRenderAll();
+    }, [canvas, preview, result, source, sourceRev]);
+
+    /* -------------------------------- actions ------------------------------- */
+    const insertGuide = (id: string) => {
+        if (!canvas) return;
+        if (guide && isPanelGuide(guide)) removeObject?.(guide);
+        const g = createGuide(id, canvas.getVpCenter());
+        addObject(g);
+        canvas.setActiveObject(g);
+        setGuide(g);
+        setError(null);
+        canvas.requestRenderAll();
+    };
+
+    const useSelectionAsGuide = () => {
+        if (!active || !canUseAsGuide) return;
+        setGuide(active);
+        setError(null);
+        canvas?.discardActiveObject();
+        canvas?.requestRenderAll();
+    };
+
+    const matchObjectWidth = () => {
+        if (!source) return;
+        patch({
+            mode: 'spacing',
+            spacing: Math.max(1, Math.round(source.getBoundingRect().width)),
+        });
+    };
+
+    const applyStyle = (p: Partial<AlongPathOptions>) =>
+        setOpts((o) => ({
+            ...DEFAULT_ALONG_PATH,
+            mode: o.mode,
+            spacing: o.spacing,
+            count: o.count,
+            ...p,
+        }));
+
+    const canApply = !!source && !!guide && !busy && !!result?.samples.length && !result.tooMany;
+
+    const apply = async () => {
+        if (!source || !guide || busy) return;
+        setBusy(true);
+        setError(null);
+        try {
+            await repeatAlongPath(source, guide, { ...opts, group, useOriginal, deleteGuide });
+            if (deleteGuide) setGuide(null);
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Could not repeat along the path.');
+        } finally {
+            setBusy(false);
         }
-    }, [paths, selectedPath]);
+    };
 
     if (!canvas) return null;
 
+    const status = !guide
+        ? 'Pick a preset or select a path on the canvas, then press "Use selection as path".'
+        : !source
+          ? multiSelected
+              ? 'Group the selection first (Ctrl+G), then repeat the group.'
+              : 'Path is set. Now select the object to repeat.'
+          : null;
+
     return (
-        <EffectSection
-            title="Repeat Along Path"
-            disabled={!activeObject || !selectedPath}
-            onApply={() => {
-                if (!activeObject || !selectedPath) return;
-                repeatAlongPath(activeObject, selectedPath, spacing, {
-                    rotateAlongPath,
-                });
-            }}
-        >
-            {/* PATH SELECTOR */}
-            <label className="text-xs">Path</label>
-            <select
-                className="w-full border px-2 py-1"
-                value={selectedPath?.uid}
-                onChange={(e) => {
-                    const path = paths.find((p) => p.uid === e.target.value);
-                    if (!path) return;
-
-                    setSelectedPath(path);
-                    showOnlyPath(canvas, path);
-
-                    canvas.discardActiveObject();
-                    canvas.setActiveObject(path);
-                }}
-            >
-                {paths.map((p, i) => (
-                    <option key={p.uid} value={p.uid}>
-                        Path {i + 1}
-                    </option>
+        <EffectSection title="Repeat Along Path" disabled={!canApply} onApply={apply}>
+            {/* ------------------------------ PATH ------------------------------ */}
+            <Heading>Path</Heading>
+            <div className="grid grid-cols-4 gap-1">
+                {GUIDE_PRESETS.map((p) => (
+                    <Button
+                        key={p.id}
+                        variant="secondary"
+                        size="sm"
+                        className="px-1"
+                        onClick={() => insertGuide(p.id)}
+                    >
+                        {p.label}
+                    </Button>
                 ))}
-            </select>
+            </div>
+            <div className="flex gap-1.5">
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1"
+                    disabled={!canUseAsGuide}
+                    onClick={useSelectionAsGuide}
+                >
+                    Use selection as path
+                </Button>
+                {guide && (
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        icon="xmark"
+                        onClick={() => setGuide(null)}
+                    >
+                        Clear
+                    </Button>
+                )}
+            </div>
+            <p className="text-caption text-ink-muted">
+                Works with paths, lines, circles, ellipses, rectangles and polygons.
+            </p>
+            {status && <p className="mt-1 text-caption text-accent-700">{status}</p>}
 
-            {/* SPACING */}
-            <TransformInput
-                label="Spacing"
-                value={spacing}
-                onChange={(v) => setSpacing(+v || 20)}
+            {/* ------------------------------ STYLE ----------------------------- */}
+            <Heading>Quick styles</Heading>
+            <div className="grid grid-cols-4 gap-1">
+                {STYLES.map((s) => (
+                    <Button
+                        key={s.id}
+                        variant="secondary"
+                        size="sm"
+                        className="px-1"
+                        onClick={() => applyStyle(s.patch)}
+                    >
+                        {s.label}
+                    </Button>
+                ))}
+            </div>
+
+            {/* --------------------------- PLACEMENT ---------------------------- */}
+            <Heading>Placement</Heading>
+            <SegmentedControl
+                aria-label="Placement"
+                value={opts.mode}
+                onChange={(mode) => patch({ mode })}
+                options={[
+                    { value: 'spacing', label: 'Fixed spacing' },
+                    { value: 'count', label: 'Fixed count' },
+                ]}
+            />
+            {opts.mode === 'spacing' ? (
+                <>
+                    <TransformInput
+                        label="Spacing (px)"
+                        value={opts.spacing}
+                        onChange={(v: any) =>
+                            patch({ spacing: Math.max(0.5, num(v, opts.spacing)) })
+                        }
+                    />
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        block
+                        disabled={!source}
+                        onClick={matchObjectWidth}
+                    >
+                        Match object width
+                    </Button>
+                </>
+            ) : (
+                <>
+                    <TransformInput
+                        label="Copies"
+                        value={opts.count}
+                        onChange={(v: any) =>
+                            patch({ count: Math.max(1, Math.round(num(v, opts.count))) })
+                        }
+                    />
+                    <LabeledToggle
+                        label="Last copy on the end point"
+                        checked={opts.includeEnd}
+                        onChange={(includeEnd) => patch({ includeEnd })}
+                    />
+                </>
+            )}
+            <SliderField
+                label="Start offset"
+                value={opts.startOffset}
+                min={0}
+                max={95}
+                step={1}
+                unit="%"
+                onChange={(startOffset) => patch({ startOffset })}
+            />
+            <SliderField
+                label="End offset"
+                value={opts.endOffset}
+                min={0}
+                max={95}
+                step={1}
+                unit="%"
+                onChange={(endOffset) => patch({ endOffset })}
+            />
+            <LabeledToggle
+                label="Reverse direction"
+                checked={opts.reverse}
+                onChange={(reverse) => patch({ reverse })}
             />
 
-            {/* ROTATE ALONG PATH */}
-            <button
-                onClick={() => setRotateAlongPath((v) => !v)}
-                className="w-full mt-2 bg-gray-200"
-            >
-                Rotate Along Path: {rotateAlongPath ? 'ON' : 'OFF'}
-            </button>
+            {/* -------------------------- ORIENTATION --------------------------- */}
+            <Heading>Orientation</Heading>
+            <SegmentedControl
+                aria-label="Orientation"
+                value={opts.rotate}
+                onChange={(rotate) => patch({ rotate })}
+                options={[
+                    { value: 'path', label: 'Follow path' },
+                    { value: 'fixed', label: 'Keep angle' },
+                    { value: 'random', label: 'Random' },
+                ]}
+            />
+            <TransformInput
+                label="Angle offset (deg)"
+                value={opts.angleOffset}
+                onChange={(v: any) => patch({ angleOffset: num(v, opts.angleOffset) })}
+            />
+            <TransformInput
+                label="Side offset (px)"
+                value={opts.sideOffset}
+                onChange={(v: any) => patch({ sideOffset: num(v, opts.sideOffset) })}
+            />
+            <LabeledToggle
+                label="Alternate sides"
+                checked={opts.alternateSide}
+                onChange={(alternateSide) => patch({ alternateSide })}
+            />
+            <LabeledToggle
+                label="Mirror every other copy"
+                checked={opts.alternateFlip}
+                onChange={(alternateFlip) => patch({ alternateFlip })}
+            />
+
+            {/* --------------------------- VARIATION ---------------------------- */}
+            <Heading>Size and opacity along the path</Heading>
+            <SliderField
+                label="Scale at start"
+                value={opts.scaleStart}
+                min={0.1}
+                max={3}
+                step={0.05}
+                onChange={(scaleStart) => patch({ scaleStart })}
+            />
+            <SliderField
+                label="Scale at end"
+                value={opts.scaleEnd}
+                min={0.1}
+                max={3}
+                step={0.05}
+                onChange={(scaleEnd) => patch({ scaleEnd })}
+            />
+            <SliderField
+                label="Opacity at start"
+                value={opts.opacityStart}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(opacityStart) => patch({ opacityStart })}
+            />
+            <SliderField
+                label="Opacity at end"
+                value={opts.opacityEnd}
+                min={0}
+                max={1}
+                step={0.05}
+                onChange={(opacityEnd) => patch({ opacityEnd })}
+            />
+
+            <Heading>Randomness</Heading>
+            <TransformInput
+                label="Position jitter (px)"
+                value={opts.jitterPosition}
+                onChange={(v: any) =>
+                    patch({ jitterPosition: Math.max(0, num(v, opts.jitterPosition)) })
+                }
+            />
+            <SliderField
+                label="Rotation jitter"
+                value={opts.jitterRotation}
+                min={0}
+                max={180}
+                step={1}
+                unit="°"
+                onChange={(jitterRotation) => patch({ jitterRotation })}
+            />
+            <SliderField
+                label="Size jitter"
+                value={opts.jitterScale}
+                min={0}
+                max={0.9}
+                step={0.05}
+                onChange={(jitterScale) => patch({ jitterScale })}
+            />
+            <div className="mt-1 flex items-end gap-1">
+                <div className="flex-1">
+                    <TransformInput
+                        label="Seed"
+                        value={opts.seed}
+                        onChange={(v: any) =>
+                            patch({ seed: Math.max(0, Math.round(num(v, opts.seed))) })
+                        }
+                    />
+                </div>
+                <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => patch({ seed: Math.floor(Math.random() * 99999) })}
+                >
+                    Shuffle
+                </Button>
+            </div>
+
+            {/* ------------------------------ OUTPUT ---------------------------- */}
+            <Heading>Output</Heading>
+            <LabeledToggle label="Show live preview" checked={preview} onChange={setPreview} />
+            <LabeledToggle
+                label="Original becomes the first copy"
+                checked={useOriginal}
+                onChange={setUseOriginal}
+            />
+            <LabeledToggle label="Group the result" checked={group} onChange={setGroup} />
+            <LabeledToggle
+                label="Remove the path afterwards"
+                checked={deleteGuide}
+                onChange={setDeleteGuide}
+            />
+
+            {result?.tooMany && (
+                <p className="mt-2 text-caption text-danger">
+                    {result.requested} copies is too many (limit {MAX_PREVIEW}). Increase the
+                    spacing or lower the count.
+                </p>
+            )}
+            {result && !result.tooMany && result.samples.length > 0 && (
+                <p className="mt-2 text-[11px] text-ink-muted">
+                    {result.samples.length} {result.samples.length === 1 ? 'copy' : 'copies'} along{' '}
+                    {Math.round(result.length)} px
+                    {result.closed ? ' (closed path)' : ''}
+                </p>
+            )}
+            {error && <p className="mt-2 text-caption text-danger">{error}</p>}
         </EffectSection>
     );
 };

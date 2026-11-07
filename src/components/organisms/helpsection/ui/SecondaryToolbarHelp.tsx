@@ -48,10 +48,8 @@ function SecondaryToolbarHelp() {
     return (
         <div className="space-y-8 p-6">
             <header className="space-y-2">
-                <h1 className="text-3xl font-bold text-gray-900">
-                    Top Toolbar – Advanced Controls
-                </h1>
-                <p className="text-gray-600">
+                <h1 className="text-3xl font-bold text-ink">Top Toolbar – Advanced Controls</h1>
+                <p className="text-ink-muted">
                     Advanced controls for transforming objects, managing layers, and styling text.
                 </p>
             </header>
@@ -59,11 +57,11 @@ function SecondaryToolbarHelp() {
             {sections.map((section) => (
                 <section
                     key={section.title}
-                    className="bg-gray-50 rounded-xl p-5 shadow-sm space-y-2"
+                    className="bg-surface-muted rounded-xl p-5 shadow-sm space-y-2"
                 >
-                    <h2 className="text-xl font-semibold text-gray-800">{section.title}</h2>
+                    <h2 className="text-xl font-semibold text-ink">{section.title}</h2>
 
-                    <ul className="list-disc pl-6 space-y-1 text-gray-700">
+                    <ul className="list-disc pl-6 space-y-1 text-ink">
                         {section.list.map((item) => (
                             <li key={item}>{item}</li>
                         ))}

@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import { Select } from './Select';
 
 export type DropdownOption = { value: string | number; label: string };
 export type DropdownProps = {
@@ -14,6 +15,10 @@ export type DropdownProps = {
     variant?: 'default' | 'error';
 };
 
+/**
+ * Compact labelled dropdown for toolbars (string values). Built on the app `Select`, so it has the
+ * same popover list, keyboard support and dark mode. Prefer `Select` / `SelectField` in panels.
+ */
 export function Dropdown({
     options = [],
     value,
@@ -22,41 +27,23 @@ export function Dropdown({
     label,
     preview,
     disabled,
-    size = 'sm', // sm | md | lg
-    variant = 'default', // default | error
+    size = 'sm',
+    variant = 'default',
 }: DropdownProps) {
-    const sizeMap = {
-        sm: 'h-4 text-xs px-1',
-        md: 'h-6 text-sm px-2',
-        lg: 'h-8 text-base px-3',
-    };
-
-    const variantMap = {
-        default: 'border-gray-300',
-        error: 'border-red-400',
-    };
-
     return (
-        <div className={clsx('flex items-center gap-1', className)}>
-            {label && <span className="text-xs text-gray-600">{label}</span>}
+        <div className={clsx('flex items-center gap-1.5', className)}>
+            {label && <span className="text-xs text-ink-muted">{label}</span>}
             {preview && <div>{preview}</div>}
-
-            <select
-                value={value}
-                onChange={(e) => onChange?.(e.target.value)}
+            <Select
+                aria-label={label ?? 'Options'}
+                block={false}
+                size={size === 'sm' ? 'sm' : 'md'}
                 disabled={disabled}
-                className={clsx(
-                    'px-1 h-6 text-xs border border-gray-300 rounded cursor-pointer',
-                    sizeMap[size],
-                    variantMap[variant],
-                )}
-            >
-                {options.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                    </option>
-                ))}
-            </select>
+                options={options.map((o) => ({ value: String(o.value), label: o.label }))}
+                value={value === undefined ? undefined : String(value)}
+                onChange={(v) => onChange?.(v)}
+                className={variant === 'error' ? 'border-danger' : undefined}
+            />
         </div>
     );
 }

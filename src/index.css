@@ -1,14 +1,246 @@
 @import 'tailwindcss';
 
+/* `dark:` follows the .dark class that settings.applyTheme() puts on <html> (Light / Dark / System). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * fateboard design tokens (docs/DESIGN.md). Colors come from the logo (public/fate.svg).
+ * Use the utilities they generate: bg-primary-600, text-ink, border-line, text-title, rounded-lg ...
+ * JS / canvas code uses the mirror in src/lib/theme.ts (kept in sync by src/__tests__/theme.test.ts).
+ */
+@theme {
+    /* floating format bars appear with a quick fade + lift (macOS popover feel) */
+    --animate-float-in: float-in 120ms ease-out;
+    @keyframes float-in {
+        from {
+            opacity: 0;
+            transform: translateY(4px) scale(0.98);
+        }
+    }
+    /* 1. Primary: Fate Blue (logo gradient #22a7ff -> #0a60d6, tint #e0f0ff) */
+    --color-primary-50: #f0f8ff;
+    --color-primary-100: #e0f0ff;
+    --color-primary-200: #bae0ff;
+    --color-primary-300: #7cc8ff;
+    --color-primary-400: #22a7ff;
+    --color-primary-500: #0f84ec;
+    --color-primary-600: #0a60d6;
+    --color-primary-700: #0b4eae;
+    /* brand-colored TEXT / icons (links, selected labels); redefined in .dark. Backgrounds use the scale. */
+    --color-primary-ink: var(--color-primary-600); /* follows the color theme */
+    --color-primary-800: #10428c;
+    --color-primary-900: #133a73;
+    --color-primary-950: #0d244a;
+
+    /* 2. Accent: Pencil Orange (logo dot #ff7f0e). Use sparingly. */
+    --color-accent-50: #fff7ed;
+    --color-accent-100: #ffedd5;
+    --color-accent-200: #fed7aa;
+    --color-accent-300: #fdba74;
+    --color-accent-400: #ff9a3c;
+    --color-accent-500: #ff7f0e;
+    --color-accent-600: #ea6a04;
+    --color-accent-700: #c2530a;
+    --color-accent-800: #9a4110;
+    --color-accent-900: #7c3711;
+    --color-accent-950: #431a06;
+
+    /* 3. Ink: text (navy-tinted to sit with the blue) */
+    --color-ink: #0f1b2d;
+    --color-ink-muted: #4a5568;
+    --color-ink-subtle: #8a94a6;
+
+    /* 4. Surfaces and lines (all switch in dark mode, see .dark below) */
+    --color-surface: #ffffff; /* panels, cards, inputs */
+    --color-surface-muted: #f5f8fc; /* section backgrounds, hover */
+    --color-surface-strong: #eaeff6; /* pressed, selected neutral, tracks */
+    --color-surface-raised: #ffffff; /* popovers, menus, modals */
+    /* board: tinted by the active color theme (was a flat, dull #c3c9d2 / beige) */
+    --color-workspace: color-mix(
+        in oklab,
+        var(--color-primary-200) 32%,
+        #e3e7ee
+    ); /* around the page */
+    --color-board: color-mix(in oklab, var(--color-primary-50) 70%, #fdfdfb); /* whiteboard paper */
+    --color-line: #e3e8ef;
+    --color-line-strong: #cbd3df;
+
+    /* 5. Status */
+    --color-success: #16a34a;
+    --color-warning: #f59e0b;
+    --color-danger: #dc2626;
+    --color-danger-hover: #b91c1c;
+
+    /* Text styles: text-display / text-title / text-body / text-label / text-caption */
+    --text-display: 1.5rem;
+    --text-display--line-height: 1.25;
+    --text-display--font-weight: 700;
+    --text-display--letter-spacing: -0.02em;
+    --text-title: 1rem;
+    --text-title--line-height: 1.35;
+    --text-title--font-weight: 600;
+    --text-title--letter-spacing: -0.01em;
+    --text-body: 0.8125rem;
+    --text-body--line-height: 1.55;
+    --text-label: 0.6875rem;
+    --text-label--line-height: 1.3;
+    --text-label--font-weight: 600;
+    --text-label--letter-spacing: 0.06em;
+    --text-caption: 0.6875rem;
+    --text-caption--line-height: 1.45;
+
+    --font-sans:
+        'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue',
+        Arial, sans-serif;
+
+    /* Tighter corners app-wide (Tailwind defaults: xl 0.75, 2xl 1, 3xl 1.5rem) */
+    --radius-xl: 0.625rem;
+    --radius-2xl: 0.75rem;
+    --radius-3xl: 1rem;
+
+    /* Focus ring color used by focus-visible styles */
+    --color-focus: #22a7ff;
+}
+
+/* Dark mode: same token names, navy surfaces that sit with the brand blue (docs/DESIGN.md). */
+/* Settings > Icon size: one scale for every editor chrome icon (top toolbars, left / right rails,
+   bottom bar). Set by applyIconSize() as data-icon-size on <html>; md is the default. */
+:root {
+    --ui-btn: 28px; /* toolbar / footer icon button */
+    --ui-icon: 15px; /* icon inside it */
+    --ui-rail: 52px; /* left + right rail width */
+    --ui-rail-btn: 40px; /* rail button */
+    --ui-rail-icon: 19px; /* icon inside it */
+    --ui-swatch: 20px; /* right dock palette swatch + color tool box */
+}
+:root[data-icon-size='sm'] {
+    --ui-btn: 24px;
+    --ui-icon: 13px;
+    --ui-rail: 44px;
+    --ui-rail-btn: 32px;
+    --ui-rail-icon: 16px;
+    --ui-swatch: 18px;
+}
+:root[data-icon-size='lg'] {
+    --ui-btn: 34px;
+    --ui-icon: 19px;
+    --ui-rail: 60px;
+    --ui-rail-btn: 48px;
+    --ui-rail-icon: 23px;
+    --ui-swatch: 24px;
+}
+
+/* Color themes (Settings > Appearance > Color theme). Fate Blue = the @theme defaults.
+   600 / 700 / 800 carry white text (>= 4.5:1, tested); 300 is brand text in dark mode. */
+:root[data-theme='ocean'] {
+    --color-primary-50: #f0fdfa;
+    --color-primary-100: #ccfbf1;
+    --color-primary-200: #99f6e4;
+    --color-primary-300: #5eead4;
+    --color-primary-400: #2dd4bf;
+    --color-primary-500: #0d9488;
+    --color-primary-600: #0f766e;
+    --color-primary-700: #115e59;
+    --color-primary-800: #134e4a;
+    --color-primary-900: #0f3f3c;
+    --color-primary-950: #042f2e;
+}
+:root[data-theme='violet'] {
+    --color-primary-50: #f5f3ff;
+    --color-primary-100: #ede9fe;
+    --color-primary-200: #ddd6fe;
+    --color-primary-300: #c4b5fd;
+    --color-primary-400: #a78bfa;
+    --color-primary-500: #8b5cf6;
+    --color-primary-600: #7c3aed;
+    --color-primary-700: #6d28d9;
+    --color-primary-800: #5b21b6;
+    --color-primary-900: #4c1d95;
+    --color-primary-950: #2e1065;
+}
+:root[data-theme='rose'] {
+    --color-primary-50: #fff1f2;
+    --color-primary-100: #ffe4e6;
+    --color-primary-200: #fecdd3;
+    --color-primary-300: #fda4af;
+    --color-primary-400: #fb7185;
+    --color-primary-500: #f43f5e;
+    --color-primary-600: #e11d48;
+    --color-primary-700: #be123c;
+    --color-primary-800: #9f1239;
+    --color-primary-900: #881337;
+    --color-primary-950: #4c0519;
+}
+:root[data-theme='emerald'] {
+    --color-primary-50: #ecfdf5;
+    --color-primary-100: #d1fae5;
+    --color-primary-200: #a7f3d0;
+    --color-primary-300: #6ee7b7;
+    --color-primary-400: #34d399;
+    --color-primary-500: #059669;
+    --color-primary-600: #047857;
+    --color-primary-700: #065f46;
+    --color-primary-800: #064e3b;
+    --color-primary-900: #053d2e;
+    --color-primary-950: #022c22;
+}
+:root[data-theme='graphite'] {
+    --color-primary-50: #f8fafc;
+    --color-primary-100: #f1f5f9;
+    --color-primary-200: #e2e8f0;
+    --color-primary-300: #cbd5e1;
+    --color-primary-400: #94a3b8;
+    --color-primary-500: #64748b;
+    --color-primary-600: #475569;
+    --color-primary-700: #334155;
+    --color-primary-800: #1e293b;
+    --color-primary-900: #0f172a;
+    --color-primary-950: #020617;
+}
+
+/* :root.dark (not .dark) so it beats the theme blocks above (same specificity, later) */
+:root.dark {
+    --color-surface: #0f1726;
+    --color-surface-muted: #172135;
+    --color-surface-strong: #1f2b42;
+    --color-surface-raised: #18233a;
+    --color-workspace: color-mix(in oklab, var(--color-primary-950) 22%, #080c16); /* subtle tint */
+    /* whiteboard paper stays light (ink is usually dark) but softer than white */
+    --color-board: color-mix(in oklab, var(--color-primary-400) 7%, #e8eaee);
+    --color-line: #2f3c58; /* dividers: >= 1.6:1 on surface */
+    --color-line-strong: #42526f; /* input / button borders: >= 2:1 */
+    --color-ink: #e6ebf3;
+    --color-ink-muted: #a3adc2;
+    --color-ink-subtle: #8c98ad; /* AA (4.5:1) on surface-strong too */
+
+    /* selected / hover tints become translucent brand blue. The 600-900 scale is NOT redefined:
+       it is used as button hover / pressed backgrounds with white text. Brand text uses primary-ink. */
+    --color-primary-50: color-mix(in srgb, var(--color-primary-400) 8%, transparent);
+    --color-primary-100: color-mix(in srgb, var(--color-primary-400) 14%, transparent);
+    --color-primary-200: color-mix(in srgb, var(--color-primary-400) 26%, transparent);
+    --color-primary-ink: var(--color-primary-300);
+    --color-accent-100: rgb(255 127 14 / 0.16);
+    --color-accent-700: #ffb170;
+}
+
+@layer base {
+    body {
+        background-color: var(--color-surface);
+        color: var(--color-ink);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+    }
+}
+
 /* Smooth scrolling */
 html {
     scroll-behavior: smooth;
 }
 
-/* Blue-500 Scrollbar */
+/* Brand scrollbar */
 * {
     scrollbar-width: thin;
-    scrollbar-color: #3b82f6 #dbeafe;
+    scrollbar-color: var(--color-primary-500) var(--color-primary-100);
 }
 
 *::-webkit-scrollbar {
@@ -17,18 +249,18 @@ html {
 }
 
 *::-webkit-scrollbar-track {
-    background: #dbeafe;
+    background: var(--color-primary-100);
 }
 
 *::-webkit-scrollbar-thumb {
-    background: #3b82f6;
+    background: var(--color-primary-500);
     border-radius: 999px;
 }
 
 *::-webkit-scrollbar-thumb:hover {
-    background: #2563eb;
+    background: var(--color-primary-600);
 }
 
 *::-webkit-scrollbar-corner {
-    background: #dbeafe;
+    background: var(--color-primary-100);
 }

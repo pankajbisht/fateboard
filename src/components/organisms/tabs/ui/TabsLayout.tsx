@@ -1,214 +1,199 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import type { IconName } from '@/components/atoms/Icon';
+import { Icon } from '@/components/atoms/Icon';
+import { useEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import clsx from 'clsx';
 import { Tooltip } from '@/components/molecules/Tooltip';
-// import { MoreHorizontal, X } from "lucide-react";
+import { useRailButtonPx } from '@hooks/useRailButtonPx';
+import {
+    railWidthCss,
+    activeButton,
+    buttonBase,
+    inactiveButton,
+    railButtonBase,
+    sideRail,
+} from '../../sidebar/sidebar.const';
 
-type TabConfig = {
+export type TabConfig = {
     id: string;
     label: string;
-    // icon?: React.ComponentType<{ size?: number }>;
-    icon?: string;
+    icon?: IconName;
     closable?: boolean;
-    content: () => JSX.Element;
+    content: () => ReactElement;
 };
 
-function Dropdown({
+// ── Size system (single source of truth) ─────────────────────────
+// Rail width and button size follow Settings > Icon size (CSS vars, same as the left rail).
+const ITEM_CSS = 'var(--ui-rail-btn)';
+const GAP = 4; // gap-1
+const MIN_VISIBLE = 3;
+
+function MoreMenu({
     tabs,
+    activeTab,
     onSelect,
     onRemove,
 }: {
     tabs: TabConfig[];
+    activeTab: string;
     onSelect: (id: string) => void;
     onRemove: (id: string) => void;
 }) {
+    const ref = useRef<HTMLDetailsElement>(null);
+
+    useEffect(() => {
+        const close = (e: MouseEvent) => {
+            if (ref.current && !ref.current.contains(e.target as Node)) {
+                ref.current.removeAttribute('open');
+            }
+        };
+        document.addEventListener('mousedown', close);
+        return () => document.removeEventListener('mousedown', close);
+    }, []);
+
     return (
-        <details className="relative ml-auto group">
-            {/* Trigger */}
+        <details ref={ref} className="relative">
             <summary
-                className="
-          list-none cursor-pointer
-          flex items-center justify-center
-          h-9 w-9
-          rounded-md
-          hover:bg-neutral-100
-          active:bg-neutral-200
-          focus:outline-none
-        "
+                style={{ width: ITEM_CSS, height: ITEM_CSS }}
+                className="flex cursor-pointer list-none items-center justify-center rounded-lg text-ink-muted transition-colors hover:bg-surface-strong/70 hover:text-ink focus:outline-none [&::-webkit-details-marker]:hidden"
+                aria-label="More tabs"
             >
-                <i className="fa-solid fa-caret-down text-sm text-neutral-700" />
+                <Icon name="ellipsis" className="text-[13px]" />
             </summary>
 
-            {/* Dropdown panel */}
-            <div
-                className="
-          absolute right-0 mt-2
-          w-48
-          rounded-md
-          border border-neutral-200
-          bg-white
-          shadow-lg
-          z-50
-          overflow-hidden
-        "
-            >
+            <div className="absolute bottom-0 right-full z-50 mr-2 w-48 overflow-hidden rounded-xl border border-line bg-surface p-1 shadow-xl">
                 {tabs.map((tab) => (
                     <div
                         key={tab.id}
-                        className="
-              group/item
-              flex items-center justify-between
-              px-3 py-2
-              text-sm
-              hover:bg-neutral-100
-            "
+                        className={clsx(
+                            'group/item flex items-center justify-between rounded-lg px-2 py-1.5 text-xs',
+                            tab.id === activeTab
+                                ? 'bg-primary-50 text-primary-ink'
+                                : 'text-ink hover:bg-surface-muted',
+                        )}
                     >
-                        {/* Select tab */}
                         <button
-                            onClick={() => onSelect(tab.id)}
-                            className="
-                flex-1 text-left
-                truncate
-                text-neutral-800
-              "
+                            onClick={() => {
+                                onSelect(tab.id);
+                                ref.current?.removeAttribute('open');
+                            }}
+                            className="flex flex-1 items-center gap-2 truncate text-left"
                         >
+                            {tab.icon && <Icon name={tab.icon} className="w-4 text-[12px]" />}
                             {tab.label}
                         </button>
 
-                        {/* Remove tab */}
                         {tab.closable && (
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     onRemove(tab.id);
                                 }}
-                                className="
-                  ml-2
-                  h-6 w-6
-                  flex items-center justify-center
-                  rounded
-                  text-neutral-400
-                  opacity-0
-                  group-hover/item:opacity-100
-                  hover:bg-neutral-200
-                  hover:text-neutral-700
-                "
-                                aria-label="Remove tab"
+                                className="ml-2 flex h-5 w-5 items-center justify-center rounded text-ink-subtle opacity-0 hover:bg-surface-strong hover:text-ink group-hover/item:opacity-100"
+                                aria-label={`Close ${tab.label}`}
                             >
-                                <i className="fa-solid fa-xmark text-xs" />
+                                <Icon name="xmark" className="text-[10px]" />
                             </button>
                         )}
                     </div>
                 ))}
-
-                {tabs.length === 0 && (
-                    <div className="px-3 py-2 text-sm text-neutral-400">No hidden tabs</div>
-                )}
             </div>
         </details>
     );
 }
 
-export function TabsLayout({
-    tabs: initialTabs,
-    defaultTab,
+export function TabsRail({
+    tabs,
+    activeTab,
+    panelOpen,
+    onSelect,
+    onRemove,
+    onTogglePanel,
 }: {
-    tabs: readonly TabConfig[];
-    defaultTab?: string;
+    tabs: TabConfig[];
+    activeTab: string;
+    panelOpen: boolean;
+    onSelect: (id: string) => void;
+    onRemove: (id: string) => void;
+    /** Bottom chevron, same as the left rail's collapse button. */
+    onTogglePanel?: () => void;
 }) {
-    const [tabs, setTabs] = useState<TabConfig[]>([...initialTabs]);
-    const [activeTab, setActiveTab] = useState(defaultTab ?? initialTabs[0].id);
+    const itemPx = useRailButtonPx();
+    const [areaHeight, setAreaHeight] = useState(0);
+    const areaRef = useRef<HTMLDivElement>(null);
 
-    // console.log('activeTab', activeTab);
+    useEffect(() => {
+        const el = areaRef.current;
+        if (!el) return;
+        const ro = new ResizeObserver(() => setAreaHeight(el.clientHeight));
+        ro.observe(el);
+        setAreaHeight(el.clientHeight);
+        return () => ro.disconnect();
+    }, []);
 
-    const containerRef = useRef<HTMLDivElement>(null);
-    const measureRef = useRef<HTMLDivElement>(null);
+    const { visible, hidden } = useMemo(() => {
+        const fitsAll = Math.floor((areaHeight + GAP) / (itemPx + GAP));
 
-    const [visible, setVisible] = useState<TabConfig[]>([]);
-    const [hidden, setHidden] = useState<TabConfig[]>([]);
-
-    // 🔥 Remove tab safely
-    const removeTab = (id: string) => {
-        setTabs((prev) => {
-            const index = prev.findIndex((t) => t.id === id);
-            const next = prev.filter((t) => t.id !== id);
-
-            if (id === activeTab) {
-                const fallback = next[index] ?? next[index - 1] ?? next[0];
-
-                if (fallback) setActiveTab(fallback.id);
-            }
-
-            return next;
-        });
-    };
-
-    useLayoutEffect(() => {
-        if (!containerRef.current || !measureRef.current) return;
-
-        const containerWidth = containerRef.current.offsetWidth;
-        const nodes = Array.from(measureRef.current.children) as HTMLDivElement[];
-
-        const MIN_VISIBLE = 3; // minimum tabs to always show
-        const v: TabConfig[] = [];
-        const h: TabConfig[] = [];
-
-        let used = 0;
-
-        tabs.forEach((tab, i) => {
-            const w = nodes[i].offsetWidth;
-            const dropdownWidth = h.length > 0 ? 40 : 0;
-
-            if (used + w + dropdownWidth <= containerWidth || v.length < MIN_VISIBLE) {
-                // always allow at least MIN_VISIBLE tabs
-                v.push(tab);
-                used += w;
-            } else {
-                h.push(tab);
-            }
-        });
-
-        // ensure active tab visible
-        if (h.some((t) => t.id === activeTab)) {
-            const active = h.find((t) => t.id === activeTab)!;
-            h.splice(h.indexOf(active), 1);
-
-            // move last visible tab to hidden to make space
-            if (v.length > 0) {
-                h.unshift(v.pop()!);
-            }
-
-            v.push(active);
+        if (areaHeight === 0 || tabs.length <= fitsAll) {
+            return { visible: tabs, hidden: [] as TabConfig[] };
         }
 
-        setVisible(v);
-        setHidden(h);
-    }, [tabs, activeTab]);
+        const count = Math.max(MIN_VISIBLE, fitsAll - 1); // reserve a slot for "more"
+        const v = tabs.slice(0, count);
+        const h = tabs.slice(count);
 
-    const active = tabs.find((t) => t.id === activeTab);
+        // keep the active tab visible
+        const idx = h.findIndex((t) => t.id === activeTab);
+        if (idx !== -1) {
+            const [activeItem] = h.splice(idx, 1);
+            const bumped = v.pop();
+            if (bumped) h.unshift(bumped);
+            v.push(activeItem);
+        }
+
+        return { visible: v, hidden: h };
+    }, [tabs, activeTab, areaHeight, itemPx]);
 
     return (
-        <div className="flex flex-col w-full">
-            {/* TAB BAR */}
-            <div ref={containerRef} className="flex items-center border-b border-stone-200 px-4">
+        <div
+            role="tablist"
+            aria-orientation="vertical"
+            style={{ width: railWidthCss() }}
+            className={`${sideRail} border-l`}
+        >
+            <div
+                ref={areaRef}
+                className="flex min-h-0 w-full flex-1 flex-col items-center"
+                style={{ gap: GAP }}
+            >
                 {visible.map((tab) => {
-                    const Icon = tab.icon;
-                    const isActive = tab.id === activeTab;
-
-                    // console.log('here....', tab.id, activeTab);
+                    // highlighted only while its panel is actually showing
+                    const isActive = tab.id === activeTab && panelOpen;
 
                     return (
                         <div
                             key={tab.id}
-                            className={clsx(
-                                'group flex items-center gap-2 px-6 py-1',
-                                isActive
-                                    ? 'text-blue-600 bg-stone-200'
-                                    : 'text-neutral-500 hover:text-neutral-700',
-                            )}
+                            className="group relative flex w-full justify-center"
+                            style={{ height: ITEM_CSS }}
                         >
-                            <Tooltip content={tab.label} position="bottom">
-                                <button onClick={() => setActiveTab(tab.id)}>
-                                    <i className={clsx(Icon)}></i>
+                            <Tooltip content={tab.label} position="left">
+                                <button
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    aria-label={tab.label}
+                                    onClick={() => onSelect(tab.id)}
+                                    className={clsx(
+                                        railButtonBase,
+                                        isActive ? activeButton : inactiveButton,
+                                    )}
+                                >
+                                    {/* same accent bar as the left rail, mirrored to the outer (right) edge */}
+                                    {isActive && (
+                                        <span
+                                            aria-hidden="true"
+                                            className="absolute right-0 top-2 h-6 w-[3px] rounded-l bg-primary-600"
+                                        />
+                                    )}
+                                    <Icon name={tab.icon} />
                                 </button>
                             </Tooltip>
 
@@ -216,11 +201,12 @@ export function TabsLayout({
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        removeTab(tab.id);
+                                        onRemove(tab.id);
                                     }}
-                                    className="opacity-0 group-hover:opacity-100"
+                                    className="absolute left-0 top-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-line-strong text-[7px] text-ink opacity-0 transition-opacity hover:bg-danger hover:text-white group-hover:opacity-100"
+                                    aria-label={`Close ${tab.label}`}
                                 >
-                                    <i className="fa-solid fa-xmark"></i>
+                                    <Icon name="xmark" />
                                 </button>
                             )}
                         </div>
@@ -228,21 +214,36 @@ export function TabsLayout({
                 })}
 
                 {hidden.length > 0 && (
-                    <Dropdown tabs={hidden} onSelect={setActiveTab} onRemove={removeTab} />
+                    <div className="mt-auto">
+                        <MoreMenu
+                            tabs={hidden}
+                            activeTab={activeTab}
+                            onSelect={onSelect}
+                            onRemove={onRemove}
+                        />
+                    </div>
                 )}
             </div>
 
-            {/* CONTENT */}
-            <div className="flex-1 px-2 py-1">{active && <active.content />}</div>
-
-            {/* MEASURE */}
-            <div ref={measureRef} className="absolute invisible whitespace-nowrap">
-                {tabs.map((tab) => (
-                    <div key={tab.id} className="px-3 py-2 text-sm">
-                        {tab.label}
-                    </div>
-                ))}
-            </div>
+            {onTogglePanel && (
+                <button
+                    type="button"
+                    title={panelOpen ? 'Collapse dock panel' : 'Expand dock panel'}
+                    aria-label={panelOpen ? 'Collapse dock panel' : 'Expand dock panel'}
+                    aria-expanded={panelOpen}
+                    disabled={tabs.length === 0}
+                    onClick={onTogglePanel}
+                    className={`${buttonBase} mt-1 size-[var(--ui-btn)] shrink-0 text-ink-muted hover:bg-surface-muted hover:text-ink`}
+                >
+                    <Icon
+                        name="chevron-right"
+                        className={clsx(
+                            'text-xs transition-transform duration-200 motion-reduce:transition-none',
+                            !panelOpen && 'rotate-180',
+                        )}
+                    />
+                </button>
+            )}
         </div>
     );
 }
