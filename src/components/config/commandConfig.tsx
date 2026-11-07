@@ -5,6 +5,7 @@ import {
     LinkBarConfig,
     LockBarConfig,
     ToolBarConfig,
+    TextBarConfig,
     UndoRedoBarConfig,
     ZoomBarConfig,
 } from './toolbars';
@@ -18,4 +19,5 @@ export const commandRegistry = [
     ...LockBarConfig,
     ...ZoomBarConfig,
     ...UndoRedoBarConfig,
+    ...TextBarConfig,
 ];

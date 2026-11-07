@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useStore } from '../../store';
 
 export const ContextMenu = () => {
@@ -6,6 +7,16 @@ export const ContextMenu = () => {
     const closeMenu = useStore((s) => s.closeMenu);
     const x = useStore((s) => s.x);
     const y = useStore((s) => s.y);
+
+    // Escape closes it, like every other menu (BUG-128)
+    useEffect(() => {
+        if (!visible) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') closeMenu();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [visible, closeMenu]);
 
     if (!visible) return null;
 

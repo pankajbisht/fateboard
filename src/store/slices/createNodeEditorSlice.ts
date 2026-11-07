@@ -29,6 +29,7 @@
 import { BRAND } from '@/lib/theme';
 import * as fabric from 'fabric';
 import { fitTextShape } from './createShapeSlice';
+import { canvasKeysBlocked } from '@/lib/keyboard/modalOpen';
 
 /* ============================================================
    Types & constants
@@ -1184,7 +1185,7 @@ export class PathNodeEditor {
     /* ---------------- keyboard ---------------- */
 
     private onKeyDown = (e: KeyboardEvent) => {
-        if (this.disposed) return;
+        if (this.disposed || canvasKeysBlocked()) return; // a modal owns the keyboard (BUG-062)
         const t = e.target as HTMLElement | null;
         if (
             t &&
@@ -1613,7 +1614,7 @@ export const createNodeEditorSlice = (set: any, get: any, store?: any) => {
                 point && editableAt(canvas, point) ? EDITABLE_HOVER_CURSOR : NODE_TOOL_CURSOR;
         };
         const onKey = (e: KeyboardEvent) => {
-            if (e.key !== 'Escape' || get().nodeEditor) return;
+            if (e.key !== 'Escape' || get().nodeEditor || canvasKeysBlocked()) return;
             const t = e.target as HTMLElement | null;
             if (t && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable)) return;
             get().setActiveTool?.('select');

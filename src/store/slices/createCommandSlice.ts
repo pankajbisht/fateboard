@@ -5,6 +5,12 @@ export interface CommandEntry {
     title?: string;
     description?: string;
     shortcut?: string;
+    /** Extra key combos that run the same command (e.g. Delete next to Backspace, BUG-103). */
+    keys?: string[];
+    /** false = the key is not handled at all (the browser keeps it, no preventDefault). */
+    enabled?: () => boolean;
+    /** Also runs while typing on the canvas (Fabric's hidden textarea), e.g. ⌘B (BUG-096). */
+    allowWhileTyping?: boolean;
     handler: () => void;
     [key: string]: unknown;
 }

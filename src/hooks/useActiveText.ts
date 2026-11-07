@@ -42,7 +42,8 @@ const EVENTS = [
 
 const asColor = (v: unknown, fallback: string) => (typeof v === 'string' && v ? v : fallback);
 
-function read(canvas: any): ActiveTextSnapshot | null {
+/** The selected text's look (also used by the ⌘B / ⌘I / ⌘U commands). */
+export function readActiveText(canvas: any): ActiveTextSnapshot | null {
     // text boxes and the text inside shapes / sticky notes (same rule as updateText)
     const texts = textTargets(canvas?.getActiveObjects?.() ?? []).map((t) => t.text);
     const o = texts[0];
@@ -103,6 +104,6 @@ export function useActiveText(): [ActiveTextSnapshot | null, () => void] {
     }, [canvas, refresh]);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `version` is the change signal
-    const snapshot = useMemo(() => read(canvas), [canvas, version]);
+    const snapshot = useMemo(() => readActiveText(canvas), [canvas, version]);
     return [snapshot, refresh];
 }

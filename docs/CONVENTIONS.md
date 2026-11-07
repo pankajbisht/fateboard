@@ -81,6 +81,9 @@ changed code:
   `resumeHistory()` + `saveState(true)` after) and offer Undo:
   `get().showToast({ message, actionLabel: 'Undo', onAction: () => get().undo() })` (see `applyDesignTemplate`).
   Actions that also delete saved data (New board, delete page) keep a `confirmDialog({ …, tone: 'danger' })`.
+- Keyboard: add shortcuts as commands (`shortcut`, extra `keys`, `enabled()` = leave the key to the browser when not
+  available, `allowWhileTyping` for text styling). Any other canvas key listener returns early when
+  `canvasKeysBlocked()` (a modal is open). A panel that handles keys itself calls `stopPropagation` for them.
 - Render errors: the routed pages sit in `ErrorBoundary` (RootLayout); do not add per-panel boundaries that hide
   errors silently.
 - New modals: build on `molecules/Modal.tsx` (+ `ModalButton`) so every modal shares the theme, focus trap, Escape,

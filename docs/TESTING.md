@@ -37,12 +37,13 @@
 | `persistence.spec.ts` | autosave survives reload; all pages + the open page survive reload (BUG-004); an imported photo survives reload (BUG-121) |
 | `mobile.spec.ts` | 390 × 844: the editor shows the desktop-only notice, Continue anyway is remembered for the session; the landing page has no notice and no horizontal scroll |
 | `a11y.spec.ts` | axe (WCAG 2.1 A / AA + best-practice) on `/`, `/draw`, `/setting`, `/help`, light + dark, reduced motion: zero violations |
+| `keyboard.spec.ts` | Delete key deletes like Backspace (BUG-103); ⌘B / ⌘I / ⌘U style text (BUG-096) |
 | `geometry.spec.ts` | two pages with different sizes keep them across switches and reload; backstore = page, identity viewport; a click selects the shape under the cursor (BUG-007, BUG-109) |
 | `templates.spec.ts` | applying a template shows an Undo toast; Undo brings the previous content back (BUG-009) |
 | `animation.spec.ts` | a keyframe survives reload; each page has its own timeline (BUG-010, Q12) |
 | `placement.spec.ts` | one place per feature in the real UI |
 | `layout.spec.ts` | no horizontal scroll, header / footer inside the window, footer 16 px inset (both viewports) |
-| `known-bugs.spec.ts` | expected failures for open bugs (today: BUG-096 ⌘B, BUG-103 Delete key) |
+| `known-bugs.spec.ts` | expected failures for open bugs (none open today) |
 
 ## Current state (after batch 1, 2026-11-06)
 

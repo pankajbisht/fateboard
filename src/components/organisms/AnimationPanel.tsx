@@ -1188,19 +1188,19 @@ export default function AnimationPanel() {
         const mod = e.ctrlKey || e.metaKey;
         const key = e.key.toLowerCase();
         const onButton = (e.target as HTMLElement).tagName === 'BUTTON';
+        // every key handled here stays here: the global canvas shortcuts must not run too (BUG-018)
+        let handled = true;
 
         if (e.code === 'Space') {
-            if (onButton) return; // let buttons activate normally
+            if (onButton) return; // let buttons activate normally (and Space is not a canvas shortcut)
             e.preventDefault();
             st.togglePlay();
         } else if (mod && key === 'z') {
-            e.preventDefault();
-            e.stopPropagation(); // keyframe history here; the canvas ⌘Z must not run too
+            e.preventDefault(); // keyframe history here, not the canvas history
             if (e.shiftKey) st.animRedo();
             else st.animUndo();
         } else if (mod && key === 'y') {
             e.preventDefault();
-            e.stopPropagation();
             st.animRedo();
         } else if (mod && key === 'a') {
             e.preventDefault();
@@ -1229,7 +1229,10 @@ export default function AnimationPanel() {
             st.setWorkArea(st.currentTime, st.workOut);
         } else if (key === 'o') {
             st.setWorkArea(st.workIn, st.currentTime);
+        } else {
+            handled = false;
         }
+        if (handled) e.stopPropagation();
     };
 
     return (

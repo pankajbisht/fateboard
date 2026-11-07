@@ -38,7 +38,8 @@ export const EditBarConfig = [
         description: 'Paste object',
         shortcut: shortcut('⌘V', 'Ctrl+v'),
         icon: <Icon name="paste" />,
-        when: () => useStore.getState().hasSelection,
+        // pasting needs something copied, not a selection (BUG-033)
+        when: () => !!useStore.getState().clipboard,
         onClick: () => useStore.getState().paste(),
         handler: ({ get, set }) => {
             const { paste } = get();
@@ -79,6 +80,7 @@ export const EditBarConfig = [
         title: 'Delete selected object',
         description: 'Delete selected object',
         shortcut: shortcut('⌫', 'Backspace'),
+        keys: ['Delete'], // the main delete key on PC keyboards (BUG-103)
         icon: <Icon name="trash" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().removeLayer(),

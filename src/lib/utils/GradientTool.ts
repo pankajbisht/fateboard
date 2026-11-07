@@ -1,5 +1,6 @@
 import { BRAND } from '@/lib/theme';
 import * as fabric from 'fabric';
+import { canvasKeysBlocked } from '@/lib/keyboard/modalOpen';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -400,6 +401,7 @@ export class MultiStopGradientTool {
     };
 
     private onKeyDown = (event: KeyboardEvent) => {
+        if (canvasKeysBlocked()) return; // a modal dialog owns the keyboard (BUG-062)
         if (event.key !== 'Delete' && event.key !== 'Backspace') {
             return;
         }

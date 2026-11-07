@@ -8,6 +8,7 @@ import { Input } from '@/components/atoms/Input';
 import { EmptyState } from '@/components/molecules/EmptyState';
 import { PanelSection } from '@/components/molecules/PanelSection';
 
+import { canvasKeysBlocked } from '@/lib/keyboard/modalOpen';
 import { useStore } from '@store'; // your combined zustand hook
 import { PaintTargetSwatch } from '../../molecules/PaintTargetSwatch';
 
@@ -83,7 +84,7 @@ export default function PagePanel() {
 
     useEffect(() => {
         const onKey = (e: KeyboardEvent) => {
-            if (isTypingTarget(e.target)) return;
+            if (isTypingTarget(e.target) || canvasKeysBlocked()) return;
             const active = canvas?.getActiveObject() as { isEditing?: boolean } | undefined;
             if (active?.isEditing) return;
             if (e.key === 'PageDown') {
