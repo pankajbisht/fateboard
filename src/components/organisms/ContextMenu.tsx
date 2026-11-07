@@ -30,8 +30,6 @@ export const ContextMenu = () => {
     // 3. Nothing to show
     if (finalItems.length === 0) return null;
 
-    console.log(finalItems);
-
     return (
         <>
             {/* backdrop */}

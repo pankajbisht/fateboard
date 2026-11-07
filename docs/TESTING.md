@@ -227,6 +227,7 @@ Today CI enforces a **ratchet** at the current level (`vitest.config.ts` `covera
 | Templates | integration + E2E | applied template fits the artboard (BUG-008); previous content recoverable (BUG-009: `store/__tests__/templateUndo.test.ts`, `e2e/templates.spec.ts`) |
 | Crash recovery | RTL | render error → fallback with Reload / Download autosave / confirmed clear (`organisms/__tests__/ErrorBoundary.test.tsx`) |
 | Bundle / assets | source + file scan | pages lazy-loaded (`__tests__/codeSplitting.test.ts`); template thumbnails < 150 KB, images < 1 MB (`__tests__/templateAssets.test.ts`) |
+| No debug logging | source scan | no `console.log` in shipped code (`__tests__/noConsoleLog.test.ts`, BUG-104) |
 | One serialize path | source scan | no canvas-level `toObject` / `toJSON` outside `lib/serialization` (`__tests__/oneSerializeList.test.ts`, BUG-003) |
 
 ---
