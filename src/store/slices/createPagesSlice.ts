@@ -132,7 +132,7 @@ const isAnimationData = (a: unknown): a is AnimationData =>
 /** Animation slice API used here (kept optional: the pages slice also runs without it in tests). */
 type AnimationPeers = {
     getAnimationData?: () => AnimationData;
-    loadAnimationData?: (data: AnimationData) => void;
+    loadAnimationData?: (data: AnimationData, options?: { keepHistory?: boolean }) => void;
     pause?: () => void;
 };
 
@@ -232,7 +232,7 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
             get().applyPageSize(target.format, target.orientation);
             canvas.backgroundColor = target.background;
             // this page's own tracks (Q12); objects were saved at rest, the timeline starts at 0
-            anim.loadAnimationData?.(target.animation ?? emptyAnimation());
+            anim.loadAnimationData?.(target.animation ?? emptyAnimation(), { keepHistory: true });
             canvas.discardActiveObject();
             canvas.requestRenderAll();
 

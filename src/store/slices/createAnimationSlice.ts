@@ -138,7 +138,8 @@ export interface AnimationSlice {
     cancelExport: () => void;
 
     getAnimationData: () => AnimationData;
-    loadAnimationData: (data: AnimationData) => void;
+    /** `keepHistory`: a page switch keeps the keyframe history of each page (Q7, BUG-141). */
+    loadAnimationData: (data: AnimationData, options?: { keepHistory?: boolean }) => void;
 
     /**
      * Always-on canvas listeners (registered by the canvas slice with its other events): an
@@ -168,7 +169,18 @@ export const createAnimationSlice: StateCreator<
     let offRestEvents: (() => void) | null = null;
 
     // Track edits are document changes: autosave the project (pages keep the tracks, BUG-010).
+    // Keyframe history per page (Q7, BUG-141): park the page you leave, bring back the one you open.
+    const pageHistory = new Map<string, { past: Snapshot[]; future: Snapshot[] }>();
     store?.subscribe?.((next, prev) => {
+        const nextPage = (next as unknown as { currentPageId?: string | null }).currentPageId;
+        const prevPage = (prev as unknown as { currentPageId?: string | null }).currentPageId;
+        if (nextPage !== prevPage) {
+            if (prevPage) pageHistory.set(prevPage, { past: next.past, future: next.future });
+            if (prevPage !== null && prevPage !== undefined) {
+                const back = nextPage ? pageHistory.get(nextPage) : undefined;
+                set({ past: back?.past ?? [], future: back?.future ?? [] });
+            }
+        }
         if (
             next.tracks !== prev.tracks ||
             next.animDuration !== prev.animDuration ||
@@ -181,13 +193,30 @@ export const createAnimationSlice: StateCreator<
     });
 
     /** Keeps `rest` in step with edits made outside the animation (see registerAnimationEvents). */
-    const refreshRest = (obj: fabric.FabricObject | undefined) => {
-        const s = get();
-        if (!obj || s.autoKey || s.isPlaying || obj instanceof fabric.ActiveSelection) return;
-        const id = getAnimId(obj);
-        const tr = id ? s.tracks[id] : undefined;
-        if (!tr) return;
+    /** Rest props of an object in canvas coordinates, also inside a multi-selection (BUG-142). */
+    const absoluteProps = (obj: fabric.FabricObject) => {
         const live = readProps(obj);
+        if (!obj.group) return live;
+        // children of an ActiveSelection hold group-relative values: decompose the full matrix onto a
+        // stand-in with the same box so left / top follow the object's own origin
+        const ghost = new fabric.Rect({
+            width: obj.width,
+            height: obj.height,
+            strokeWidth: obj.strokeWidth,
+            strokeUniform: obj.strokeUniform,
+            originX: obj.originX,
+            originY: obj.originY,
+        });
+        fabric.util.applyTransformToObject(ghost, obj.calcTransformMatrix());
+        const abs = readProps(ghost);
+        return { ...live, ...abs, fill: live.fill, stroke: live.stroke, opacity: live.opacity };
+    };
+
+    const refreshOne = (obj: fabric.FabricObject, tracks: Tracks): Tracks | null => {
+        const id = getAnimId(obj);
+        const tr = id ? tracks[id] : undefined;
+        if (!tr) return null;
+        const live = absoluteProps(obj);
         let rest: Track['rest'];
         let fullText = tr.fullText;
         if (!isShownAnimated(obj)) {
@@ -202,13 +231,29 @@ export const createAnimationSlice: StateCreator<
                 if (!animated.has(k)) (rest as Record<string, unknown>)[k] = v;
             }
         }
-        if (JSON.stringify(rest) === JSON.stringify(tr.rest) && fullText === tr.fullText) return;
-        set({
-            tracks: {
-                ...s.tracks,
-                [tr.objectId]: { ...tr, rest, ...(fullText !== undefined ? { fullText } : {}) },
-            },
-        });
+        if (JSON.stringify(rest) === JSON.stringify(tr.rest) && fullText === tr.fullText)
+            return null;
+        return {
+            ...tracks,
+            [tr.objectId]: { ...tr, rest, ...(fullText !== undefined ? { fullText } : {}) },
+        };
+    };
+
+    /** Keeps `rest` in step with edits made outside the animation (see registerAnimationEvents). */
+    const refreshRest = (obj: fabric.FabricObject | undefined) => {
+        const s = get();
+        if (!obj || s.autoKey || s.isPlaying) return;
+        const objs = obj instanceof fabric.ActiveSelection ? obj.getObjects() : [obj];
+        let tracks = s.tracks;
+        let changed = false;
+        for (const o of objs) {
+            const next = refreshOne(o, tracks);
+            if (next) {
+                tracks = next;
+                changed = true;
+            }
+        }
+        if (changed) set({ tracks });
     };
     const range = (): [number, number] => {
         const { workIn, workOut, animDuration } = get();
@@ -713,9 +758,9 @@ export const createAnimationSlice: StateCreator<
 
             get().pause();
             const prevTime = get().currentTime;
-            const prevVpt = [...canvas.viewportTransform] as fabric.TMat2D;
             canvas.discardActiveObject();
-            canvas.setViewportTransform([1, 0, 0, 1, 0, 0]); // export un-zoomed / un-panned
+            // Export what the board shows (BUG-026): the design page has an identity viewport (exactly
+            // the page); the whiteboard keeps its current view. Resetting it exported the scene corner.
 
             const { tracks, animDuration } = get();
             const [from, to] = settings.range === 'work' ? range() : [0, animDuration];
@@ -786,7 +831,6 @@ export const createAnimationSlice: StateCreator<
                 });
             } finally {
                 exportCtl = null;
-                canvas.setViewportTransform(prevVpt);
                 get().seek(prevTime);
             }
         },
@@ -800,7 +844,7 @@ export const createAnimationSlice: StateCreator<
             workOut: get().workOut,
             tracks: get().tracks,
         }),
-        loadAnimationData: (data) => {
+        loadAnimationData: (data, { keepHistory = false } = {}) => {
             get().pause();
             set({
                 animDuration: data.duration,
@@ -810,8 +854,7 @@ export const createAnimationSlice: StateCreator<
                 tracks: data.tracks ?? {},
                 currentTime: 0,
                 selectedKeyframes: [],
-                past: [],
-                future: [],
+                ...(keepHistory ? {} : { past: [], future: [] }),
             });
             applyAt(0);
         },

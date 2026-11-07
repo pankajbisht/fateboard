@@ -46,6 +46,10 @@ type Peers = {
     /** Canvas: THE page size (BUG-007); part of every snapshot so undo restores it too. */
     selectedPreset?: { id: string; width: number; height: number } | null;
     setSelectedPreset?: (preset: never) => void;
+    /** Animation: re-pose objects at the playhead after a restore (BUG-140). */
+    tracks?: Record<string, unknown>;
+    currentTime?: number;
+    seek?: (ms: number) => void;
 };
 
 /** Snapshot key for the page size; removed again before Fabric loads the JSON. */
@@ -148,6 +152,9 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
             canvas.requestRenderAll();
             peers().clearToolbar?.();
             peers().rebuildLinks?.(canvas); // optional hook: re-link __text/__box/__instances
+            // snapshots hold rest values: show the animation at the playhead again (BUG-140)
+            const anim = peers();
+            if (anim.tracks && Object.keys(anim.tracks).length) anim.seek?.(anim.currentTime ?? 0);
             peers().persist?.();
         } finally {
             set({ _isRestoring: false });

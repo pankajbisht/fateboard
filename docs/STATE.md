@@ -402,7 +402,8 @@ A store subscription calls Canvas `persist` when `tracks`, `animDuration`, `anim
 are saved with their page, BUG-010). The engine marks an object shown animated with `__animRest` (runtime only) and
 `serializeCanvas` writes those rest values, so no save holds mid-animation values (BUG-011).
 **Depends on:** Canvas (`canvas`, `persist`).
-**Risks:** BUG-018, BUG-026, BUG-140, BUG-141, BUG-142. The Animation panel's own ⌘Z / ⌘Y run `animUndo` / `animRedo` and
+Keyframe history (`past` / `future`) is kept per page (Q7). Export renders the board's current view.
+**Risks:** none open. The Animation panel's own ⌘Z / ⌘Y run `animUndo` / `animRedo` and
 stop the event, so the canvas history does not run too. `src/components/organisms/effects/ui/Engine.tsx` is a
 second, older animation engine (dead).
 

@@ -28,6 +28,7 @@ import { Button } from '../atoms/Button';
 import { IconButton } from '../atoms/IconButton';
 import { Icon } from '../atoms/Icon';
 import { Input } from '../atoms/Input';
+import { NumberField } from '../atoms/NumberField';
 import { SegmentedControl } from '../molecules/SegmentedControl';
 import { Select } from '../atoms/Select';
 import { Slider } from '../atoms/Slider';
@@ -673,17 +674,15 @@ function Inspector() {
             {single && (
                 <>
                     <Field label={`Time (s) · frame ${Math.round((kf.time / 1000) * fps)}`}>
-                        <Input
-                            size="sm"
-                            type="number"
+                        <NumberField
+                            aria-label="Keyframe time"
+                            unit="s"
                             step={1 / fps}
                             min={0}
-
+                            precision={3}
                             value={+(kf.time / 1000).toFixed(3)}
-                            onChange={(e) =>
-                                a.updateKeyframe(tr.objectId, kf.id, {
-                                    time: Number(e.target.value) * 1000,
-                                })
+                            onCommit={(v) =>
+                                a.updateKeyframe(tr.objectId, kf.id, { time: v * 1000 })
                             }
                         />
                     </Field>
@@ -691,25 +690,21 @@ function Inspector() {
                     <div className="grid grid-cols-3 gap-2">
                         {numericProps.map((p) => (
                             <Field key={p} label={p}>
-                                <Input
-                                    size="sm"
-                                    type="number"
+                                <NumberField
+                                    aria-label={p}
+                                    stepper="stack"
                                     step={
                                         p === 'opacity' || p === 'reveal' || p.startsWith('scale')
                                             ? 0.05
                                             : 1
                                     }
-
-                                    placeholder="—"
+                                    precision={3}
                                     value={
                                         kf.props[p] !== undefined
                                             ? +(kf.props[p] as number).toFixed(3)
                                             : ''
                                     }
-                                    onChange={(e) =>
-                                        e.target.value !== '' &&
-                                        set({ [p]: Number(e.target.value) })
-                                    }
+                                    onCommit={(v) => set({ [p]: v })}
                                 />
                             </Field>
                         ))}
@@ -841,13 +836,14 @@ function Presets({ selCount, selHasText }: { selCount: number; selHasText: boole
             <div className="grid grid-cols-2 gap-2">
                 <Field label="Start (s)">
                     <div className="flex gap-1">
-                        <Input
-                            size="sm"
-                            type="number"
+                        <NumberField
+                            aria-label="Start"
+                            unit="s"
                             min={0}
                             step={0.1}
+                            precision={2}
                             value={start}
-                            onChange={(e) => setStart(Math.max(0, Number(e.target.value)))}
+                            onCommit={(v) => setStart(Math.max(0, v))}
                         />
                         <IconButton
                             icon={<Icon name="crosshairs" />}
@@ -859,43 +855,48 @@ function Presets({ selCount, selHasText }: { selCount: number; selHasText: boole
                     </div>
                 </Field>
                 <Field label="Length (s)">
-                    <Input
-                        size="sm"
-                        type="number"
-                        min={0.1}
-                        step={0.1}
-
-                        placeholder="auto"
-                        value={dur}
-                        onChange={(e) =>
-                            setDur(
-                                e.target.value === '' ? '' : Math.max(0.1, Number(e.target.value)),
-                            )
-                        }
-                    />
+                    <div className="flex gap-1">
+                        <NumberField
+                            aria-label="Length"
+                            unit="s"
+                            min={0.1}
+                            step={0.1}
+                            precision={2}
+                            value={dur}
+                            onCommit={(v) => setDur(Math.max(0.1, v))}
+                        />
+                        {dur !== '' && (
+                            <IconButton
+                                icon={<Icon name="rotate-left" />}
+                                className="border border-line-strong"
+                                title="Use the preset's own length"
+                                aria-label="Use the preset's own length"
+                                onClick={() => setDur('')}
+                            />
+                        )}
+                    </div>
                 </Field>
                 <Field label="Stagger between objects (ms)">
-                    <Input
-                        size="sm"
-                        type="number"
+                    <NumberField
+                        aria-label="Stagger between objects"
+                        unit="ms"
                         min={0}
                         step={50}
+                        precision={0}
                         value={stagger}
-                        onChange={(e) => setStagger(Math.max(0, Number(e.target.value)))}
+                        onCommit={(v) => setStagger(Math.max(0, v))}
                     />
                 </Field>
                 <Field label="Repeat (emphasis)">
-                    <Input
-                        size="sm"
-                        type="number"
+                    <NumberField
+                        aria-label="Repeat"
                         min={1}
                         max={20}
-
+                        step={1}
+                        precision={0}
                         value={repeat}
                         disabled={group !== 'emphasis'}
-                        onChange={(e) =>
-                            setRepeat(Math.max(1, Math.min(20, Number(e.target.value) || 1)))
-                        }
+                        onCommit={(v) => setRepeat(Math.max(1, Math.min(20, Math.round(v))))}
                     />
                 </Field>
             </div>
@@ -1092,14 +1093,14 @@ function ExportSection() {
 
             {mode !== 'png' && (
                 <Field label="Timeline length (s)">
-                    <Input
-                        size="sm"
-                        type="number"
+                    <NumberField
+                        aria-label="Timeline length"
+                        unit="s"
                         min={0.5}
                         step={0.5}
-
+                        precision={2}
                         value={+(duration / 1000).toFixed(2)}
-                        onChange={(e) => a.setAnimDuration(Number(e.target.value) * 1000)}
+                        onCommit={(v) => a.setAnimDuration(v * 1000)}
                         disabled={rendering}
                     />
                 </Field>
