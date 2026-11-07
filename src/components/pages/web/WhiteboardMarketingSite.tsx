@@ -415,7 +415,7 @@ export default function WhiteboardMarketingSite() {
                             </div>
 
                             <div className="grid gap-x-8 sm:grid-cols-2">
-                                {useCases.map((item, index) => (
+                                {useCases.map((item) => (
                                     <div
                                         key={item.number}
                                         className="group border-t border-gray-200 py-7 transition duration-300 hover:border-primary-300"

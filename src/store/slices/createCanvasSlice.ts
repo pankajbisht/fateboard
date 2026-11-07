@@ -111,27 +111,6 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         unloadHandler = null;
     };
 
-    const removeNodes = () => {
-        const canvas = get().canvas;
-
-        if (!canvas) {
-            set({ nodes: [] });
-            return;
-        }
-
-        const nodes = get().nodes ?? [];
-
-        nodes.forEach((node: CanvasObject) => {
-            if (node.connectorLine) {
-                canvas.remove(node.connectorLine);
-            }
-
-            canvas.remove(node);
-        });
-
-        set({ nodes: [] });
-    };
-
     const cleanupEditingSession = (commit = false) => {
         get().closeShapeTextEditor?.(commit);
     };
@@ -366,7 +345,6 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                     canvas.discardActiveObject();
 
                     get().enablePan();
-                    removeNodes();
                     break;
                 }
 
@@ -381,8 +359,6 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                     canvas.freeDrawingBrush.width = Math.max(1, Number(get().width) || 1);
 
                     canvas.selection = false;
-
-                    removeNodes();
                     break;
                 }
 
@@ -467,7 +443,6 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             cancelPersist();
             cleanupEditingSession(false);
-            removeNodes();
 
             get().clearGradientSession?.();
 
@@ -873,8 +848,6 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             // Skip helper objects (node handles, guides, connector handles, etc.).
             if (obj?.excludeFromExport) return;
-
-            if (obj && (get().nodes ?? []).includes(obj)) return;
 
             get().persist();
         },

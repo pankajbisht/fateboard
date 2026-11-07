@@ -163,10 +163,13 @@ export const RepeatAlongPath = () => {
     }, [canvas]);
 
     /* ------------------------------ sampling ------------------------------ */
+    // guideRev / sourceRev change when the same Fabric objects are edited in place: they bust the cache
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const guidePath = useMemo(() => (guide ? toGuidePath(guide) : null), [guide, guideRev]);
     const result = useMemo(
         () =>
             guidePath ? sampleAlongPath(guidePath, opts, source?.angle ?? 0, MAX_PREVIEW) : null,
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- sourceRev: see guidePath
         [guidePath, opts, source, sourceRev],
     );
 

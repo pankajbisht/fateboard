@@ -5,15 +5,12 @@ import { TABS_CONFIG } from '../config/tabs.config';
 import { DockPanel } from './DockPanel';
 import { SIDE_PANEL_WIDTH } from './sidebar/sidebar.const';
 import { PanelLayout } from '../templates/PanelLayout';
-import { ColorSlider } from '../atoms/ColorSlider';
-
-const SNAP_POINTS = [240, 320, SIDE_PANEL_WIDTH, 480];
 
 export const DockRoot = () => {
     const [tabs, setTabs] = useState<TabConfig[]>([...TABS_CONFIG]);
     const [active, setActive] = useState<string>('effects');
     const [open, setOpen] = useState(false);
-    const [width, setWidth] = useState(SIDE_PANEL_WIDTH);
+    const width = SIDE_PANEL_WIDTH; // fixed: the resize handle was removed
 
     const scrollRef = useRef<HTMLDivElement>(null);
     const scrollMemory = useRef<Record<string, number>>({});
@@ -50,13 +47,7 @@ export const DockRoot = () => {
 
     return (
         <aside className="flex h-full">
-            <DockPanel
-                open={open}
-                width={width}
-                snapPoints={SNAP_POINTS}
-                onToggle={() => setOpen((o) => !o)}
-                onWidthChange={setWidth}
-            >
+            <DockPanel open={open} width={width}>
                 {activeTab && (
                     <PanelLayout
                         title={activeTab.label}
@@ -88,8 +79,6 @@ export const DockRoot = () => {
                 <PaletteTools />
 
                 <RecentColors />
-
-                {/*<ColorSlider scrollRef={scrollRef} />*/}
             </div>
 
             <div className="min-h-0 shrink-0 overflow-y-auto overflow-x-hidden bg-surface p-[3px] [scrollbar-width:thin]">

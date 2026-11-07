@@ -1,10 +1,8 @@
 import AnimationPanel from '../organisms/AnimationPanel';
-import { EffectsPanel } from '../organisms/effects';
 import ExportCanvas from '../organisms/effects/ui/ExportCanvas';
 import { PathEffects } from '../organisms/effects/ui/PathEffects';
 import { RepeatAlongPath } from '../organisms/effects/ui/RepeatAlongPath';
 import { RepeatRadially } from '../organisms/effects/ui/RepeatRadially';
-import TemplateGallery from '../organisms/effects/ui/TemplateGallery';
 import Filters from '../organisms/filter/ui/Filters';
 import { FillShadowPanel } from '../organisms/FillShadowPanel';
 

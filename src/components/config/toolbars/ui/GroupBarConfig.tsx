@@ -12,7 +12,7 @@ export const GroupBarConfig = [
         icon: <Icon name="object-group" />,
         when: () => useStore.getState().hasMultipleSelection(),
         onClick: () => useStore.getState().groupLayers(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { groupLayers } = get();
             groupLayers();
         },
@@ -26,7 +26,7 @@ export const GroupBarConfig = [
         icon: <Icon name="object-ungroup" />,
         when: () => useStore.getState().isGroupSelected(),
         onClick: () => useStore.getState().ungroupSelected(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { ungroupSelected } = get();
             ungroupSelected();
         },

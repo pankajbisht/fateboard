@@ -11,7 +11,7 @@ export interface UiSlice {
     actualSize: () => void;
 }
 
-export const createUISlice: SliceCreator<UiSlice> = (set, get, store) => ({
+export const createUISlice: SliceCreator<UiSlice> = (set, get, _store) => ({
     toolbarPosition: 'left',
     isFullScreen: false,
 

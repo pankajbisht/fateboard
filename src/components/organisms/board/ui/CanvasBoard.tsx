@@ -134,7 +134,6 @@ function CanvasSurface({
     const selectedObject = useStore((s: any) => s.selectedObject);
     const nodeMode = useStore((s: any) => s.nodeMode as boolean);
     const nodePath = useStore((s: any) => s.activePath);
-    const saveState = useStore((s: any) => s.saveState);
     const userZoom = useStore((s: any) => (typeof s.zoom === 'number' ? s.zoom : 1));
     const rulerUnit = useStore((s: any) => s.settings?.unit ?? 'px') as RulerUnit;
     const setBoardMode = useStore((s: any) => s.setBoardMode);
@@ -312,17 +311,12 @@ function CanvasSurface({
     const rafRef = useRef(0);
     const insideRef = useRef(false);
 
+    const presetSize = getPresetSize(pageSize);
+    const sizeW = presetSize?.width;
+    const sizeH = presetSize?.height;
     const size = useMemo(
-        () => getPresetSize(pageSize),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [
-            pageSize?.width,
-            pageSize?.height,
-            (pageSize as any)?.w,
-            (pageSize as any)?.h,
-            (pageSize as any)?.size?.width,
-            (pageSize as any)?.size?.height,
-        ],
+        () => (sizeW && sizeH ? { width: sizeW, height: sizeH } : null),
+        [sizeW, sizeH],
     );
 
     // The rulers are OUTSIDE the scroll area, so `viewport` is already the usable area.

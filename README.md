@@ -46,11 +46,10 @@ CI reads both from repository variables of the same names (Settings > Secrets an
 | `npm run check` | lint + type-check + format check |
 | `npm test` / `npm run test:run` | Vitest (watch / single run) |
 | `npm run test:coverage` | Coverage (`@vitest/coverage-v8`) |
-| `npm run deploy` | `gh-pages -d dist` (manual deploy; CI also deploys on push to `main`) |
 | `npm run server` | `json-server` on `db.json` (no `db.json` in the repo; unused) |
 | `npm run clean` | `rimraf dist` (`rimraf` is not a declared dependency) |
 
-Docker: `docker build -t fateboard . && docker run -p 4173:4173 fateboard` (Vite preview).
+Docker (self-hosting; the production target is GitHub Pages): `docker build --build-arg VITE_SITE_URL=https://www.example.com -t fateboard . && docker run --rm -p 8080:8080 fateboard`. Multi-stage: Node builds, an unprivileged nginx serves the static files (`docker/nginx.conf`, same routing as Pages). CI builds and smoke-tests it (`.github/workflows/docker.yml`).
 
 ## Project structure
 

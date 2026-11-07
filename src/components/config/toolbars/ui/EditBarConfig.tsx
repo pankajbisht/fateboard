@@ -12,7 +12,7 @@ export const EditBarConfig = [
         icon: <Icon name="copy" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().copy(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { copy } = get();
             copy();
         },
@@ -26,7 +26,7 @@ export const EditBarConfig = [
         icon: <Icon name="scissors" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().cut(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { cut } = get();
             cut();
         },
@@ -41,7 +41,7 @@ export const EditBarConfig = [
         // pasting needs something copied, not a selection (BUG-033)
         when: () => !!useStore.getState().clipboard,
         onClick: () => useStore.getState().paste(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { paste } = get();
             paste();
         },
@@ -55,7 +55,7 @@ export const EditBarConfig = [
         icon: <Icon name="clone" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().duplicate(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { duplicate } = get();
             duplicate();
         },
@@ -69,7 +69,7 @@ export const EditBarConfig = [
         icon: <Icon name="layer-group" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().clone(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { clone } = get();
             clone();
         },
@@ -84,7 +84,7 @@ export const EditBarConfig = [
         icon: <Icon name="trash" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().removeLayer(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { removeLayer } = get();
             removeLayer();
         },

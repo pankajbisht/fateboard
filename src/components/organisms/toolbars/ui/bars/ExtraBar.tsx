@@ -1,10 +1,9 @@
 import { Icon } from '@/components/atoms/Icon';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import db from 'opendb-store';
 import { useStore } from '@/store';
 import { shortcut } from '@/lib/utils/isMac';
-import Toast from '@/components/atoms/Toast';
+import { canvasKeysBlocked } from '@/lib/keyboard/modalOpen';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 
@@ -17,15 +16,6 @@ interface ToolbarAction {
     onClick: () => void;
 }
 
-interface ToastState {
-    id: number;
-    message: string;
-}
-
-const createBoardId = (): string =>
-    globalThis.crypto?.randomUUID?.() ??
-    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-
 const isTypingTarget = (target: EventTarget | null): boolean =>
     target instanceof HTMLElement &&
     (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
@@ -33,20 +23,10 @@ const isTypingTarget = (target: EventTarget | null): boolean =>
 const ExtraBar = () => {
     const navigate = useNavigate();
 
-    const canvas = useStore((s) => s.canvas);
     const gridEnabled = useStore((s) => s.gridEnabled);
     const snapEnabled = useStore((s) => s.snapEnabled);
     const toggleGrid = useStore((s) => s.toggleGrid);
     const toggleSnap = useStore((s) => s.toggleSnap);
-
-    // Lazy init: created once per mount (the old useRef(crypto.randomUUID()) ran on every render).
-    const [boardId] = useState(createBoardId);
-    const [toast, setToast] = useState<ToastState | null>(null);
-
-    const showToast = useCallback((message: string) => {
-        // New id => Toast remounts, so the same message can show twice in a row.
-        setToast({ id: Date.now(), message });
-    }, []);
 
     /* ------------------------------- Shortcuts ------------------------------- */
     // Ctrl/⌘ + '  → grid      Ctrl/⌘ + ;  → snap
@@ -54,7 +34,7 @@ const ExtraBar = () => {
     useEffect(() => {
         const onKeyDown = (e: KeyboardEvent) => {
             if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return;
-            if (isTypingTarget(e.target)) return;
+            if (isTypingTarget(e.target) || canvasKeysBlocked()) return;
 
             if (e.key === "'") {
                 e.preventDefault();
@@ -68,55 +48,6 @@ const ExtraBar = () => {
         window.addEventListener('keydown', onKeyDown);
         return () => window.removeEventListener('keydown', onKeyDown);
     }, [toggleGrid, toggleSnap]);
-
-    /* --------------------------------- Share --------------------------------- */
-
-    const handleShare = useCallback(async () => {
-        if (!canvas) {
-            showToast('Canvas is not ready yet');
-            return;
-        }
-
-        const link = `${window.location.origin}/share/${boardId}?mode=view`;
-
-        let saved: Promise<boolean>;
-        try {
-            const payload = {
-                id: boardId,
-                version: 1,
-                canvasJSON: canvas.toJSON(),
-                updatedAt: Date.now(),
-            };
-            saved = Promise.resolve(db.local.set(`board:${boardId}`, JSON.stringify(payload))).then(
-                () => true,
-                () => false,
-            );
-        } catch (error) {
-            console.error('[ExtraBar] Failed to prepare preview', error);
-            showToast('Could not create preview');
-            return;
-        }
-
-        // Start the clipboard write and open the tab synchronously, so both stay inside the click gesture.
-        const copied = navigator.clipboard?.writeText
-            ? navigator.clipboard.writeText(link).then(
-                  () => true,
-                  () => false,
-              )
-            : Promise.resolve(false);
-
-        window.open(link, '_blank', 'noopener,noreferrer');
-
-        const [didSave, didCopy] = await Promise.all([saved, copied]);
-
-        if (!didSave) {
-            showToast('Preview data could not be saved. Storage may be full.');
-        } else if (didCopy) {
-            showToast('Preview opened in new tab & link copied!');
-        } else {
-            showToast('Preview opened in new tab');
-        }
-    }, [canvas, boardId, showToast]);
 
     /* -------------------------------- Actions -------------------------------- */
 
@@ -144,12 +75,8 @@ const ExtraBar = () => {
                 icon: <Icon name="gear" />,
                 onClick: () => navigate('/setting'),
             },
-            {
-                id: 'preview',
-                label: 'Preview',
-                icon: <Icon name="share-from-square" />,
-                onClick: () => void handleShare(),
-            },
+            // Share / Preview removed until there is a backend: the link only ever worked in this
+            // browser (BUG-028, decision Q6)
             {
                 id: 'help',
                 label: 'Help',
@@ -157,7 +84,7 @@ const ExtraBar = () => {
                 onClick: () => navigate('/help'),
             },
         ],
-        [gridEnabled, snapEnabled, toggleGrid, toggleSnap, navigate, handleShare],
+        [gridEnabled, snapEnabled, toggleGrid, toggleSnap, navigate],
     );
 
     return (
@@ -193,15 +120,6 @@ const ExtraBar = () => {
                     </li>
                 ))}
             </ul>
-
-            {toast && (
-                <Toast
-                    key={toast.id}
-                    message={toast.message}
-                    onClose={() => setToast(null)}
-                    duration={2000}
-                />
-            )}
         </>
     );
 };

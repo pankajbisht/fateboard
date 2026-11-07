@@ -11,7 +11,7 @@ export const ZoomBarConfig = [
         shortcut: shortcut('⌘+equal', 'Ctrl+Equal'),
         icon: <Icon name="magnifying-glass-plus" />,
         onClick: () => useStore.getState().zoomIn(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { zoomIn } = get();
             zoomIn();
         },
@@ -24,7 +24,7 @@ export const ZoomBarConfig = [
         shortcut: shortcut('⌘+minus', 'Ctrl+Minus'),
         icon: <Icon name="magnifying-glass-minus" />,
         onClick: () => useStore.getState().zoomOut(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { zoomOut } = get();
             zoomOut();
         },
@@ -37,7 +37,7 @@ export const ZoomBarConfig = [
         shortcut: shortcut('⌘+Digit0', 'Ctrl+Digit0'),
         icon: <Icon name="expand" />,
         onClick: () => useStore.getState().zoomFit(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { zoomFit } = get();
             zoomFit();
         },
@@ -50,7 +50,7 @@ export const ZoomBarConfig = [
         shortcut: shortcut('⌘+Digit1', 'Ctrl+Digit1'),
         icon: <Icon name="arrows-left-right" />,
         onClick: () => useStore.getState().actualSize(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { actualSize } = get();
             actualSize();
         },

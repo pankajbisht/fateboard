@@ -296,14 +296,10 @@ Pure helpers worth unit testing: `sanitizeSettings`, `getCanvasSize`, `clampDime
 **Depends on:** Canvas, UndoRedo. **Risks:** `setCanvas` can overwrite the canvas owned by the Canvas slice
 (no caller today). Only partly audited.
 
-## 18. geometryEngine: `geometryEngineSlice.ts`
+## 18. geometryEngine: removed
 
-**Purpose:** experimental node graph (Transform/Repeat/Boolean nodes) using paper.js.
-**State:** `inputGeometry`, `outputGeometry`, `graph`. **Actions:** `setInputFromFabric`, `addNode`,
-`updateNodeInputs`, `removeNode`, `runGraph`, `renderToFabric`, pure helpers (`translate`, `rotate`, node fns,
-converters). No UI uses it. **Risks:** BUG-030. `setInputFromFabric`/`addNode`/`updateNodeInputs`/`removeNode` call
-`set(partial, () => get().runGraph())`. In zustand v5 the 2nd argument is `replace`; a function is truthy, so the call
-would **replace the whole store** with that partial. It is latent because nothing calls these today.
+Deleted 2026-11-07 (BUG-030, owner approved): no UI used it, and its `set(partial, cb)` calls would have replaced
+the whole store. paper.js stays for boolean operations (`lib/booleanOps`).
 
 ## 19. NodeEditor: `createNodeEditorSlice.ts`
 

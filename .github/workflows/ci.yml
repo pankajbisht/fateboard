@@ -2,8 +2,9 @@
 # This file only wires the pipeline; each stage is a reusable workflow:
 #
 #   quality.yml ─┐
-#   e2e.yml ─────┼─> ci (single required check) ─> deploy.yml (push to main only)
-#   build.yml ───┘
+#   e2e.yml ─────┤
+#   build.yml ───┼─> ci (single required check) ─> deploy.yml (push to main only)
+#   docker.yml ──┘
 #
 # Shared Node setup: .github/actions/setup-node-deps. Third-party actions are pinned to
 # full commit SHAs (tag in the trailing comment); Dependabot keeps them current.
@@ -36,12 +37,15 @@ jobs:
     build:
         uses: ./.github/workflows/build.yml
 
+    docker:
+        uses: ./.github/workflows/docker.yml
+
     # Single status to mark "required" in branch protection, so adding/renaming stages
     # never needs a settings change.
     ci:
         name: CI passed
         if: ${{ always() }}
-        needs: [quality, e2e, build]
+        needs: [quality, e2e, build, docker]
         runs-on: ubuntu-latest
         timeout-minutes: 5
         steps:

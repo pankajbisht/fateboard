@@ -7,8 +7,6 @@ import { FileBarConfig } from '@/components/config/toolbars';
 import { OPEN_ACCEPT } from '@/components/config/toolbars/fileActions';
 
 function getFileActions(handlers) {
-    // console.log(FileBarConfig, handlers.openFile);
-
     const x = FileBarConfig.map((config) => {
         if (config.id !== 'open') return config;
 
@@ -32,8 +30,6 @@ const FileBar = () => {
     const actions = getFileActions({
         openFile: handleUploadClick,
     });
-
-    // console.log(actions);
 
     return (
         <>

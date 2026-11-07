@@ -14,7 +14,6 @@ const WhiteboardMarketingSite = lazy(
 );
 const EditorPage = lazy(() => import('@/components/pages/Editor/Editor'));
 const EditorSettingPage = lazy(() => import('@/components/pages/Setting/EditorSettingPage'));
-const SharePage = lazy(() => import('@/components/pages/SharePage/SharePage'));
 const HelpPage = lazy(() => import('@/components/pages/HelpPage/HelpPage'));
 const NotFound = lazy(() => import('@/components/pages/NotFound/NotFoundPage'));
 const CommandPalettePage = lazy(() =>
@@ -42,7 +41,6 @@ export function RootRouter() {
                         <Route path="/draw" element={<EditorPage />} />
                         <Route path="/setting" element={<EditorSettingPage />} />
                         <Route path="/command-palette" element={<CommandPalettePage />} />
-                        <Route path="/share/:docId" element={<SharePage />} />
                         <Route path="/help" element={<HelpPage />} />
                     </Route>
 

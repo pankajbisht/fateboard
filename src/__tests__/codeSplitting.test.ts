@@ -24,7 +24,6 @@ describe('code splitting', () => {
             'web/WhiteboardMarketingSite',
             'Editor/Editor',
             'Setting/EditorSettingPage',
-            'SharePage/SharePage',
             'HelpPage/HelpPage',
             'NotFound/NotFoundPage',
             'Command/CommandPalette',

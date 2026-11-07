@@ -159,8 +159,16 @@ function buildShape(def: ShapeDef, raw: Record<string, any>): fabric.Object | nu
     if (!def.text) return buildBase(def, w, h, style);
 
     // ---- shape + editable text (Figma / Canva style) ----
-    const { left, top, originX, originY, hasControls, customType, objectCaching, ...baseStyle } =
-        style;
+    const {
+        left,
+        top,
+        originX,
+        originY,
+        hasControls,
+        customType,
+        objectCaching: _objectCaching, // dropped: text shapes set their own caching
+        ...baseStyle
+    } = style;
 
     const base = buildBase(def, w, h, {
         ...baseStyle,

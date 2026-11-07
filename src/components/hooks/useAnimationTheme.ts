@@ -71,10 +71,10 @@ function readDom(): boolean | null {
  * NOT from the OS. Order: what the app applied to <html> → the stored setting → OS (only for "system").
  */
 export function useIsDark(): boolean {
-    const setting = useStore((s) => {
-        const st = s as unknown as { theme?: ThemeSetting; settings?: { theme?: ThemeSetting } };
-        return st.theme ?? st.settings?.theme;
-    });
+    // Settings > Theme lives in `settings.mode` (BUG-064: this read a `theme` key that does not exist)
+    const setting = useStore(
+        (s) => (s as unknown as { settings?: { mode?: ThemeSetting } }).settings?.mode,
+    );
     const [systemDark, setSystemDark] = useState(
         () => window.matchMedia('(prefers-color-scheme: dark)').matches,
     );

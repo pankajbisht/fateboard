@@ -4,7 +4,6 @@ import { STilte, Tile } from '../molecules/Tile';
 import { TransformInput } from '../molecules/TransformInput';
 import { BooleanOperationsDropdown } from './BooleanOperationsDropdown';
 import { PaintToggle } from './PaintToggle';
-import { useState } from 'react';
 // import { CanvasWorkspace } from './CanvasWorkspace';
 
 export function StrokeControls() {
@@ -19,7 +18,6 @@ export function StrokeControls() {
     const strokeStyle = useStore((s) => s.strokeStyle);
     const setStrokeStyle = useStore((s) => s.setStrokeStyle);
     const canvas = useStore((s) => s.canvas);
-    const setSelectedPreset = useStore((s) => s.setSelectedPreset);
 
     const activeObject = canvas?.getActiveObject();
     const isFillActive = activePaint === 'fill';

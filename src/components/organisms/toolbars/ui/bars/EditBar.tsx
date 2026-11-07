@@ -1,4 +1,3 @@
-import { shortcut } from '@/lib/utils/isMac';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 import { EditBarConfig } from '@/components/config/toolbars';

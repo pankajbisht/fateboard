@@ -26,7 +26,6 @@ src/main.tsx → App.tsx → app/rootRouter.tsx (BrowserRouter + RouteSeo)
        ├─ /draw             pages/Editor/Editor.tsx             ← the editor
        ├─ /setting          pages/Setting/EditorSettingPage     (Preferences)
        ├─ /command-palette  pages/Command/CommandPalette
-       ├─ /share/:docId     pages/SharePage/SharePage           (its own fabric.Canvas, read-only view)
        └─ /help             pages/HelpPage/HelpPage
      * → pages/NotFound/NotFoundPage
 ```
@@ -61,7 +60,7 @@ Code layers (top depends on bottom):
   calls `init`, and on unmount snapshots `exportJSON()` and calls `dispose()`. `CanvasSurface` is keyed by mode, so a
   mode change remounts it and carries content over through `snapshotRef`.
 - **Readers:** almost every organism reads `canvas` from the store and calls Fabric directly. There is no facade.
-- **Other Fabric canvases:** `SharePage` (own instance), `MiniWhiteboard` (marketing), `advanceOperationSlice`
+- **Other Fabric canvases:** `MiniWhiteboard` (marketing), `advanceOperationSlice`
   (`StaticCanvas` for pattern tiles). `advanceOperationSlice.setCanvas` can overwrite the store's `canvas` (unused).
 - **Geometry has one owner per board** (Q2, BUG-007 fixed): `CanvasBoard` sizes the canvas (design: backstore = page
   px from `selectedPreset`, CSS = fit × zoom, identity viewport; whiteboard: host size). Zoom / pan go through the Page
@@ -161,7 +160,7 @@ Event flow, step by step:
 | Save file | FileBar → `saveBoard()` | downloads `drawing.fateboard` (the whole project, same format as the autosave) | |
 | Open file | FileBar "Open" button → hidden `<input>` → `feature/import/importFile` | `.png/.jpg/.webp` → image, `.svg` → SVG, `.fateboard/.json` → `importFabricJSON` (v5-style `loadFromJSON`, no persist lock, history not reset: BUG-014) | The **keyboard** Ctrl/⌘+O runs `clearBoard()` instead (BUG-040) |
 | Project | `exportProject()` / `importProject()` (Save / Open in the top bar) | `{app:'fateboard', version:1, currentPageId, pages[{…, animation?}]}` | Same document is autosaved (BUG-004) |
-| Share | ExtraBar → `localStorage['board:<id>']` → `/share/:id` | `canvas.toJSON()` | Same-browser only (BUG-028) |
+| Share | removed until there is a backend (decision Q6, BUG-028) | | The link only ever worked in the same browser; Save Board (`.fateboard`) is the way to hand a board over |
 | Settings | Setting slice | opendb `fateboard-settings` | Validated by `sanitizeSettings` |
 
 ## Bundles and assets
@@ -171,7 +170,7 @@ Event flow, step by step:
   deploy hits the `ErrorBoundary` (Reload). Guard: `src/__tests__/codeSplitting.test.ts`.
 - **Vendor chunks** (`vite.config.ts` `build.rolldownOptions.output.codeSplitting.groups`): `fabric`, `paper`, `react`,
   `icons`, cached separately across deploys. Startup = entry + react + fabric + icons ≈ 278 KB gzip (was one 490 KB chunk).
-- **paper.js loads on demand** (`lib/booleanOps.computeBoolean`, geometry engine `loadGeometryEngine()`), ≈ 120 KB gzip
+- **paper.js loads on demand** (`lib/booleanOps.computeBoolean`), ≈ 120 KB gzip
   kept out of startup. The store still imports Fabric, so every route loads it (the shell needs the store).
 - **Template images**: canvas / preview images ≤ 2048 px (≤ 0.7 MB), gallery cards use 640 px files in
   `public/template/thumb/`; `dist` 39 MB → 9.5 MB. Guard: `src/__tests__/templateAssets.test.ts`.

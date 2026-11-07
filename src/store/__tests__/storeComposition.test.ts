@@ -23,7 +23,6 @@ import { createBackgroundColor } from '../slices/createBackgroundColor';
 import { createContextMenu } from '../slices/createContextMenu';
 import { createSettingSlice } from '../slices/createSettingSlice';
 import { advanceOperationSlice } from '../slices/advanceOperationSlice';
-import { geometryEngineSlice } from '../slices/geometryEngineSlice';
 import { createNodeEditorSlice } from '../slices/createNodeEditorSlice';
 import { createFilterSlice } from '../slices/createFilterSlice';
 import { createTemplateSlice } from '../slices/templateSlice';
@@ -53,7 +52,6 @@ const SLICES: [string, (...args: any[]) => Record<string, unknown>][] = [
     ['ContextMenu', createContextMenu as any],
     ['Setting', createSettingSlice as any],
     ['advanceOperation', advanceOperationSlice as any],
-    ['geometryEngine', geometryEngineSlice as any],
     ['NodeEditor', createNodeEditorSlice as any],
     ['Filter', createFilterSlice as any],
     ['Template', createTemplateSlice as any],

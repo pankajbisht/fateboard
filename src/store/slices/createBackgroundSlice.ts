@@ -8,7 +8,8 @@ type PatternFactoryCtx = {
 
 type PatternFactory = (ctx: PatternFactoryCtx) => fabricNS.Pattern | null;
 
-const getFabric = () => (fabricNS as any).fabric ?? fabricNS;
+// Fabric 7 is an ES module namespace (no `fabric` default export, BUG-143)
+const getFabric = () => fabricNS;
 
 const gridPattern: PatternFactory = ({ get }) => {
     const fabric = getFabric();
@@ -127,7 +128,7 @@ const BACKGROUND_PATTERNS: Record<BackgroundStyle, PatternFactory | null> = {
     isometric: isometricPattern,
 };
 
-export const createBackgroundSlice = (set, get, store) => ({
+export const createBackgroundSlice = (set, get, _store) => ({
     backgroundStyle: 'none' as BackgroundStyle,
 
     /** Background pattern cell size (BUG-002: was `gridSize`, which the notebook grid owns). */

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { BRAND } from '@/lib/theme';
 import * as fabric from 'fabric';
 import { computeBoolean, type BooleanOp } from '@/lib/booleanOps';
 import { collectPaintTargets, createColorMethods } from './colorSystemFixes';

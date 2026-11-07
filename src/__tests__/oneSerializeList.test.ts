@@ -1,7 +1,7 @@
 /**
  * BUG-003: every document write goes through `serializeCanvas` (one CUSTOM_PROPS list, animated
  * objects written at rest). A canvas-level `toObject(...)` / `toJSON()` anywhere else is a second
- * list that silently drops custom data. Known exception: Share (BUG-028, waits on decision Q6).
+ * list that silently drops custom data. No exceptions.
  */
 import { describe, expect, it } from 'vitest';
 
@@ -14,10 +14,8 @@ const SRC = import.meta.glob<string>(
     },
 );
 
-const ALLOWED = new Set([
-    '/src/lib/serialization.ts',
-    '/src/components/organisms/toolbars/ui/bars/ExtraBar.tsx', // Share: BUG-028 / Q6
-]);
+// Share (the last exception, BUG-028) was removed until there is a backend (decision Q6)
+const ALLOWED = new Set(['/src/lib/serialization.ts']);
 
 describe('one serialize path (BUG-003)', () => {
     it('no canvas-level toObject / toJSON outside lib/serialization', () => {

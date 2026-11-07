@@ -1,3 +1,18 @@
+# Only what the build needs goes into the image build context.
 node_modules
 dist
+dist-e2e
+coverage
+playwright-report
+test-results
 .git
+.github
+.husky
+.zed
+.vscode
+.idea
+# never bake local config / secrets into an image: pass VITE_* as --build-arg
+.env
+.env.*
+!.env.example
+*.log

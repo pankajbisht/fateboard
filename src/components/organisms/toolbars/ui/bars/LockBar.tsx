@@ -1,6 +1,5 @@
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
-import { shortcut } from '@/lib/utils/isMac';
 import { LockBarConfig } from '@/components/config/toolbars';
 
 const LockBar = () => {

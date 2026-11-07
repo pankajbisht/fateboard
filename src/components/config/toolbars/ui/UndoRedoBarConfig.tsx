@@ -12,7 +12,7 @@ export const UndoRedoBarConfig = [
         shortcut: shortcut('⌘z', 'Ctrl+z'),
         icon: <UndoIcon />,
         onClick: () => useStore.getState().undo(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { undo } = get();
             undo();
         },
@@ -25,7 +25,7 @@ export const UndoRedoBarConfig = [
         shortcut: shortcut('⌘⇧z', 'Ctrl+Shift+z'),
         icon: <RedoIcon />,
         onClick: () => useStore.getState().redo(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { redo } = get();
             redo();
         },

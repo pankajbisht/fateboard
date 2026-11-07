@@ -12,7 +12,7 @@ export const LockBarConfig = [
         icon: <Icon name="lock" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().lock(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { lock } = get();
             lock();
         },
@@ -26,7 +26,7 @@ export const LockBarConfig = [
         icon: <Icon name="lock-open" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().unlock(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { unlock } = get();
             unlock();
         },

@@ -17,7 +17,6 @@ import { createBackgroundColor } from './slices/createBackgroundColor.ts';
 import { createContextMenu } from './slices/createContextMenu.ts';
 import { createSettingSlice } from './slices/createSettingSlice.ts';
 import { advanceOperationSlice } from './slices/advanceOperationSlice.ts';
-import { geometryEngineSlice } from './slices/geometryEngineSlice.ts';
 import { createNodeEditorSlice } from './slices/createNodeEditorSlice.ts';
 import { createFilterSlice } from './slices/createFilterSlice.ts';
 import { createTemplateSlice } from './slices/templateSlice.ts';
@@ -44,7 +43,6 @@ export const combinedSlice = (set, get, store) => ({
     ...createContextMenu(set, get, store),
     ...createSettingSlice(set, get, store),
     ...advanceOperationSlice(set, get, store),
-    ...geometryEngineSlice(set, get, store),
     ...createNodeEditorSlice(set, get, store),
     ...createFilterSlice(set, get, store),
     ...createTemplateSlice(set, get, store),

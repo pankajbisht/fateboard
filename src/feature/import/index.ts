@@ -1,6 +1,5 @@
 import { importImage } from './imageImporter';
 import { importSVG } from './svgImporter';
-import { importAppFile } from './appImporter';
 import * as fabric from 'fabric';
 import { importFabricJSON } from './importFabricJSON';
 import { useStore } from '@/store';

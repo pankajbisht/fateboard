@@ -1,6 +1,5 @@
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
-import { shortcut } from '@/lib/utils/isMac';
 import { GroupBarConfig } from '@/components/config/toolbars';
 
 const GroupBar = () => {
