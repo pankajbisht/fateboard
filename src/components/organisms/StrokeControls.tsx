@@ -34,6 +34,10 @@ export function StrokeControls() {
         <div className="flex w-full min-w-0 items-center justify-between gap-2">
             <div
                 data-dimmed={!activeObject || undefined}
+                // nothing selected: these paint controls are inactive (and exempt from contrast rules)
+                role="group"
+                aria-label="Selection paint"
+                aria-disabled={!activeObject || undefined}
                 className={clsx(
                     // wraps to a second line instead of being cut off (narrow window / large icons)
                     'flex min-w-0 flex-row flex-wrap items-center gap-x-5 gap-y-1 bg-surface',

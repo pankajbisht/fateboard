@@ -154,8 +154,11 @@ export function TabsRail({
     }, [tabs, activeTab, areaHeight, itemPx]);
 
     return (
+        // a toolbar of panel toggles (it also holds close / more / collapse buttons, which a
+        // tablist may not contain: axe aria-required-children)
         <div
-            role="tablist"
+            role="toolbar"
+            aria-label="Dock panels"
             aria-orientation="vertical"
             style={{ width: railWidthCss() }}
             className={`${sideRail} border-l`}
@@ -177,8 +180,8 @@ export function TabsRail({
                         >
                             <Tooltip content={tab.label} position="left">
                                 <button
-                                    role="tab"
-                                    aria-selected={isActive}
+                                    type="button"
+                                    aria-pressed={isActive}
                                     aria-label={tab.label}
                                     onClick={() => onSelect(tab.id)}
                                     className={clsx(

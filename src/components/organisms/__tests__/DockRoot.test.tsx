@@ -65,10 +65,10 @@ describe('right dock matches the left sidebar (one side-panel system)', () => {
             await import('../sidebar/sidebar.const');
         render(<DockRoot />);
 
-        const rail = screen.getByRole('tablist');
+        const rail = screen.getByRole('toolbar', { name: 'Dock panels' });
         expect(rail.style.width).toBe(railWidthCss()); // same source as the left rail
 
-        const tab = screen.getAllByRole('tab')[0];
+        const tab = within(rail).getAllByRole('button', { pressed: false })[0]; // a panel toggle
         act(() => tab.click());
         // same button recipe + same active look as the left rail (no extra ring / glow)
         for (const cls of `${railButtonBase} ${activeButton}`.split(/\s+/)) {

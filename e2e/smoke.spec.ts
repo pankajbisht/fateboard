@@ -6,7 +6,7 @@ import { test as plain } from '@playwright/test';
 test('editor loads with canvas, rail, dock, header and footer', async ({ editor, page }) => {
     await expect(editor.canvas).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Editor tools and panels' })).toBeVisible();
-    await expect(page.getByRole('tablist')).toBeVisible();
+    await expect(page.getByRole('toolbar', { name: 'Dock panels' })).toBeVisible();
     await expect(page.getByRole('group', { name: 'Color palette' })).toBeVisible();
     await expect(editor.footerView.getByRole('slider', { name: 'Zoom' })).toBeVisible();
 });

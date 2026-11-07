@@ -50,7 +50,7 @@ export function ZoomControl() {
                     onChange={(t) => setZoom(sliderToZoom(t))}
                 />
                 {preset && !whiteboard && (
-                    <span className="text-[11px] leading-none tabular-nums text-ink-subtle">
+                    <span className="text-[11px] leading-none tabular-nums text-ink-muted">
                         {preset.width} × {preset.height} px
                     </span>
                 )}

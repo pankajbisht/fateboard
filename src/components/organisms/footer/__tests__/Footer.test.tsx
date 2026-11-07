@@ -116,7 +116,7 @@ describe('log zoom scale', () => {
 describe('Footer spacing', () => {
     it('has the same 16 px inset on the left and right (labels do not touch the edge)', () => {
         const { container } = render(<Footer />);
-        const footer = container.querySelector('footer')!;
+        const footer = container.firstElementChild as HTMLElement; // the template owns the <footer> landmark
         expect(footer.className).toMatch(/\bpx-4\b/);
         expect(footer.className).not.toMatch(/\b(pl|pr)-\d/); // one value for both sides
     });

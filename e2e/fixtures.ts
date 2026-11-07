@@ -87,7 +87,10 @@ export class Editor {
 
     /** Right dock: open a tab (Fill & Shadow, Export, …). */
     async openDockTab(label: string) {
-        await this.page.getByRole('tab', { name: label, exact: true }).click();
+        await this.page
+            .getByRole('toolbar', { name: 'Dock panels' })
+            .getByRole('button', { name: label, exact: true })
+            .click();
     }
 
     /** Shapes panel: add a catalog shape by its label (Rectangle, Circle, Sticky Note, …). */

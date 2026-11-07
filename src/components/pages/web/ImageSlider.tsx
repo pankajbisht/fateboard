@@ -97,7 +97,7 @@ function ImageSlider({ images }: ImageSliderProps) {
                                     Fateboard
                                 </p>
 
-                                <p className="text-xs text-gray-400">Canvas preview</p>
+                                <p className="text-xs text-gray-600">Canvas preview</p>
                             </div>
                         </div>
 
@@ -127,7 +127,7 @@ function ImageSlider({ images }: ImageSliderProps) {
                             </div>
 
                             <div className="mx-auto flex h-7 max-w-xs flex-1 items-center justify-center rounded-lg border border-gray-200 bg-white px-3">
-                                <div className="flex items-center gap-2 text-[10px] text-gray-400">
+                                <div className="flex items-center gap-2 text-[10px] text-gray-600">
                                     <span className="text-primary-500">✦</span>
                                     fateboard.app
                                 </div>

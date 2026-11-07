@@ -44,6 +44,16 @@ where no semantic token fits.
 | `ink-subtle` on white | 3.06 | ⚠️ placeholders, icons, disabled only |
 | white on `danger` | 4.83 | ✅ destructive buttons |
 
+### Accessibility checks
+
+`e2e/a11y.spec.ts` runs axe (WCAG 2.1 A / AA + best-practice landmarks) on `/`, `/draw`, `/setting`, `/help` in light
+and dark mode with reduced motion; it must stay at zero violations. Rules it enforced (2026-11-07):
+- `ink-subtle` only for placeholders, icons and disabled text; information (e.g. the footer page size) uses `ink-muted`.
+- Controls that are dimmed because they are inactive sit in a group with `aria-disabled` (footer paint tiles).
+- Brand text on a tinted background: `primary-ink` on `primary-100` or lighter (`primary-200` is 4.15:1).
+- Every image has `alt` (`Brand` defaults to "Fateboard"; `alt=""` inside a labelled button).
+- One `<header>` / `<main>` / `<footer>` landmark per page; organisms inside a template use `div`.
+
 ## Text styles
 
 Each sets size, line height, weight and letter spacing. Add a color class (`text-ink`, `text-ink-muted`).
