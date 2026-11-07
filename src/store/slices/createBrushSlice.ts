@@ -356,7 +356,7 @@ class VariableWidthBrush extends (fabric.PencilBrush as any) {
 
 function buildShadow(s: any) {
     if (!(s.shadowBlur > 0 || s.shadowOffsetX || s.shadowOffsetY)) return null;
-    const base = s.shadowMatchColor ? s.color : s.shadowColor;
+    const base = s.shadowMatchColor ? s.color : s.brushShadowColor;
     return new fabric.Shadow({
         color: toRgba(base, s.shadowOpacity),
         blur: s.shadowBlur,
@@ -389,9 +389,9 @@ function buildBrush(canvas: any, s: any) {
     brush.width = s.width;
 
     if (eraser) brush.color = ERASER_PREVIEW;
-    else if (engine === 'neon') brush.color = toRgba(mixWithWhite(s.color, 0.7), s.opacity);
+    else if (engine === 'neon') brush.color = toRgba(mixWithWhite(s.color, 0.7), s.brushOpacity);
     else if (usesRgbaColor(s.brush))
-        brush.color = toRgba(s.color, s.opacity); // live preview shows real opacity
+        brush.color = toRgba(s.color, s.brushOpacity); // live preview shows real opacity
     else brush.color = s.color; // textures / spray / dots: opacity is applied on the finished object
 
     if (brush instanceof fabric.PencilBrush) {
@@ -481,7 +481,7 @@ function styleNewPath(path: any, s: any) {
     }
 
     path.set({ perPixelTargetFind: true, targetFindTolerance: 4, isFreehand: true });
-    if (!usesRgbaColor(s.brush)) path.set('opacity', s.opacity); // textures, spray, dots, pattern
+    if (!usesRgbaColor(s.brush)) path.set('opacity', s.brushOpacity); // textures, spray, dots, pattern
 
     const blend = s.blend && s.blend !== 'source-over' ? s.blend : undefined;
     if (blend) path.set('globalCompositeOperation', blend);
@@ -548,7 +548,7 @@ function sanitize(p: any) {
     if (p.brush !== undefined && p.brush in DEFAULT_PRESET_KEYS) o.brush = p.brush;
     if (p.color !== undefined) o.color = toHex6(p.color);
     if (p.width !== undefined) o.width = clamp(Math.round(num(p.width, 1)), 1, 200);
-    if (p.opacity !== undefined) o.opacity = clamp(num(p.opacity, 1), 0.05, 1);
+    if (p.brushOpacity !== undefined) o.brushOpacity = clamp(num(p.brushOpacity, 1), 0.05, 1);
     if (p.smoothing !== undefined) o.smoothing = clamp(num(p.smoothing, 0), 0, 10);
     if (p.taper !== undefined) o.taper = clamp(num(p.taper, 0), 0, 10);
     if (p.nibAngle !== undefined) o.nibAngle = clamp(num(p.nibAngle, 45), 0, 180);
@@ -562,7 +562,7 @@ function sanitize(p: any) {
         o.shadowOffsetX = clamp(Math.round(num(p.shadowOffsetX, 0)), -60, 60);
     if (p.shadowOffsetY !== undefined)
         o.shadowOffsetY = clamp(Math.round(num(p.shadowOffsetY, 0)), -60, 60);
-    if (p.shadowColor !== undefined) o.shadowColor = toHex6(p.shadowColor);
+    if (p.brushShadowColor !== undefined) o.brushShadowColor = toHex6(p.brushShadowColor);
     if (p.shadowOpacity !== undefined) o.shadowOpacity = clamp(num(p.shadowOpacity, 1), 0.05, 1);
     if (p.shadowMatchColor !== undefined) o.shadowMatchColor = !!p.shadowMatchColor;
 
@@ -629,7 +629,7 @@ export const createBrushSlice = (set: any, get: any, _store: any) => {
         const p = getPreset(type);
         return {
             width: p.width,
-            opacity: p.opacity,
+            brushOpacity: p.opacity,
             lineCap: p.lineCap,
             smoothing: p.smoothing,
             blend: p.blend ?? 'source-over',
@@ -652,7 +652,7 @@ export const createBrushSlice = (set: any, get: any, _store: any) => {
             else patch(options);
         },
 
-        /** Generic updater: updateBrush({ opacity: 0.5, lineStyle: 'dashed', shadowBlur: 10 }) */
+        /** Generic updater: updateBrush({ brushOpacity: 0.5, lineStyle: 'dashed', shadowBlur: 10 }) */
         updateBrush: (partial: any) => patch(partial),
 
         setBrushWidth: (o: any = {}) =>

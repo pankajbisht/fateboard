@@ -256,14 +256,12 @@ export interface SettingsSlice {
     setColorTheme: (theme: ColorTheme) => void;
     setBackgroundStyle: (style: BackgroundStyle) => void;
     setBackgroundColor: (color: string) => void;
-    setGridSize: (size: number) => void;
     setSnapToGrid: (snap: boolean) => void;
     setShowRulers: (show: boolean) => void;
     setUnit: (unit: Unit) => void;
     setFreehand: (freehand: boolean) => void;
     toggleFreehand: () => void;
     setFormat: (format: PageFormat) => void;
-    setOrientation: (orientation: Orientation) => void;
     setCustomSize: (size: Partial<CustomSize>) => void;
     resetSettings: () => void;
 
@@ -333,8 +331,6 @@ export const createSettingSlice: StateCreator<SettingsSlice, [], [], SettingsSli
         setBackgroundColor: (color) => {
             if (isHexColor(color)) commit({ backgroundColor: color.toLowerCase() }); // ignore half-typed values
         },
-        setGridSize: (gridSize) =>
-            commit({ gridSize: clampGridSize(gridSize, get().settings.gridSize) }),
         setSnapToGrid: (snapToGrid) => commit({ snapToGrid }),
         setShowRulers: (showRulers) => commit({ showRulers }),
         setUnit: (unit) => commit({ unit }),
@@ -345,11 +341,6 @@ export const createSettingSlice: StateCreator<SettingsSlice, [], [], SettingsSli
         setFormat: (format) => {
             if (get().settings.freehand) return; // page size has no meaning on an infinite canvas
             commit({ lastPageFormat: format });
-        },
-
-        setOrientation: (orientation) => {
-            if (get().settings.freehand) return;
-            commit({ orientation });
         },
 
         setCustomSize: (size) => {

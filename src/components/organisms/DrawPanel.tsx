@@ -46,7 +46,7 @@ export function DrawPanel(_props: { closePanel?: () => void }) {
     const brush = useBrushStore((s) => s.brush) as BrushType;
     const width = useBrushStore((s) => s.width) as number;
     const color = toHex6(useBrushStore((s) => s.color) as string);
-    const opacity = useBrushStore((s) => s.opacity) as number;
+    const opacity = useBrushStore((s) => s.brushOpacity) as number;
     const smoothing = useBrushStore((s) => s.smoothing) as number;
     const lineCap = useBrushStore((s) => s.lineCap) as LineCap;
     const lineJoin = useBrushStore((s) => s.lineJoin) as LineJoin;
@@ -57,7 +57,7 @@ export function DrawPanel(_props: { closePanel?: () => void }) {
     const shadowBlur = useBrushStore((s) => s.shadowBlur) as number;
     const shadowOffsetX = useBrushStore((s) => s.shadowOffsetX) as number;
     const shadowOffsetY = useBrushStore((s) => s.shadowOffsetY) as number;
-    const shadowColor = toHex6(useBrushStore((s) => s.shadowColor) as string);
+    const shadowColor = toHex6(useBrushStore((s) => s.brushShadowColor) as string);
     const shadowOpacity = useBrushStore((s) => s.shadowOpacity) as number;
     const shadowMatchColor = useBrushStore((s) => s.shadowMatchColor) as boolean;
     const fillEnabled = useBrushStore((s) => s.fillEnabled) as boolean;
@@ -278,7 +278,7 @@ export function DrawPanel(_props: { closePanel?: () => void }) {
                             min={5}
                             max={100}
                             unit="%"
-                            onChange={(v) => updateBrush({ opacity: v / 100 })}
+                            onChange={(v) => updateBrush({ brushOpacity: v / 100 })}
                         />
                         <SelectField
                             label="Blend mode"
@@ -495,7 +495,7 @@ export function DrawPanel(_props: { closePanel?: () => void }) {
                             label="Shadow color"
                             value={shadowColor}
                             showLabel
-                            onChange={(hex) => updateBrush({ shadowColor: hex })}
+                            onChange={(hex) => updateBrush({ brushShadowColor: hex })}
                         />
                     )}
                     {engine === 'neon' && !shadowActive && (

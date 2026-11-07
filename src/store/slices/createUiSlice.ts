@@ -1,5 +1,4 @@
 import type { SliceCreator } from '../types';
-import * as fabric from 'fabric';
 
 type ToolBarPosition = 'left';
 
@@ -8,8 +7,6 @@ export interface UiSlice {
     isFullScreen: boolean;
     setToolbarPosition: (pos: ToolBarPosition) => void;
     toggleFullscreen: () => void;
-    zoomIn: () => void;
-    zoomOut: () => void;
     zoomFit: () => void;
     actualSize: () => void;
 }
@@ -30,24 +27,6 @@ export const createUISlice: SliceCreator<UiSlice> = (set, get, store) => ({
             document.exitFullscreen?.();
             set({ isFullScreen: false });
         }
-    },
-
-    zoomIn: () => {
-        const canvas = get().canvas;
-        if (!canvas) return;
-        const center = new fabric.Point(canvas.width / 2, canvas.height / 2);
-        const next = Math.min(canvas.getZoom() * 1.1, 5);
-        canvas.zoomToPoint(center, next);
-        canvas.requestRenderAll();
-    },
-
-    zoomOut: () => {
-        const canvas = get().canvas;
-        if (!canvas) return;
-        const center = new fabric.Point(canvas.width / 2, canvas.height / 2);
-        const next = Math.max(canvas.getZoom() / 1.1, 0.1);
-        canvas.zoomToPoint(center, next);
-        canvas.requestRenderAll();
     },
 
     zoomFit: () => {

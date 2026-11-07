@@ -21,7 +21,7 @@ Key-collision data comes from an AST scan (not committed) of every slice's retur
 | ID | Sev | Area | Status | One-line |
 |---|---|---|---|---|
 | BUG-001 | Critical | store / undo | fixed (undo system) | Animation `undo`/`redo` overwrite canvas `undo`/`redo`; Ctrl+Z never undoes canvas edits |
-| BUG-002 | Critical | store | open | 17 store keys collide between slices (silent last-spread-wins) |
+| BUG-002 | Critical | store | fixed (launch-blockers, 2026-11-07): every key has one owner, each slice spread once; guarded by `storeKeys.test.ts` | 17 store keys collide between slices (silent last-spread-wins) |
 | BUG-003 | Critical | serialization | partly fixed (one `CUSTOM_PROPS` + `serializeCanvas` for undo, autosave, board save, pages, mode switch, layers copy and Export → JSON; guarded by `oneSerializeList.test.ts`. Left: Share, BUG-028 / Q6) | 7 different "custom props" lists; custom data lost on undo, page switch, autosave, share, export |
 | BUG-004 | Critical | pages | fixed (P0 data-safety batch, 2026-11-07): whole project (all pages + open page) autosaved to IndexedDB via `lib/storage/projectStorage`; old `drawJson` migrated | Pages are never persisted; reload keeps only the current canvas |
 | BUG-005 | Critical | undo + pages | fixed (undo system: per-page history, Q7) | Undo history is global, not per page; undo after a page switch writes old page content into the new page |
@@ -39,11 +39,11 @@ Key-collision data comes from an AST scan (not committed) of every slice's retur
 | BUG-016 | Medium | canvas | open | Mode switch: `restoreFromStorage` and `importJSON(snapshot)` load into the same canvas concurrently |
 | BUG-017 | Medium | layers | fixed (undo system: keyframeClipboard) | `clipboard` shared with animation: paste before copy throws; keyframe copy breaks canvas paste |
 | BUG-018 | Medium | keyboard | open | Animation panel keys bubble to global shortcuts (Delete removes the canvas object too, Ctrl+Z fires twice) |
-| BUG-019 | Medium | brush | open | `opacity` shared by brush, shape style and filters |
-| BUG-020 | Medium | brush/text | open | `color`, `shadowColor`, `fillColor`, `strokeWidth` shared by brush/text/shape style |
+| BUG-019 | Medium | brush | fixed (launch-blockers, 2026-11-07): brush → `brushOpacity`, filter → `filterOpacity`, selection keeps `opacity` | `opacity` shared by brush, shape style and filters |
+| BUG-020 | Medium | brush/text | fixed (launch-blockers, 2026-11-07): brush keeps `color` / `fillColor`, brush shadow → `brushShadowColor`, `strokeWidth` → ShapeStyle only | `color`, `shadowColor`, `fillColor`, `strokeWidth` shared by brush/text/shape style |
 | BUG-021 | Medium | brush | open | Three writers to `canvas.freeDrawingBrush` (Editor effect, `setActiveTool`, brush slice) |
 | BUG-022 | Medium | background | open | `drawBackground()` (called from every `applyPageSize`/`setZoom`) sets `canvas.backgroundColor = null` |
-| BUG-023 | Medium | settings | open | `setOrientation`, `setBackgroundStyle`, `setBackgroundColor`, `setGridSize`, `toggleGrid` resolve to the wrong slice |
+| BUG-023 | Medium | settings | fixed (launch-blockers, 2026-11-07): shadowed duplicates removed: Page owns `setOrientation`, Setting `setBackgroundStyle` / `setBackgroundColor`, Notebook `setGridSize` / `toggleGrid` | `setOrientation`, `setBackgroundStyle`, `setBackgroundColor`, `setGridSize`, `toggleGrid` resolve to the wrong slice |
 | BUG-024 | Medium | tools | fixed (node tool) | `switchCanvasMode('select')` unlocks every Path and deletes circles with `hoverCursor === 'pointer'` |
 | BUG-025 | Medium | zoom | open | Four zoom implementations; `zoom` state desyncs from the viewport transform |
 | BUG-026 | Medium | export | open | Video export resets VPT to identity but sizes from the element; wrong frame when VPT ≠ identity |

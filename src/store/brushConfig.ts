@@ -242,7 +242,7 @@ export const SHADOW_PRESETS: { label: string; values: Record<string, unknown> }[
             shadowOffsetX: 4,
             shadowOffsetY: 6,
             shadowMatchColor: false,
-            shadowColor: '#000000',
+            brushShadowColor: '#000000',
             shadowOpacity: 0.35,
         },
     },
@@ -253,7 +253,7 @@ export const SHADOW_PRESETS: { label: string; values: Record<string, unknown> }[
             shadowOffsetX: 4,
             shadowOffsetY: 4,
             shadowMatchColor: false,
-            shadowColor: '#000000',
+            brushShadowColor: '#000000',
             shadowOpacity: 0.5,
         },
     },
@@ -378,7 +378,8 @@ export const DEFAULT_BRUSH_STATE = {
     brush: 'pencil' as BrushType,
     width: 4,
     color: '#000000',
-    opacity: 1,
+    /** BUG-002: was `opacity` (shared with the selection and the filter slice) */
+    brushOpacity: 1,
     smoothing: 2,
     lineCap: 'round' as LineCap,
     lineJoin: 'round' as LineJoin,
@@ -390,7 +391,8 @@ export const DEFAULT_BRUSH_STATE = {
     shadowBlur: 0,
     shadowOffsetX: 0,
     shadowOffsetY: 0,
-    shadowColor: '#000000',
+    /** BUG-002: was `shadowColor` (shared with the shape shadow colour) */
+    brushShadowColor: '#000000',
     shadowOpacity: 0.6,
     shadowMatchColor: true, // glow in the brush color
     // fill for closed / filled shapes

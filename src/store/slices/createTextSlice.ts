@@ -77,7 +77,6 @@ export interface TextSlice {
     fonts: { label: string; value: string }[];
     fontSize: number;
     bgColor: string;
-    color: string;
     hasShadow: boolean;
     shadowColor: string;
     fontFamily: string;
@@ -87,15 +86,12 @@ export interface TextSlice {
     charSpacing: number;
     lineHeight: number;
     strokeColor: string;
-    strokeWidth: number;
-    fillColor: string;
     textAlign: string;
 
     setBgColor: (val: string) => void;
     setFontSize: (val: number) => void;
     setHasShadow: (val: boolean) => void;
     setShadowColor: (val: string) => void;
-    setColor: (val: string) => void;
     setFontFamily: (val: string) => void;
     setIsBold: (val: boolean) => void;
     setIsItalic: (val: boolean) => void;
@@ -103,8 +99,6 @@ export interface TextSlice {
     setCharSpacing: (val: number) => void;
     setLineHeight: (val: number) => void;
     setStrokeColor: (val: string) => void;
-    setStrokeWidth: (val: number) => void;
-    setFillColor: (val: string) => void;
     setTextAlign: (val: string) => void;
     /**
      * Style the selected text. While typing with characters selected, character-level props apply
@@ -120,8 +114,8 @@ export interface TextSlice {
 /*
  * NOTE: the setters below only update the STORE (they never touch the canvas).
  * Apply to the canvas with updateText(...) for text properties, and with
- * handleColorChange / setFill / setStroke for colors. strokeWidth also exists in the
- * shape-style slice; both default to 1, but keep one of them as the source of truth.
+ * handleColorChange / setFill / setStroke for colors. `strokeWidth` belongs to the shape-style
+ * slice and the brush owns `color` / `fillColor` (BUG-002: one owner per key).
  */
 export const createTextSlice: SliceCreator<TextSlice> = (set, get) => ({
     fonts: fontFamilyConfig,
@@ -129,12 +123,10 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get) => ({
     bgColor: '#000000',
     setBgColor: (val) => set({ bgColor: val }),
     setFontSize: (val) => set({ fontSize: val }),
-    color: '#000000',
     hasShadow: false,
     setHasShadow: (val) => set({ hasShadow: val }),
     shadowColor: '',
     setShadowColor: (val) => set({ shadowColor: val }),
-    setColor: (val) => set({ color: val }),
     fontFamily: 'Arial',
     setFontFamily: (val) => set({ fontFamily: val }),
     isBold: false,
@@ -149,10 +141,6 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get) => ({
     setLineHeight: (val) => set({ lineHeight: val }),
     strokeColor: '#000000',
     setStrokeColor: (val) => set({ strokeColor: val }),
-    strokeWidth: 1,
-    setStrokeWidth: (val) => set({ strokeWidth: val }),
-    fillColor: '#000000',
-    setFillColor: (val) => set({ fillColor: val }),
     textAlign: '',
     setTextAlign: (val) => set({ textAlign: val }),
 

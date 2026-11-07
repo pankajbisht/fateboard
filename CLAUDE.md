@@ -60,7 +60,7 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 ## Slice pattern rules
 
 1. One store. Add slices to `combinedSlice` in `src/store/index.ts`, **before** `createAnimationSlice`.
-2. Every key must be unique across all slices. Later spreads silently win (17 keys collide today, see `docs/STATE.md`).
+2. Every key must be unique across all slices and each slice spread once; `src/__tests__/storeKeys.test.ts` fails otherwise (no collisions left, BUG-002).
 3. Fabric canvas is the source of truth for content; store mirrors UI state; derived lists are rebuilt from canvas.
 4. Only store actions mutate Fabric objects. Document-changing actions: mutate → `requestRenderAll()` → history → autosave.
 5. Canvas listeners: register in one place, keep disposers, unregister on `dispose`; ignore helpers (`excludeFromExport`).

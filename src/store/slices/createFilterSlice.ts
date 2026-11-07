@@ -15,7 +15,8 @@ export type FilterState = {
     grayscale: boolean;
     sepia: boolean;
     invert: boolean;
-    opacity: number; // 0 → 1
+    /** BUG-002: was `opacity` (shared with the selection and the brush) */
+    filterOpacity: number; // 0 → 1
 };
 
 export type FilterActions = {
@@ -37,7 +38,7 @@ export const defaultFilters: FilterState = {
     grayscale: false,
     sepia: false,
     invert: false,
-    opacity: 1,
+    filterOpacity: 1,
 };
 
 /**

@@ -88,8 +88,6 @@ describe('createSettingSlice', () => {
         expect(h.get().settings.backgroundColor).toBe(DEFAULT_SETTINGS.backgroundColor);
         h.get().setBackgroundColor('#00FF00');
         expect(h.get().settings.backgroundColor).toBe('#00ff00');
-        h.get().setGridSize(1000);
-        expect(h.get().settings.gridSize).toBe(GRID_SIZE_LIMITS.max);
     });
 
     it('page format and orientation are ignored in freehand mode', () => {

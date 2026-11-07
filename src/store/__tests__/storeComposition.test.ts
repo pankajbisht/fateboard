@@ -34,7 +34,7 @@ import { useStore } from '../index';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Same order as combinedSlice in src/store/index.ts (createPageSlice is spread twice there).
+// Same order as combinedSlice in src/store/index.ts (each slice spread once, BUG-002).
 const SLICES: [string, (...args: any[]) => Record<string, unknown>][] = [
     ['Canvas', createCanvasSlice as any],
     ['Brush', createBrushSlice as any],
@@ -63,22 +63,7 @@ const SLICES: [string, (...args: any[]) => Record<string, unknown>][] = [
 ];
 
 /** Keys defined by more than one slice today (sorted). Shrink this list as collisions are fixed. */
-const KNOWN_COLLISIONS = [
-    '_isSyncing',
-    'color',
-    'fillColor',
-    'gridSize',
-    'opacity',
-    'setBackgroundColor',
-    'setBackgroundStyle',
-    'setGridSize',
-    'setOrientation',
-    'shadowColor',
-    'strokeWidth',
-    'toggleGrid',
-    'zoomIn',
-    'zoomOut',
-];
+const KNOWN_COLLISIONS: string[] = []; // BUG-002 fixed: no key is shared any more
 
 function sliceKeys() {
     const stubStore = {

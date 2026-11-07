@@ -51,8 +51,8 @@ changed code:
 ## Slice pattern rules
 
 1. **One store.** Add slices to `combinedSlice` in `src/store/index.ts`; never create a second zustand store.
-2. **Keys must be unique across all slices.** Check `docs/STATE.md#key-collisions` and grep before adding a key.
-   When the collision guard exists (BUG-002), it will enforce this.
+2. **Keys must be unique across all slices.** Grep before adding a key; `src/__tests__/storeKeys.test.ts` fails on a
+   duplicate key or a slice spread twice. Prefix feature-specific fields (`brushOpacity`, `filterOpacity`).
 3. **Fabric is the source of truth for document content.** Store fields mirror UI state (selection, tool, panel
    values). Derived lists (layers) are rebuilt from the canvas, not edited in place.
 4. **Mutations go through actions.** Components call `useStore.getState().action()` or a selected action. They do not

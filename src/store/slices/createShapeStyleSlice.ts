@@ -109,6 +109,9 @@ export const createShapeStyleSlice = (set: any, get: any, _store?: any) => ({
     setActivePaint: (paint: 'fill' | 'stroke' | 'shadow') =>
         set({ activePaint: paint, paintTarget: null }),
 
+    /** Store value only (default width for new shapes, ShapePanel); `setStrokeWidthN` also restyles the selection. */
+    setStrokeWidth: (width: number) => set({ strokeWidth: width }),
+
     setStrokeWidthN: (width: number) => {
         const canvas = get().canvas;
         if (!canvas) return;

@@ -15,7 +15,7 @@ Goal: make every later change safe to ship.
 | 0.1 | Real type-check in CI (`tsc -p tsconfig.app.json --noEmit`), CI runs type-check + tests + build | BUG-012, BUG-044 | Q8 (dead files break type-check) |
 | 0.2 | Delete dead code + unused deps | BUG-031, BUG-032 | Q8 |
 | 0.3 | Test harness (fake canvas, `makeStore`, canvas mock), Playwright smoke | none | Q9 |
-| 0.4 | Store collision guard + rename colliding keys | BUG-001, BUG-002, BUG-017, BUG-019, BUG-020, BUG-023 | Q1 |
+| 0.4 | Store collision guard + rename colliding keys (**done** 2026-11-07, BUG-017 left) | BUG-001, BUG-002, BUG-017, BUG-019, BUG-020, BUG-023 | Q1 ✅ |
 | 0.5 | Single serialization contract (`CUSTOM_PROPS`, `serializeCanvas`, `loadCanvas`), await all `loadFromJSON` | BUG-003, BUG-014 | none |
 | 0.6 | Remove Fabric `any` shims; explicit origins | BUG-013, BUG-008 (part) | Q4, Q10 |
 

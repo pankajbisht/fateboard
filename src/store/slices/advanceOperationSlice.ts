@@ -304,7 +304,6 @@ export const advanceOperationSlice = (
     /* --------------------------------- API ---------------------------------- */
     return {
         objects: [] as fabric.Object[], // all canvas objects
-        _isSyncing: false, // internal flag
         patterns: loadPatterns() as SavedPattern[],
 
         setCanvas: (canvas: fabric.Canvas | null) => set({ canvas }),

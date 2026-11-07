@@ -28,7 +28,7 @@ describe('createBrushSlice', () => {
         const { h } = setup();
         h.get().setBrush({ brush: 'highlighter' });
         expect(h.get().brush).toBe('highlighter');
-        expect(h.get().opacity).toBeLessThan(1);
+        expect(h.get().brushOpacity).toBeLessThan(1);
     });
 
     it('setBrushWidth updates state and the canvas brush', () => {

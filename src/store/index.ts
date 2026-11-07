@@ -47,7 +47,6 @@ export const combinedSlice = (set, get, store) => ({
     ...geometryEngineSlice(set, get, store),
     ...createNodeEditorSlice(set, get, store),
     ...createFilterSlice(set, get, store),
-    ...createPageSlice(set, get, store),
     ...createTemplateSlice(set, get, store),
     ...createNotebookSlice(set, get, store),
     ...createDialogSlice(set, get, store),
