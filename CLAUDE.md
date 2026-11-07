@@ -19,7 +19,7 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 | All checks | `npm run check` | lint + type-check + format:check |
 | Unit tests | `npm run test:run` (CI) · `npm test` (watch) | Vitest + jsdom |
 | Coverage | `npm run test:coverage` | HTML at `coverage/index.html`; `npm run report` = coverage + E2E (docs/TESTING.md "Health report") |
-| E2E | `npm run e2e` (report: `npm run e2e:report`) | Playwright 1.64.1, Chromium; builds `--mode e2e` and runs `e2e/` against `vite preview`. First time: `npx playwright install chromium` |
+| E2E | `npm run e2e` (report: `npm run e2e:report`) | Playwright 1.64.1, Chromium (+ Firefox in CI or with `E2E_FIREFOX=1`); builds `--mode e2e` and runs `e2e/` against `vite preview`. First time: `npx playwright install chromium` |
 
 ## Folder map
 

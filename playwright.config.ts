@@ -6,6 +6,8 @@ import { defineConfig, devices } from '@playwright/test';
  * served by `vite preview`. Run: `npm run e2e` (report: `npm run e2e:report`).
  */
 const PORT = 4173;
+/** Firefox runs in CI; locally opt in with E2E_FIREFOX=1 (needs `npx playwright install firefox`). */
+const withFirefox = !!process.env.CI || !!process.env.E2E_FIREFOX;
 
 export default defineConfig({
     testDir: './e2e',
@@ -29,6 +31,18 @@ export default defineConfig({
             name: 'desktop-chromium',
             use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
         },
+        // second engine (Gecko): every spec runs in Firefox too (production readiness P1)
+        ...(withFirefox
+            ? [
+                  {
+                      name: 'desktop-firefox',
+                      use: {
+                          ...devices['Desktop Firefox'],
+                          viewport: { width: 1440, height: 900 },
+                      },
+                  },
+              ]
+            : []),
         {
             // narrow laptop: toolbars must wrap / overflow, nothing cut off
             name: 'laptop-chromium',

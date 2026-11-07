@@ -10,7 +10,7 @@ permissions:
 
 jobs:
     e2e:
-        name: E2E (Playwright)
+        name: E2E (Playwright, Chromium + Firefox)
         runs-on: ubuntu-latest
         timeout-minutes: 30
         env:
@@ -34,16 +34,16 @@ jobs:
               uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
               with:
                   path: ~/.cache/ms-playwright
-                  key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium
+                  key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-chromium-firefox
 
-            - name: Install Chromium + system deps
+            - name: Install Chromium + Firefox + system deps
               if: steps.pw-cache.outputs.cache-hit != 'true'
-              run: npx playwright install --with-deps chromium
+              run: npx playwright install --with-deps chromium firefox
 
             # Cache hit: binaries are restored, but OS libraries still need installing.
             - name: Install system deps only
               if: steps.pw-cache.outputs.cache-hit == 'true'
-              run: npx playwright install-deps chromium
+              run: npx playwright install-deps chromium firefox
 
             - name: End-to-end tests
               run: npm run e2e

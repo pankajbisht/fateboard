@@ -13,7 +13,9 @@
 - **Fixture (`e2e/fixtures.ts`):** fresh profile per test, opens `/draw`, waits for the canvas, and **fails any test with
   a console error or uncaught exception**. Helpers: `openPanel`, `openDockTab`, `addShape`, `clickEmptyCanvas`,
   `objects`, `selection`, `state`, `footer`, `footerView`, `textFloat`.
-- **Projects:** `desktop-chromium` (1440×900, all specs) and `laptop-chromium` (1024×700, `layout.spec.ts`).
+- **Projects:** `desktop-chromium` (1440×900, all specs), `laptop-chromium` (1024×700, `layout.spec.ts`) and
+  `desktop-firefox` (1440×900, all specs; **CI only**, locally `E2E_FIREFOX=1` after `npx playwright install firefox`).
+  Firefox could not start inside the agent's sandbox, so its first results come from CI: **UNKNOWN - verify on the first CI run**.
 - **Known bugs** are `test.fail` in `e2e/known-bugs.spec.ts` (undo, ⌘B, Delete key): they pass while the bug exists and
   turn red when it is fixed; remove the marker with the fix.
 - **CI:** job `e2e` (installs Chromium, runs the suite, uploads `playwright-report` on failure); `build-deploy` `needs: e2e`.
