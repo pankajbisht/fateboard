@@ -20,3 +20,11 @@ test('applying a template can be undone from the toast', async ({ editor, page }
     await expect.poll(async () => (await editor.objects()).map((o) => o.type)).toEqual(mine);
     await expect(toast).toBeHidden();
 });
+
+// BUG-145: the "Modern Social Post" template's photo (/template/girl.jpg) was missing and never loaded
+test('the Modern Social Post template brings its photo', async ({ editor, page }) => {
+    await editor.openPanel('Templates');
+    await page.getByRole('button', { name: 'Preview Modern Social Post' }).click();
+    await page.getByRole('button', { name: 'Use this template' }).click();
+    await expect.poll(async () => (await editor.objects()).map((o) => o.type)).toContain('image');
+});

@@ -28,7 +28,7 @@ describe('template assets', () => {
             }
         }
         for (const url of urls) {
-            if (!existsSync(file(url))) continue; // missing files: BUG-145
+            expect(existsSync(file(url)), `${url} exists`).toBe(true); // BUG-145
             expect(statSync(file(url)).size, url).toBeLessThan(1024 * KB);
         }
     });

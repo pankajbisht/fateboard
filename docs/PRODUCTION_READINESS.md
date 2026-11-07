@@ -41,7 +41,7 @@ Hiding Share until then is the low-risk option.
 - Medium bugs still open: Fabric 5 `loadFromJSON` callbacks (BUG-014, BUG-101), mode-switch race (BUG-016), animation
   panel keys leaking (BUG-018), brush writers (BUG-021), background reset on the whiteboard (BUG-022), video export
   frame (BUG-026), full re-renders (BUG-029), latent geometry-engine store replace (BUG-030), template origin shift
-  (BUG-059), animation number fields (BUG-092), Delete key (BUG-103), missing template photo (BUG-145).
+  (BUG-059), animation number fields (BUG-092), Delete key (BUG-103).
 - Flaky E2E (BUG-146); unit coverage to 60 % for store slices.
 - Remote error reporting (the error boundary only logs to the console).
 
