@@ -35,6 +35,7 @@
 | `settings.spec.ts` | theme / icon size apply and persist; only working preferences; Large icons size swatches |
 | `seo.spec.ts` | hash links redirect, per-route head, build files; SEO fallback hidden while the app loads, visible without JS (BUG-144) |
 | `persistence.spec.ts` | autosave survives reload; all pages + the open page survive reload (BUG-004); an imported photo survives reload (BUG-121) |
+| `mobile.spec.ts` | 390 × 844: the editor shows the desktop-only notice, Continue anyway is remembered for the session; the landing page has no notice and no horizontal scroll |
 | `a11y.spec.ts` | axe (WCAG 2.1 A / AA + best-practice) on `/`, `/draw`, `/setting`, `/help`, light + dark, reduced motion: zero violations |
 | `geometry.spec.ts` | two pages with different sizes keep them across switches and reload; backstore = page, identity viewport; a click selects the shape under the cursor (BUG-007, BUG-109) |
 | `templates.spec.ts` | applying a template shows an Undo toast; Undo brings the previous content back (BUG-009) |

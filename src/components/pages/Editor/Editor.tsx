@@ -8,6 +8,7 @@ import EditorTemplate from '@/components/templates/Editor.template.tsx';
 import { DockRoot } from '@/components/organisms/DockRoot.tsx';
 import { Footer } from '@/components/organisms/footer/index.ts';
 import { ContextMenu } from '@/components/organisms/ContextMenu.tsx';
+import { SmallScreenNotice } from '@/components/organisms/SmallScreenNotice';
 import editorsidebarconfig from '@/components/organisms/editorsidebar/editorsidebar.config.tsx';
 // ONE board for both modes (replaces CanvasBoardFreeHand + the old CanvasBoard)
 import { CanvasBoard } from '@/components/organisms/board/index.ts';
@@ -107,6 +108,8 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
 
     return (
         <>
+            {/* phones: the editor is desktop-only and says so (owner decision 2026-11-07) */}
+            <SmallScreenNotice />
             <EditorTemplate
                 header={<Header />}
                 leftSidebar={
