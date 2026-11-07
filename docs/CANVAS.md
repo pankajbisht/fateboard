@@ -22,8 +22,8 @@ Mount path: `pages/Editor/Editor.tsx` → `<CanvasBoard mode pageSize>` → `Can
    7. Adds `beforeunload`/`pagehide` → `flushPersist`.
    8. Async `restoreFromStorage()` (takes `persistLock`, reads the project from IndexedDB via `projectStorage.load()` → `importProject(project)`; an old opendb `drawJson` board → `importJSON(saved, {persist:false})`), then `initPages()`.
 3. Back in `CanvasSurface`: sets `stopContextMenu`, wires the `contextmenu` canvas event to `openMenu(...)`, adds
-   `calcOffset` refreshers (pointerdown/enter, scroll, resize). Then **either** `importJSON(snapshotFromPreviousMode)`
-   **or** `initHistory()`. This races with step 2.8 (BUG-016).
+   `calcOffset` refreshers (pointerdown/enter, scroll, resize), then `initHistory()`. Content comes only from step 2.8
+   (the autosaved project), so nothing races on the canvas (BUG-016 fixed).
 4. Further effects:
    - **Whiteboard:** ResizeObserver → `setDimensions(host size)`; a CSS dot-grid overlay follows the VPT on
      `after:render`.
@@ -36,7 +36,7 @@ Mount path: `pages/Editor/Editor.tsx` → `<CanvasBoard mode pageSize>` → `Can
 
 ## Dispose
 
-`CanvasSurface` cleanup: snapshot `exportJSON()` into `snapshotRef` (if there are objects), remove listeners,
+`CanvasSurface` cleanup: remove listeners,
 `dispose()`:
 `closeShapeTextEditor(true)` → `flushPersist()` → detach pan + unload handlers → `unregisterCanvasEvents` →
 **`set({ canvas: null, geditor: null, … })` synchronously** → `await canvas.dispose()`. Because the null happens
@@ -97,8 +97,9 @@ Runtime-only refs (`__*`, including `__animRest`) are never serialized and must 
 rebuild).
 
 Loading: always `await canvas.loadFromJSON(json)` (Promise in v6+; the 2nd arg is a per-object **reviver**, not a
-completion callback). Five call sites still use the v5 callback form (BUG-014). Wrap loads with `persistLock`
-(`importJSON` does) and `pauseHistory/resumeHistory`.
+completion callback). Only the canvas, pages and undo slices call it; other code uses the `importJSON` action
+(`src/__tests__/oneLoader.test.ts`, BUG-014 / 101 / 016). Wrap loads with `persistLock` (`importJSON` does) and
+`pauseHistory/resumeHistory`.
 
 ## History / snapshots
 

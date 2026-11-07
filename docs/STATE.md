@@ -81,7 +81,7 @@ animation, autosave deleted), `exportJSON`,
 selection off (`selection=false`, `skipTargetFind=true`) and calls NodeEditor `enterNodeMode` when something is selected; it never changes objects.
 
 **Risks:** BUG-003 (its `SERIALIZE_PROPS` lacks `id`, `name`, `animId`), BUG-006/034 (`saveState` on selection),
-BUG-016 (restore race), BUG-021 (draw tool overwrites brush)
+BUG-021 (draw tool overwrites brush)
 (`defaultSettings` → `setPageFormat` changes VPT).
 
 ## 2. Brush: `createBrushSlice.ts` (+ `store/brushConfig.ts`)

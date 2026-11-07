@@ -11,14 +11,12 @@ import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { DEFAULT_CANVAS_PRESET } from './CanvasSizePanel';
 import Ruler, { RULER_SIZE, createPointerSource, type RulerUnit } from './Ruler';
 import { isTextFloatTarget } from '@/lib/textTargets';
-import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
 
 export type CanvasMode = 'design' | 'whiteboard';
 
 /** The mode used when nothing says otherwise. */
 const DEFAULT_MODE: CanvasMode = 'design';
 
-const SERIALIZE_PROPS: string[] = [...CUSTOM_PROPS];
 const ARTBOARD_GAP = 48;
 const MIN_FIT_SCALE = 0.05;
 const MAX_FIT_SCALE = 1;
@@ -104,29 +102,19 @@ export function CanvasBoard({
 
     // the Editor passes the mode; without it, follow Settings > Freehand (boolean)
     const resolved: CanvasMode = mode ?? (freehand ? 'whiteboard' : DEFAULT_MODE);
-    const snapshotRef = useRef<any>(null);
 
     return (
         <CanvasSurface
             key={resolved}
             mode={resolved}
             pageSize={pageSize ?? storePreset ?? DEFAULT_CANVAS_PRESET}
-            snapshotRef={snapshotRef}
         />
     );
 }
 
 export default CanvasBoard;
 
-function CanvasSurface({
-    mode,
-    pageSize,
-    snapshotRef,
-}: {
-    mode: CanvasMode;
-    pageSize?: CanvasPreset | null;
-    snapshotRef: React.MutableRefObject<any>;
-}) {
+function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: CanvasPreset | null }) {
     const isWhiteboard = mode === 'whiteboard';
 
     const canvas = useStore((s: any) => s.canvas);
@@ -199,16 +187,9 @@ function CanvasSurface({
         window.addEventListener('scroll', refreshOffset, true);
         window.addEventListener('resize', refreshOffset);
 
-        // keep content when the mode changed (or after a StrictMode remount)
-        const snap = snapshotRef.current;
-        snapshotRef.current = null;
-        const s0: any = useStore.getState();
-        if (snap) {
-            if (s0.importJSON) void s0.importJSON(snap);
-            else void c.loadFromJSON(snap).then(() => c.requestRenderAll());
-        } else {
-            s0.initHistory?.();
-        }
+        // One loader (BUG-016): after a mode switch / remount the canvas slice's init() restores the
+        // autosaved project (dispose() flushed it first). Re-importing a snapshot here raced with it.
+        (useStore.getState() as any).initHistory?.();
 
         return () => {
             host.removeEventListener('pointerdown', refreshOffset, true);
@@ -217,14 +198,7 @@ function CanvasSurface({
             window.removeEventListener('resize', refreshOffset);
 
             const s: any = useStore.getState();
-            if (s.canvas) {
-                if (s.canvas.getObjects().length > 0) {
-                    snapshotRef.current = s.exportJSON
-                        ? s.exportJSON()
-                        : serializeCanvas(s.canvas, SERIALIZE_PROPS);
-                }
-                s.canvas.off('contextmenu', onContextMenu);
-            }
+            if (s.canvas) s.canvas.off('contextmenu', onContextMenu);
 
             // dispose() nulls store.canvas synchronously (before awaiting Fabric), so the next
             // surface can init() right away. Fallback for an older slice without dispose().

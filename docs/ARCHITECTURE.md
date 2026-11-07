@@ -57,8 +57,8 @@ Code layers (top depends on bottom):
 - **Owner:** `createCanvasSlice` stores the instance in `useStore.getState().canvas`. Created by `init(el, container)`,
   destroyed by `dispose()`.
 - **Mounting:** `CanvasBoard` → `CanvasSurface` creates a `<canvas>` element **in code** (not JSX; Fabric wraps it),
-  calls `init`, and on unmount snapshots `exportJSON()` and calls `dispose()`. `CanvasSurface` is keyed by mode, so a
-  mode change remounts it and carries content over through `snapshotRef`.
+  calls `init`, and on unmount calls `dispose()` (which flushes the autosave). `CanvasSurface` is keyed by mode, so a
+  mode change remounts it; the new `init()` restores the autosaved project (one loader, BUG-016).
 - **Readers:** almost every organism reads `canvas` from the store and calls Fabric directly. There is no facade.
 - **Other Fabric canvases:** `MiniWhiteboard` (marketing), `advanceOperationSlice`
   (`StaticCanvas` for pattern tiles). `advanceOperationSlice.setCanvas` can overwrite the store's `canvas` (unused).
@@ -158,7 +158,7 @@ Event flow, step by step:
 | Autosave | `persist()` | the whole project (`captureProject`: every page + its animation; live canvas → current page; `serializeCanvas`, animated objects at rest) → IndexedDB key `project` | Locked (`persistLock`) during import/clear/restore; skipped while a page loads (BUG-004) |
 | Restore | `init` → `restoreFromStorage()` → `importProject(project)` (all pages, the page that was open) → `initPages()` (no-op when pages exist) | same | Skips if objects already exist. An old localStorage `drawJson` board is loaded with `importJSON` and adopted as Page 1, then removed on the first save |
 | Save file | FileBar → `saveBoard()` | downloads `drawing.fateboard` (the whole project, same format as the autosave) | |
-| Open file | FileBar "Open" button → hidden `<input>` → `feature/import/importFile` | `.png/.jpg/.webp` → image, `.svg` → SVG, `.fateboard/.json` → `importFabricJSON` (v5-style `loadFromJSON`, no persist lock, history not reset: BUG-014) | The **keyboard** Ctrl/⌘+O runs `clearBoard()` instead (BUG-040) |
+| Open file | FileBar "Open" button → hidden `<input>` → `feature/import/importFile` | `.png/.jpg/.webp` → image, `.svg` → SVG, `.fateboard/.json`: a project → `importProject`; a single board → `importFabricJSON` → store `importJSON(json, { undoable: true })` (persist lock, autosave, one undo step; a broken file shows a dialog) | |
 | Project | `exportProject()` / `importProject()` (Save / Open in the top bar) | `{app:'fateboard', version:1, currentPageId, pages[{…, animation?}]}` | Same document is autosaved (BUG-004) |
 | Share | removed until there is a backend (decision Q6, BUG-028) | | The link only ever worked in the same browser; Save Board (`.fateboard`) is the way to hand a board over |
 | Settings | Setting slice | opendb `fateboard-settings` | Validated by `sanitizeSettings` |

@@ -494,8 +494,12 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
          * `persist: false` is used when restoring from storage (no point writing back
          * the data we just read).
          */
-        importJSON: async (json: unknown, options: { persist?: boolean } = {}) => {
-            const { persist: shouldPersist = true } = options;
+        importJSON: async (
+            json: unknown,
+            options: { persist?: boolean; undoable?: boolean } = {},
+        ) => {
+            // undoable: replacing the page is ONE undo step (opening a file, Q11); else history restarts
+            const { persist: shouldPersist = true, undoable = false } = options;
             const canvas = get().canvas;
 
             if (!canvas || !json || typeof json !== 'object') {
@@ -505,6 +509,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             cancelPersist();
             cleanupEditingSession(false);
 
+            if (undoable) get().saveState?.(true); // the page as it was = the step to go back to
             get().pauseHistory?.();
 
             // Loading fires object:added for every object; don't save mid-load.
@@ -534,7 +539,8 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 get().resumeHistory?.();
             }
 
-            get().initHistory?.();
+            if (undoable) get().saveState?.(true);
+            else get().initHistory?.();
 
             if (shouldPersist) {
                 get().persist();
