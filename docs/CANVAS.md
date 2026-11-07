@@ -163,7 +163,9 @@ refreshed on pointerdown/scroll/resize because cached offsets go stale.
   unit / theme change. The marker sits at the pointer's viewport x / y because the rulers line up with the viewport.
 - Transform row (BUG-106): each X / Y / W / H / R field subscribes to its own `transform[key]`, so a drag re-renders
   only X and Y. Keep it that way: never select the whole `transform` object in a mounted component.
-- Design backstore = page × devicePixelRatio at any zoom (BUG-108, open).
+- Design backstore = page × `designRenderRatio` (`lib/canvas/renderRatio.ts`): devicePixelRatio × on-screen scale, at
+  least 1 (Fabric's pointer maths breaks below 1), at most 8192 px a side; set by overriding the canvas's
+  `getRetinaScaling` in CanvasBoard (BUG-108). Export is unaffected (own multiplier).
 - Export: `toCanvasElement(scale)` per frame. WebCodecs path applies back-pressure (`encodeQueueSize > 6`).
 - Image export / preview (`ExportCanvas`) render the region with `canvas.toCanvasElement(multiplier, region)` and
   draw it into the output canvas; never encode to a data URL in between. Before rendering, `whenImagesReady`

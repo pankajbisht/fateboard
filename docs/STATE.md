@@ -80,8 +80,8 @@ animation, autosave deleted), `exportJSON`,
 (`updateFromFabric`). Also imports `updateMaster`, `MultiStopGradientTool`. Node tool: `setActiveTool('node')` turns Fabric
 selection off (`selection=false`, `skipTargetFind=true`) and calls NodeEditor `enterNodeMode` when something is selected; it never changes objects.
 
-**Risks:** BUG-003 (its `SERIALIZE_PROPS` lacks `id`, `name`, `animId`), BUG-006/034 (`saveState` on selection),
-BUG-021 (draw tool overwrites brush)
+**Risks:** BUG-003 (its `SERIALIZE_PROPS` lacks `id`, `name`, `animId`), BUG-006/034 (`saveState` on selection).
+The draw tool asks the brush slice to rebuild the brush (`initBrush`); it never writes `freeDrawingBrush` (BUG-021).
 (`defaultSettings` → `setPageFormat` changes VPT).
 
 ## 2. Brush: `createBrushSlice.ts` (+ `store/brushConfig.ts`)
@@ -99,7 +99,8 @@ fillColor, fillOpacity, straightLine, symmetry, symmetryCenter, eraserMode, rece
 
 **Depends on:** Canvas (`canvas`). Installs canvas hooks once (flag `__fbBrushHooks`).
 
-**Risks:** other code writes `freeDrawingBrush` directly (BUG-021). (Shared keys fixed: brush opacity / shadow colour are
+**Owner of `canvas.freeDrawingBrush`** (the only writer, BUG-021: the Editor effect and the draw tool used to overwrite
+its colour / width). (Shared keys fixed: brush opacity / shadow colour are
 `brushOpacity` / `brushShadowColor`, BUG-019/020.) There is an existing (possibly stale) test: `src/__tests__/store/brushSlice.test.ts`.
 
 ## 3. UI: `createUiSlice.ts`
@@ -149,7 +150,7 @@ edit and its linked copies are one undo step.
 `MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`.
 **Depends on:** Canvas (`canvas`, `cw`, `ch`, `selectedPreset`), Setting (`settings.freehand` before the board reports
 `boardMode`), Background (`drawBackground`, whiteboard only).
-**Risks:** `drawBackground` erases the page colour on the whiteboard (BUG-022); `pageFormat` / `orientation` /
+**Risks:** `pageFormat` / `orientation` /
 `customSize` are legacy mirrors (the page size is `selectedPreset`); `PAGE_SIZES` keys differ from settings formats.
 
 ## 6. Pages (multi-page document): `createPagesSlice.ts`
@@ -174,7 +175,8 @@ Async ops are serialized through a module-level promise queue `runExclusive`.
 `gridLineWidth`, `gridMajorLineWidth`, `ruledLineHeight`, `ruledColor`, `ruledLineWidth`.
 **Actions:** `setBackgroundStyle` (**overridden**), `toggleGrid` (**overridden**), `setGridOptions`, `setRuledOptions`,
 `drawBackground`.
-**Risks:** BUG-022, BUG-023. Not connected to `settings.backgroundStyle`.
+`drawBackground` with no pattern keeps the page colour (BUG-022 fixed). Not connected to `settings.backgroundStyle` (no UI
+sets a pattern today).
 
 ## 8. Command: `createCommandSlice.ts`
 
@@ -359,11 +361,11 @@ One undo step incl. the page size; then `showToast` with Undo, Q11).
 **Purpose:** grid painted behind objects (patches Fabric's internal `_renderBackground`) and smart snapping to
 grid/objects with guides while moving/scaling. Re-attaches itself via `store.subscribe` when `canvas` changes.
 **State:** `gridEnabled` (false), `gridSize` (20), `snapEnabled` (false), `snapToObjects` (true, applies once snap is on), `snapThreshold`.
-Grid and snap start off (2026-11-07, see DECISIONS); the whiteboard CSS dot grid in `CanvasBoard` also follows `gridEnabled`.
+Grid and snap start off (2026-11-07, see DECISIONS). This is the only grid renderer in both modes (the whiteboard CSS
+dot grid was removed, BUG-107).
 **Actions:** `setGridEnabled`, `toggleGrid`, `setGridSize`, `setSnapEnabled`, `toggleSnap`, `setSnapToObjects`,
 `toggleSnapToObjects`, `setSnapThreshold`, `drawGrid`.
-**Risks:** relies on a private Fabric method (`_renderBackground`), so it may break on a Fabric upgrade. Whiteboard
-mode also draws a CSS dot grid in `CanvasBoard`, which gives two grids. `settings.snapToGrid`/`settings.gridSize` are
+**Risks:** relies on a private Fabric method (`_renderBackground`), so it may break on a Fabric upgrade. `settings.snapToGrid`/`settings.gridSize` are
 separate, unconnected values.
 
 ## 24. Dialog: `createDialogSlice.ts` (+ `organisms/DialogHost.tsx`, `molecules/Modal.tsx`)

@@ -11,6 +11,7 @@ import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { DEFAULT_CANVAS_PRESET } from './CanvasSizePanel';
 import Ruler, { RULER_SIZE, createPointerSource, type RulerUnit } from './Ruler';
 import { isTextFloatTarget } from '@/lib/textTargets';
+import { designRenderRatio } from '@/lib/canvas/renderRatio';
 
 export type CanvasMode = 'design' | 'whiteboard';
 
@@ -51,12 +52,9 @@ const THEME = {
     artboardBorder: 'rgba(15, 23, 42, 0.08)', // hairline, keeps the edge visible on light workspaces
     artboardShadow: '0 1px 3px rgba(15, 23, 42, 0.10), 0 8px 24px rgba(15, 23, 42, 0.08)',
     whiteboard: 'var(--color-board)', // whiteboard paper (token: tinted by the color theme)
-    gridDot: 'rgba(71, 85, 105, 0.38)', // whiteboard dot grid (editor-only, never exported)
 };
 
 /** Whiteboard dot grid spacing in canvas px at zoom 1. */
-const GRID_STEP = 24;
-const GRID_MIN_STEP = 12; // below this on screen, the spacing doubles so dots never turn into noise
 
 function clamp(value: number, min: number, max: number) {
     return Math.min(max, Math.max(min, value));
@@ -125,7 +123,6 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     const userZoom = useStore((s: any) => (typeof s.zoom === 'number' ? s.zoom : 1));
     const rulerUnit = useStore((s: any) => s.settings?.unit ?? 'px') as RulerUnit;
     const setBoardMode = useStore((s: any) => s.setBoardMode);
-    const gridEnabled = useStore((s) => s.gridEnabled);
     const themeVersion = useThemeVersion();
 
     /* selection handles take the current brand color (on mount and on theme change) */
@@ -244,38 +241,8 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
         return () => ro.disconnect();
     }, [canvas, isWhiteboard]);
 
-    /* ------------------------------------------------------------------ */
-    /* WHITEBOARD: dot grid that follows pan / zoom                       */
-    /* A CSS overlay (pointer-events: none, multiply blend), so it is     */
-    /* never part of the canvas data and never exported.                  */
-    /* ------------------------------------------------------------------ */
-    const gridRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        if (!isWhiteboard || !canvas) return;
-        const grid = gridRef.current;
-        if (!grid) return;
-
-        const update = () => {
-            const vt: number[] = canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0];
-            const zoom = vt[0] || 1;
-
-            let step = GRID_STEP * zoom;
-            while (step < GRID_MIN_STEP) step *= 2;
-
-            const ox = (((vt[4] ?? 0) % step) + step) % step;
-            const oy = (((vt[5] ?? 0) % step) + step) % step;
-
-            grid.style.backgroundSize = `${step}px ${step}px`;
-            grid.style.backgroundPosition = `${ox}px ${oy}px`;
-        };
-
-        update();
-        canvas.on('after:render', update);
-        return () => {
-            canvas.off('after:render', update);
-        };
-    }, [canvas, isWhiteboard]);
+    // WHITEBOARD grid: drawn by the notebook slice only (follows zoom + snap spacing). The CSS dot
+    // overlay that was here doubled it with a different spacing (BUG-107).
 
     /** pointer inside the scroll viewport (CSS px). Not React state: only the ruler markers follow it. */
     const [pointer] = useState(createPointerSource);
@@ -348,6 +315,17 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     /* ------------------------------------------------------------------ */
     useEffect(() => {
         if (isWhiteboard || !canvas || !size || !displaySize) return;
+
+        // render at the density the page is shown at (BUG-108): Fabric reads this ratio everywhere
+        // (render, brush, hit-testing); export uses its own multiplier, so files are unaffected
+        const ratio = designRenderRatio({
+            dpr: window.devicePixelRatio || 1,
+            displayScale: displaySize.width / size.width,
+            width: size.width,
+            height: size.height,
+        });
+        (canvas as { getRetinaScaling: () => number }).getRetinaScaling = () =>
+            canvas.enableRetinaScaling ? ratio : 1;
 
         // 1) real document pixels (this is what gets exported / saved)
         canvas.setDimensions({ width: size.width, height: size.height }, { backstoreOnly: true });
@@ -556,17 +534,6 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
                     {/* dot grid: BEHIND the (transparent) canvas, so shapes cover it (it used to sit on
                         top with multiply blending and showed through every filled shape).
                         Follows the top-bar Grid toggle (off by default). */}
-                    <div
-                        hidden={!gridEnabled}
-                        ref={gridRef}
-                        aria-hidden
-                        data-testid="whiteboard-grid"
-                        className="pointer-events-none absolute inset-0"
-                        style={{
-                            backgroundImage: `radial-gradient(circle, ${THEME.gridDot} 1px, transparent 1.6px)`,
-                            backgroundSize: `${GRID_STEP}px ${GRID_STEP}px`,
-                        }}
-                    />
                     {/* absolute + inset-0: size never depends on the Fabric wrapper */}
                     <div ref={hostRef} className="absolute inset-0 overflow-hidden" />
                     {renderToolbar(0, 0, anchor?.hostW ?? 0)}

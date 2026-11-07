@@ -161,7 +161,12 @@ export const createBackgroundSlice = (set, get, _store) => ({
         const factory = BACKGROUND_PATTERNS[style];
 
         if (!factory) {
-            canvas.backgroundColor = null;
+            // no pattern: the page keeps its own colour (BUG-022: this used to null it on every
+            // fit / page-size reset, so the background vanished)
+            const pageBackground = get().pageBackground;
+            if (typeof pageBackground === 'string' && pageBackground) {
+                canvas.backgroundColor = pageBackground;
+            }
             canvas.requestRenderAll();
             return;
         }

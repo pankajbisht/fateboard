@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import * as fabric from 'fabric';
 import { useStore } from '@store';
 import { useBoardMode } from '@hooks/useBoardMode';
 import { Header } from '@/components/organisms/header/index.ts';
@@ -30,9 +29,6 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
     const activeTool = useStore((state) => state.activeTool);
     const setActiveTool = useStore((state) => state.setActiveTool);
     const addText = useStore((state) => state.addText);
-
-    const brushColor = useStore((state) => state.color);
-    const brushWidth = useStore((state) => state.width);
 
     // The store is the single source of truth for the canvas size
     // (before: a second useState here that nothing else could see).
@@ -78,19 +74,7 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
         setActiveTool(activeTool);
     }, [canvas, activeTool, setActiveTool]);
 
-    // Synchronize brush settings without overriding the store's tool handlers.
-    useEffect(() => {
-        if (!canvas) return;
-
-        if (!canvas.freeDrawingBrush) {
-            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-        }
-
-        if (brushColor) canvas.freeDrawingBrush.color = brushColor;
-        canvas.freeDrawingBrush.width = Math.max(1, Number(brushWidth) || 1);
-
-        canvas.requestRenderAll();
-    }, [canvas, brushColor, brushWidth]);
+    // The brush slice owns canvas.freeDrawingBrush and re-applies it on every setting change (BUG-021).
 
     const handleToolChange = useCallback(
         (tool: EditorTool) => {

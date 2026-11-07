@@ -70,3 +70,35 @@ test('each page keeps its size; the canvas is the page; clicks hit the shape und
     await page.waitForFunction(() => !!window.__fateboard?.ready());
     await expect.poll(async () => (await geometry(editor)).page).toEqual(first.page);
 });
+
+test.describe('retina, zoomed in (BUG-108)', () => {
+    test.use({ deviceScaleFactor: 2 });
+
+    test('renders sharper when zoomed in and clicks still hit the shape', async ({
+        editor,
+        page,
+    }) => {
+        await editor.addShape('Rectangle');
+        const zoomIn = page.getByRole('button', { name: /zoom in/i }).first();
+        for (let i = 0; i < 10; i++) await zoomIn.click(); // to the maximum zoom
+        const { backstore, page: pagePx } = await page.evaluate(() => {
+            const el = document.querySelector('canvas.lower-canvas') as HTMLCanvasElement;
+            const p = window.__fateboard!.state('selectedPreset') as { width: number };
+            return { backstore: el.width, page: p.width };
+        });
+        // the old fixed retina backstore was exactly 2 × the page (blurry when zoomed in); now it
+        // follows the on-screen scale
+        expect(backstore).toBeGreaterThan(pagePx * 2 * 1.5);
+
+        // zoomed in, the canvas is bigger than the view: click empty page inside the VISIBLE part
+        const canvasBox = (await editor.canvas.boundingBox())!;
+        const view = (await page.locator('[data-board-scroll]').boundingBox())!;
+        await page.mouse.click(
+            Math.max(canvasBox.x, view.x) + 12,
+            Math.max(canvasBox.y, view.y) + 12,
+        );
+        await expect.poll(async () => (await editor.selection()).length).toBe(0);
+        await clickCentreOf(editor, 0);
+        await expect.poll(async () => (await editor.selection()).length).toBe(1);
+    });
+});

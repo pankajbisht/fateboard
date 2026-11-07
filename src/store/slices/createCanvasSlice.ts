@@ -349,14 +349,10 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 }
 
                 case 'draw': {
-                    if (!canvas.freeDrawingBrush) {
-                        canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-                    }
-
                     canvas.isDrawingMode = true;
-                    canvas.freeDrawingBrush.color = get().color || '#000000';
-
-                    canvas.freeDrawingBrush.width = Math.max(1, Number(get().width) || 1);
+                    // the brush slice is the only writer of freeDrawingBrush (BUG-021): rebuild it
+                    // from the brush settings instead of overwriting colour / width here
+                    get().initBrush?.();
 
                     canvas.selection = false;
                     break;
