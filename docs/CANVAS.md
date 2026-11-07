@@ -125,15 +125,20 @@ completion callback). Five call sites still use the v5 callback form (BUG-014). 
 
 ## Zoom / pan
 
-| Mechanism | Where | Model |
-|---|---|---|
-| Wheel zoom | Canvas slice `panHandlers.wheel` | `zoomToPoint`, clamp 0.1–5, **only attached while Hand tool is active**; converts CSS→canvas px |
-| Hand pan | Canvas slice `panHandlers.move` | `relativePan(movementX/Y × cssScale)` |
-| Zoom in/out buttons | Page slice `setZoom` | freehand: `zoomToPoint` centre; paper: **resizes element** to page×scale×zoom and sets VPT; clamp 0.1–4 |
-| Fit / actual size | UI slice `zoomFit` (fit all objects), `actualSize` (VPT identity) | |
-| Fit to screen | Page slice `fitToScreen` → `applyPageSize` | resets element + VPT |
-| Template fit | Template slice `fitDesignToViewport` | element = host, VPT zoom+pan |
-| Design fit | `CanvasBoard` | CSS-only scaling, VPT should stay identity |
+One geometry owner per board (decision Q2, BUG-007 fixed 2026-11-07); `src/store/__tests__/geometryOwner.test.ts` and
+`e2e/geometry.spec.ts` guard it.
+
+| Board | Canvas size | Viewport | Zoom | Pan |
+|---|---|---|---|---|
+| **Design** (fixed page) | `CanvasBoard` only: backstore = page px (`selectedPreset`), CSS size = fit × zoom | always identity | Page `setZoom` changes `zoom` state only; CanvasBoard redraws (footer, toolbar, Hand-tool wheel, UI `actualSize`) | Hand tool scrolls the board (`[data-board-scroll]`) |
+| **Whiteboard** (infinite) | `CanvasBoard` only: canvas = host size | Page slice only: `setZoom(z, point)` (`zoomToPoint`), `zoomToRect(rect)`, `applyPageSize` (reset 1:1) | same actions; `zoom` always equals the viewport zoom (BUG-025) | Hand tool `relativePan` |
+
+The page size has **one source**, `selectedPreset` (Canvas slice). `setSelectedPreset` is a document change: one undo
+step (snapshots carry the page size under `fateboardPage`), autosaved, and stored per page (`Page.preset`, BUG-109).
+`applyPageSize` never writes the canvas in design; it resets `zoom` and mirrors `pageWidth` / `pageHeight`.
+Templates set the page size and put their content on the page: no artboard rect, clip path or own viewport (BUG-139).
+Only temporary writers remain: PNG / video export set an identity viewport and restore it afterwards.
+Wheel zoom stays a Hand-tool gesture (attached in `enablePan`).
 
 Coordinates: in design mode the CSS size is smaller than the backstore. Pointer maths must multiply CSS px by
 `canvas.getWidth() / upperCanvasEl.getBoundingClientRect().width` (`getCssToCanvasScale`). `calcOffset()` is

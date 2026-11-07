@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
-import type { FabricObject, Rect } from 'fabric';
+import { describe, expect, it, vi } from 'vitest';
+import type { FabricObject } from 'fabric';
 
-import { createTemplateSlice, isArtboardObject } from '@/store/slices/templateSlice';
+import { createTemplateSlice } from '@/store/slices/templateSlice';
 import type { DesignTemplate } from '@/components/organisms/effects/designTemplate.types';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { createHarness } from '@/test/sliceHarness';
@@ -29,10 +29,11 @@ const TEMPLATE = {
 
 async function applyTemplate() {
     const canvas = createFakeCanvas();
-    const h = createHarness([createTemplateSlice as any], { canvas });
+    const setSelectedPreset = vi.fn();
+    const h = createHarness([createTemplateSlice as any], { canvas, setSelectedPreset });
     h.set({ designTemplates: [TEMPLATE] });
     await h.get().applyDesignTemplate('test-template');
-    return { canvas: canvas as any, h };
+    return { canvas: canvas as any, h, setSelectedPreset };
 }
 
 const bounds = (o: FabricObject) => {
@@ -41,33 +42,30 @@ const bounds = (o: FabricObject) => {
     return { left: Math.round(b.left), top: Math.round(b.top) };
 };
 
-describe('templateSlice.applyDesignTemplate (BUG-008)', () => {
-    it('places the artboard at (0,0)-(W,H), not centred on the origin', async () => {
-        const { canvas } = await applyTemplate();
-        const artboard = canvas.getObjects().find(isArtboardObject) as Rect;
-
-        expect(artboard).toBeDefined();
-        expect(bounds(artboard)).toEqual({ left: 0, top: 0 });
-        expect(artboard.width).toBe(W);
-        expect(artboard.height).toBe(H);
+describe('templateSlice.applyDesignTemplate (BUG-008, BUG-007)', () => {
+    it('the page is the artboard: page size = template size, no artboard rect, no clip', async () => {
+        const { canvas, setSelectedPreset } = await applyTemplate();
+        expect(setSelectedPreset).toHaveBeenCalledWith(
+            expect.objectContaining({ width: W, height: H }),
+        );
+        expect(canvas.getObjects()).toHaveLength(4); // template content only
+        expect(canvas.clipPath).toBeUndefined();
+        expect(canvas.viewportTransform).toEqual([1, 0, 0, 1, 0, 0]);
     });
 
-    it('clips the canvas to (0,0)-(W,H)', async () => {
-        const { canvas } = await applyTemplate();
-        const clip = canvas.clipPath as Rect;
-
-        expect(clip.originX).toBe('left');
-        expect(clip.originY).toBe('top');
-        expect(clip.left).toBe(0);
-        expect(clip.top).toBe(0);
+    it('keeps the page background', async () => {
+        const canvas = createFakeCanvas();
+        canvas.backgroundColor = '#fafafa';
+        const h = createHarness([createTemplateSlice as any], { canvas });
+        h.set({ designTemplates: [TEMPLATE] });
+        await h.get().applyDesignTemplate('test-template');
+        expect(canvas.backgroundColor).toBe('#fafafa');
     });
 
-    it('puts every template object at its declared top-left position', async () => {
+    it('puts every template object at its declared top-left position on the page', async () => {
         const { canvas } = await applyTemplate();
-        const content = canvas.getObjects().filter((o: FabricObject) => !isArtboardObject(o));
-        const [bg, box, dot, title] = content; // added in template order
+        const [bg, box, dot, title] = canvas.getObjects() as FabricObject[]; // template order
 
-        expect(content).toHaveLength(4);
         expect(bounds(bg)).toEqual({ left: 0, top: 0 });
         expect(bounds(box)).toEqual({ left: 100, top: 50 });
         expect(bounds(dot)).toEqual({ left: 900, top: 400 });

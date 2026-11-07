@@ -81,7 +81,7 @@ animation, autosave deleted), `exportJSON`,
 selection off (`selection=false`, `skipTargetFind=true`) and calls NodeEditor `enterNodeMode` when something is selected; it never changes objects.
 
 **Risks:** BUG-003 (its `SERIALIZE_PROPS` lacks `id`, `name`, `animId`), BUG-006/034 (`saveState` on selection),
-BUG-016 (restore race), BUG-021 (draw tool overwrites brush), BUG-025 (wheel zoom only in pan tool), BUG-007
+BUG-016 (restore race), BUG-021 (draw tool overwrites brush)
 (`defaultSettings` → `setPageFormat` changes VPT).
 
 ## 2. Brush: `createBrushSlice.ts` (+ `store/brushConfig.ts`)
@@ -138,17 +138,19 @@ edit and its linked copies are one undo step.
 **Risks:** BUG-003 (layers clone list), BUG-024
 (locks undone by tool switch). `stageRect` ignores pan offset (align-to-canvas is wrong when panned).
 
-## 5 & 21. Page (single page geometry): `createPageSlice.ts`
+## 5. Page (page geometry state + the one zoom path): `createPageSlice.ts`
 
 **Purpose:** page format/orientation/custom size/background, fit scale and zoom of the **current** page.
 **State:** `pageFormat` (`'Freehand'` default; type `PageFormat` only allows `'Freehand'`), `orientation`,
 `customSize`, `pageBackground`, `zoom`, `scale`, `pageWidth`, `pageHeight`.
 **Actions:** `setPageFormat`, `setOrientation`, `setCustomPageSize`, `setPageBackground`, `setZoom(z, point?)`,
-`zoomIn`, `zoomOut`, `fitToScreen`, `applyPageSize`. Exports: `resolvePageSize`, `isFreehand`, `MIN/MAX_ZOOM`,
+`zoomIn`, `zoomOut`, `fitToScreen`, `zoomToRect(rect, padding?)` (whiteboard), `applyPageSize` (design: state only, zoom 1
++ `pageWidth/Height` from `selectedPreset`; whiteboard: viewport back to 1:1). Exports: `resolvePageSize`, `isFreehand`, `MIN/MAX_ZOOM`,
 `MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`.
-**Depends on:** Canvas (`canvas`, `cw`, `ch`), Background (`drawBackground`).
-**Risks:** spread twice (BUG-002); competes with CanvasBoard for canvas size/VPT (BUG-007); `drawBackground` erases
-the page colour (BUG-022); `PAGE_SIZES` keys (`A4`, `LETTER`…) differ from settings formats.
+**Depends on:** Canvas (`canvas`, `cw`, `ch`, `selectedPreset`), Setting (`settings.freehand` before the board reports
+`boardMode`), Background (`drawBackground`, whiteboard only).
+**Risks:** `drawBackground` erases the page colour on the whiteboard (BUG-022); `pageFormat` / `orientation` /
+`customSize` are legacy mirrors (the page size is `selectedPreset`); `PAGE_SIZES` keys differ from settings formats.
 
 ## 6. Pages (multi-page document): `createPagesSlice.ts`
 
@@ -344,14 +346,17 @@ the Filter tab (`Filters.tsx` → `useImageFilters`) keeps its own state; only t
 
 ## 22. Template: `templateSlice.ts` (+ `organisms/effects/designTemplateData.ts`, `sizePresets.ts`)
 
-**Purpose:** design template gallery, favourites, "save canvas as template", applying a template onto an artboard.
+**Purpose:** design template gallery, favourites, "save canvas as template", applying a template to the page.
 **State:** `designTemplates`, `designTemplateSearch`, `designTemplateCategory`, `designTemplateSizeId`,
-`favoriteDesignTemplateIds`, `designArtboard`, `designViewZoom`.
+`favoriteDesignTemplateIds`. (`designArtboard`, `designViewZoom`, `fitDesignToViewport` and `isArtboardObject` removed:
+the page is the artboard, BUG-007 / BUG-139.)
 **Actions:** `saveCanvasAsTemplate`, setters for search/category/size, `toggleFavoriteDesignTemplate`,
-`getDesignTemplateById`, `getFilteredDesignTemplates`, `fitDesignToViewport`, `applyDesignTemplate` (one undo step:
-flush pending history, pause while replacing, commit once; then `showToast` with Undo, Q11).
-**Depends on:** Canvas (`canvas`), UndoRedo (`saveState`, `pause/resumeHistory`, `undo`), Dialog (`showToast`).
-**Risks:** BUG-007, BUG-008, BUG-139 (artboard identity lost after undo / reload). Persistence of favourites/saved templates: **UNKNOWN - verify**.
+`getDesignTemplateById`, `getFilteredDesignTemplates`, `applyDesignTemplate` (design: page size = template size via
+`setSelectedPreset`, content placed on the page, page background kept; whiteboard: content framed with `zoomToRect`.
+One undo step incl. the page size; then `showToast` with Undo, Q11).
+**Depends on:** Canvas (`canvas`, `setSelectedPreset`), Page (`boardMode`, `zoomToRect`), UndoRedo (`saveState`,
+`pause/resumeHistory`, `undo`), Dialog (`showToast`).
+**Risks:** BUG-008 (origins of template data). Persistence of favourites/saved templates: **UNKNOWN - verify**.
 
 ## 23. Notebook (grid + snapping): `createNotebookSlice.ts`
 

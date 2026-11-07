@@ -25,7 +25,7 @@ export interface UndoRedoSlice {
 }
 
 type HistoryCanvas = Parameters<typeof serializeCanvas>[0] & {
-    loadFromJSON: (json: string) => Promise<unknown>;
+    loadFromJSON: (json: string | Record<string, unknown>) => Promise<unknown>;
     discardActiveObject: () => void;
     requestRenderAll: () => void;
     getActiveObject?: () => { isEditing?: boolean; exitEditing?: () => void } | undefined;
@@ -43,7 +43,13 @@ type Peers = {
     persist?: () => void;
     /** Layers: linked clones follow the object that changed (lib/linkedClones). */
     syncLinkedClones?: (sources?: unknown[]) => void;
+    /** Canvas: THE page size (BUG-007); part of every snapshot so undo restores it too. */
+    selectedPreset?: { id: string; width: number; height: number } | null;
+    setSelectedPreset?: (preset: never) => void;
 };
+
+/** Snapshot key for the page size; removed again before Fabric loads the JSON. */
+const PAGE_KEY = 'fateboardPage';
 
 type PageState = {
     currentPageId?: string | null;
@@ -71,6 +77,13 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
     const pageStacks = new Map<string, { undo: string[]; redo: string[] }>();
     const peers = () => get() as unknown as UndoRedoSlice & Peers;
 
+    /** Canvas content + page size, as one string (equal strings = nothing changed). */
+    const snapshot = (canvas: HistoryCanvas): string => {
+        const json = serializeCanvas(canvas, SERIALIZE_PROPS);
+        const page = peers().selectedPreset;
+        return JSON.stringify(page ? { ...json, [PAGE_KEY]: page } : json);
+    };
+
     const cancelTimer = () => {
         if (timer) clearTimeout(timer);
         timer = null;
@@ -84,7 +97,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
         if (!canvas || _isRestoring || _historyPaused > 0) return;
         if (isPageSwitching && !force) return; // loading a page is not an edit
 
-        const state = JSON.stringify(serializeCanvas(canvas, SERIALIZE_PROPS));
+        const state = snapshot(canvas);
         if (undoStack[undoStack.length - 1] === state) return; // nothing actually changed
 
         const next = [...undoStack, state].slice(-(MAX_HISTORY + 1)); // enforce limit
@@ -119,7 +132,18 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
         const { canvas } = peers();
         set({ _isRestoring: true });
         try {
-            await canvas.loadFromJSON(state);
+            const { [PAGE_KEY]: page, ...json } = JSON.parse(state) as Record<string, unknown>;
+            await canvas.loadFromJSON(json);
+            const current = peers().selectedPreset;
+            const saved = page as Peers['selectedPreset'];
+            if (
+                saved &&
+                (saved.id !== current?.id ||
+                    saved.width !== current?.width ||
+                    saved.height !== current?.height)
+            ) {
+                peers().setSelectedPreset?.(saved as never); // no history while restoring
+            }
             canvas.discardActiveObject();
             canvas.requestRenderAll();
             peers().clearToolbar?.();
@@ -215,7 +239,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
             const { undoStack, canvas } = peers();
             if (!undoStack.length) commit();
             else if (canvas) {
-                const loaded = JSON.stringify(serializeCanvas(canvas, SERIALIZE_PROPS));
+                const loaded = snapshot(canvas);
                 set({ undoStack: [...undoStack.slice(0, -1), loaded] });
             }
         }

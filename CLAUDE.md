@@ -73,7 +73,7 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 - Never call `canvas.clear()` / `loadFromJSON` outside the canvas/pages slices (bypasses persist lock + history).
 - Never add a second zustand store, a second Fabric canvas for the editor, or another serialize-props list.
 - Never add helper objects (handles, guides) to the canvas without `excludeFromExport` + layer/snap exclusion flags.
-- Never write a new geometry/zoom path. Canvas sizing has 3 competing writers already (BUG-007).
+- Never write a new geometry/zoom path: `CanvasBoard` sizes the canvas, the Page slice (`setZoom`, `zoomToRect`) zooms, `selectedPreset` is the page size (BUG-007, docs/CANVAS.md).
 - Never use `alert()`, leave `console.log`, or add `any` to store code.
 - Never edit `node_modules`, `dist/` or `.env`. Never re-add a static import from a slice to a module that imports the store (BUG-048).
 - Never commit with failing lint, type-check, or tests; never skip hooks (`--no-verify`).

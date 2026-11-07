@@ -32,7 +32,7 @@ Goal: make every later change safe to ship.
 
 | # | Work | Fixes | Blocked by | Needs |
 |---|---|---|---|---|
-| 2.1 | Single viewport/geometry owner; page/template/zoom call it | BUG-007, BUG-022, BUG-025 | M1 | Q2, Q3 |
+| 2.1 | Single viewport/geometry owner; page/template/zoom call it (**done** 2026-11-07; BUG-022 left) | BUG-007, BUG-022, BUG-025 | M1 | Q2, Q3 |
 | 2.2 | Mode model (design/whiteboard) wired end-to-end | BUG-015 | 2.1 | Q3 |
 
 ## Features (after M0-M2)

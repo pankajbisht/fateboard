@@ -63,10 +63,9 @@ Code layers (top depends on bottom):
 - **Readers:** almost every organism reads `canvas` from the store and calls Fabric directly. There is no facade.
 - **Other Fabric canvases:** `SharePage` (own instance), `MiniWhiteboard` (marketing), `advanceOperationSlice`
   (`StaticCanvas` for pattern tiles). `advanceOperationSlice.setCanvas` can overwrite the store's `canvas` (unused).
-- **Geometry (size/zoom/VPT) has three writers.** This is a known defect, BUG-007:
-  `CanvasBoard` (backstore = preset, CSS = fit), `createPageSlice.applyPageSize/setZoom` (element = page×scale,
-  VPT = scale), `templateSlice.fitDesignToViewport` (element = host, VPT = zoom+pan). Plus pan/wheel in Canvas slice and
-  `zoomFit/actualSize` in UI slice.
+- **Geometry has one owner per board** (Q2, BUG-007 fixed): `CanvasBoard` sizes the canvas (design: backstore = page
+  px from `selectedPreset`, CSS = fit × zoom, identity viewport; whiteboard: host size). Zoom / pan go through the Page
+  slice (`setZoom`, `zoomToRect`, `applyPageSize`); in design they change only `zoom`. See CANVAS.md "Zoom / pan".
 
 ## How slices compose
 

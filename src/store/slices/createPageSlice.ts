@@ -16,9 +16,6 @@ export const ZOOM_STEP = 1.25;
 export const MIN_PAGE_PX = 50;
 export const MAX_PAGE_PX = 10000;
 
-const PAGE_PADDING = 48; // breathing room around the page inside the workspace
-const FALLBACK_FIT_WIDTH = 800; // used until the workspace size (cw/ch) is known
-const MAX_FIT_SCALE = 2; // never blow tiny pages up more than 2x on "fit"
 export const DEFAULT_PAGE_BACKGROUND = '#ffffff';
 
 const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
@@ -54,13 +51,6 @@ export const resolvePageSize = (
     return orientation === 'portrait' ? { w: short, h: long } : { w: long, h: short };
 };
 
-const computeFitScale = (width: number, height: number, cw?: number, ch?: number) => {
-    if (!cw || !ch) return FALLBACK_FIT_WIDTH / width;
-    const availW = Math.max(cw - PAGE_PADDING * 2, 100);
-    const availH = Math.max(ch - PAGE_PADDING * 2, 100);
-    return Math.min(availW / width, availH / height, MAX_FIT_SCALE);
-};
-
 export interface PageSlice {
     pageFormat: PageFormat;
     orientation: Orientation;
@@ -89,8 +79,27 @@ export interface PageSlice {
     zoomIn: () => void;
     zoomOut: () => void;
     fitToScreen: () => void;
+    /** Whiteboard: zoom / pan so `rect` (scene px) fills the view. Design: no-op (CanvasBoard fits the page). */
+    zoomToRect: (
+        rect: { left: number; top: number; width: number; height: number },
+        padding?: number,
+    ) => void;
     applyPageSize: (format?: PageFormat, orientation?: Orientation) => void;
 }
+
+type GeometryPeers = {
+    settings?: { freehand?: boolean };
+    selectedPreset?: { width: number; height: number } | null;
+    cw?: number;
+    ch?: number;
+};
+
+/**
+ * Design board = CanvasBoard owns the canvas size + viewport (decision Q2, BUG-007). Before the
+ * board reports its mode (init), Settings > Freehand decides (Q3: off = design).
+ */
+const isDesignBoard = (s: { boardMode?: 'design' | 'whiteboard' | null } & GeometryPeers) =>
+    s.boardMode ? s.boardMode === 'design' : !s.settings?.freehand;
 
 export const createPageSlice: SliceCreator<PageSlice> = (set, get) => ({
     pageFormat: 'Freehand',
@@ -146,87 +155,90 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get) => ({
     // got clipped instead of growing, and `zoom` state desynced from `scale` after
     // every applyPageSize. Now: paper mode resizes the element to pageSize * scale * zoom,
     // freehand zooms around a point (default: viewport centre).
+    // ONE zoom path (BUG-007 / BUG-025). Design: CanvasBoard draws the page at fitScale × zoom and
+    // scrolls, so only the state changes. Whiteboard: the viewport zooms around `point` (canvas px,
+    // default: view centre) and `zoom` always equals the viewport zoom.
     setZoom: (next, point) => {
         const canvas = get().canvas;
         if (!canvas) return;
         const zoom = clamp(next, MIN_ZOOM, MAX_ZOOM);
 
-        // design board: CanvasBoard draws the page at fitScale × zoom and scrolls; don't touch
-        // the canvas here (writing the viewport / element size fought CanvasBoard, BUG-007)
-        if (get().boardMode === 'design') {
+        if (isDesignBoard(get() as never)) {
             set({ zoom }, false, 'page/setZoom');
             return;
         }
 
-        if (isFreehand(get().pageFormat)) {
-            const p = point
-                ? new fabric.Point(point.x, point.y)
-                : new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
-            canvas.zoomToPoint(p, zoom);
-            set({ zoom }, false, 'page/setZoom');
-        } else {
-            const { pageWidth, pageHeight, scale } = get();
-            if (!pageWidth || !pageHeight) return;
-            const eff = scale * zoom;
-            canvas.setDimensions({ width: pageWidth * eff, height: pageHeight * eff });
-            canvas.setViewportTransform([eff, 0, 0, eff, 0, 0]);
-            canvas.calcOffset();
-            set({ zoom }, false, 'page/setZoom');
-        }
-
-        get().drawBackground?.();
+        const p = point
+            ? new fabric.Point(point.x, point.y)
+            : new fabric.Point(canvas.getWidth() / 2, canvas.getHeight() / 2);
+        canvas.zoomToPoint(p, zoom);
+        set({ zoom }, false, 'page/setZoom');
         canvas.requestRenderAll();
     },
 
     zoomIn: () => get().setZoom(get().zoom * ZOOM_STEP),
     zoomOut: () => get().setZoom(get().zoom / ZOOM_STEP),
+    zoomToRect: (rect, padding = 40) => {
+        const canvas = get().canvas;
+        if (!canvas || isDesignBoard(get() as never)) return;
+        if (!(rect.width > 0 && rect.height > 0)) return;
+        const viewW = canvas.getWidth();
+        const viewH = canvas.getHeight();
+        const zoom = clamp(
+            Math.min(
+                Math.max(viewW - padding * 2, 1) / rect.width,
+                Math.max(viewH - padding * 2, 1) / rect.height,
+            ),
+            MIN_ZOOM,
+            MAX_ZOOM,
+        );
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        canvas.setViewportTransform([
+            zoom,
+            0,
+            0,
+            zoom,
+            viewW / 2 - cx * zoom,
+            viewH / 2 - cy * zoom,
+        ]);
+        set({ zoom }, false, 'page/zoomToRect');
+        canvas.requestRenderAll();
+    },
+
     fitToScreen: () => {
-        if (get().boardMode === 'design') {
+        if (isDesignBoard(get() as never)) {
             set({ zoom: 1 }, false, 'page/fit');
             return;
         }
         get().applyPageSize();
     },
 
-    // Recomputes canvas dimensions + fit scale. Also resets zoom to 1 ("fit").
-    // Call it again (via fitToScreen) when the workspace container is resized.
-    applyPageSize: (format = get().pageFormat, orientation = get().orientation) => {
+    // Design: CanvasBoard owns the canvas size and viewport (Q2, BUG-007); this only resets the
+    // zoom and mirrors the page size (one source: `selectedPreset`). Whiteboard: back to 1:1.
+    applyPageSize: () => {
         const canvas = get().canvas;
         if (!canvas) return;
+        const peers = get() as unknown as GeometryPeers;
 
-        if (isFreehand(format)) {
-            const width = get().cw || canvas.getWidth();
-            const height = get().ch || canvas.getHeight();
-
-            canvas.setDimensions({ width, height });
-            canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-            canvas.calcOffset();
+        if (isDesignBoard(get() as never)) {
+            const preset = peers.selectedPreset;
             set(
-                { scale: 1, zoom: 1, pageWidth: width, pageHeight: height },
+                {
+                    zoom: 1,
+                    ...(preset ? { pageWidth: preset.width, pageHeight: preset.height } : {}),
+                },
                 false,
                 'page/applySize',
             );
-            get().drawBackground?.();
-            canvas.requestRenderAll();
             return;
         }
 
-        // FIX: unknown formats used to throw on `PAGE_SIZES[format]` destructuring.
-        const size = resolvePageSize(format, orientation, get().customSize);
-        if (!size) {
-            console.warn(`[page] Unknown page format "${format}"`);
-            return;
-        }
-
-        // FIX: scale used to be a hard-coded 800px wide. Now it fits the whole page
-        // (width AND height) into the workspace.
-        const scale = computeFitScale(size.w, size.h, get().cw, get().ch);
-
-        canvas.setDimensions({ width: size.w * scale, height: size.h * scale });
-        canvas.setViewportTransform([scale, 0, 0, scale, 0, 0]);
+        const width = peers.cw || canvas.getWidth();
+        const height = peers.ch || canvas.getHeight();
+        canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
         canvas.calcOffset();
-
-        set({ scale, zoom: 1, pageWidth: size.w, pageHeight: size.h }, false, 'page/applySize');
+        set({ scale: 1, zoom: 1, pageWidth: width, pageHeight: height }, false, 'page/applySize');
         get().drawBackground?.();
         canvas.requestRenderAll();
     },

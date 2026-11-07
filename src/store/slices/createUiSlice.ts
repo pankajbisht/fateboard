@@ -29,80 +29,50 @@ export const createUISlice: SliceCreator<UiSlice> = (set, get, store) => ({
         }
     },
 
+    // Whiteboard fit / 100% go through the page slice's one zoom path (BUG-025); the design
+    // board fits / zooms through the same actions (state only, CanvasBoard draws).
     zoomFit: () => {
         const canvas = get().canvas;
         if (!canvas) return;
-        // design board: "fit" = whole page on screen (CanvasBoard owns geometry, ADR Q2)
-        if ((get() as { boardMode?: string }).boardMode === 'design') {
-            (get() as { fitToScreen?: () => void }).fitToScreen?.();
+        const st = get() as unknown as {
+            boardMode?: string;
+            fitToScreen?: () => void;
+            zoomToRect?: (r: { left: number; top: number; width: number; height: number }) => void;
+        };
+        if (st.boardMode === 'design') {
+            st.fitToScreen?.();
             return;
         }
 
-        const objs = canvas.getObjects().filter((o) => o.visible);
+        const objs = canvas.getObjects().filter((o) => o.visible && !o.excludeFromExport);
         if (objs.length === 0) {
-            // reset to 1:1 centered
-            const vpt = canvas.viewportTransform;
-            const scale = 1;
-            vpt[0] = scale;
-            vpt[3] = scale;
-            vpt[4] = 0;
-            vpt[5] = 0;
-            canvas.setViewportTransform(vpt);
-            canvas.requestRenderAll();
+            st.fitToScreen?.(); // empty board: back to 1:1
             return;
         }
 
-        // compute union bounds in absolute coords (transforms applied)
-        let minX = Infinity,
-            minY = Infinity,
-            maxX = -Infinity,
-            maxY = -Infinity;
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
         objs.forEach((o) => {
-            const r = (o as any).getBoundingRect(true, true);
+            const r = o.getBoundingRect();
             minX = Math.min(minX, r.left);
             minY = Math.min(minY, r.top);
             maxX = Math.max(maxX, r.left + r.width);
             maxY = Math.max(maxY, r.top + r.height);
         });
-
-        const bounds = {
-            left: minX,
-            top: minY,
-            width: maxX - minX,
-            height: maxY - minY,
-        };
-        const padding = 20;
-        const fitW = canvas.width - padding * 2;
-        const fitH = canvas.height - padding * 2;
-
-        let scale = Math.min(fitW / bounds.width, fitH / bounds.height);
-        scale = Math.min(Math.max(scale, 0.1), 5);
-
-        // center the bounds in viewport
-        const cx = bounds.left + bounds.width / 2;
-        const cy = bounds.top + bounds.height / 2;
-        const vpt = canvas.viewportTransform;
-        vpt[0] = scale; // scaleX
-        vpt[3] = scale; // scaleY
-        vpt[4] = canvas.width / 2 - cx * scale; // translateX
-        vpt[5] = canvas.height / 2 - cy * scale; // translateY
-        canvas.setViewportTransform(vpt);
-        canvas.requestRenderAll();
+        st.zoomToRect?.({ left: minX, top: minY, width: maxX - minX, height: maxY - minY });
     },
 
     actualSize: () => {
         const canvas = get().canvas;
         if (!canvas) return;
-        // design board: 100% on screen = zoom 1 / fit scale (CanvasBoard draws fit × zoom)
-        const st = get() as { boardMode?: string; scale?: number; setZoom?: (z: number) => void };
-        if (st.boardMode === 'design') {
-            st.setZoom?.(1 / (st.scale || 1));
-            return;
-        }
-
-        canvas.setZoom(1);
-
-        canvas.viewportTransform = [1, 0, 0, 1, 0, 0];
-        canvas.requestRenderAll();
+        const st = get() as unknown as {
+            boardMode?: string;
+            scale?: number;
+            setZoom?: (z: number) => void;
+        };
+        // design: 100% on screen = zoom 1 / fit scale (CanvasBoard draws fit × zoom); whiteboard: 1
+        st.setZoom?.(st.boardMode === 'design' ? 1 / (st.scale || 1) : 1);
     },
 });

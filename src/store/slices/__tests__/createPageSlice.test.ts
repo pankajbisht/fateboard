@@ -50,24 +50,27 @@ describe('createPageSlice', () => {
         return { canvas, h };
     };
 
-    it('paper mode fits the page into the workspace and sets the viewport scale', () => {
+    // BUG-007 / Q2: on the design board CanvasBoard owns the canvas size + viewport; the page
+    // slice only resets zoom and mirrors the page size from `selectedPreset` (the one source).
+    it('design board: setPageFormat never writes canvas size or viewport', () => {
         const { canvas, h } = setup(1000, 800);
+        h.set({ boardMode: 'design', selectedPreset: { width: 794, height: 1123 }, zoom: 2 });
+        const before = canvas.getWidth();
         h.get().setPageFormat(fmt('A4'), 'portrait');
-        const { scale, pageWidth, pageHeight, zoom } = h.get();
-        expect(pageWidth).toBe(794);
-        expect(pageHeight).toBe(1123);
-        expect(zoom).toBe(1);
-        // fits height: (800 - 2*48) / 1123
-        expect(scale).toBeCloseTo((800 - 96) / 1123, 5);
-        expect(canvas.viewportTransform[0]).toBeCloseTo(scale, 5);
-        expect(canvas.getWidth()).toBeCloseTo(794 * scale, 3);
+        expect(canvas.getWidth()).toBe(before);
+        expect(canvas.viewportTransform).toEqual([1, 0, 0, 1, 0, 0]);
+        expect(h.get().zoom).toBe(1);
+        expect(h.get().pageWidth).toBe(794);
+        expect(h.get().pageHeight).toBe(1123);
     });
 
-    it('freehand uses the container size and identity viewport', () => {
+    it('whiteboard: applyPageSize resets the view to 1:1 at the container size', () => {
         const { canvas, h } = setup(640, 480);
+        h.set({ boardMode: 'whiteboard' });
+        canvas.setViewportTransform([2, 0, 0, 2, 30, 40]);
         h.get().setPageFormat(fmt('Freehand'));
-        expect(canvas.getWidth()).toBe(640);
         expect(canvas.viewportTransform).toEqual([1, 0, 0, 1, 0, 0]);
+        expect(h.get().pageWidth).toBe(640);
         expect(h.get().scale).toBe(1);
     });
 

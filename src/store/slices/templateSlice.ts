@@ -1,5 +1,7 @@
-import type { Canvas, FabricObject, IText } from 'fabric';
+import type { FabricObject, IText } from 'fabric';
 import { Circle, FabricImage, Line, Point, Rect, Textbox } from 'fabric';
+import type { CanvasPreset } from '@/components/organisms/board/board.type';
+import { CANVAS_PRESETS } from '@/components/organisms/board/board.config';
 
 import { SIZE_PRESETS } from '@/components/organisms/effects/sizePresets';
 import { DESIGN_TEMPLATES } from '@/components/organisms/effects/designTemplateData';
@@ -15,26 +17,6 @@ import type { SliceCreator } from '@/store/types';
 // ============================================================
 // CONFIG
 // ============================================================
-
-/**
- * Space kept between the artboard and the edge of the viewport.
- */
-const VIEW_PADDING = 40;
-
-/**
- * Maximum zoom allowed when fitting the artboard.
- */
-const MAX_FIT_ZOOM = 1;
-
-/**
- * Minimum zoom allowed when fitting the artboard.
- */
-const MIN_FIT_ZOOM = 0.05;
-
-/**
- * Background color of the design/artboard.
- */
-const ARTBOARD_COLOR = '#ffffff';
 
 /**
  * When true, the complete template content is translated so that
@@ -57,11 +39,6 @@ const TOP_LEFT = { originX: 'left', originY: 'top' } as const;
 // TYPES / STATE
 // ============================================================
 
-export interface DesignArtboard {
-    width: number;
-    height: number;
-}
-
 export interface TemplateSlice {
     designTemplates: DesignTemplate[];
 
@@ -74,16 +51,6 @@ export interface TemplateSlice {
     designTemplateSizeId: string | 'All';
 
     favoriteDesignTemplateIds: string[];
-
-    /**
-     * Size of the design area in design pixels.
-     */
-    designArtboard: DesignArtboard | null;
-
-    /**
-     * Current viewport zoom.
-     */
-    designViewZoom: number;
 
     setDesignTemplateSearch: (value: string) => void;
 
@@ -98,22 +65,11 @@ export interface TemplateSlice {
     getFilteredDesignTemplates: () => DesignTemplate[];
 
     applyDesignTemplate: (templateId: string) => Promise<void>;
-
-    /**
-     * Resize the Fabric canvas to its host and fit the artboard.
-     */
-    fitDesignToViewport: () => void;
 }
 
 // ============================================================
 // MODULE STATE
 // ============================================================
-
-/**
- * Objects that belong to the editor UI/artboard rather than
- * the actual design content.
- */
-const ARTBOARD_OBJECTS = new WeakSet<FabricObject>();
 
 /**
  * Prevents older async template loads from overwriting
@@ -124,42 +80,6 @@ let applyRequestId = 0;
 // ============================================================
 // HELPERS
 // ============================================================
-
-function getCanvasHost(canvas: Canvas): HTMLElement | null {
-    return canvas.wrapperEl?.parentElement ?? null;
-}
-
-/**
- * Pins Fabric's wrapper to the host so that the Fabric canvas
- * does not participate in normal layout sizing.
- *
- * This prevents:
- *
- * - host expanding because of canvas
- * - unwanted vertical overflow
- * - artboard appearing too high/low
- * - centering problems caused by flex/grid layout
- */
-function pinCanvasToHost(canvas: Canvas, host: HTMLElement): void {
-    const hostPosition = getComputedStyle(host).position;
-
-    if (hostPosition === 'static') {
-        host.style.position = 'relative';
-    }
-
-    host.style.overflow = 'hidden';
-
-    const wrapper = canvas.wrapperEl;
-
-    wrapper.style.position = 'absolute';
-    wrapper.style.top = '0px';
-    wrapper.style.left = '0px';
-    wrapper.style.right = 'auto';
-    wrapper.style.bottom = 'auto';
-    wrapper.style.margin = '0';
-    wrapper.style.width = '100%';
-    wrapper.style.height = '100%';
-}
 
 /**
  * Keeps template objects interactive according to their
@@ -174,11 +94,20 @@ function interactivity(object: { selectable?: boolean; evented?: boolean; locked
 }
 
 /**
- * Returns true when the Fabric object belongs to the
- * editor artboard rather than the user's template.
+ * The page preset for a template size: the matching Canvas Size preset when there is one, else a
+ * custom size shaped like the ones the Canvas Size panel makes.
  */
-export function isArtboardObject(object: FabricObject): boolean {
-    return ARTBOARD_OBJECTS.has(object);
+function templatePagePreset(size: { width: number; height: number }): CanvasPreset {
+    const known = CANVAS_PRESETS.find((p) => p.width === size.width && p.height === size.height);
+    if (known) return known;
+    return {
+        id: `custom-${size.width}x${size.height}`,
+        label: 'Custom Size',
+        category: 'Custom',
+        width: size.width,
+        height: size.height,
+        icon: 'ruler-combined',
+    } as CanvasPreset;
 }
 
 // ============================================================
@@ -199,10 +128,6 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
     designTemplateSizeId: 'All',
 
     favoriteDesignTemplateIds: [],
-
-    designArtboard: null,
-
-    designViewZoom: 1,
 
     saveCanvasAsTemplate: (template) => {
         const canvas = get().canvas;
@@ -445,101 +370,6 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
     },
 
     // ========================================================
-    // FIT ARTBOARD TO VIEWPORT
-    // ========================================================
-
-    fitDesignToViewport: () => {
-        const { canvas, designArtboard } = get();
-
-        if (!canvas || !designArtboard) {
-            return;
-        }
-
-        const host = getCanvasHost(canvas);
-
-        if (!host) {
-            return;
-        }
-
-        /**
-         * Important:
-         * Pin the Fabric wrapper before measuring the host.
-         */
-        pinCanvasToHost(canvas, host);
-
-        const viewWidth = Math.floor(host.clientWidth);
-
-        const viewHeight = Math.floor(host.clientHeight);
-
-        /**
-         * Host may not have dimensions yet.
-         *
-         * This commonly happens when:
-         * - tab is hidden
-         * - modal is opening
-         * - sidebar is being animated
-         * - component is mounting
-         */
-        if (viewWidth <= 0 || viewHeight <= 0) {
-            return;
-        }
-
-        /**
-         * Make Fabric's viewport canvas exactly
-         * the same size as its host.
-         */
-        if (canvas.getWidth() !== viewWidth || canvas.getHeight() !== viewHeight) {
-            canvas.setDimensions({
-                width: viewWidth,
-                height: viewHeight,
-            });
-        }
-
-        // ----------------------------------------------------
-        // AVAILABLE VIEWPORT SPACE
-        // ----------------------------------------------------
-
-        const availableWidth = Math.max(viewWidth - VIEW_PADDING * 2, 1);
-
-        const availableHeight = Math.max(viewHeight - VIEW_PADDING * 2, 1);
-
-        // ----------------------------------------------------
-        // CALCULATE FIT ZOOM
-        // ----------------------------------------------------
-
-        const widthZoom = availableWidth / designArtboard.width;
-
-        const heightZoom = availableHeight / designArtboard.height;
-
-        const zoom = Math.min(
-            MAX_FIT_ZOOM,
-            Math.max(MIN_FIT_ZOOM, Math.min(widthZoom, heightZoom)),
-        );
-
-        // ----------------------------------------------------
-        // CENTER ARTBOARD IN VIEWPORT
-        // ----------------------------------------------------
-
-        const scaledWidth = designArtboard.width * zoom;
-
-        const scaledHeight = designArtboard.height * zoom;
-
-        const panX = (viewWidth - scaledWidth) / 2;
-
-        const panY = (viewHeight - scaledHeight) / 2;
-
-        canvas.setViewportTransform([zoom, 0, 0, zoom, panX, panY]);
-
-        canvas.requestRenderAll();
-
-        if (get().designViewZoom !== zoom) {
-            set({
-                designViewZoom: zoom,
-            });
-        }
-    },
-
-    // ========================================================
     // APPLY TEMPLATE
     // ========================================================
 
@@ -612,109 +442,49 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
 
             canvas.discardActiveObject();
 
+            // The page IS the artboard (decision Q2, BUG-007): no artboard rect, no clip path and
+            // no own viewport. In design the page takes the template's size; CanvasBoard sizes the
+            // canvas. On the whiteboard the content is framed through the one zoom path.
+            const peers = get() as unknown as Partial<{
+                saveState: (immediate?: boolean) => void;
+                pauseHistory: () => void;
+                resumeHistory: () => void;
+                setSelectedPreset: (preset: CanvasPreset) => void;
+                zoomToRect: (rect: {
+                    left: number;
+                    top: number;
+                    width: number;
+                    height: number;
+                }) => void;
+                boardMode: 'design' | 'whiteboard' | null;
+            }>;
+            const design = peers.boardMode !== 'whiteboard';
+
             function replaceWithTemplate() {
                 if (!canvas) return;
-
+                // clear() also wipes the page colour; the page keeps its background
+                const background = canvas.backgroundColor;
                 canvas.clear();
-
-                /**
-                 * Reset previous clip path.
-                 */
                 canvas.clipPath = undefined;
-
-                // ==================================================
-                // CREATE ARTBOARD
-                // ==================================================
-
-                const artboard = new Rect({
-                    ...TOP_LEFT,
-
-                    left: 0,
-                    top: 0,
-
-                    width: preset.width,
-
-                    height: preset.height,
-
-                    fill: ARTBOARD_COLOR,
-
-                    selectable: false,
-
-                    evented: false,
-
-                    hoverCursor: 'default',
-
-                    objectCaching: false,
-                });
-
-                ARTBOARD_OBJECTS.add(artboard);
-
-                canvas.add(artboard);
-
-                // ==================================================
-                // ADD TEMPLATE OBJECTS
-                // ==================================================
-
-                objects.forEach((object) => {
-                    canvas.add(object);
-                });
-
-                // ==================================================
-                // ARTBOARD CLIP
-                // ==================================================
-
-                canvas.clipPath = new Rect({
-                    ...TOP_LEFT,
-
-                    left: 0,
-                    top: 0,
-
-                    width: preset.width,
-
-                    height: preset.height,
-
-                    absolutePositioned: true,
-
-                    selectable: false,
-
-                    evented: false,
-
-                    objectCaching: false,
-                });
+                canvas.backgroundColor = background;
+                objects.forEach((object) => canvas.add(object));
+                if (design) peers.setSelectedPreset?.(templatePagePreset(preset!));
             }
 
-            // ONE undo step (BUG-009, Q11): record any pending edit as its own step, then
-            // record nothing while the page is replaced, then commit the result once.
-            const history = get() as unknown as Partial<
-                Record<'saveState', (immediate?: boolean) => void> &
-                    Record<'pauseHistory' | 'resumeHistory', () => void>
-            >;
-            history.saveState?.(true);
-            history.pauseHistory?.();
+            // ONE undo step (BUG-009, Q11), page size included: record any pending edit as its own
+            // step, record nothing while the page is replaced, then commit the result once.
+            peers.saveState?.(true);
+            peers.pauseHistory?.();
             try {
                 replaceWithTemplate();
             } finally {
-                history.resumeHistory?.();
+                peers.resumeHistory?.();
             }
-            history.saveState?.(true);
+            peers.saveState?.(true);
 
-            // ==================================================
-            // UPDATE STATE
-            // ==================================================
-
-            set({
-                designArtboard: {
-                    width: preset.width,
-
-                    height: preset.height,
-                },
-            });
-
-            // ==================================================
-            // FIT ARTBOARD
-            // ==================================================
-
-            get().fitDesignToViewport();
+            if (!design) {
+                peers.zoomToRect?.({ left: 0, top: 0, width: preset.width, height: preset.height });
+            }
 
             canvas.requestRenderAll();
 

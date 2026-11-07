@@ -645,6 +645,7 @@ function CanvasSurface({
 
                 <div
                     ref={scrollRef}
+                    data-board-scroll // the Hand tool scrolls this in design (createCanvasSlice pan)
                     className="relative min-w-0 flex-1 overflow-auto"
                     style={{ backgroundColor: THEME.workspace }}
                     onMouseMove={onMouseMove}

@@ -5,6 +5,7 @@ import { DEFAULT_PAGE_BACKGROUND, isFreehand, type CustomPageSize } from './crea
 import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
 import type { ProjectDoc } from '@/lib/storage/projectStorage';
 import { emptyAnimation, type AnimationData } from '@/animation/engine';
+import type { CanvasPreset } from '@/components/organisms/board/board.type';
 
 /**
  * Custom props that must survive toObject()/loadFromJSON(). Fabric drops anything
@@ -29,6 +30,8 @@ export type Page = {
     background: string;
     /** This page's animation (decision Q12: each page is its own scene). Absent = none. */
     animation?: AnimationData;
+    /** This page's size (BUG-007 / BUG-109: the one page-size source). Absent = keep the current one. */
+    preset?: CanvasPreset;
     createdAt: number;
     updatedAt: number;
 };
@@ -42,6 +45,7 @@ type PageSnapshot = Pick<
     | 'customSize'
     | 'background'
     | 'animation'
+    | 'preset'
     | 'updatedAt'
 >;
 
@@ -107,6 +111,18 @@ const makeThumbnail = (canvas: fabric.Canvas): string | undefined => {
     }
 };
 
+const isPreset = (p: unknown): p is CanvasPreset =>
+    !!p &&
+    typeof p === 'object' &&
+    Number((p as CanvasPreset).width) > 0 &&
+    Number((p as CanvasPreset).height) > 0;
+
+/** Canvas slice: THE page size (BUG-007). */
+type PresetPeers = {
+    selectedPreset?: CanvasPreset;
+    setSelectedPreset?: (preset: CanvasPreset) => void;
+};
+
 const isAnimationData = (a: unknown): a is AnimationData =>
     !!a &&
     typeof a === 'object' &&
@@ -138,6 +154,7 @@ const normalizePage = (raw: any, index: number, used: Set<string>): Page => {
         customSize: isValidSize(raw?.customSize) ? raw.customSize : null,
         background: typeof raw?.background === 'string' ? raw.background : DEFAULT_PAGE_BACKGROUND,
         ...(isAnimationData(raw?.animation) ? { animation: raw.animation } : {}),
+        ...(isPreset(raw?.preset) ? { preset: raw.preset } : {}),
         createdAt: Number(raw?.createdAt) || now,
         updatedAt: Number(raw?.updatedAt) || now,
     };
@@ -153,8 +170,10 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
         if (!canvas) return null;
         const thumbnail = withThumbnail ? makeThumbnail(canvas) : undefined;
         const animation = (s as unknown as AnimationPeers).getAnimationData?.();
+        const preset = (s as unknown as PresetPeers).selectedPreset;
         return {
             ...(animation ? { animation } : {}),
+            ...(preset ? { preset } : {}),
             // FIX: toJSON() drops custom props (id, name, locked...). toObject(props) keeps them.
             canvasJSON: serializeCanvas(canvas, PAGE_SERIALIZE_PROPS),
             ...(thumbnail ? { thumbnail } : {}),
@@ -208,6 +227,8 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
                 false,
                 'pages/show:meta',
             );
+            // this page's size first (one source, BUG-007 / BUG-109); CanvasBoard re-sizes from it
+            if (target.preset) (get() as unknown as PresetPeers).setSelectedPreset?.(target.preset);
             get().applyPageSize(target.format, target.orientation);
             canvas.backgroundColor = target.background;
             // this page's own tracks (Q12); objects were saved at rest, the timeline starts at 0
@@ -284,6 +305,7 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
                     orientation: ref.orientation,
                     customSize: ref.customSize,
                     background: ref.background,
+                    ...(ref.preset ? { preset: { ...ref.preset } } : {}),
                     createdAt: now,
                     updatedAt: now,
                 };

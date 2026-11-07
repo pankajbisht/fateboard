@@ -153,14 +153,20 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             if (!canvas || !event) return;
 
-            let zoom = canvas.getZoom() * Math.pow(0.999, event.deltaY);
+            const factor = Math.pow(0.999, event.deltaY);
 
-            zoom = Math.min(Math.max(zoom, 0.1), 5);
-
-            // offsetX/Y are CSS pixels; Fabric expects canvas pixels
-            const k = getCssToCanvasScale(canvas);
-
-            canvas.zoomToPoint(new fabric.Point(event.offsetX * k, event.offsetY * k), zoom);
+            // ONE zoom path (BUG-025): the page slice's setZoom keeps `zoom` and the view in step.
+            // Design: zoom state only (CanvasBoard re-draws); whiteboard: around the pointer.
+            if (get().boardMode === 'design') {
+                get().setZoom(get().zoom * factor);
+            } else {
+                // offsetX/Y are CSS pixels; Fabric expects canvas pixels
+                const k = getCssToCanvasScale(canvas);
+                get().setZoom(canvas.getZoom() * factor, {
+                    x: event.offsetX * k,
+                    y: event.offsetY * k,
+                });
+            }
 
             event.preventDefault();
             event.stopPropagation();
@@ -190,11 +196,19 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             if (!canvas || !event) return;
 
-            const k = getCssToCanvasScale(canvas);
-            const dx = (Number(event.movementX) || 0) * k;
-            const dy = (Number(event.movementY) || 0) * k;
+            const mx = Number(event.movementX) || 0;
+            const my = Number(event.movementY) || 0;
 
-            canvas.relativePan(new fabric.Point(dx, dy));
+            // Design: the viewport stays identity (CanvasBoard owns it, BUG-007); pan = scroll the board.
+            if (get().boardMode === 'design') {
+                const scroller = canvas.wrapperEl?.closest?.('[data-board-scroll]') as
+                    HTMLElement | null | undefined;
+                scroller?.scrollBy(-mx, -my);
+                return;
+            }
+
+            const k = getCssToCanvasScale(canvas);
+            canvas.relativePan(new fabric.Point(mx * k, my * k));
             canvas.requestRenderAll();
         },
 
@@ -248,8 +262,26 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
         selectedPreset: DEFAULT_CANVAS_PRESET as CanvasPreset,
 
+        /**
+         * THE page size (one source, BUG-007). A document change: one undo step, autosaved, and
+         * stored with the page (BUG-109). CanvasBoard re-sizes the canvas from it.
+         */
         setSelectedPreset: (preset: CanvasPreset) => {
-            set({ selectedPreset: preset }, false, 'create/preset');
+            if (!preset) return;
+            const prev: CanvasPreset | undefined = get().selectedPreset;
+            set(
+                { selectedPreset: preset, pageWidth: preset.width, pageHeight: preset.height },
+                false,
+                'create/preset',
+            );
+            const changed =
+                !prev ||
+                prev.id !== preset.id ||
+                prev.width !== preset.width ||
+                prev.height !== preset.height;
+            if (!changed) return;
+            get().saveState?.();
+            get().persist?.();
         },
 
         hasMultipleSelection: () => {

@@ -33,6 +33,7 @@
 | `settings.spec.ts` | theme / icon size apply and persist; only working preferences; Large icons size swatches |
 | `seo.spec.ts` | hash links redirect, per-route head, build files; SEO fallback hidden while the app loads, visible without JS (BUG-144) |
 | `persistence.spec.ts` | autosave survives reload; all pages + the open page survive reload (BUG-004); an imported photo survives reload (BUG-121) |
+| `geometry.spec.ts` | two pages with different sizes keep them across switches and reload; backstore = page, identity viewport; a click selects the shape under the cursor (BUG-007, BUG-109) |
 | `templates.spec.ts` | applying a template shows an Undo toast; Undo brings the previous content back (BUG-009) |
 | `animation.spec.ts` | a keyframe survives reload; each page has its own timeline (BUG-010, Q12) |
 | `placement.spec.ts` | one place per feature in the real UI |
@@ -215,7 +216,7 @@ Today CI enforces a **ratchet** at the current level (`vitest.config.ts` `covera
 | Autosave/restore | integration + E2E | edit → reload → same objects; no save of half-loaded canvas (`persistLock`); `flushPersist` on `pagehide` |
 | Pages | integration + E2E | add/duplicate/delete/switch keeps each page's content and size; survives reload (BUG-004: `store/__tests__/projectPersistence.test.ts`, `e2e/persistence.spec.ts`) |
 | Layers | unit | sync from canvas, lock blocks delete/move, group/ungroup keeps world transform, z-order ops |
-| Canvas geometry | integration + E2E | preset switch: backstore = preset, VPT identity; pointer hits the object under the cursor (BUG-007) |
+| Canvas geometry | integration + E2E | preset switch: backstore = preset, VPT identity; pointer hits the object under the cursor (BUG-007: `store/__tests__/geometryOwner.test.ts`, `e2e/geometry.spec.ts`) |
 | Keyboard | RTL + E2E | shortcuts run the right command; typing in inputs/text editing is ignored; panel-scoped keys don't leak (BUG-018); Ctrl+O never clears (BUG-040) |
 | Animation | unit + integration | sampling/easing, presets, keyframe edits + undo, rest state never saved (BUG-011), data persists per page (BUG-010): `animation/__tests__/animationPersistence.test.ts`, `e2e/animation.spec.ts` |
 | Export | integration + E2E | PNG dimensions = page size at 1×; JSON export re-imports; video export produces a non-empty file (Chromium) |
