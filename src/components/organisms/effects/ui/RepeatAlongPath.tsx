@@ -436,11 +436,14 @@ export const RepeatAlongPath = () => {
             />
             <TransformInput
                 label="Angle offset (deg)"
+                min={-360}
+                max={360}
                 value={opts.angleOffset}
                 onChange={(v: any) => patch({ angleOffset: num(v, opts.angleOffset) })}
             />
             <TransformInput
                 label="Side offset (px)"
+                min={-5000}
                 value={opts.sideOffset}
                 onChange={(v: any) => patch({ sideOffset: num(v, opts.sideOffset) })}
             />

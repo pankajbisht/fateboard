@@ -151,15 +151,23 @@ export const RepeatRadially = () => {
                 onChange={field('distance')}
             />
             {mode === 'spiral' && (
-                <TransformInput label="Gap per turn" value={fields.gap} onChange={field('gap')} />
+                <TransformInput
+                    label="Gap per turn"
+                    min={-1000}
+                    value={fields.gap}
+                    onChange={field('gap')}
+                />
             )}
             <TransformInput
                 label="Start angle"
+                min={-360}
+                max={360}
                 value={fields.startAngle}
                 onChange={field('startAngle')}
             />
             <TransformInput
                 label="Scale step %"
+                min={-100}
                 value={fields.scalePct}
                 onChange={field('scalePct')}
             />

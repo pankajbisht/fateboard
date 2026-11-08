@@ -3,6 +3,7 @@ import { MAX_ZOOM, MIN_ZOOM } from '@/store/slices/createPageSlice';
 import { Slider } from '@/components/atoms/Slider';
 import { useBoardMode } from '@hooks/useBoardMode';
 import { IconButton } from '@/components/atoms/IconButton';
+import { Button } from '@/components/atoms/Button';
 import { Icon } from '@/components/atoms/Icon';
 
 /* Log scale (like Figma): 100% sits mid-track and small zoom steps stay precise. */
@@ -62,15 +63,16 @@ export function ZoomControl() {
                 title="Zoom in"
                 onClick={zoomIn}
             />
-            <button
-                type="button"
+            <Button
+                variant="ghost"
+                size="sm"
                 aria-label={`Zoom ${percent}%. Zoom to 100%`}
                 title="Zoom to 100%"
                 onClick={actualSize}
-                className="w-11 shrink-0 cursor-pointer rounded text-center text-[11px] font-semibold tabular-nums text-ink hover:text-primary-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/60"
+                className="w-11 shrink-0 justify-center px-0 text-[11px] font-semibold tabular-nums text-ink"
             >
                 {percent}%
-            </button>
+            </Button>
             <IconButton
                 size="chrome"
                 icon={<Icon name="zoom-fit" />}

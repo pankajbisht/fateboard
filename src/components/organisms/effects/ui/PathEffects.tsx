@@ -470,16 +470,20 @@ export const PathEffects = () => {
                     />
                     <TransformInput
                         label="Angle"
+                        min={-360}
+                        max={360}
                         value={apply.angle}
                         onChange={(v) => setApply((a) => ({ ...a, angle: clampNum(v, 0, 360) }))}
                     />
                     <TransformInput
                         label="Offset X"
+                        min={-5000}
                         value={apply.offsetX}
                         onChange={(v) => setApply((a) => ({ ...a, offsetX: clampNum(v, 0, 2000) }))}
                     />
                     <TransformInput
                         label="Offset Y"
+                        min={-5000}
                         value={apply.offsetY}
                         onChange={(v) => setApply((a) => ({ ...a, offsetY: clampNum(v, 0, 2000) }))}
                     />

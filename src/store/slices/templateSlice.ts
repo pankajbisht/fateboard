@@ -110,6 +110,15 @@ function templatePagePreset(size: { width: number; height: number }): CanvasPres
     } as CanvasPreset;
 }
 
+/**
+ * Template data is top-left based (applied with `TOP_LEFT`); canvas objects may use any origin (Fabric 7
+ * default: centre). Save the real top-left so a re-applied template does not shift (BUG-059).
+ */
+function topLeftOf(object: FabricObject) {
+    const p = object.getPositionByOrigin('left', 'top');
+    return { left: p.x, top: p.y };
+}
+
 // ============================================================
 // SLICE
 // ============================================================
@@ -149,8 +158,7 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
                     return {
                         id: rect.get('id'),
                         type: 'rect',
-                        left: rect.left ?? 0,
-                        top: rect.top ?? 0,
+                        ...topLeftOf(rect),
                         width: rect.getScaledWidth(),
                         height: rect.getScaledHeight(),
                         fill: rect.fill as string,
@@ -175,8 +183,7 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
                     return {
                         id: circle.get('id'),
                         type: 'circle',
-                        left: circle.left ?? 0,
-                        top: circle.top ?? 0,
+                        ...topLeftOf(circle),
                         radius: circle.radius ?? 0,
                         fill: circle.fill as string,
                         stroke: circle.stroke as string,
@@ -198,8 +205,7 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
                     return {
                         id: line.get('id'),
                         type: 'line',
-                        left: line.left ?? 0,
-                        top: line.top ?? 0,
+                        ...topLeftOf(line),
                         x1: line.x1 ?? 0,
                         y1: line.y1 ?? 0,
                         x2: line.x2 ?? 0,
@@ -223,8 +229,7 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
                     return {
                         id: textObject.get('id'),
                         type: 'text',
-                        left: textObject.left ?? 0,
-                        top: textObject.top ?? 0,
+                        ...topLeftOf(textObject),
                         text: textObject.text ?? '',
                         width: textObject.width,
                         height: textObject.height,
@@ -253,8 +258,7 @@ export const createTemplateSlice: SliceCreator<TemplateSlice> = (set, get, _stor
                     return {
                         id: image.get('id'),
                         type: 'image',
-                        left: image.left ?? 0,
-                        top: image.top ?? 0,
+                        ...topLeftOf(image),
                         width: image.getScaledWidth(),
                         height: image.getScaledHeight(),
 
