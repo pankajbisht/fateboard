@@ -1,3 +1,4 @@
+import { readLocalList, writeLocalList } from '@/lib/storage/localList';
 import * as fabric from 'fabric';
 import { nanoid } from 'nanoid';
 import {
@@ -48,7 +49,8 @@ export type RepeatAlongPathOptions = Partial<AlongPathOptions> & {
 };
 
 const CLONE_PROPS = ['name', 'data', 'id']; // custom props that must survive clone()
-const STORAGE_KEY = 'canvas.patterns.v1';
+const PATTERN_LIST = 'patterns'; // fateboard:patterns (BUG-036); was canvas.patterns.v1
+const LEGACY_PATTERN_KEYS = ['canvas.patterns.v1'];
 
 /* ---------------------------- pattern persistence --------------------------- */
 const isSavedPattern = (p: any): p is SavedPattern =>
@@ -60,25 +62,12 @@ const isSavedPattern = (p: any): p is SavedPattern =>
     typeof p.height === 'number' &&
     typeof p.multiplier === 'number';
 
-const loadPatterns = (): SavedPattern[] => {
-    if (typeof window === 'undefined') return [];
-    try {
-        const raw = window.localStorage.getItem(STORAGE_KEY);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed.filter(isSavedPattern) : [];
-    } catch {
-        return [];
-    }
-};
+const loadPatterns = (): SavedPattern[] =>
+    readLocalList(PATTERN_LIST, isSavedPattern, LEGACY_PATTERN_KEYS);
 
+// quota exceeded / private mode: the library still works for this session
 const persistPatterns = (list: SavedPattern[]) => {
-    if (typeof window === 'undefined') return;
-    try {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    } catch (e) {
-        // quota exceeded / private mode: library still works for this session
-        console.warn('[patterns] could not persist pattern library', e);
-    }
+    writeLocalList(PATTERN_LIST, list);
 };
 
 /* ---------------------------------- slice ---------------------------------- */

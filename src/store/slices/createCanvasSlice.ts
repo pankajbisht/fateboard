@@ -53,6 +53,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
     // half-loaded or empty canvas can never overwrite the saved data.
     let persistLock = 0;
     let unloadHandler: (() => void) | null = null;
+    // tab hidden (switching away, closing on mobile): save NOW; pagehide can be too late for the
+    // async IndexedDB write (BUG-138)
+    let visibilityHandler: (() => void) | null = null;
 
     const cancelPersist = () => {
         if (persistTimer !== undefined) {
@@ -883,9 +886,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             // X Y W H R + anchor work on a single object AND on a multi-selection (as one box)
             if (obj) get().updateFromFabric(obj);
 
-            get().saveState();
-
-            // Selecting does not change the document, so no persist() here anymore.
+            // Selecting does not change the document: no undo snapshot (BUG-034: this serialised the
+            // whole canvas on every selection) and no persist(). Content changes are recorded by
+            // the history events and handlePersistEvent / handleObjectChange.
             // Content changes are saved by handlePersistEvent / handleObjectChange.
         },
 
@@ -972,6 +975,13 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 canvas.on(name as any, handler as any);
             });
 
+            if (typeof document !== 'undefined' && !visibilityHandler) {
+                visibilityHandler = () => {
+                    if (document.visibilityState === 'hidden') flushPersist();
+                };
+                document.addEventListener('visibilitychange', visibilityHandler);
+            }
+
             // every content change becomes an undo step (BUG-006)
             get().registerHistoryEvents?.(canvas);
 
@@ -985,6 +995,10 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         },
 
         unregisterCanvasEvents: (canvas: CanvasInstance) => {
+            if (visibilityHandler && typeof document !== 'undefined') {
+                document.removeEventListener('visibilitychange', visibilityHandler);
+                visibilityHandler = null;
+            }
             get().unregisterHistoryEvents?.(canvas);
             get().unregisterAnimationEvents?.(canvas);
             if (!eventHandlers) return;

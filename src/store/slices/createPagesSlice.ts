@@ -82,16 +82,6 @@ export type PagesSlice = {
 
 const newId = () => crypto.randomUUID();
 
-// FIX: Page switches are async in Fabric v6 (loadFromJSON returns a Promise and no
-// longer takes a callback). Running every page operation through one queue stops
-// rapid clicks from interleaving loads and corrupting pages.
-let opChain: Promise<unknown> = Promise.resolve();
-const runExclusive = <T>(task: () => Promise<T>): Promise<T> => {
-    const next = opChain.then(task, task);
-    opChain = next.catch(() => undefined);
-    return next;
-};
-
 const nextPageName = (pages: Page[]) => {
     const nums = pages
         .map((p) => /^Page (\d+)$/.exec(p.name))
@@ -163,6 +153,15 @@ const normalizePage = (raw: any, index: number, used: Set<string>): Page => {
 /* ------------------------------ slice ------------------------------ */
 
 export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
+    // Page switches are async (loadFromJSON returns a Promise). Every page operation runs through
+    // one queue so rapid clicks never interleave loads. Per store, not module-level (BUG-035).
+    let opChain: Promise<unknown> = Promise.resolve();
+    const runExclusive = <T>(task: () => Promise<T>): Promise<T> => {
+        const next = opChain.then(task, task);
+        opChain = next.catch(() => undefined);
+        return next;
+    };
+
     /** Snapshot of the live canvas + page setup (read from PageSlice). */
     const capture = (withThumbnail = true): PageSnapshot | null => {
         const s = get();

@@ -192,7 +192,7 @@ const friendlyError = (error) => {
  * --------------------------------------------------------- */
 
 const ExportCanvas = () => {
-    const { canvas } = useStore();
+    const canvas = useStore((s) => s.canvas); // selector: never re-render on unrelated changes (BUG-029)
 
     const [width, setWidth] = useState(1280);
     const [height, setHeight] = useState(720);

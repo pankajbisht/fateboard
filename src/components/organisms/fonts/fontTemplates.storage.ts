@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FontTemplate } from './fontTemplates.config';
 
-const STORAGE_KEY = 'fateboard:fontTemplates';
+import { readLocalList, writeLocalList } from '@/lib/storage/localList';
+
+const LIST = 'fontTemplates'; // stored as fateboard:fontTemplates (BUG-036)
 
 function isTemplate(value: any): value is FontTemplate {
     return (
@@ -14,26 +16,15 @@ function isTemplate(value: any): value is FontTemplate {
 }
 
 export function loadCustomTemplates(): FontTemplate[] {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed)
-            ? parsed
-                  .filter(isTemplate)
-                  .map((t) => ({ ...t, category: 'Mine' as const, custom: true }))
-            : [];
-    } catch {
-        return [];
-    }
+    return readLocalList(LIST, isTemplate).map((t) => ({
+        ...t,
+        category: 'Mine' as const,
+        custom: true,
+    }));
 }
 
 function write(templates: FontTemplate[]) {
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
-    } catch (error) {
-        console.error('Failed to save font templates:', error);
-    }
+    writeLocalList(LIST, templates);
 }
 
 export function saveCustomTemplate(template: FontTemplate): FontTemplate[] {

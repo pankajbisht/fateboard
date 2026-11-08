@@ -162,6 +162,7 @@ Event flow, step by step:
 | Project | `exportProject()` / `importProject()` (Save / Open in the top bar) | `{app:'fateboard', version:1, currentPageId, pages[{…, animation?}]}` | Same document is autosaved (BUG-004) |
 | Share | removed until there is a backend (decision Q6, BUG-028) | | The link only ever worked in the same browser; Save Board (`.fateboard`) is the way to hand a board over |
 | Settings | Setting slice | opendb `fateboard-settings` | Validated by `sanitizeSettings` |
+| Small libraries | custom shapes, patterns, font templates → `lib/storage/localList` | localStorage `fateboard:customShapes` / `fateboard:patterns` / `fateboard:fontTemplates`, `{ v, items }` | Old keys migrated once; never throws (BUG-036) |
 
 ## Bundles and assets
 

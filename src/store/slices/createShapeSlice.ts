@@ -1,3 +1,4 @@
+import { readLocalList, writeLocalList } from '@/lib/storage/localList';
 import type { SliceCreator } from '../types';
 import * as fabric from 'fabric';
 import { getShapeDef, setCustomShapes, type ShapeDef } from '@hooks/shape/shapeCatalog';
@@ -70,7 +71,8 @@ const DEFAULT_FILL = PAINT_DEFAULTS.shape.fill;
 const DEFAULT_STROKE = PAINT_DEFAULTS.shape.stroke;
 const DEFAULT_STROKE_WIDTH = PAINT_DEFAULTS.shape.strokeWidth;
 const TEXT_FONT = 'Inter, Arial, sans-serif';
-const CUSTOM_KEY = 'fateboard.customShapes.v1';
+const CUSTOM_LIST = 'customShapes'; // fateboard:customShapes (BUG-036); was fateboard.customShapes.v1
+const LEGACY_CUSTOM_KEYS = ['fateboard.customShapes.v1'];
 
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-3);
 
@@ -346,25 +348,15 @@ function installBehavior(canvas: any, hooks: ConnectorHooks) {
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const clamp = (n: number, a: number, b: number) => Math.min(Math.max(n, a), b);
 
+const isShapeDef = (s: unknown): s is ShapeDef =>
+    !!s && typeof (s as ShapeDef).type === 'string' && typeof (s as { d?: unknown }).d === 'string';
+
 function loadCustomShapes(): ShapeDef[] {
-    try {
-        if (typeof window === 'undefined') return [];
-        const raw = window.localStorage.getItem(CUSTOM_KEY);
-        const list = raw ? JSON.parse(raw) : [];
-        return Array.isArray(list)
-            ? list.filter((s) => s && typeof s.type === 'string' && typeof s.d === 'string')
-            : [];
-    } catch {
-        return [];
-    }
+    return readLocalList(CUSTOM_LIST, isShapeDef, LEGACY_CUSTOM_KEYS);
 }
 
 function saveCustomShapes(list: ShapeDef[]) {
-    try {
-        window.localStorage.setItem(CUSTOM_KEY, JSON.stringify(list));
-    } catch {
-        /* storage full / blocked: the shapes still work for this session */
-    }
+    writeLocalList(CUSTOM_LIST, list); // storage full / blocked: the shapes still work this session
 }
 
 /** fabric.Path (already simplified to absolute M/L/C/Q/Z) -> path in a 100x100 box. */
