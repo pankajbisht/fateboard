@@ -313,7 +313,9 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     /* ------------------------------------------------------------------ */
     /* DESIGN: canvas is exactly the preset's W x H, shown scaled to fit  */
     /* ------------------------------------------------------------------ */
-    useEffect(() => {
+    // layout effect: the page frame and the canvas resize in the same paint. With useEffect the
+    // frame grew first and, for one frame, a click on the page edge hit the frame, not the canvas (BUG-146)
+    useLayoutEffect(() => {
         if (isWhiteboard || !canvas || !size || !displaySize) return;
 
         // render at the density the page is shown at (BUG-108): Fabric reads this ratio everywhere

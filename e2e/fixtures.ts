@@ -101,9 +101,29 @@ export class Editor {
         await expect.poll(async () => (await this.objects()).length).toBe(before + 1);
     }
 
+    /** The canvas box once it has stopped moving (side panels animate open / closed). */
+    async settledCanvasBox() {
+        let prev = await this.canvas.boundingBox();
+        for (let i = 0; i < 40; i++) {
+            await this.page.waitForTimeout(50);
+            const next = await this.canvas.boundingBox();
+            if (
+                prev &&
+                next &&
+                prev.x === next.x &&
+                prev.y === next.y &&
+                prev.width === next.width &&
+                prev.height === next.height
+            )
+                return next;
+            prev = next;
+        }
+        throw new Error('canvas never settled');
+    }
+
     /** Click an empty spot of the canvas (top-left corner area) to deselect. */
     async clickEmptyCanvas() {
-        const box = (await this.canvas.boundingBox())!;
+        const box = await this.settledCanvasBox();
         await this.page.mouse.click(box.x + 12, box.y + 12);
     }
 }
