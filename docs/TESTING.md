@@ -184,6 +184,8 @@ export const makeStore = () => create<any>()(combinedSlice as any);
 
 Coverage is measured on app code only (`src/**`, without tests and `src/test` helpers). It counts unit / component
 tests; the Playwright suite exercises flows on top of that (e.g. Export is 6 % in unit coverage but covered end to end).
+Only files that tests load are counted, so a test that imports a config full of panels adds all of them to the total
+(BUG-153). Guard tests that only need ids read the config as text, like `helpTopics.test.ts` and `panelConsistency.test.ts`.
 
 Snapshot 2026-11-07 (87 unit files, 631 tests; 44 E2E tests in 15 specs, plus 3 known-bug expected failures):
 
@@ -214,7 +216,7 @@ filtered photos), zoom, settings, layout. Open known bugs are listed in `e2e/kno
 | `src/components/**` | 50% | n/a |
 | Global floor (target) | 60% | n/a |
 
-Today CI enforces a **ratchet** at the current level (`vitest.config.ts` `coverage.thresholds`: statements 46, branches 39, functions 47, lines 47 on 2026-11-07); `test:coverage` fails below it. Raise the numbers as coverage grows until the 60% floor.
+Today CI enforces a **ratchet** at the current level (`vitest.config.ts` `coverage.thresholds`: statements 52, branches 45, functions 54, lines 54); `test:coverage` fails below it. Raise the numbers as coverage grows until the 60% floor.
 
 ## Critical flow tests (what each must cover)
 
