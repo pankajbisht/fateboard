@@ -28,6 +28,7 @@
 | `shapes.spec.ts` | add shape, type W + click canvas (commit before deselect), counter ± / Shift, footer fill / stroke toggles, disabled with nothing selected, Backspace deletes |
 | `text.spec.ts` | one text float (font, size, style, align) for text boxes and sticky notes; no header text tools |
 | `color.spec.ts` | palette strip swatch + ring, All colors grid, custom picker hex + Recent |
+| `many-objects.spec.ts` | busy boards: Layers list mounts only part of a long list and stays usable; hover outline on the top canvas in the right place (retina), nothing left behind |
 | `pages.spec.ts` | add / switch pages, objects per page, Clear page with confirm |
 | `zoom.spec.ts` | footer zoom − / + / 100% / Fit |
 | `file.spec.ts` | Save downloads the whole project (all pages); Open restores it |

@@ -304,6 +304,10 @@ interface Hint {
     ref?: any;
 }
 
+const HOVER_LINE_WIDTH = 1.5;
+/** Line half-width plus antialiasing, so clearing leaves no ghost edge. */
+const HOVER_CLEAR_MARGIN = 3;
+
 interface State {
     installed: boolean;
     hooks: ConnectorHooks;
@@ -311,6 +315,8 @@ interface State {
     handles: any[];
     hints: Hint[];
     hover: any | null;
+    /** Where the hover outline was last painted on the top canvas. */
+    hoverBox: { x: number; y: number; w: number; h: number } | null;
     busy: boolean;
     moved: boolean;
 }
@@ -327,6 +333,7 @@ function stateOf(canvas: any): State {
             handles: [],
             hints: [],
             hover: null,
+            hoverBox: null,
             busy: false,
             moved: false,
         };
@@ -648,6 +655,55 @@ function onHandleMoving(canvas: any, h: any) {
     updateConnector(conn, h);
 }
 
+/**
+ * Hover outline, drawn on Fabric's top canvas: a hover change must not repaint the scene (a full
+ * render per shape crossed was most of the cost of moving the mouse over a busy board). Clears
+ * only its own pixels, because the text cursor shares this canvas.
+ */
+function paintHover(
+    canvas: Pick<fabric.Canvas, 'viewportTransform' | 'getActiveObject'> & {
+        contextTop?: CanvasRenderingContext2D;
+    },
+    st: State,
+) {
+    const ctx = canvas.contextTop;
+    if (!ctx) return;
+
+    if (st.hoverBox) {
+        ctx.clearRect(st.hoverBox.x, st.hoverBox.y, st.hoverBox.w, st.hoverBox.h);
+        st.hoverBox = null;
+    }
+
+    const t = st.hover;
+    if (!t || t.canvas !== canvas || t === canvas.getActiveObject()) return;
+
+    const v = canvas.viewportTransform;
+    const pts: Pt[] = t.getCoords().map((p: Pt) => ({
+        x: v[0] * p.x + v[2] * p.y + v[4],
+        y: v[1] * p.x + v[3] * p.y + v[5],
+    }));
+
+    ctx.save();
+    ctx.beginPath();
+    pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+    ctx.closePath();
+    ctx.lineWidth = HOVER_LINE_WIDTH;
+    ctx.strokeStyle = BRAND.primary;
+    ctx.stroke();
+    ctx.restore();
+
+    const xs = pts.map((p) => p.x);
+    const ys = pts.map((p) => p.y);
+    const x = Math.min(...xs) - HOVER_CLEAR_MARGIN;
+    const y = Math.min(...ys) - HOVER_CLEAR_MARGIN;
+    st.hoverBox = {
+        x,
+        y,
+        w: Math.max(...xs) + HOVER_CLEAR_MARGIN - x,
+        h: Math.max(...ys) + HOVER_CLEAR_MARGIN - y,
+    };
+}
+
 /* --------------------------------- install --------------------------------- */
 
 function connectorsOf(canvas: any): any[] {
@@ -756,19 +812,20 @@ export function installConnectorBehavior(canvas: any, hooks: ConnectorHooks) {
         const t = e?.target;
         if (hoverable(t) && t !== canvas.getActiveObject()) {
             st.hover = t;
-            canvas.requestRenderAll();
+            paintHover(canvas, st);
         }
     });
     canvas.on('mouse:out', () => {
         if (st.hover) {
             st.hover = null;
-            canvas.requestRenderAll();
+            paintHover(canvas, st);
         }
     });
 
     // port dots while dragging an end + hover outline
     canvas.on('after:render', (e: any) => {
-        if (!st.hover && !st.hints.length) return;
+        paintHover(canvas, st); // the hovered shape may have moved, been selected or removed
+        if (!st.hints.length) return;
         const ctx: CanvasRenderingContext2D | undefined = e?.ctx ?? canvas.getContext?.();
         if (!ctx) return;
 
@@ -777,16 +834,6 @@ export function installConnectorBehavior(canvas: any, hooks: ConnectorHooks) {
 
         ctx.save();
         ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
-
-        if (st.hover && st.hover.canvas === canvas && st.hover !== canvas.getActiveObject()) {
-            const pts: Pt[] = st.hover.getCoords();
-            ctx.beginPath();
-            pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-            ctx.closePath();
-            ctx.lineWidth = 1.5 / z;
-            ctx.strokeStyle = BRAND.primary;
-            ctx.stroke();
-        }
 
         st.hints.forEach((h) => {
             ctx.beginPath();

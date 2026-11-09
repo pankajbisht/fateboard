@@ -83,7 +83,7 @@ body scrolls with standard padding and section spacing.
 | `templates` | panel | `TemplateGallery` | `{ className?, loading? }` | Template (all) |
 | `fonttemplates` | panel | `FontTemplatePanel` | none | Canvas (`canvas, persist`), UndoRedo; `localStorage` `fateboard:fontTemplates` |
 | `Pages` | panel | `PagePanel` | none | Pages (list, add / duplicate / delete / rename / reorder, PageUp / PageDown), Page (`pageBackground` via `PaintTargetSwatch`), Clear page. **No** page size (Canvas Size panel), zoom (footer), export (Export tab) or save / open (top bar File). |
-| `layers` | panel | `LayersPanel` | none | Layers (`layers, selectedLayerIds, bindLayerEvents` + actions), Canvas |
+| `layers` | panel | `LayersPanel` (rows windowed, see CANVAS "Performance notes") | none | Layers (`layers, selectedLayerIds, bindLayerEvents` + actions), Canvas |
 
 ## Right dock tabs (`config/tabs.config.tsx`)
 

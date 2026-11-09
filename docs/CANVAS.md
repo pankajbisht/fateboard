@@ -147,15 +147,21 @@ refreshed on pointerdown/scroll/resize because cached offsets go stale.
 
 ## Performance notes
 
-- Full-canvas `JSON.stringify(toObject())` on every selection (history) and on every content change (autosave, 300 ms
-  debounce), plus `toObject` + `toDataURL` thumbnail every 500 ms of activity (PagePanel). For big boards, move to
-  dirty-flag snapshots or idle callbacks.
+- Measured 2026-11-09 (1500 mixed objects, M1 Pro GPU): `renderAll` 12 ms; history snapshot + autosave 15-25 ms per
+  change; undo 250 ms. Serialization is not the bottleneck; a repaint or per-object DOM is. With the Pages panel open, a
+  `toDataURL` thumbnail of the scene costs 125 ms 500 ms after a change (BUG-150).
+- Anything that only changes an overlay must not call `requestRenderAll`: that repaints every object. The hover outline
+  is painted on the top canvas (`paintHover` in `shapeConnectors`, BUG-148), clears only its own pixels (the text cursor
+  shares that canvas) and repaints on `after:render` so it follows the shape.
+- The Layers panel mounts only the rows near its viewport (fixed 44 px rows, BUG-147). Per-layer work belongs in
+  visible rows only; the row being dragged stays mounted, because removing a drag source cancels the drag.
 - Several components use `useStore()` without a selector, so they re-render on any store change, including 60 fps
   `currentTime` updates during playback (BUG-029).
 - Layers rebuild on `requestAnimationFrame` after add/remove/modify. Fine, but `buildLayers` walks groups recursively
   and mutates objects.
-- `objectCaching: false` is set on shapes, text and template objects. That gives crisper rendering but slower redraw
-  with many objects.
+- `objectCaching: false` is set on new shapes, text and template objects, but the flag is not serialized, so the same
+  objects are cached after an undo or reload (BUG-149). Do not enable caching globally: at 1500 objects it gains 4 ms
+  per frame on a GPU and loses 310 ms without one.
 - Notebook grid paints in `_renderBackground` on every render (off by default since 2026-11-07); snap guides on
   `after:render`.
 - Rulers (BUG-105): the pointer lives in a small pointer store (`createPointerSource` in `Ruler.tsx`), not React

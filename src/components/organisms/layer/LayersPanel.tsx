@@ -44,9 +44,17 @@ import type {
     ReorderPosition,
 } from '@/store/slices/createLayersSlice';
 import { Input } from '@/components/atoms/Input';
+import { visibleRange } from './visibleRange';
 
 /* All logic lives in layersSlice. This file only reads `layers` / `selectedLayerIds`
  * and calls slice actions. */
+
+/** Row height in px: must match `h-11` on LayerRow. */
+const ROW_HEIGHT = 44;
+/** Extra rows mounted past each edge, so scrolling and Tab never reach an unmounted row. */
+const ROW_OVERSCAN = 6;
+/** List height assumed until it has been measured. */
+const INITIAL_LIST_HEIGHT = 600;
 
 const BLEND_MODES: [string, string][] = [
     ['source-over', 'Normal'],
@@ -204,22 +212,30 @@ function ContextMenu({
     );
 }
 
-function Thumbnail({ layer }: { layer: Layer }) {
+/** Finished thumbnails per object, for the panel's lifetime: rows remount as the list scrolls. */
+type ThumbCache = WeakMap<object, { key: string; url: string | null }>;
+
+function Thumbnail({ layer, cache }: { layer: Layer; cache: ThumbCache }) {
     const url = useMemo(() => {
+        const o = layer.object;
+        // thumbRev changes whenever the object is modified
+        const key = `${layer.thumbRev}|${layer.visible}|${layer.opacity}|${layer.blendMode}`;
+        const cached = cache.get(o);
+        if (cached?.key === key) return cached.url;
+        let made: string | null;
         try {
-            const o = layer.object;
             const size = Math.max(o.getScaledWidth?.() ?? 1, o.getScaledHeight?.() ?? 1, 1);
-            return o.toDataURL({
+            made = o.toDataURL({
                 format: 'png',
                 multiplier: Math.min(2, 64 / size),
                 enableRetinaScaling: false,
             }) as string;
         } catch {
-            return null;
+            made = null;
         }
-        // thumbRev changes whenever the object is modified
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [layer.object, layer.thumbRev, layer.visible, layer.opacity, layer.blendMode]);
+        cache.set(o, { key, url: made });
+        return made;
+    }, [cache, layer.object, layer.thumbRev, layer.visible, layer.opacity, layer.blendMode]);
 
     const Icon = layer.isGroup ? Folder : (TYPE_ICONS[layer.type] ?? Box);
     return (
@@ -248,6 +264,10 @@ function Thumbnail({ layer }: { layer: Layer }) {
 
 interface RowProps {
     layer: Layer;
+    /** Position in the list being shown (rows are absolutely placed, see LayersPanel). */
+    index: number;
+    total: number;
+    thumbCache: ThumbCache;
     selected: boolean;
     collapsed: boolean;
     dropPos: ReorderPosition | null;
@@ -287,6 +307,8 @@ const LayerRow = memo(function LayerRow(p: RowProps) {
         <div
             role="option"
             aria-selected={p.selected}
+            aria-posinset={p.index + 1}
+            aria-setsize={p.total}
             tabIndex={0}
             draggable={topLevel && !editing}
             onClick={p.onSelect}
@@ -311,8 +333,14 @@ const LayerRow = memo(function LayerRow(p: RowProps) {
                 p.onDrop();
             }}
             onDragEnd={p.onDragEnd}
-            style={{ paddingLeft: 8 + layer.depth * 16 }}
-            className={`group relative flex h-11 cursor-default select-none items-center gap-1.5 pr-2 outline-none
+            style={{
+                paddingLeft: 8 + layer.depth * 16,
+                position: 'absolute',
+                top: p.index * ROW_HEIGHT,
+                left: 0,
+                right: 0,
+            }}
+            className={`group flex h-11 cursor-default select-none items-center gap-1.5 pr-2 outline-none
                 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-400/60
                 ${p.selected ? 'bg-primary-50 shadow-[inset_2px_0_0_theme(colors.teal.600)]' : 'hover:bg-surface-muted'}`}
         >
@@ -345,7 +373,7 @@ const LayerRow = memo(function LayerRow(p: RowProps) {
                         <FolderOpen size={15} className="text-ink-muted" />
                     </span>
                 ) : (
-                    <Thumbnail layer={layer} />
+                    <Thumbnail layer={layer} cache={p.thumbCache} />
                 )}
             </div>
 
@@ -418,6 +446,10 @@ export default function LayersPanel() {
     const [dragId, setDragId] = useState<string | number | null>(null);
     const [hint, setHint] = useState<{ id: string | number; pos: ReorderPosition } | null>(null);
     const [opacityDraft, setOpacityDraft] = useState<number | null>(null);
+    const [firstRow, setFirstRow] = useState(0);
+    const [listHeight, setListHeight] = useState(INITIAL_LIST_HEIGHT);
+    const listRef = useRef<HTMLDivElement>(null);
+    const thumbCache = useRef<ThumbCache>(new WeakMap()).current;
 
     // The slice owns the logic; the panel just asks it to listen to the canvas while mounted.
     // (Safe to also call store.bindLayerEvents() once in your canvas setup instead.)
@@ -447,6 +479,43 @@ export default function LayersPanel() {
             return true;
         });
     }, [layers, query, collapsed]);
+
+    useLayoutEffect(() => {
+        const el = listRef.current;
+        if (!el) return;
+        const measure = () => setListHeight(el.clientHeight);
+        const observer = new ResizeObserver(measure);
+        observer.observe(el);
+        measure();
+        return () => observer.disconnect();
+    }, []);
+
+    // Only the rows near the viewport are mounted: a row costs a thumbnail render and its DOM, so
+    // doing it per layer froze the tab on big boards.
+    const shownRows = useMemo(() => {
+        const { start, end } = visibleRange({
+            firstRow,
+            viewportRows: Math.ceil(listHeight / ROW_HEIGHT),
+            count: rows.length,
+            overscan: ROW_OVERSCAN,
+        });
+        const shown = rows.slice(start, end).map((layer, i) => ({ layer, index: start + i }));
+        // the row being dragged stays mounted: removing a drag source cancels the drag
+        const dragIndex = dragId === null ? -1 : rows.findIndex((layer) => layer.id === dragId);
+        if (dragIndex !== -1 && (dragIndex < start || dragIndex >= end))
+            shown.push({ layer: rows[dragIndex]!, index: dragIndex });
+        return shown;
+    }, [rows, firstRow, listHeight, dragId]);
+
+    const onListScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        const next = Math.floor(e.currentTarget.scrollTop / ROW_HEIGHT);
+        if (next === firstRow) return;
+        // a rename in progress commits, as when clicking away, before its row can unmount
+        const focused = document.activeElement;
+        if (focused instanceof HTMLInputElement && e.currentTarget.contains(focused))
+            focused.blur();
+        setFirstRow(next);
+    };
 
     const toggleCollapse = useCallback((id: string | number) => {
         setCollapsed((prev) => {
@@ -627,7 +696,9 @@ export default function LayersPanel() {
                 role="listbox"
                 aria-multiselectable
                 aria-label="Layers"
+                ref={listRef}
                 className="min-h-0 flex-1 overflow-y-auto"
+                onScroll={onListScroll}
                 onDragLeave={(e) => {
                     if (!e.currentTarget.contains(e.relatedTarget as Node)) setHint(null);
                 }}
@@ -643,43 +714,54 @@ export default function LayersPanel() {
                         }
                     />
                 ) : (
-                    rows.map((layer) => (
-                        <LayerRow
-                            key={layer.id}
-                            layer={layer}
-                            selected={selectedSet.has(String(layer.id))}
-                            collapsed={collapsed.has(layer.id)}
-                            dropPos={hint?.id === layer.id && dragId !== layer.id ? hint.pos : null}
-                            onSelect={(e) =>
-                                store.selectLayer(
-                                    layer.id,
-                                    e.shiftKey
-                                        ? 'range'
-                                        : e.metaKey || e.ctrlKey
-                                          ? 'toggle'
-                                          : 'replace',
-                                )
-                            }
-                            onToggleCollapse={() => toggleCollapse(layer.id)}
-                            onContextMenu={(e) => {
-                                e.preventDefault();
-                                if (!selectedSet.has(String(layer.id)))
-                                    store.selectLayer(layer.id, 'replace');
-                                setMenu({ x: e.clientX, y: e.clientY, id: layer.id });
-                            }}
-                            onRename={(name) => store.renameLayer(layer.id, name)}
-                            onToggleVisible={() => store.toggleVisibility(layer.id)}
-                            onToggleLock={() => store.toggleLayerLock(layer.id)}
-                            onDragStart={() => setDragId(layer.id)}
-                            onDragOver={(pos) => setHint({ id: layer.id, pos })}
-                            onDrop={() => {
-                                if (dragId !== null && hint)
-                                    store.reorderLayer(dragId, hint.id, hint.pos);
-                                endDrag();
-                            }}
-                            onDragEnd={endDrag}
-                        />
-                    ))
+                    <div
+                        role="presentation"
+                        className="relative"
+                        style={{ height: rows.length * ROW_HEIGHT }}
+                    >
+                        {shownRows.map(({ layer, index }) => (
+                            <LayerRow
+                                key={layer.id}
+                                layer={layer}
+                                index={index}
+                                total={rows.length}
+                                thumbCache={thumbCache}
+                                selected={selectedSet.has(String(layer.id))}
+                                collapsed={collapsed.has(layer.id)}
+                                dropPos={
+                                    hint?.id === layer.id && dragId !== layer.id ? hint.pos : null
+                                }
+                                onSelect={(e) =>
+                                    store.selectLayer(
+                                        layer.id,
+                                        e.shiftKey
+                                            ? 'range'
+                                            : e.metaKey || e.ctrlKey
+                                              ? 'toggle'
+                                              : 'replace',
+                                    )
+                                }
+                                onToggleCollapse={() => toggleCollapse(layer.id)}
+                                onContextMenu={(e) => {
+                                    e.preventDefault();
+                                    if (!selectedSet.has(String(layer.id)))
+                                        store.selectLayer(layer.id, 'replace');
+                                    setMenu({ x: e.clientX, y: e.clientY, id: layer.id });
+                                }}
+                                onRename={(name) => store.renameLayer(layer.id, name)}
+                                onToggleVisible={() => store.toggleVisibility(layer.id)}
+                                onToggleLock={() => store.toggleLayerLock(layer.id)}
+                                onDragStart={() => setDragId(layer.id)}
+                                onDragOver={(pos) => setHint({ id: layer.id, pos })}
+                                onDrop={() => {
+                                    if (dragId !== null && hint)
+                                        store.reorderLayer(dragId, hint.id, hint.pos);
+                                    endDrag();
+                                }}
+                                onDragEnd={endDrag}
+                            />
+                        ))}
+                    </div>
                 )}
             </div>
 
