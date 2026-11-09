@@ -17,9 +17,9 @@ export default defineConfig({
             // json-summary = coverage/coverage-summary.json (totals for the health report)
             reporter: ['text-summary', 'html', 'json-summary'],
             reportsDirectory: 'coverage',
-            // Ratchet: CI fails if coverage drops below today's level (2026-11-07). Raise these
+            // Ratchet: CI fails if coverage drops below today's level (raised 2026-11-09). Raise these
             // as coverage grows; target floor is 60% (docs/TESTING.md "Coverage").
-            thresholds: { statements: 46, branches: 39, functions: 47, lines: 47 },
+            thresholds: { statements: 52, branches: 45, functions: 54, lines: 54 },
             include: ['src/**/*.{ts,tsx}'],
             exclude: [
                 'src/**/__tests__/**',

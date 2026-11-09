@@ -10,7 +10,7 @@
 | Persistence | IndexedDB (project autosave, `lib/storage/projectStorage`), opendb-store (`db.local`, settings) + raw `localStorage` | opendb 2.0.1 |
 | Styling | Tailwind CSS 4 (`@tailwindcss/vite`), Font Awesome 7, lucide-react | |
 | Geometry | paper.js (boolean ops, geometry engine) | 0.12.x |
-| Export | mp4-muxer (WebCodecs MP4), jsPDF (dead code only) | |
+| Export | mp4-muxer (WebCodecs MP4); PNG / SVG / JSON via Fabric | |
 | Build | Vite 7, TypeScript 5.9 (`strict: false`), ESLint 9 flat config, Prettier 3 | |
 | Test | Vitest 4 + jsdom + Testing Library | |
 | Unused deps | `@reduxjs/toolkit`, `react-redux` (dead file only), `json-server` (no `db.json`) | |
@@ -184,7 +184,7 @@ Static GitHub Pages (ADR-11), no server and no rewrites, so every public route g
 |---|---|---|
 | Route list + metadata | `src/app/seo/routes.ts` (`SEO_ROUTES`) | One source for the build and the app. `/` must match `index.html`. `index: false` = `noindex`, no canonical, not in the sitemap |
 | Per-route pages | `vite.config.ts` plugin → `src/app/seo/prerender.ts` | Built `index.html` → `draw.html`, `help.html`, `setting.html`, `command-palette.html` with own title, description, robots, canonical, OG/Twitter and fallback `h1` / `data-seo="intro"`. GitHub Pages serves `/help` from `help.html` (HTTP 200, no slash redirect). Throws on a missing tag |
-| Unknown URLs / share links | generated `404.html` | App shell, `noindex`, no canonical. GitHub Pages returns it with HTTP 404; the app still renders `/share/:id` and Not Found |
+| Unknown URLs | generated `404.html` | App shell, `noindex`, no canonical. GitHub Pages returns it with HTTP 404; the app renders Not Found (Share / `/share/:id` removed, Q6) |
 | Site URL | `VITE_SITE_URL` (`.env` / CI repo variable), validated by `src/app/seo/siteUrl.ts` | One origin for canonical, OG / JSON-LD (`%VITE_SITE_URL%` in `index.html`), per-route pages, sitemap and robots. `vite.config.ts` refuses to build without a valid value; never hard-code the domain (`siteUrl.test.ts` scans for it) |
 | Sitemap / robots | generated `sitemap.xml` + `robots.txt` | Indexable routes only; robots points to the sitemap. Do not add a static `public/404.html`, `public/sitemap.xml` or `public/robots.txt` |
 | Client navigation | `src/app/seo/RouteSeo.tsx` (in `rootRouter`) | Only writer of `document.title`; updates description, robots, canonical, OG/Twitter per path |

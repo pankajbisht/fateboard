@@ -35,7 +35,7 @@ src/
   components/organisms/editorsidebar/editorsidebar.config.tsx  left panels
   components/config/tabs.config.tsx       right dock tabs
   components/config/toolbars/ui/*Config.tsx  toolbar buttons = keyboard commands
-  lib/                                    patterns, connectors, text-in-shape, gradient tool, serialization, storage (IndexedDB project autosave), utils
+  lib/                                    serialization, storage (IndexedDB project + localList), units, keyboard (canvasKeysBlocked), canvas (renderRatio), patterns, connectors, gradient tool, utils
   hooks/                                  keyboard shortcuts, shape catalog/factory
   feature/import/                         image/SVG/JSON import
   test/                                   test helpers: fakeCanvas.ts, sliceHarness.ts (not shipped)
@@ -56,6 +56,8 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 - Panels: content only, inside `templates/PanelLayout` (one header). Build with `PanelSection`/`Field`/`SliderField`/`Select`/`Switch`/`SegmentedControl`/`Chip`/`Input`/`Textarea`/`Button`; panel-level action = `PanelAction`, other buttons `Button size="sm"`/`IconButton`; no raw `<select>`/range/checkbox, no `gray-*`/`white` (use `surface`/`ink`/`line` tokens so dark mode works).
 - UI colors/text/radius: brand tokens only (`bg-primary-600`, `text-primary-ink` for brand text, `text-ink`, `text-title`, `rounded-md`; canvas: `BRAND` from `@lib/theme`). See docs/DESIGN.md.
 - Errors: actions never throw to React; `try/catch` + `console.error('[slice] …')` + return falsy.
+- Keys: shortcuts are commands (`shortcut`, `keys`, `enabled`, `allowWhileTyping`); other canvas key listeners return early on `canvasKeysBlocked()`.
+- Sizes shown to users go through `lib/units` (Settings > Units); documents are stored in px.
 
 ## Slice pattern rules
 

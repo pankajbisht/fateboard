@@ -55,7 +55,7 @@ Docker (self-hosting; the production target is GitHub Pages): `docker build --bu
 
 ```
 src/
-  app/rootRouter.tsx      routes: /, /draw, /setting, /command-palette, /share/:docId, /help
+  app/rootRouter.tsx      routes: /, /draw, /setting, /command-palette, /help (each a lazy chunk)
   store/                  single zustand store composed from slices (store/slices/*)
   animation/              keyframe engine + video export
   components/             atoms → molecules → organisms → templates → pages

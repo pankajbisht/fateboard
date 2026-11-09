@@ -19,8 +19,8 @@
 - **Known bugs** are `test.fail` in `e2e/known-bugs.spec.ts` (undo, ⌘B, Delete key): they pass while the bug exists and
   turn red when it is fixed; remove the marker with the fix.
 - **CI:** job `e2e` (installs Chromium, runs the suite, uploads `playwright-report` on failure); `build-deploy` `needs: e2e`.
-- **Stability:** 35 tests, 105 / 105 green with `--repeat-each=3` (2026-11-07). After the P0 data-safety batch: 60 tests
-  green + 2 expected failures (known bugs); persistence / pages / file specs 30 / 30 at `--repeat-each=5`.
+- **Stability (2026-11-09):** 76 specs on Chromium, 152 / 152 green over two full runs (`--repeat-each=2`);
+  the former flaky deselect test 20 / 20. Firefox runs the same specs in CI.
 
 | Spec | Covers |
 |---|---|
@@ -186,14 +186,14 @@ Snapshot 2026-11-07 (87 unit files, 631 tests; 44 E2E tests in 15 specs, plus 3 
 
 | Area | Lines covered |
 |---|---|
-| hooks | 96 % |
-| UI molecules | 90 % |
-| UI atoms | 79 % |
-| animation engine | 58 % |
-| store slices | 52 % (UndoRedo 99 %, Pages 86 %, Text 83 %, ShapeStyle 79 %, NodeEditor 76 %, Transform 75 %; low: geometryEngine 2 %, advanceOperation 8 %, Shape 26 %, Brush 28 %) |
-| UI panels (organisms) | 37 % |
-| lib (canvas logic) | 29 % |
-| **Total** | **46 % lines, 38 % branches** |
+| hooks | 97 % |
+| UI atoms | 92 % |
+| UI molecules | 91 % |
+| animation engine | 59 % |
+| store slices | 58 % (UndoRedo 99 %, Dialog 97 %, Pages 87 %, Text 86 %; low: advanceOperation 7 %, Filter 17 %, Background 21 %, Shape 27 %) |
+| UI panels (organisms) | 48 % |
+| lib (canvas logic) | 36 % |
+| **Total (2026-11-09)** | **54 % lines, 45 % branches** (CI ratchet: 54 / 45 / 54 / 52) |
 
 Must-have flows verified end to end (all green): add / select / move / resize shapes, colors, text, text shapes,
 drawing, duplicate, copy / paste, group / ungroup, delete, lock, layer order, align, undo / redo (keyboard, buttons,

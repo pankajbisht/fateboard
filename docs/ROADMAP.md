@@ -25,7 +25,7 @@ Goal: make every later change safe to ship.
 |---|---|---|---|---|
 | 1.1 | Undo/redo correct: register history events, per-page stacks, pause during loads | BUG-005, BUG-006, BUG-034 | 0.4, 0.5 | Q7 |
 | 1.2 | Destructive actions safe (Ctrl+O, New board, Apply template, Clear page) | BUG-040, BUG-009 (**done** 2026-11-07: template = one undo step + Undo toast) | 1.1 | Q11 ✅ |
-| 1.3 | Project persistence: pages + meta in one versioned document, migration from `drawJson` | BUG-004 (**done** 2026-11-07, IndexedDB), BUG-036 (open: other features still use raw localStorage) | 0.5 | Q5 ✅ |
+| 1.3 | Project persistence: pages + meta in one versioned document, migration from `drawJson` | BUG-004 (**done** 2026-11-07, IndexedDB), BUG-036 (**done** 2026-11-08: `lib/storage/localList`) | 0.5 | Q5 ✅ |
 | 1.4 | Mount/restore race fixed | BUG-016 | 1.3 | none |
 
 ## M2: One canvas geometry model
@@ -42,20 +42,20 @@ Goal: make every later change safe to ship.
 Priority: high (core editing). Remaining work: connectors and text shapes survive undo/pages/reload; custom shapes
 move into the project/storage module; Text panel actually edits text (BUG-041); origin selector works (BUG-042);
 shape stroke vs text stroke separated (BUG-020).
-**Blocking bugs:** BUG-003, BUG-005, BUG-006, BUG-020, BUG-041. **Depends on:** M0, M1.1.
+**Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). **Depends on:** M0, M1.1.
 
 ### F2. Snap & grid (exists: `createNotebookSlice` grid + object snapping + guides; settings has separate `snapToGrid`/`gridSize`; whiteboard has a CSS dot grid)
 
 Priority: high (cheap once geometry is fixed). Work: one source of truth for grid size/snap (settings ↔ notebook),
 one grid renderer per mode, snap respects page bounds in design mode, keyboard toggles documented, grid never exported.
-**Blocking bugs:** BUG-023 (gridSize/toggleGrid collisions), BUG-022, BUG-007, BUG-025. **Depends on:** M0.4, M2.1.
+**Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). **Depends on:** M0.4, M2.1.
 
 ### F3. Templates (exists: gallery, favourites, save-as-template, apply onto artboard)
 
 Priority: medium-high. Work: apply into a **new page** (or undoable), artboard = page geometry (no separate
 VPT/clipPath model), template content positioned with explicit origins, saved templates persisted with the project
 store, template thumbnails.
-**Blocking bugs:** BUG-007, BUG-008, BUG-139 (BUG-004 and BUG-009 fixed). **Depends on:** M1.2, M1.3, M2.1. **Decisions:** Q2, Q3.
+**Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). **Depends on:** M1.2, M1.3, M2.1. **Decisions:** Q2, Q3.
 
 ### F4. Animation + video export (exists: keyframes, presets, curves, auto-key, playback, MP4 via WebCodecs, WebM/MP4 realtime fallback, PNG still)
 
@@ -67,7 +67,7 @@ Priority: high (headline feature), but it has the most blockers. Work, in order:
 4. Export the page rect regardless of zoom/pan; output size presets (1080p/4K/square/vertical) (BUG-026).
 5. Multi-page export as scenes *(proposed, Q12)*; audio track *(proposed; not in code today)*.
 6. Performance: selectors instead of `useStore()` so playback does not re-render the editor (BUG-029).
-**Blocking bugs:** BUG-017, BUG-018, BUG-026, BUG-029 (BUG-001, BUG-004, BUG-010, BUG-011 fixed; BUG-003 only Share left).
+**Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). 
 **Depends on:** M0, M1, M2.1. **Decisions:** Q1, Q5, Q7, Q12.
 
 ### F5. Layers polish (exists)
@@ -77,13 +77,13 @@ rect and pan. **Depends on:** M0.5, M2.1.
 
 ### F6. Export & sharing (exists: Export tab PNG/JPEG/SVG/JSON with crop; `saveBoard`; per-page PNG; local-only share)
 
-Work: one export pipeline that uses page geometry; PDF *(proposed; jsPDF is installed but only used by dead code)*;
-decide Share (Q6). **Blocking bugs:** BUG-007, BUG-026, BUG-028.
+Work: one export pipeline that uses page geometry; PDF *(proposed; no PDF library installed today)*;
+decide Share (Q6). **Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). 
 
 ### F7. Brush quality (exists: 14 brushes, eraser, symmetry)
 
 Single writer for `freeDrawingBrush`; brush state separated from text/style state.
-**Blocking bugs:** BUG-019, BUG-020, BUG-021, BUG-024.
+**Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). 
 
 ### F8. Performance & a11y hardening *(proposed)*
 

@@ -14,7 +14,8 @@ Spread order (it matters):
 ```
 1 Canvas  2 Brush  3 UI  4 Layers  5 Page  6 Pages  7 Background  8 Command  9 ShapeStyle  10 UndoRedo
 11 Transform  12 Shape  13 Text  14 BackgroundColor  15 ContextMenu  16 Setting  17 advanceOperation
-18 geometryEngine  19 NodeEditor  20 Filter  21 Page (again)  22 Template  23 Notebook  24 Dialog  25 Animation
+19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  25 Animation
+(each spread once; 18 geometryEngine removed, the second Page spread removed: BUG-002 / BUG-030)
 ```
 
 Persistence summary: only `settings` (opendb key `fateboard-settings`) and the live canvas JSON (opendb key
@@ -333,7 +334,7 @@ While editing, the source is hidden by skipping its `render` (not `visible`), so
 save it visible. Handle sizes and hit radii are screen px (`screenScale` = zoom × CSS fit scale).
 **Cross-slice:** reads `canvas`, `activeTool`; calls Canvas `setActiveTool('select')` (Escape); imports
 `fitTextShape` from the Shape slice module (plain function, no store import).
-**Risks:** BUG-062 (capture-phase keydown while a modal is open). Commit fires `object:modified` (autosave) and
+Keys pause while a modal is open (`canvasKeysBlocked`, BUG-062). Commit fires `object:modified` (autosave) and
 `setActiveObject` (selection → history snapshot); ⌘Z during an edit cancels it (UndoRedo).
 
 ## 20. Filter: `createFilterSlice.ts` (+ `organisms/filter/ui/filterEngine.ts`, `useImageFilters.ts`)

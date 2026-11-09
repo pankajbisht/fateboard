@@ -41,7 +41,7 @@ Kept on purpose: right-click / layer context menus and the command palette repea
 | `AlignmentBar` | `bars/AlignmentBar.tsx` | none | config → Layers (`alignObjects`) |
 | `GroupBar` / `LockBar` / `LayerControlBar` / `FlipBar` | `bars/*.tsx` | none | Layers (`groupLayers, ungroupSelected, isGroupSelected, lock, unlock, bring*/send*`), Canvas (`hasMultipleSelection`), Transform (`transform, setTransform`) |
 | `UndoRedoBar` | `bars/UndoRedoBar.tsx` | none | **commented out of TopToolbar**; config `undo/redo` resolves to Animation (BUG-001) |
-| `ExtraBar` | `bars/ExtraBar.tsx` | none | Notebook (`gridEnabled, snapEnabled, toggleGrid, toggleSnap`), Canvas; share via `localStorage`; navigates to help/settings |
+| `ExtraBar` | `bars/ExtraBar.tsx` | none | Notebook (`gridEnabled, snapEnabled, toggleGrid, toggleSnap`), grid / snap shortcuts (⌘' / ⌘;, paused under a modal); navigates to help/settings. Share removed (Q6) |
 | `OriginBar` → `OriginSelector` | `toolbars/ui/TopToolbar.tsx`, `molecules/OriginSelector.tsx` | `{ size?=24, value?='c', onChange?(OriginChoice) }` | Transform (`transform.id`, `setOrigin`) (fixed BUG-042) |
 | `ShapeToolsHeader` | `organisms/ShapeToolsHeader.tsx` | none | Transform (`transform, setTransform, hasSelection, setRadius`), Canvas (`canvas`, `selectedObject` via `useStore()` **no selector**) |
 | `EditorSidebar` | `organisms/editorsidebar/ui/EditorSidebar.tsx` | `EditorSidebarProps { items, initialActiveId?, railWidth?, panelWidth?, defaultExpanded?, className?, onActiveChange?, onToolChange? }` | none directly; items from `editorsidebar.config.tsx` |

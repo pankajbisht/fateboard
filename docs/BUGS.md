@@ -16,6 +16,9 @@ toolbar/command wiring were read line by line. The large feature modules (`creat
 Key-collision data comes from an AST scan (not committed) of every slice's returned object, in the spread order of
 `src/store/index.ts`. See [STATE.md](STATE.md#key-collisions).
 
+**Status 2026-11-09:** every bug in this audit is fixed except **BUG-136** (deferred, dev tooling only, see its row).
+New bugs get the next free ID and start as `open`.
+
 ## Summary
 
 | ID | Sev | Area | Status | One-line |
