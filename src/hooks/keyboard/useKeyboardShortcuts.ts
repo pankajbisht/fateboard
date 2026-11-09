@@ -16,7 +16,7 @@ const passesHistoryThrough = (target: HTMLElement) =>
     target.getAttribute?.('data-fabric') === 'textarea' ||
     !!target.closest?.('[data-history-passthrough="true"]');
 
-function buildCombo(e: KeyboardEvent, drag = false) {
+export function buildCombo(e: KeyboardEvent, drag = false) {
     return [
         e.metaKey ? 'Meta' : '',
         e.ctrlKey ? 'Ctrl' : '',

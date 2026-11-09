@@ -5,7 +5,7 @@ import { test, expect } from './fixtures';
  * Accessibility (production readiness P1): no WCAG 2.1 A / AA (+ best-practice landmark) violations axe detects on the
  * main routes, in light and dark mode. Failures print rule id, impact and the offending nodes.
  */
-const ROUTES = ['/', '/draw', '/setting', '/help'];
+const ROUTES = ['/', '/draw', '/setting', '/help', '/help?topic=shortcuts', '/help?topic=node'];
 
 for (const scheme of ['light', 'dark'] as const) {
     for (const route of ROUTES) {

@@ -106,7 +106,7 @@ Rendered inside `PanelLayout` by `DockRoot` (title = tab label, close collapses 
 | `WhiteboardMarketingSite`, `MiniWhiteboard`, `ImageSlider` | `pages/web/*` | none | marketing; `MiniWhiteboard` is a plain 2D `<canvas>` (no Fabric, no store) |
 | `EditorSettingPage` → `Preferences` | `pages/Setting`, `organisms/settings/ui/Preferences.tsx` | none | Setting: Appearance (theme, colour theme, icon size), Canvas (Freehand on / off; points to the Canvas Size panel), Units, Reset. Only preferences the editor reads: page size, orientation, background pattern / colour, grid spacing and snap were removed (saved but never read; page size lives in Canvas Size, grid / snap in the top bar). |
 | `CommandPalette` | `pages/Command/CommandPalette.tsx` | `{ commands }` | static `commandRegistry` |
-| `HelpPage` | `pages/HelpPage/HelpPage.tsx` | none | static help sections |
+| `HelpPage` | `pages/HelpPage/HelpPage.tsx` | none | shell (search, topic nav, `?topic=` / `&section=`). Content is data in `organisms/helpsection/helpTopics.ts`; keys in `helpShortcuts.ts` (commands read from the registry); views in `helpsection/ui/` (`HelpHome`, `EditorMap`, `QuickStart`, `TopicView`, `ShortcutExplorer`, `demos/`). A new left rail panel or dock tab needs a topic, or `helpTopics.test.ts` fails |
 | `NotFoundPage` | `pages/NotFound/NotFoundPage.tsx` | none | keyboard mini-game |
 
 ## Panel design system (atoms → molecules → template)

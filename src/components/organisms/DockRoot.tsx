@@ -8,8 +8,13 @@ import { PanelLayout } from '../templates/PanelLayout';
 
 export const DockRoot = () => {
     const [tabs, setTabs] = useState<TabConfig[]>([...TABS_CONFIG]);
-    const [active, setActive] = useState<string>('effects');
-    const [open, setOpen] = useState(false);
+    // a link from Help can name the tab to open (/draw?tab=export): read once, when the dock mounts
+    const [linkedTab] = useState(() => {
+        const id = new URLSearchParams(window.location.search).get('tab');
+        return TABS_CONFIG.find((t) => t.id === id)?.id;
+    });
+    const [active, setActive] = useState<string>(linkedTab ?? 'effects');
+    const [open, setOpen] = useState(!!linkedTab);
     const width = SIDE_PANEL_WIDTH; // fixed: the resize handle was removed
 
     const scrollRef = useRef<HTMLDivElement>(null);

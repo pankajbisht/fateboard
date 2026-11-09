@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useStore } from '@store';
 import { useBoardMode } from '@hooks/useBoardMode';
 import { Header } from '@/components/organisms/header/index.ts';
@@ -38,7 +39,12 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
     // Settings > Freehand ON = whiteboard, OFF = design (DECISIONS Q3, BUG-015)
     const isWhiteboard = useBoardMode() === 'whiteboard';
 
+    // a link from Help can name the panel to open: /draw?panel=layers
+    const [searchParams] = useSearchParams();
+    const linkedPanel = searchParams.get('panel');
+
     const appliedCanvasRef = useRef<typeof canvas>(null);
+    const linkedDrawDone = useRef(false);
 
     const handlePresetSelect = useCallback(
         (preset: CanvasPreset) => {
@@ -74,6 +80,14 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
         setActiveTool(activeTool);
     }, [canvas, activeTool, setActiveTool]);
 
+    // /draw?panel=draw arrives ready to draw. Text is left out on purpose: clicking Text adds a text
+    // box, and following a link must not change the document.
+    useEffect(() => {
+        if (!canvas || linkedPanel !== 'draw' || linkedDrawDone.current) return;
+        linkedDrawDone.current = true;
+        setActiveTool('draw');
+    }, [canvas, linkedPanel, setActiveTool]);
+
     // The brush slice owns canvas.freeDrawingBrush and re-applies it on every setting change (BUG-021).
 
     const handleToolChange = useCallback(
@@ -99,10 +113,10 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
                 leftSidebar={
                     <EditorSidebar
                         items={sidebarItems}
-                        initialActiveId="select"
+                        initialActiveId={linkedPanel ?? 'select'}
                         railWidth={SIDE_RAIL_WIDTH}
                         panelWidth={SIDE_PANEL_WIDTH}
-                        defaultExpanded={false}
+                        defaultExpanded={!!linkedPanel}
                         onToolChange={handleToolChange}
                         activeTool={activeTool}
                     />
