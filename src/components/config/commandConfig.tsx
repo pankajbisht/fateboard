@@ -1,4 +1,5 @@
 import {
+    CanvasKeysConfig,
     EditBarConfig,
     FileBarConfig,
     GroupBarConfig,
@@ -20,4 +21,5 @@ export const commandRegistry = [
     ...ZoomBarConfig,
     ...UndoRedoBarConfig,
     ...TextBarConfig,
+    ...CanvasKeysConfig,
 ];

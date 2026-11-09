@@ -125,6 +125,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Click an object to select it',
                     '`shift` + click adds another object to the selection',
                     'Drag across an empty area to draw a selection box',
+                    '`mod+A` selects everything except locked and hidden objects',
                     'Right-click for copy, paste, group, lock and more',
                 ],
             },
@@ -132,6 +133,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 title: 'Move, resize, rotate',
                 items: [
                     'Drag an object to move it',
+                    'Arrow keys nudge it 1 px at a time, and `shift` makes it 10 px',
                     'Drag a corner handle to resize: proportions stay the same',
                     'Hold `shift` on a corner to resize freely',
                     'Hold `alt` to resize from the center',
@@ -173,6 +175,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Drag anywhere to move the view',
                     'Scroll to zoom while the Hand tool is active',
                     'Press `V` to go back to Select',
+                    'Hold `Space` to drag the view from the Select or Draw tool. Let go and you are back where you were, with your selection intact',
                 ],
             },
             {

@@ -45,6 +45,15 @@ const isGradient = (fill: unknown): boolean => fill instanceof fabric.Gradient;
 export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown) => {
     // Private lifecycle state: these values are not part of Zustand.
     let panCanvas: CanvasInstance | null = null;
+    /** What a held Space replaced, to hand back on release. Null when not held. */
+    let temporaryPan: {
+        canvas: CanvasInstance;
+        isDrawingMode: boolean;
+        selection: boolean;
+        skipTargetFind: boolean;
+        defaultCursor: string;
+        objects: CanvasObject[];
+    } | null = null;
     let persistTimer: ReturnType<typeof setTimeout> | undefined;
     let eventHandlers: Record<string, EventHandler> | null = null;
     let filteringSelection = false;
@@ -157,7 +166,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         down: (opt: CanvasEvent) => {
             const canvas = get().canvas;
 
-            if (!canvas || get().activeTool !== 'pan') return;
+            if (!canvas || (get().activeTool !== 'pan' && !temporaryPan)) return;
 
             // Do not begin panning with a non-primary mouse button.
             if (opt?.e?.button !== undefined && opt.e.button !== 0) {
@@ -202,7 +211,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             set({ isPanning: false });
 
             if (canvas) {
-                canvas.setCursor(get().activeTool === 'pan' ? 'grab' : 'default');
+                canvas.setCursor(get().activeTool === 'pan' || temporaryPan ? 'grab' : 'default');
 
                 canvas.requestRenderAll();
             }
@@ -323,6 +332,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             if (!canvas) return;
 
             cleanupEditingSession(true);
+            temporaryPan = null; // a real tool change replaces whatever a held Space would restore
 
             set({
                 activeTool: tool,
@@ -396,6 +406,57 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             canvas.on('mouse:down', panHandlers.down);
             canvas.on('mouse:move', panHandlers.move);
             canvas.on('mouse:up', panHandlers.up);
+        },
+
+        /**
+         * Hold Space: the Hand tool for a moment, without leaving the current tool. A real tool
+         * change would drop the selection and end the drawing session.
+         */
+        beginTemporaryPan: () => {
+            const { canvas, activeTool } = get();
+            if (!canvas || temporaryPan) return false;
+            if (activeTool !== 'select' && activeTool !== 'draw') return false;
+            // something else owns the pointer (line drawing, gradient handles)
+            if (activeTool === 'select' && !canvas.selection) return false;
+
+            temporaryPan = {
+                canvas,
+                isDrawingMode: canvas.isDrawingMode,
+                selection: canvas.selection,
+                skipTargetFind: canvas.skipTargetFind,
+                defaultCursor: canvas.defaultCursor,
+                objects: canvas.getActiveObjects(),
+            };
+            canvas.isDrawingMode = false;
+            canvas.selection = false;
+            canvas.skipTargetFind = true;
+            canvas.defaultCursor = 'grab';
+            canvas.setCursor('grab');
+            get().enablePan();
+            return true;
+        },
+
+        endTemporaryPan: () => {
+            const saved = temporaryPan;
+            temporaryPan = null;
+            const canvas = get().canvas;
+            if (!saved || canvas !== saved.canvas) return;
+
+            get().disablePan();
+            canvas.isDrawingMode = saved.isDrawingMode;
+            canvas.selection = saved.selection;
+            canvas.skipTargetFind = saved.skipTargetFind;
+            canvas.defaultCursor = saved.defaultCursor;
+            canvas.setCursor(saved.defaultCursor);
+
+            // with target finding off, Fabric treats the drag's mouse-down as a click on nothing
+            if (canvas.getActiveObject()) return;
+            const onBoard = canvas.getObjects();
+            const objects = saved.objects.filter((o) => onBoard.includes(o));
+            if (objects.length === 1) canvas.setActiveObject(objects[0]);
+            else if (objects.length > 1)
+                canvas.setActiveObject(new fabric.ActiveSelection(objects, { canvas }));
+            canvas.requestRenderAll();
         },
 
         disablePan: () => {

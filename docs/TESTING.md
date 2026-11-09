@@ -29,6 +29,7 @@
 | `text.spec.ts` | one text float (font, size, style, align) for text boxes and sticky notes; no header text tools |
 | `color.spec.ts` | palette strip swatch + ring, All colors grid, custom picker hex + Recent |
 | `many-objects.spec.ts` | busy boards: Layers list mounts only part of a long list and stays usable; hover outline on the top canvas in the right place (retina), nothing left behind |
+| `canvas-keys.spec.ts` | ⌘A selects all; arrows nudge, one undo per run; hold Space drags the view, keeps the selection and moves nothing |
 | `help.spec.ts` | Help search reaches inside topics, topic URLs and Back, press-to-find, node demo; links open the right panel / tab; Text link adds nothing |
 | `pages.spec.ts` | add / switch pages, objects per page, Clear page with confirm |
 | `zoom.spec.ts` | footer zoom − / + / 100% / Fit |

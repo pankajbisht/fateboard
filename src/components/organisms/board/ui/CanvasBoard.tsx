@@ -4,6 +4,7 @@ import { useStore } from '@store';
 import { useThemeVersion } from '@hooks/useThemeVersion';
 import { restyleSelectionChrome } from '@/lib/fabricChrome';
 import { useKeyboardShortcuts } from '@/hooks';
+import { useSpacePan } from '@/hooks/keyboard/useSpacePan';
 import { FloatingTextToolbar } from '@/components/organisms/FloatingTextToolbar';
 import { NodeToolbar } from '@/components/organisms/NodeToolbar';
 import { contextMenuRegistry } from '@/components/config/contextMenuRegistry';
@@ -133,6 +134,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     }, [canvas, themeVersion]);
 
     useKeyboardShortcuts();
+    useSpacePan();
 
     // The canvas element is created in code: Fabric moves <canvas> into its own wrapper, which
     // breaks React's removeChild on unmount / StrictMode when the element is JSX.

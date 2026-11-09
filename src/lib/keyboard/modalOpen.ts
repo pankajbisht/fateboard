@@ -6,3 +6,10 @@
  */
 export const canvasKeysBlocked = (): boolean =>
     typeof document !== 'undefined' && document.querySelector('[aria-modal="true"]') !== null;
+
+const USES_ARROW_KEYS =
+    '[role="radiogroup"], [role="slider"], [role="tablist"], [role="menu"], [role="listbox"]';
+
+/** The focused control moves its own value or items with the arrow keys. */
+export const arrowKeysOwnedByFocus = (): boolean =>
+    document.activeElement?.closest(USES_ARROW_KEYS) != null;

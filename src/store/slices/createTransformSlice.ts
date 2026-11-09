@@ -69,6 +69,8 @@ export interface TransformSlice {
     setTransform: (key: keyof Transform, value: number | string | boolean) => void;
     setOrigin: (origin: { originX: OriginX; originY: OriginY; id: string }) => void;
     setRadius: (rx?: number, ry?: number) => void;
+    /** Moves the selection by a few px (arrow keys). False when there is nothing movable. */
+    nudgeSelection: (dx: number, dy: number) => boolean;
     syncTransformFromSelection: () => void;
 }
 
@@ -251,6 +253,20 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get) => 
         }));
         const obj = get().canvas?.getActiveObject();
         if (obj) get().updateFromFabric(obj);
+    },
+
+    nudgeSelection: (dx, dy) => {
+        const canvas = get().canvas;
+        const active = canvas?.getActiveObject();
+        if (!canvas || !active || active.excludeFromExport) return false;
+        if (active.lockMovementX || active.lockMovementY) return false;
+
+        active.set({ left: active.left + dx, top: active.top + dy });
+        active.setCoords();
+        canvas.requestRenderAll();
+        // only `modified`: `moving` listeners (snap) expect a live pointer drag
+        canvas.fire('object:modified', { target: active });
+        return true;
     },
 
     setRadius: (rx, ry) => {

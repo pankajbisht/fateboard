@@ -62,10 +62,7 @@ describe('help topics', () => {
         ['a T key for Text', /`T`/],
         ['a C key for colors', /`C`/],
         ['the wrong Ungroup key', /mod\+shift\+G/i],
-        ['Select all', /mod\+A`.*select all|select all.*mod\+A`/i],
-        ['Space to pan', /`Space`.*(hand|pan)|(hand|pan).*`Space`/i],
         ['Shift to keep proportions', /shift[^.]*(keep|maintain)[^.]*(proportion|aspect)/i],
-        ['arrow keys moving objects', /arrow keys[^.]*(object|selection)\b/i],
     ])('does not promise %s', (_name, claim) => {
         expect(allText).not.toMatch(claim);
     });

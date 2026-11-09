@@ -63,7 +63,7 @@ Private closure state (not in zustand): `panCanvas`, `persistTimer`, `eventHandl
 blocks saves during load/clear), `unloadHandler`.
 
 **Actions:** `create`, `mount`, `init(el, container)`, `dispose()` (nulls `canvas` synchronously, then awaits
-`canvas.dispose()`), `registerCanvasEvents`, `unregisterCanvasEvents`, `setActiveTool`, `enablePan`, `disablePan`,
+`canvas.dispose()`), `registerCanvasEvents`, `unregisterCanvasEvents`, `setActiveTool`, `enablePan`, `disablePan`, `beginTemporaryPan`, `endTemporaryPan`,
 `setSelectedPreset`, `hasMultipleSelection`, `filterUnlockedSelection`, `setSelectedObject`, `syncFromObject`,
 `setToolbar`, `clearToolbar`, `loadLib`, `defaultSettings`, `clearBoard` (New board = new project: one empty page, empty
 animation, autosave deleted), `exportJSON`,
@@ -126,7 +126,7 @@ z-order, group/ungroup, align/distribute, copy/cut/paste/duplicate/linked clone.
 `setAllLocked`, `bringForward`, `sendBackward`, `bringToFront`, `sendToBack`, `reorderLayer`, `deleteObject`,
 `groupLayers(1)`, `ungroupSelected`, `ungroupLayers1`, `alignLayers`, `distributeLayers`, `isGroupSelected`, `copy`,
 `cut`, `paste`, `canPaste`, `duplicate`, `clone` (linked), `cloneer`, `clone1`, `unlinkClone`, `linkClones`,
-`selectLinked`, `syncLinkedClones`, `hasLinkedSelection`, `canLinkSelection`, `alignObjects(key, to)`,
+`selectLinked`, `syncLinkedClones`, `hasLinkedSelection`, `canLinkSelection`, `alignObjects(key, to)`, `selectAllObjects`,
 `distributeObjects`.
 **Side effects:** `buildLayers` **mutates objects** (assigns `id`, `name`, re-applies lock style).
 **Depends on:** Canvas, UndoRedo (`saveState`).
@@ -237,7 +237,7 @@ NodeEditor (`nodeEditor`, `cancelNodeMode`), Shape (`closeShapeTextEditor`); opt
 **State:** `transform` (`x,y,width,height,rotation,flipX,flipY,originX,originY,id,rx,ry`), `hasSelection`,
 `_isSyncing`.
 **Actions:** `updateFromFabric(obj)`, `updateFabricFromStore`, `setTransform(key, value)`, `flipX`, `flipY`,
-`setOrigin`, `setRadius`, `syncTransformFromSelection`.
+`setOrigin`, `setRadius`, `nudgeSelection(dx, dy)`, `syncTransformFromSelection`.
 **Risks:** BUG-033 (`hasSelection` never reset). Called only on selection/creation, so the panel is stale while
 dragging (**UNKNOWN - verify** whether any component listens to `object:moving` for it). `lib/types/transform.type.ts`
 still has `centerY` instead of `originY`.

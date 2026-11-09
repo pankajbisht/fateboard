@@ -103,6 +103,8 @@ export interface LayerSlice {
     setLayerOpacity: (id: LayerId, opacity: number, commit?: boolean) => void;
     setLayerBlendMode: (id: LayerId, mode: string) => void;
     reorderLayer: (dragId: LayerId, targetId: LayerId, position: ReorderPosition) => void;
+    /** Selects everything that can be selected. False when there is nothing to select. */
+    selectAllObjects: () => boolean;
 }
 
 /* ───────────────────────────── helpers ───────────────────────────── */
@@ -395,6 +397,20 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
         clipboard: null,
 
         setLayers: (layers) => set({ layers }),
+
+        selectAllObjects: () => {
+            const canvas = cv();
+            if (!canvas) return false;
+            const objects = canvas
+                .getObjects()
+                .filter(
+                    (o: FObj) =>
+                        isLayerObject(o) && o.selectable && o.visible !== false && !o._locked,
+                );
+            if (!objects.length) return false;
+            setSelection(canvas, objects);
+            return true;
+        },
 
         /* ───── sync (new) ───── */
 
