@@ -4,6 +4,8 @@ import { Slider } from '@/components/atoms/Slider';
 import { useBoardMode } from '@hooks/useBoardMode';
 import { IconButton } from '@/components/atoms/IconButton';
 import { Button } from '@/components/atoms/Button';
+import { useUnit } from '@hooks/useUnit';
+import { formatSize } from '@/lib/units';
 import { Icon } from '@/components/atoms/Icon';
 
 /* Log scale (like Figma): 100% sits mid-track and small zoom steps stay precise. */
@@ -27,6 +29,7 @@ export function ZoomControl() {
     const zoomOut = useStore((s) => s.zoomOut);
     const actualSize = useStore((s) => s.actualSize);
     const preset = useStore((s) => s.selectedPreset);
+    const unit = useUnit(); // Settings > Units (BUG-082)
     const whiteboard = useBoardMode() === 'whiteboard'; // infinite canvas: no page size
 
     const percent = Math.round((scale || 1) * zoom * 100);
@@ -52,7 +55,7 @@ export function ZoomControl() {
                 />
                 {preset && !whiteboard && (
                     <span className="text-[11px] leading-none tabular-nums text-ink-muted">
-                        {preset.width} × {preset.height} px
+                        {formatSize(preset.width, preset.height, unit)}
                     </span>
                 )}
             </div>

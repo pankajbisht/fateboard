@@ -7,6 +7,8 @@ import { transformFieldsConfig } from '../config/transformfields.config.ts';
 import { GlowDivider } from '../atoms/GlowDivider.tsx';
 import OriginSelector from '../molecules/OriginSelector.tsx';
 import { NumberField } from '../atoms/NumberField.tsx';
+import { useUnit } from '@hooks/useUnit';
+import { fromUnit, toUnit, unitPrecision } from '@/lib/units';
 
 type TransformFieldConfig = (typeof transformFieldsConfig)[number];
 
@@ -18,17 +20,33 @@ const TransformField = memo(function TransformField({ field }: { field: Transfor
     const value = useStore((s) => s.transform[field.key]);
     const hasSelection = useStore((s) => s.hasSelection);
     const setTransform = useStore((s) => s.setTransform);
+    const unit = useUnit();
+    // lengths are shown in Settings > Units and stored in px (BUG-082)
+    const isLength = 'length' in field && field.length;
+    const show = (px: number | undefined) =>
+        isLength && typeof px === 'number' ? toUnit(px, unit) : px;
     return (
         <NumberField
             label={field.label}
             aria-label={field.name}
             title={field.name}
-            unit={'unit' in field ? field.unit : undefined}
-            min={'min' in field ? field.min : undefined}
+            unit={
+                isLength
+                    ? unit === 'px'
+                        ? undefined
+                        : unit
+                    : 'unit' in field
+                      ? field.unit
+                      : undefined
+            }
+            precision={isLength ? unitPrecision(unit) : undefined}
+            min={'min' in field ? show(field.min) : undefined}
             max={'max' in field ? field.max : undefined}
-            value={value}
+            value={show(value as number)}
             disabled={!hasSelection}
-            onCommit={(v) => setTransform(field.key as keyof Transform, v)}
+            onCommit={(v) =>
+                setTransform(field.key as keyof Transform, isLength ? fromUnit(v, unit) : v)
+            }
             stepper="stack"
             size="toolbar"
             className="w-24"
@@ -41,6 +59,9 @@ const RadiusFields = memo(function RadiusFields() {
     const rx = useStore((s) => s.transform.rx);
     const ry = useStore((s) => s.transform.ry);
     const setRadius = useStore((s) => s.setRadius);
+    const unit = useUnit();
+    const d = unitPrecision(unit);
+    const label = unit === 'px' ? undefined : unit;
     return (
         <div className="flex items-center gap-2 px-2">
             <GlowDivider />
@@ -49,8 +70,10 @@ const RadiusFields = memo(function RadiusFields() {
                 label="Rx"
                 aria-label="Corner radius X"
                 min={0}
-                value={rx}
-                onCommit={(v) => setRadius(v, ry)}
+                unit={label}
+                precision={d}
+                value={toUnit(rx, unit)}
+                onCommit={(v) => setRadius(fromUnit(v, unit), ry)}
                 stepper="stack"
                 size="toolbar"
                 className="w-24"
@@ -59,8 +82,10 @@ const RadiusFields = memo(function RadiusFields() {
                 label="Ry"
                 aria-label="Corner radius Y"
                 min={0}
-                value={ry}
-                onCommit={(v) => setRadius(rx, v)}
+                unit={label}
+                precision={d}
+                value={toUnit(ry, unit)}
+                onCommit={(v) => setRadius(rx, fromUnit(v, unit))}
                 stepper="stack"
                 size="toolbar"
                 className="w-24"

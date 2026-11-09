@@ -10,6 +10,8 @@ import { CANVAS_PRESETS, DEFAULT_CANVAS_PRESET } from '../board.config';
 import type { CanvasPreset, CanvasSizePanelProps } from '../board.type';
 import { PanelAction } from '@/components/molecules/PanelAction';
 import { Chip } from '@/components/atoms/Chip';
+import { useUnit } from '@hooks/useUnit';
+import { formatSize, fromUnit, toUnit, unitPrecision } from '@/lib/units';
 
 export { DEFAULT_CANVAS_PRESET };
 
@@ -90,8 +92,14 @@ export function CanvasSizePanel(props: Partial<CanvasSizePanelProps>) {
     const [query, setQuery] = useState('');
     const [category, setCategory] = useState<CategoryFilter>('All');
     const [showCustom, setShowCustom] = useState(false);
-    const [customWidth, setCustomWidth] = useState(String(selectedPreset.width));
-    const [customHeight, setCustomHeight] = useState(String(selectedPreset.height));
+    // shown / typed in Settings > Units, stored in px (BUG-082)
+    const unit = useUnit();
+    const inUnit = (px: number) => {
+        const f = 10 ** unitPrecision(unit);
+        return String(Math.round(toUnit(px, unit) * f) / f);
+    };
+    const [customWidth, setCustomWidth] = useState(() => inUnit(selectedPreset.width));
+    const [customHeight, setCustomHeight] = useState(() => inUnit(selectedPreset.height));
     const [customError, setCustomError] = useState('');
 
     const filteredPresets = useMemo(() => {
@@ -115,18 +123,27 @@ export function CanvasSizePanel(props: Partial<CanvasSizePanelProps>) {
     };
 
     const applyCustomSize = () => {
-        const width = Number(customWidth);
-        const height = Number(customHeight);
+        const typedW = Number(customWidth);
+        const typedH = Number(customHeight);
+        // px must be whole numbers; mm / cm / in may have decimals and are rounded to whole px
+        const pxOk = unit !== 'px' || (Number.isInteger(typedW) && Number.isInteger(typedH));
+        const width = Math.round(fromUnit(typedW, unit));
+        const height = Math.round(fromUnit(typedH, unit));
 
         if (
-            !Number.isInteger(width) ||
-            !Number.isInteger(height) ||
+            !pxOk ||
+            !Number.isFinite(width) ||
+            !Number.isFinite(height) ||
             width < 1 ||
             height < 1 ||
             width > 10000 ||
             height > 10000
         ) {
-            setCustomError('Enter whole-number dimensions between 1 and 10,000 px.');
+            setCustomError(
+                unit === 'px'
+                    ? 'Enter whole-number dimensions between 1 and 10,000 px.'
+                    : `Enter dimensions between ${inUnit(1)} and ${inUnit(10000)} ${unit}.`,
+            );
             return;
         }
 
@@ -160,7 +177,7 @@ export function CanvasSizePanel(props: Partial<CanvasSizePanelProps>) {
                             {selectedPreset.label}
                         </p>
                         <p className="text-xs text-ink-muted">
-                            {selectedPreset.width} × {selectedPreset.height} px
+                            {formatSize(selectedPreset.width, selectedPreset.height, unit)}
                         </p>
                     </div>
                     <Icon name="check" className="text-primary-ink" />
@@ -254,7 +271,7 @@ export function CanvasSizePanel(props: Partial<CanvasSizePanelProps>) {
                                             {preset.label}
                                         </span>
                                         <span className="block text-xs text-ink-muted">
-                                            {preset.width} × {preset.height} px
+                                            {formatSize(preset.width, preset.height, unit)}
                                         </span>
                                     </span>
 
@@ -294,18 +311,16 @@ export function CanvasSizePanel(props: Partial<CanvasSizePanelProps>) {
                     <div className="mt-2 space-y-2">
                         <div className="grid grid-cols-2 gap-2">
                             <Input
-                                label="Width (px)"
+                                label={`Width (${unit})`}
                                 type="number"
-                                min={1}
-                                max={10000}
+                                min={0}
                                 value={customWidth}
                                 onChange={(event) => setCustomWidth(event.target.value)}
                             />
                             <Input
-                                label="Height (px)"
+                                label={`Height (${unit})`}
                                 type="number"
-                                min={1}
-                                max={10000}
+                                min={0}
                                 value={customHeight}
                                 onChange={(event) => setCustomHeight(event.target.value)}
                             />

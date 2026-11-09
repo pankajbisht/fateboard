@@ -3,14 +3,11 @@ import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { cssToken, useThemeVersion } from '@hooks/useThemeVersion';
 export const RULER_SIZE = 20;
 
-export type RulerUnit = 'px' | 'mm' | 'cm' | 'in';
-/** Document px per unit (CSS reference: 96 px = 1 in). */
-export const PX_PER_UNIT: Record<RulerUnit, number> = {
-    px: 1,
-    mm: 96 / 25.4,
-    cm: 96 / 2.54,
-    in: 96,
-};
+import { PX_PER_UNIT as UNIT_PX, type Unit } from '@/lib/units';
+
+/** Same units / conversion as the size fields (`lib/units`, BUG-082). */
+export type RulerUnit = Unit;
+export const PX_PER_UNIT = UNIT_PX;
 
 export type RulerTick = { u: number; size: number; label?: string };
 

@@ -282,7 +282,7 @@ application.
 orientation ('LANDSCAPE'|'PORTRAIT'), freehand: boolean, format, lastPageFormat, customSize (mm) }`.
 **Actions:** `load` (unused; `RootLayout` calls `hydrate` instead), `hydrate`, `initTheme` (unused), `setMode`,
 `setIconSize`, `setBackgroundStyle`*, `setBackgroundColor`*, (`setGridSize` removed: Notebook owns it), `setSnapToGrid`,
-`setShowRulers`, `setUnit`, `setFreehand`, `toggleFreehand`, `setFormat`, (`setOrientation` removed: Page owns it),
+`setShowRulers`, `setUnit` (rulers and size fields, via `lib/units` + `hooks/useUnit`; values stay in px), `setFreehand`, `toggleFreehand`, `setFormat`, (`setOrientation` removed: Page owns it),
 `setCustomSize`, `resetSettings`, `updateSetting`, `applyTheme`, `opendbSave`. (*collision)
 Pure helpers worth unit testing: `sanitizeSettings`, `getCanvasSize`, `clampDimension`, `clampGridSize`, `isHexColor`.
 **Risks:** BUG-015 (consumers compare `freehand` to strings), BUG-023.
