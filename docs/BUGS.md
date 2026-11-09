@@ -187,6 +187,7 @@ New bugs get the next free ID and start as `open`.
 | BUG-150 | Minor | perf / pages | open | With the Pages panel open, each change repaints the whole scene for a thumbnail on the main thread 500 ms later (`makeThumbnail`: 125 ms at 1500 objects) |
 | BUG-151 | Medium | help / accuracy | fixed (2026-11-09, help rebuild): every topic rewritten from the code, guarded by `helpTopics.test.ts` | Help promised things that do not exist: `P` / `S` / `T` / `C` tool keys, PDF export, `⌘A` select all, Space to pan, arrow keys moving objects, `⌘Y` redo; gave `⌘⇧G` for Ungroup (real key `⌘⇧U`); and said Shift keeps proportions (it is the reverse). Animate, Filters, Export, Layers, Pages, Templates, tiling tools, linked clones and shape operations had no help at all |
 | BUG-152 | Minor | layers / shortcuts | open | The Layers right-click menu shows `Ctrl+Shift+]`, `Ctrl+]`, `Ctrl+[`, `Ctrl+Shift+[`, `Ctrl+/` and `Ctrl+Shift+G`, which do nothing: `handleLayerKeyDown` is never called. The working keys are `⌘⇧↑`, `⌘↑`, `⌘↓`, `⌘⇧↓`, `⌘L` / `⌘⇧L`, `⌘⇧U` |
+| BUG-153 | High | CI / coverage | fixed (2026-11-09, `fix/coverage-gate`): the guard test reads the configs as text (`helpTopics.test.ts`); coverage 55.78 % lines, limits unchanged | `helpTopics.test.ts` imported the rail and dock configs, which loaded every panel. About 1,100 untested lines joined the coverage total (51.75 % lines against a limit of 54 %), so `quality` failed on the first CI run |
 
 ## Details
 
