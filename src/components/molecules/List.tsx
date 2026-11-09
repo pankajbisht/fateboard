@@ -1,6 +1,6 @@
 function List({ items, keyExtractor, renderItem, emptySlot }) {
     if (!items || items.length === 0) {
-        return emptySlot ?? <div className="p-3 text-sm text-gray-500">No results</div>;
+        return emptySlot ?? <div className="p-3 text-sm text-ink-muted">No results</div>;
     }
 
     return (

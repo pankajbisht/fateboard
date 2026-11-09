@@ -1,3 +1,4 @@
+import { Icon } from '@/components/atoms/Icon';
 import { shortcut } from '@/lib/utils/isMac';
 import { useStore } from '@/store';
 
@@ -8,10 +9,10 @@ export const LockBarConfig = [
         title: 'Lock selected object',
         description: 'Lock selected object',
         shortcut: shortcut('⌘L', 'Ctrl+L'),
-        icon: <i className="fa-solid fa-lock" />,
+        icon: <Icon name="lock" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().lock(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { lock } = get();
             lock();
         },
@@ -22,10 +23,10 @@ export const LockBarConfig = [
         title: 'Unlock selected object',
         description: 'Unlock selected object',
         shortcut: shortcut('⌘⇧L', 'Ctrl+Shift+L'),
-        icon: <i className="fa-solid fa-lock-open" />,
+        icon: <Icon name="lock-open" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().unlock(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { unlock } = get();
             unlock();
         },

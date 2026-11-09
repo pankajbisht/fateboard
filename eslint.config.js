@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint';
 import { globalIgnores } from 'eslint/config';
 
 export default tseslint.config([
-    globalIgnores(['dist']),
+    // build / test output is generated, never linted
+    globalIgnores(['dist', 'dist-e2e', 'coverage', 'playwright-report', 'test-results']),
     {
         files: ['**/*.{ts,tsx}'],
         extends: [
@@ -43,7 +44,11 @@ export default tseslint.config([
         files: ['src/**'],
         rules: {
             '@typescript-eslint/no-explicit-any': 'warn',
-            '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+            '@typescript-eslint/no-unused-vars': [
+                'warn',
+                // `_name` = deliberately unused (omitted from a rest spread, unused callback arg)
+                { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+            ],
             'react-refresh/only-export-components': 'off',
             'react-hooks/exhaustive-deps': 'warn',
         },

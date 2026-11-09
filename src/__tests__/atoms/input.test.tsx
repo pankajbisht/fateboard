@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { Input } from 'src/components/atoms/Input';
+import { Input } from '@/components/atoms/Input';
 
 describe('Input atom', () => {
     it('renders label and value, shows error text when error string provided', () => {

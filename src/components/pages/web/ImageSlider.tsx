@@ -79,7 +79,7 @@ function ImageSlider({ images }: ImageSliderProps) {
                     BACKGROUND GLOW
                 ================================================= */}
 
-                <div className="pointer-events-none absolute -inset-8 rounded-[3rem] bg-indigo-500/10 blur-3xl" />
+                <div className="pointer-events-none absolute -inset-8 rounded-[3rem] bg-primary-500/10 blur-3xl" />
 
                 <div className="relative">
                     {/* =================================================
@@ -88,23 +88,23 @@ function ImageSlider({ images }: ImageSliderProps) {
 
                     <div className="mb-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-sm font-bold text-white shadow-lg shadow-indigo-200">
+                            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-600 text-sm font-bold text-white shadow-lg shadow-primary-200">
                                 F
                             </span>
 
                             <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-600">
+                                <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary-600">
                                     Fateboard
                                 </p>
 
-                                <p className="text-xs text-gray-400">Canvas preview</p>
+                                <p className="text-xs text-gray-600">Canvas preview</p>
                             </div>
                         </div>
 
                         <div className="hidden items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-500 shadow-sm sm:flex">
                             <span
                                 className={`h-2 w-2 rounded-full ${
-                                    isPaused ? 'bg-gray-400' : 'animate-pulse bg-indigo-500'
+                                    isPaused ? 'bg-gray-400' : 'animate-pulse bg-primary-500'
                                 }`}
                             />
 
@@ -127,8 +127,8 @@ function ImageSlider({ images }: ImageSliderProps) {
                             </div>
 
                             <div className="mx-auto flex h-7 max-w-xs flex-1 items-center justify-center rounded-lg border border-gray-200 bg-white px-3">
-                                <div className="flex items-center gap-2 text-[10px] text-gray-400">
-                                    <span className="text-indigo-500">✦</span>
+                                <div className="flex items-center gap-2 text-[10px] text-gray-600">
+                                    <span className="text-primary-500">✦</span>
                                     fateboard.app
                                 </div>
                             </div>
@@ -136,7 +136,7 @@ function ImageSlider({ images }: ImageSliderProps) {
                             <button
                                 type="button"
                                 onClick={() => setIsZoomed(true)}
-                                className="ml-3 hidden rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm transition hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-600 sm:block"
+                                className="ml-3 hidden rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm transition hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
                             >
                                 ⛶
                             </button>
@@ -146,9 +146,9 @@ function ImageSlider({ images }: ImageSliderProps) {
                             IMAGE AREA
                         ================================================= */}
 
-                        <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-gray-100 via-white to-indigo-50 p-3 sm:p-5">
+                        <div className="relative aspect-[16/10] overflow-hidden bg-gradient-to-br from-gray-100 via-white to-primary-50 p-3 sm:p-5">
                             {/* Decorative background */}
-                            <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-100/40 blur-3xl" />
+                            <div className="pointer-events-none absolute left-1/2 top-1/2 h-72 w-72 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary-100/40 blur-3xl" />
 
                             {/* Screenshot */}
                             <div className="relative h-full w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
@@ -171,7 +171,7 @@ function ImageSlider({ images }: ImageSliderProps) {
                                 type="button"
                                 onClick={previous}
                                 aria-label="Previous screenshot"
-                                className="group absolute left-5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/95 text-gray-600 opacity-0 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-indigo-600 hover:text-white focus:opacity-100 group-hover:opacity-100"
+                                className="group absolute left-5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/95 text-gray-600 opacity-0 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-primary-600 hover:text-white focus:opacity-100 group-hover:opacity-100"
                             >
                                 <span className="text-lg transition-transform group-hover:-translate-x-0.5">
                                     ←
@@ -186,7 +186,7 @@ function ImageSlider({ images }: ImageSliderProps) {
                                 type="button"
                                 onClick={next}
                                 aria-label="Next screenshot"
-                                className="group absolute right-5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/95 text-gray-600 opacity-0 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-indigo-600 hover:text-white focus:opacity-100 group-hover:opacity-100"
+                                className="group absolute right-5 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-white/70 bg-white/95 text-gray-600 opacity-0 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-110 hover:bg-primary-600 hover:text-white focus:opacity-100 group-hover:opacity-100"
                             >
                                 <span className="text-lg transition-transform group-hover:translate-x-0.5">
                                     →
@@ -218,7 +218,7 @@ function ImageSlider({ images }: ImageSliderProps) {
                             {!isPaused && (
                                 <div
                                     key={index}
-                                    className="h-full origin-left bg-indigo-600"
+                                    className="h-full origin-left bg-primary-600"
                                     style={{
                                         animation: 'sliderProgress 5s linear',
                                     }}
@@ -243,8 +243,8 @@ function ImageSlider({ images }: ImageSliderProps) {
                                         onClick={() => setIndex(imageIndex)}
                                         className={`group relative h-16 w-24 shrink-0 overflow-hidden rounded-xl border-2 bg-white transition-all duration-300 sm:h-20 sm:w-28 ${
                                             active
-                                                ? 'border-indigo-600 shadow-lg shadow-indigo-100'
-                                                : 'border-gray-200 opacity-60 hover:border-indigo-300 hover:opacity-100'
+                                                ? 'border-primary-600 shadow-lg shadow-primary-100'
+                                                : 'border-gray-200 opacity-60 hover:border-primary-300 hover:opacity-100'
                                         }`}
                                     >
                                         <img
@@ -254,7 +254,7 @@ function ImageSlider({ images }: ImageSliderProps) {
                                         />
 
                                         {active && (
-                                            <div className="absolute inset-x-0 bottom-0 h-1 bg-indigo-600" />
+                                            <div className="absolute inset-x-0 bottom-0 h-1 bg-primary-600" />
                                         )}
                                     </button>
                                 );
@@ -281,8 +281,8 @@ function ImageSlider({ images }: ImageSliderProps) {
                                 aria-label={`Go to screenshot ${imageIndex + 1}`}
                                 className={`h-1.5 rounded-full transition-all duration-300 ${
                                     imageIndex === index
-                                        ? 'w-8 bg-indigo-600'
-                                        : 'w-1.5 bg-gray-300 hover:bg-indigo-300'
+                                        ? 'w-8 bg-primary-600'
+                                        : 'w-1.5 bg-gray-300 hover:bg-primary-300'
                                 }`}
                             />
                         ))}

@@ -5,3 +5,7 @@ export * from './ui/LockBarConfig';
 export * from './ui/GroupBarConfig';
 export * from './ui/ZoomBarConfig';
 export * from './ui/UndoRedoBarConfig';
+export * from './ui/ToolBarConfig';
+export * from './ui/LinkBarConfig';
+export * from './ui/TextBarConfig';
+export * from './ui/CanvasKeysConfig';

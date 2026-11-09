@@ -1,42 +1,34 @@
+import React from 'react';
+import clsx from 'clsx';
+import { SIDE_PANEL_WIDTH, sidePanelFrame } from './sidebar/sidebar.const';
+
+/**
+ * The right dock's panel frame (opens to the left of the dock rail). Collapsing is done from the
+ * rail; the old drag-to-resize handle was removed, so the width is fixed.
+ */
 export const DockPanel = ({
     open,
-    width = 320,
-    onToggle,
-    scrollRef,
-    onScrollSave,
+    width = SIDE_PANEL_WIDTH,
     children,
 }: {
     open: boolean;
     width?: number;
-    onToggle: () => void;
-    scrollRef: React.RefObject<HTMLDivElement>;
-    onScrollSave: (scrollTop: number) => void;
     children: React.ReactNode;
-}) => {
-    return (
-        <div className="relative flex h-full">
-            {/* 3-dot handle */}
-            <button
-                onClick={onToggle}
-                className="w-2 border border-stone-200 cursor-ew-resize flex items-center justify-center bg-stone-200 hover:bg-stone-300"
-            >
-                <i className="fa-solid fa-ellipsis-vertical" />
-            </button>
-
-            {/* panel */}
+}) => (
+    <div className="relative flex h-full">
+        <div
+            data-testid="dock-panel"
+            aria-hidden={!open}
+            inert={!open}
+            className={clsx(sidePanelFrame, open && 'border-l')}
+            style={{ width: open ? width : 0, minWidth: 0 }}
+        >
             <div
-                className="bg-white shadow-
-        xl border-l border-stone-200 transition-[width,opacity] duration-300 overflow-hidden"
-                style={{ width: open ? width : 0, opacity: open ? 1 : 0 }}
+                style={{ width }} // fixed inner width -> no reflow while animating
+                className="h-full"
             >
-                <div
-                    ref={scrollRef}
-                    onScroll={(e) => onScrollSave((e.target as HTMLDivElement).scrollTop)}
-                    className="h-full overflow-y-auto"
-                >
-                    {children}
-                </div>
+                {children}
             </div>
         </div>
-    );
-};
+    </div>
+);

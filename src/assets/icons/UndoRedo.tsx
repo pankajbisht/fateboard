@@ -6,10 +6,10 @@ const UndoIcon = () => {
                 focusable="false"
                 role="img"
                 viewBox="0 0 20 20"
-                class=""
+                className=""
                 fill="none"
                 stroke="currentColor"
-                trokeLinecap="round"
+                strokeLinecap="round"
                 strokeLinejoin="round"
             >
                 <path

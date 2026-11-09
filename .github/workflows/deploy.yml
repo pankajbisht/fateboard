@@ -1,0 +1,29 @@
+# Reusable: publish the Pages artifact uploaded by build.yml in the same run.
+# The caller must grant `pages: write` and `id-token: write`, and must only call this
+# on a push to main (ci.yml does; never from a PR, BUG-057).
+name: Deploy
+
+on:
+    workflow_call:
+
+jobs:
+    deploy:
+        name: Deploy to GitHub Pages
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        permissions:
+            pages: write # deploy to Pages
+            id-token: write # OIDC token proving the deployment's origin
+        environment:
+            name: github-pages
+            url: ${{ steps.deployment.outputs.page_url }}
+        concurrency:
+            group: pages
+            cancel-in-progress: false # never abort a live deploy half-way
+        steps:
+            - name: Configure Pages
+              uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+
+            - name: Deploy
+              id: deployment
+              uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

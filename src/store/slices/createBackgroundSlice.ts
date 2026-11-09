@@ -8,12 +8,13 @@ type PatternFactoryCtx = {
 
 type PatternFactory = (ctx: PatternFactoryCtx) => fabricNS.Pattern | null;
 
-const getFabric = () => (fabricNS as any).fabric ?? fabricNS;
+// Fabric 7 is an ES module namespace (no `fabric` default export, BUG-143)
+const getFabric = () => fabricNS;
 
 const gridPattern: PatternFactory = ({ get }) => {
     const fabric = getFabric();
 
-    const size = Math.max(2, get().gridSize);
+    const size = Math.max(2, get().patternSize);
     const majorEvery = Math.max(1, get().gridMajorEvery);
     const tileSize = size * majorEvery;
 
@@ -82,7 +83,7 @@ const ruledPattern: PatternFactory = ({ get }) => {
 const dotsPattern: PatternFactory = ({ get }) => {
     const fabric = getFabric();
 
-    const gap = Math.max(6, get().gridSize);
+    const gap = Math.max(6, get().patternSize);
     const tile = document.createElement('canvas');
     tile.width = tile.height = gap;
 
@@ -100,7 +101,7 @@ const dotsPattern: PatternFactory = ({ get }) => {
 const isometricPattern: PatternFactory = ({ get }) => {
     const fabric = getFabric();
 
-    const size = Math.max(16, get().gridSize * 2);
+    const size = Math.max(16, get().patternSize * 2);
     const tile = document.createElement('canvas');
     tile.width = tile.height = size;
 
@@ -127,10 +128,11 @@ const BACKGROUND_PATTERNS: Record<BackgroundStyle, PatternFactory | null> = {
     isometric: isometricPattern,
 };
 
-export const createBackgroundSlice = (set, get, store) => ({
+export const createBackgroundSlice = (set, get, _store) => ({
     backgroundStyle: 'none' as BackgroundStyle,
 
-    gridSize: 20,
+    /** Background pattern cell size (BUG-002: was `gridSize`, which the notebook grid owns). */
+    patternSize: 20,
     gridColor: '#e0e0e0',
     gridMajorEvery: 5,
     gridMajorColor: '#bdbdbd',
@@ -140,17 +142,6 @@ export const createBackgroundSlice = (set, get, store) => ({
     ruledLineHeight: 24,
     ruledColor: '#c0d6ff',
     ruledLineWidth: 1,
-
-    setBackgroundStyle: (style: BackgroundStyle) => {
-        set({ backgroundStyle: style });
-        get().drawBackground();
-    },
-
-    toggleGrid: () => {
-        const next = get().backgroundStyle === 'grid' ? 'none' : 'grid';
-        set({ backgroundStyle: next });
-        get().drawBackground();
-    },
 
     setGridOptions: (opts) => {
         set(opts);
@@ -170,7 +161,12 @@ export const createBackgroundSlice = (set, get, store) => ({
         const factory = BACKGROUND_PATTERNS[style];
 
         if (!factory) {
-            canvas.backgroundColor = null;
+            // no pattern: the page keeps its own colour (BUG-022: this used to null it on every
+            // fit / page-size reset, so the background vanished)
+            const pageBackground = get().pageBackground;
+            if (typeof pageBackground === 'string' && pageBackground) {
+                canvas.backgroundColor = pageBackground;
+            }
             canvas.requestRenderAll();
             return;
         }

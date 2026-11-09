@@ -1,7 +1,7 @@
 const HeaderViewTool = ({ brand, toolbar, transform }) => {
     return (
-        <section className="flex flex-col">
-            <div className="flex flex-row items-center">
+        <section className="flex min-w-0 flex-1 flex-col">
+            <div className="flex min-w-0 flex-row items-center">
                 {brand}
                 {toolbar}
             </div>

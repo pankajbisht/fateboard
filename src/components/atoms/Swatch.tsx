@@ -1,38 +1,42 @@
-import React from 'react';
 import clsx from 'clsx';
+import { forwardRef, type ButtonHTMLAttributes } from 'react';
 
-type SwatchProp = {
-    bgColor: string;
-    isActive?: boolean;
-    onClick?: () => void;
-    className?: string;
+export type SwatchState = 'none' | 'active';
+
+type SwatchProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'color'> & {
+    /** CSS color painted in the box. */
+    color: string;
+    /** Accessible name and tooltip, e.g. "Red 500 · #fb2c36". */
+    label: string;
+    /** `active` = this is the current color (brand ring). */
+    state?: SwatchState;
 };
 
-export const Swatch: React.FC<SwatchProp> = ({
-    bgColor,
-    isActive = false,
-    onClick,
-    className = '',
-}) => {
-    return (
-        <div
-            onClick={onClick}
-            role="button"
-            tabIndex={0}
+/**
+ * One palette color. Square box sized by Settings > Icon size (`--ui-swatch`); the current color
+ * gets a brand ring.
+ */
+export const Swatch = forwardRef<HTMLButtonElement, SwatchProps>(
+    ({ color, label, state = 'none', className, style, ...rest }, ref) => (
+        <button
+            ref={ref}
+            type="button"
+            aria-label={label}
+            title={label}
+            aria-pressed={state === 'active'}
+            data-state={state}
             className={clsx(
-                'relative w-5 h-5 ml-px mb-px border border-stone-300 cursor-pointer',
-                bgColor,
+                'relative size-[var(--ui-swatch)] shrink-0 cursor-pointer border border-black/10 dark:border-white/15',
+                'transition-transform hover:z-10 hover:scale-110 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-1 focus-visible:ring-offset-surface',
+                state === 'active' &&
+                    'z-10 ring-2 ring-primary-500 ring-offset-1 ring-offset-surface',
                 className,
             )}
-        >
-            {isActive && (
-                <span
-                    className="absolute inset-0 m-auto w-2 h-2 rounded-full bg-white"
-                    style={{ boxShadow: '0 0 0 1px #000' }}
-                />
-            )}
-        </div>
-    );
-};
+            style={{ ...style, backgroundColor: color }}
+            {...rest}
+        ></button>
+    ),
+);
+Swatch.displayName = 'Swatch';
 
 export default Swatch;

@@ -117,8 +117,8 @@ export default function NotFound() {
 
     return (
         <div className="flex flex-col items-center p-6 font-sans m-4">
-            <h1 className="text-7xl font-bold text-red-600">404</h1>
-            <p className="m-4 text-lg text-gray-700">Oops! Page not found.</p>
+            <h1 className="text-7xl font-bold text-danger">404</h1>
+            <p className="m-4 text-lg text-ink">Oops! Page not found.</p>
 
             {!gameOver ? (
                 <canvas
@@ -126,11 +126,11 @@ export default function NotFound() {
                     ref={canvasRef}
                     width={600}
                     height={400}
-                    className="border border-gray-400 rounded shadow"
+                    className="border border-line-strong rounded shadow"
                 />
             ) : (
                 <div className="flex flex-col items-center">
-                    <p className="text-xl text-red-600 font-semibold m-4">
+                    <p className="text-xl text-danger font-semibold m-4">
                         💀 Game Over! Final Score: {score}
                     </p>
                     <button
@@ -140,7 +140,7 @@ export default function NotFound() {
                             setGameOver(false);
                             setRestartKey((k) => k + 1);
                         }}
-                        className="mt-4 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-800"
+                        className="mt-4 px-6 py-2 bg-success text-white rounded-md hover:bg-success/90"
                     >
                         🔄 Restart Game
                     </button>
@@ -149,7 +149,7 @@ export default function NotFound() {
 
             <Link
                 to="/"
-                className="mt-6 px-6 py-3 bg-blue-600 text-white rounded-md font-semibold hover:bg-blue-800 transition"
+                className="mt-6 px-6 py-3 bg-primary-600 text-white rounded-md font-semibold hover:bg-primary-800 transition"
             >
                 Go Back Home
             </Link>

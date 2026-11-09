@@ -1,14 +1,10 @@
-import { shortcut } from '@/lib/utils/isMac';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
-import { useStore } from '@/store';
 import { EditBarConfig } from '@/components/config/toolbars';
 
 const EditBar = () => {
-    const iconSize = useStore((state) => state.iconSize);
-
     return (
-        <ul className="flex items-center gap-2 px-1">
+        <ul className="flex items-center gap-0.5">
             {EditBarConfig.map((action) => (
                 <li key={action.id}>
                     <Tooltip
@@ -16,7 +12,7 @@ const EditBar = () => {
                         content={
                             <div className="flex flex-col">
                                 <span>{action.label}</span>
-                                <span className="text-xs opacity-60">{action.shortcut}</span>
+                                <span className="text-xs text-ink-muted">{action.shortcut}</span>
                             </div>
                         }
                     >
@@ -25,7 +21,7 @@ const EditBar = () => {
                             title={action.label}
                             aria-label={action.label}
                             onClick={action.onClick}
-                            size={iconSize}
+                            size="chrome"
                         />
                     </Tooltip>
                 </li>

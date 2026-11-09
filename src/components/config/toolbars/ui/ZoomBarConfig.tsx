@@ -1,3 +1,4 @@
+import { Icon } from '@/components/atoms/Icon';
 import { shortcut } from '@/lib/utils/isMac';
 import { useStore } from '@/store';
 
@@ -7,10 +8,10 @@ export const ZoomBarConfig = [
         label: 'Zoom In',
         title: 'Zoom In',
         description: 'Zoom In',
-        shortcut: shortcut('⌘+equal', 'Ctrl++'),
-        icon: <i className="fa-solid fa-magnifying-glass-plus" />,
+        shortcut: shortcut('⌘+equal', 'Ctrl+Equal'),
+        icon: <Icon name="magnifying-glass-plus" />,
         onClick: () => useStore.getState().zoomIn(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { zoomIn } = get();
             zoomIn();
         },
@@ -20,10 +21,10 @@ export const ZoomBarConfig = [
         label: 'Zoom Out',
         title: 'Zoom Out',
         description: 'Zoom Out',
-        shortcut: shortcut('⌘+minus', 'Ctrl+-'),
-        icon: <i className="fa-solid fa-magnifying-glass-minus" />,
+        shortcut: shortcut('⌘+minus', 'Ctrl+Minus'),
+        icon: <Icon name="magnifying-glass-minus" />,
         onClick: () => useStore.getState().zoomOut(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { zoomOut } = get();
             zoomOut();
         },
@@ -33,10 +34,10 @@ export const ZoomBarConfig = [
         label: 'Fit to Screen',
         title: 'Fit to Screen',
         description: 'Fit to Screen',
-        shortcut: shortcut('⌘+Digit0', 'Ctrl+0'),
-        icon: <i className="fa-solid fa-expand" />,
+        shortcut: shortcut('⌘+Digit0', 'Ctrl+Digit0'),
+        icon: <Icon name="expand" />,
         onClick: () => useStore.getState().zoomFit(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { zoomFit } = get();
             zoomFit();
         },
@@ -46,10 +47,10 @@ export const ZoomBarConfig = [
         label: 'Actual Size',
         title: 'Actual Size',
         description: 'Actual Size',
-        shortcut: shortcut('⌘+Digit1', 'Ctrl+1'),
-        icon: <i className="fa-solid fa-arrows-left-right" />,
+        shortcut: shortcut('⌘+Digit1', 'Ctrl+Digit1'),
+        icon: <Icon name="arrows-left-right" />,
         onClick: () => useStore.getState().actualSize(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { actualSize } = get();
             actualSize();
         },

@@ -4,10 +4,9 @@ import { Tooltip } from '../../../../molecules/Tooltip';
 import { importFile } from '@/feature/import';
 import { useRef } from 'react';
 import { FileBarConfig } from '@/components/config/toolbars';
+import { OPEN_ACCEPT } from '@/components/config/toolbars/fileActions';
 
 function getFileActions(handlers) {
-    // console.log(FileBarConfig, handlers.openFile);
-
     const x = FileBarConfig.map((config) => {
         if (config.id !== 'open') return config;
 
@@ -21,8 +20,6 @@ function getFileActions(handlers) {
 }
 
 const FileBar = () => {
-    const iconSize = useStore((state) => state.settings.iconSize);
-
     const fileInputRef = useRef(null);
     const canvas = useStore((s) => s.canvas);
 
@@ -34,14 +31,12 @@ const FileBar = () => {
         openFile: handleUploadClick,
     });
 
-    // console.log(actions);
-
     return (
         <>
             <input
                 ref={fileInputRef}
                 type="file"
-                accept=".png,.jpg,.jpeg,.webp,.svg,.fateboard"
+                accept={OPEN_ACCEPT}
                 hidden
                 onChange={async (e) => {
                     if (!canvas) return;
@@ -52,7 +47,7 @@ const FileBar = () => {
                 }}
             />
 
-            <ul className="flex items-center gap-2 px-1">
+            <ul className="flex items-center gap-0.5">
                 {actions.map((action) => (
                     <li key={action.id}>
                         <Tooltip
@@ -60,16 +55,18 @@ const FileBar = () => {
                             content={
                                 <div className="flex flex-col">
                                     <span>{action.label}</span>
-                                    <span className="text-xs opacity-60">{action.shortcut}</span>
+                                    <span className="text-xs text-ink-muted">
+                                        {action.shortcut}
+                                    </span>
                                 </div>
                             }
                         >
                             <IconButton
                                 icon={action.icon}
-                                title={action.tooltip}
-                                aria-label={action.tooltip}
+                                title={action.title}
+                                aria-label={action.title}
                                 onClick={action.onClick}
-                                size={iconSize}
+                                size="chrome"
                             />
                         </Tooltip>
                     </li>

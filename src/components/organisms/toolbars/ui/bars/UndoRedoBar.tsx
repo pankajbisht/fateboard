@@ -1,13 +1,16 @@
-import { useStore } from '@/store';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
 import { UndoRedoBarConfig } from '@/components/config/toolbars';
+import { useStore } from '@store';
 
+/** Undo / Redo of the canvas history (per page); disabled when there is nothing to undo / redo. */
 const UndoRedoBar = () => {
-    const iconSize = useStore((state) => state.settings.iconSize);
+    const canUndo = useStore((s) => s.canUndo);
+    const canRedo = useStore((s) => s.canRedo);
+    const enabled: Record<string, boolean> = { undo: canUndo, redo: canRedo };
 
     return (
-        <ul className="flex items-center gap-1 px-1">
+        <ul className="flex items-center gap-0.5">
             {UndoRedoBarConfig.map((action) => (
                 <li key={action.id}>
                     <Tooltip
@@ -15,7 +18,7 @@ const UndoRedoBar = () => {
                         content={
                             <div className="flex flex-col">
                                 <span>{action.label}</span>
-                                <span className="text-xs opacity-60">{action.shortcut}</span>
+                                <span className="text-xs text-ink-muted">{action.shortcut}</span>
                             </div>
                         }
                     >
@@ -24,7 +27,8 @@ const UndoRedoBar = () => {
                             title={action.label}
                             aria-label={action.label}
                             onClick={action.onClick}
-                            size={iconSize}
+                            disabled={!enabled[action.id]}
+                            size="chrome"
                         />
                     </Tooltip>
                 </li>

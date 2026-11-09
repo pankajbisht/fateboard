@@ -6,7 +6,7 @@ const RedoIcon = () => {
                 focusable="false"
                 role="img"
                 viewBox="0 0 20 20"
-                class=""
+                className=""
                 fill="none"
                 stroke="currentColor"
                 strokeLinecap="round"

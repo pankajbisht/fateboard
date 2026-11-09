@@ -1,0 +1,29 @@
+# Weekly dependency updates. Versions stay exact (.npmrc save-exact): Dependabot
+# bumps the pinned version instead of widening ranges.
+version: 2
+updates:
+    - package-ecosystem: npm
+      directory: /
+      schedule:
+          interval: weekly
+          day: monday
+      versioning-strategy: increase
+      open-pull-requests-limit: 10
+      groups:
+          # one PR for all patch/minor dev-tool bumps; majors and runtime deps stay separate
+          dev-tooling:
+              dependency-type: development
+              update-types: [minor, patch]
+      commit-message:
+          prefix: chore(deps)
+
+    - package-ecosystem: github-actions
+      directory: /
+      schedule:
+          interval: weekly
+          day: monday
+      groups:
+          actions:
+              patterns: ['*']
+      commit-message:
+          prefix: chore(ci)

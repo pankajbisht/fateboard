@@ -198,7 +198,7 @@ function MiniWhiteboard() {
     };
 
     return (
-        <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl shadow-indigo-100">
+        <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl shadow-primary-100">
             {/* =================================================
                 TOOLBAR
             ================================================= */}
@@ -212,8 +212,8 @@ function MiniWhiteboard() {
                         onClick={() => setTool('pen')}
                         className={`flex h-9 w-9 items-center justify-center rounded-lg text-lg transition ${
                             tool === 'pen'
-                                ? 'bg-indigo-600 text-white shadow-md'
-                                : 'bg-white text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'
+                                ? 'bg-primary-600 text-white shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-primary-50 hover:text-primary-600'
                         }`}
                         title="Pencil"
                     >
@@ -225,8 +225,8 @@ function MiniWhiteboard() {
                         onClick={() => setTool('rectangle')}
                         className={`flex h-9 w-9 items-center justify-center rounded-lg text-xl transition ${
                             tool === 'rectangle'
-                                ? 'bg-indigo-600 text-white shadow-md'
-                                : 'bg-white text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'
+                                ? 'bg-primary-600 text-white shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-primary-50 hover:text-primary-600'
                         }`}
                         title="Rectangle"
                     >
@@ -238,8 +238,8 @@ function MiniWhiteboard() {
                         onClick={() => setTool('circle')}
                         className={`flex h-9 w-9 items-center justify-center rounded-lg text-xl transition ${
                             tool === 'circle'
-                                ? 'bg-indigo-600 text-white shadow-md'
-                                : 'bg-white text-gray-600 hover:bg-indigo-50 hover:text-indigo-600'
+                                ? 'bg-primary-600 text-white shadow-md'
+                                : 'bg-white text-gray-600 hover:bg-primary-50 hover:text-primary-600'
                         }`}
                         title="Circle"
                     >
@@ -257,7 +257,7 @@ function MiniWhiteboard() {
                             onClick={() => setColor(item)}
                             aria-label={`Select ${item}`}
                             className={`h-5 w-5 rounded-full border-2 border-white shadow ring-1 transition ${
-                                color === item ? 'scale-125 ring-indigo-500' : 'ring-gray-200'
+                                color === item ? 'scale-125 ring-primary-500' : 'ring-gray-200'
                             }`}
                             style={{
                                 backgroundColor: item,
@@ -320,7 +320,7 @@ function MiniWhiteboard() {
                 {shapes.length === 0 && points.length === 0 && !drawing && (
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
-                            <div className="mb-3 text-3xl text-indigo-200">✦</div>
+                            <div className="mb-3 text-3xl text-primary-200">✦</div>
 
                             <p className="text-sm font-medium text-gray-400">Start drawing here</p>
 
@@ -403,7 +403,7 @@ function MiniWhiteboard() {
                 ================================================= */}
 
                 <div className="pointer-events-none absolute bottom-5 right-5 hidden items-center gap-2 rounded-full border border-gray-200 bg-white/90 px-3 py-2 text-xs text-gray-500 shadow-lg backdrop-blur sm:flex">
-                    <span className="h-2 w-2 animate-pulse rounded-full bg-indigo-500" />
+                    <span className="h-2 w-2 animate-pulse rounded-full bg-primary-500" />
                     Interactive canvas
                 </div>
             </div>

@@ -1,8 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import * as fabric from 'fabric';
-import paper from 'paper';
-import { BooleanEngine, extractStyle } from '@/lib/utils/BooleanEngine';
-import { createColorMethods } from './colorSystemFixes';
+import { computeBoolean, type BooleanOp } from '@/lib/booleanOps';
+import { collectPaintTargets, createColorMethods } from './colorSystemFixes';
+import {
+    SHADOW_PRESETS,
+    shadowToFabric,
+    toFabricGradient,
+    type GradientFill,
+    type ShadowStyle,
+} from '@/lib/fillStyle';
+import { PAINT_DEFAULTS, hasFill, hasStroke, isTextObject, paintTargets } from '@/lib/paintToggle';
 
 // Re-exported so existing imports (e.g. `import { cssColorToHex } from '.../shapeStyle'`) keep working
 export {
@@ -11,330 +18,39 @@ export {
     angleToCoords,
     createFabricGradient,
 } from './colorSystemFixes';
-export type { GradientStop, GradientConfig } from './colorSystemFixes';
+import { whenImageReady } from '@/lib/imageReady';
+export type { GradientStop, GradientConfig, PaintTarget } from './colorSystemFixes';
 
 const typeOf = (o: any) => (o?.type || '').toLowerCase();
 const TEXT_TYPES = ['text', 'itext', 'textbox'];
 
-const SHADOW_PRESETS: Record<string, any> = {
-    soft: { blur: 12, offsetX: 0, offsetY: 6, color: 'rgba(0,0,0,0.2)' },
-    medium: { blur: 20, offsetX: 0, offsetY: 10, color: 'rgba(0,0,0,0.25)' },
-    strong: { blur: 40, offsetX: 0, offsetY: 20, color: 'rgba(0,0,0,0.3)' },
+/* -------------------------------------------------------------------------- */
+/* Fill & shadow (right dock "Fill & Shadow" tab)                             */
+/* -------------------------------------------------------------------------- */
+
+type ApplyOpts = { history?: boolean };
+
+const BOOLEAN_OPS: BooleanOp[] = ['union', 'subtract', 'intersect', 'exclude', 'divide', 'crop'];
+/** Older menu entries that were duplicates of the real operations. */
+const BOOLEAN_ALIASES: Record<string, BooleanOp> = {
+    cut: 'divide',
+    punch: 'subtract',
+    smartUnion: 'union',
+    xorSplit: 'exclude',
 };
-
-/* -------------------------------------------------------------------------- */
-/* Gradient editor (on-canvas handles)                                        */
-/* -------------------------------------------------------------------------- */
-
-// canvas point -> object local (unscaled) point
-function canvasPointToObjectLocal(obj: fabric.Object, point: fabric.Point) {
-    const inverted = fabric.util.invertTransform(obj.calcTransformMatrix());
-    return fabric.util.transformPoint(point, inverted);
-}
-
-type StopHandle = { stop: fabric.Circle; offset: number };
-type StopData = { offset: number; color: string };
-
-export class GradientEditor {
-    canvas: fabric.Canvas;
-    target: fabric.Object | null = null;
-    mode: 'linear' | 'radial' = 'linear';
-
-    line?: fabric.Line;
-    start?: fabric.Circle;
-    end?: fabric.Circle;
-    center?: fabric.Circle;
-    radius?: fabric.Circle;
-    stops: StopHandle[] = [];
-
-    private onTargetChange = () => this.syncHelpers();
-
-    constructor(canvas: fabric.Canvas) {
-        this.canvas = canvas;
-    }
-
-    /* ---------- ATTACH ---------- */
-    attach(
-        obj: fabric.Object,
-        initialStops: StopData[] = [
-            { offset: 0, color: '#ff0000' },
-            { offset: 1, color: '#0000ff' },
-        ],
-    ) {
-        this.detach();
-        this.target = obj;
-
-        if (this.mode === 'linear') this.createLinearHandles();
-        else this.createRadialHandles();
-
-        initialStops.forEach((s) => this.addColorStop(s.offset, s.color));
-
-        // detach() removes these, so they never pile up
-        obj.on('moving', this.onTargetChange);
-        obj.on('scaling', this.onTargetChange);
-        obj.on('rotating', this.onTargetChange);
-
-        this.updateGradient();
-    }
-
-    /* ---------- HANDLES ---------- */
-    createHandle(x: number, y: number, color: string) {
-        const c = new fabric.Circle({
-            left: x,
-            top: y,
-            radius: 6,
-            fill: color,
-            originX: 'center',
-            originY: 'center',
-            hasControls: false,
-            hasBorders: false,
-            excludeFromExport: true,
-        });
-        (c as any)._isHelper = true;
-        return c;
-    }
-
-    createLinearHandles() {
-        if (!this.target) return;
-        const b = this.target.getBoundingRect();
-
-        this.start = this.createHandle(b.left, b.top + b.height / 2, '#2563eb');
-        this.end = this.createHandle(b.left + b.width, b.top + b.height / 2, '#dc2626');
-
-        this.line = new fabric.Line(
-            [this.start.left!, this.start.top!, this.end.left!, this.end.top!],
-            {
-                stroke: '#6366f1',
-                strokeWidth: 1,
-                selectable: false,
-                evented: false,
-                excludeFromExport: true,
-            },
-        );
-
-        const move = () => {
-            this.snapAngle();
-            this.updateGradient();
-        };
-        this.start.on('moving', move);
-        this.end.on('moving', move);
-
-        this.canvas.add(this.line, this.start, this.end);
-    }
-
-    createRadialHandles() {
-        if (!this.target) return;
-        const b = this.target.getBoundingRect();
-        const cx = b.left + b.width / 2;
-        const cy = b.top + b.height / 2;
-
-        this.center = this.createHandle(cx, cy, '#16a34a');
-        this.radius = this.createHandle(cx + b.width / 4, cy, '#9333ea');
-
-        this.center.on('moving', () => this.updateGradient());
-        this.radius.on('moving', () => this.updateGradient());
-
-        this.canvas.add(this.center, this.radius);
-    }
-
-    /* ---------- AXIS (linear: start->end, radial: center->radius) ---------- */
-    private axis() {
-        if (this.mode === 'linear') {
-            return {
-                x1: this.start!.left!,
-                y1: this.start!.top!,
-                x2: this.end!.left!,
-                y2: this.end!.top!,
-            };
-        }
-        return {
-            x1: this.center!.left!,
-            y1: this.center!.top!,
-            x2: this.radius!.left!,
-            y2: this.radius!.top!,
-        };
-    }
-
-    interpolate(t: number) {
-        const a = this.axis();
-        return { x: a.x1 + (a.x2 - a.x1) * t, y: a.y1 + (a.y2 - a.y1) * t };
-    }
-
-    /* ---------- COLOR STOPS ---------- */
-    addColorStop(offset: number, color: string) {
-        const p = this.interpolate(offset); // radial stops used to all sit on the center
-
-        const stop = new fabric.Circle({
-            left: p.x,
-            top: p.y,
-            radius: 5,
-            fill: color,
-            originX: 'center',
-            originY: 'center',
-            hasControls: false,
-            hasBorders: false,
-            excludeFromExport: true,
-        });
-        (stop as any)._isHelper = true;
-
-        stop.on('moving', () => {
-            this.updateStopOffset(stop);
-            this.updateGradient();
-        });
-
-        this.stops.push({ stop, offset });
-        this.canvas.add(stop);
-    }
-
-    updateStopOffset(stop: fabric.Circle) {
-        const a = this.axis();
-        const dx = a.x2 - a.x1;
-        const dy = a.y2 - a.y1;
-        const len = dx * dx + dy * dy || 1;
-        const t = ((stop.left! - a.x1) * dx + (stop.top! - a.y1) * dy) / len;
-
-        const s = this.stops.find((x) => x.stop === stop);
-        if (s) s.offset = Math.min(1, Math.max(0, t));
-    }
-
-    /* ---------- SNAP ---------- */
-    snapAngle() {
-        if (!this.start || !this.end) return;
-        const dx = this.end.left! - this.start.left!;
-        const dy = this.end.top! - this.start.top!;
-        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-
-        const snaps = [0, 45, 90, 135, 180, -45, -90, -135];
-        const snap = snaps.find((a) => Math.abs(a - angle) < 6);
-        if (snap === undefined) return;
-
-        const len = Math.hypot(dx, dy);
-        const rad = (snap * Math.PI) / 180;
-
-        this.end.set({
-            left: this.start.left! + Math.cos(rad) * len,
-            top: this.start.top! + Math.sin(rad) * len,
-        });
-        this.end.setCoords();
-    }
-
-    /* ---------- GRADIENT UPDATE ---------- */
-    updateGradient() {
-        if (!this.target) return;
-        const obj = this.target;
-
-        // Gradient coords are fractions of the UNSCALED width/height (the object's transform
-        // already applies the scale). The old code divided by the scaled size.
-        const w = obj.width || 1;
-        const h = obj.height || 1;
-        const toFraction = (x: number, y: number) => {
-            const p = canvasPointToObjectLocal(obj, new fabric.Point(x, y));
-            return { x: (p.x + w / 2) / w, y: (p.y + h / 2) / h };
-        };
-
-        const colorStops = this.stops
-            .map((s) => ({ offset: s.offset, color: s.stop.fill as string }))
-            .sort((a, b) => a.offset - b.offset);
-
-        let gradient: any;
-
-        if (this.mode === 'linear') {
-            const p1 = toFraction(this.start!.left!, this.start!.top!);
-            const p2 = toFraction(this.end!.left!, this.end!.top!);
-
-            gradient = new fabric.Gradient({
-                type: 'linear',
-                gradientUnits: 'percentage', // 'objectBoundingBox' is treated as pixels by Fabric
-                coords: { x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y },
-                colorStops,
-            } as any);
-
-            this.line?.set({
-                x1: this.start!.left!,
-                y1: this.start!.top!,
-                x2: this.end!.left!,
-                y2: this.end!.top!,
-            });
-        } else {
-            const c = toFraction(this.center!.left!, this.center!.top!);
-            const rCanvas = Math.hypot(
-                this.radius!.left! - this.center!.left!,
-                this.radius!.top! - this.center!.top!,
-            );
-            const scale = Math.max(Math.abs(obj.scaleX || 1), Math.abs(obj.scaleY || 1));
-            const r2 = rCanvas / scale / Math.max(w, h);
-
-            gradient = new fabric.Gradient({
-                type: 'radial',
-                gradientUnits: 'percentage',
-                coords: { x1: c.x, y1: c.y, r1: 0, x2: c.x, y2: c.y, r2 },
-                colorStops,
-            } as any);
-        }
-
-        obj.set('fill', gradient);
-        obj.set('dirty', true);
-        this.canvas.requestRenderAll();
-    }
-
-    /* ---------- SYNC ---------- */
-    // Old version called attach() which reset the stops to red/blue on every move
-    syncHelpers() {
-        if (!this.target) return;
-        const saved: StopData[] = this.stops.map((s) => ({
-            offset: s.offset,
-            color: s.stop.fill as string,
-        }));
-        this.attach(this.target, saved);
-    }
-
-    setMode(mode: 'linear' | 'radial') {
-        this.mode = mode;
-        if (!this.target) return;
-        const saved: StopData[] = this.stops.map((s) => ({
-            offset: s.offset,
-            color: s.stop.fill as string,
-        }));
-        this.attach(this.target, saved.length ? saved : undefined);
-    }
-
-    /* ---------- DETACH ---------- */
-    detach() {
-        this.target?.off('moving', this.onTargetChange);
-        this.target?.off('scaling', this.onTargetChange);
-        this.target?.off('rotating', this.onTargetChange);
-
-        [this.line, this.start, this.end, this.center, this.radius].forEach((o) => {
-            if (o) this.canvas.remove(o);
-        });
-        this.stops.forEach((s) => this.canvas.remove(s.stop));
-
-        this.line = this.start = this.end = this.center = this.radius = undefined;
-        this.stops = [];
-        this.target = null;
-    }
-}
-
-/* -------------------------------------------------------------------------- */
-/* Boolean-op helpers                                                         */
-/* -------------------------------------------------------------------------- */
-
-// Paper cannot outline strokes: this drops the stroke and treats the centre line as the shape.
-// (Properties were `path.fill` before, which Paper ignores - it is `fillColor`.)
-function convertStrokeToPath(path: any) {
-    if (!path) return path;
-    if (path.strokeWidth) {
-        path.strokeColor = null;
-        path.strokeWidth = 0;
-        path.fillColor = 'black';
-        path.closed = true;
-    }
-    return path;
-}
 
 /* -------------------------------------------------------------------------- */
 /* Slice                                                                      */
 /* -------------------------------------------------------------------------- */
+
+const NO_FILL = 'rgba(0,0,0,0)';
+
+/** Redraw a painted object (and the group it sits in); its size may change with the stroke. */
+const markPainted = (o: any) => {
+    o.set('dirty', true);
+    o.setCoords?.();
+    o.group?.set?.('dirty', true);
+};
 
 // opacity preview: remembers each object's original opacity (was a single module variable)
 const previewBase = new Map<any, number>();
@@ -388,7 +104,12 @@ export const createShapeStyleSlice = (set: any, get: any, _store?: any) => ({
         outset: { dashArray: [2, 1], lineCap: 'butt' },
     },
 
-    setActivePaint: (paint: 'fill' | 'stroke' | 'shadow') => set({ activePaint: paint }),
+    // Choosing fill / stroke / shadow hands the palette back from any panel target
+    setActivePaint: (paint: 'fill' | 'stroke' | 'shadow') =>
+        set({ activePaint: paint, paintTarget: null }),
+
+    /** Store value only (default width for new shapes, ShapePanel); `setStrokeWidthN` also restyles the selection. */
+    setStrokeWidth: (width: number) => set({ strokeWidth: width }),
 
     setStrokeWidthN: (width: number) => {
         const canvas = get().canvas;
@@ -400,6 +121,90 @@ export const createShapeStyleSlice = (set: any, get: any, _store?: any) => ({
         canvas.requestRenderAll();
         set({ strokeWidth: width });
         get().saveState?.();
+    },
+
+    /**
+     * Dock toggle: Remove stroke ⇄ Add stroke on the selection. Removes from every target if any
+     * has a stroke, else adds the default (text: the Text panel outline). Groups are painted
+     * through their children. Nothing selected: no-op (defaults stay). One undo step.
+     */
+    toggleStroke: () => {
+        const canvas = get().canvas;
+        const active = (canvas?.getActiveObjects?.() ?? []).filter(
+            (o: any) => !o.excludeFromExport,
+        );
+        const targets = paintTargets(active, 'stroke');
+        if (!canvas || !targets.length) return false;
+        try {
+            const remove = targets.some(hasStroke);
+            targets.forEach((o: any) => {
+                const text = isTextObject(o);
+                if (remove) {
+                    o.set({ stroke: null, strokeWidth: 0 });
+                    if (text) {
+                        o.removeStyle?.('stroke');
+                        o.removeStyle?.('strokeWidth');
+                    }
+                } else {
+                    const d = text ? PAINT_DEFAULTS.text : PAINT_DEFAULTS.shape;
+                    o.set({ stroke: d.stroke, strokeWidth: d.strokeWidth });
+                    if (text) o.set({ paintFirst: 'stroke' }); // outline behind the letters
+                }
+                markPainted(o);
+            });
+            canvas.requestRenderAll();
+            set(
+                remove
+                    ? { strokeWidth: 0 }
+                    : {
+                          stroke: PAINT_DEFAULTS.shape.stroke,
+                          strokeWidth: PAINT_DEFAULTS.shape.strokeWidth,
+                      },
+            );
+            canvas.fire('object:modified', { target: active[0] }); // panels re-read the selection
+            get().saveState?.(); // one undo step (canvas history listeners are not wired: BUG-090)
+            return true;
+        } catch (e) {
+            console.error('[shapeStyle] toggleStroke failed', e);
+            return false;
+        }
+    },
+
+    /**
+     * Dock toggle: Remove fill ⇄ Add fill on the selection (gradients count as fill). Removes from
+     * every target if any has a fill, else adds the default (shapes white, text black). Images
+     * are skipped. Nothing selected: no-op (no change to defaults or the brush). One undo step.
+     */
+    toggleFill: () => {
+        const canvas = get().canvas;
+        const active = (canvas?.getActiveObjects?.() ?? []).filter(
+            (o: any) => !o.excludeFromExport,
+        );
+        const targets = paintTargets(active, 'fill');
+        if (!canvas || !targets.length) return false;
+        try {
+            const remove = targets.some(hasFill);
+            get().clearGradientSession?.();
+            let shown = NO_FILL;
+            targets.forEach((o: any, i: number) => {
+                const text = isTextObject(o);
+                const next = remove
+                    ? NO_FILL
+                    : (text ? PAINT_DEFAULTS.text : PAINT_DEFAULTS.shape).fill;
+                o.set({ fill: next });
+                if (text && remove) o.removeStyle?.('fill');
+                if (i === 0) shown = next;
+                markPainted(o);
+            });
+            canvas.requestRenderAll();
+            set({ fill: shown, fillMode: 'solid' });
+            canvas.fire('object:modified', { target: active[0] }); // panels re-read the selection
+            get().saveState?.(); // one undo step
+            return true;
+        } catch (e) {
+            console.error('[shapeStyle] toggleFill failed', e);
+            return false;
+        }
     },
 
     setStrokeStyle: (styleValue: string) => {
@@ -460,28 +265,58 @@ export const createShapeStyleSlice = (set: any, get: any, _store?: any) => ({
         get().saveState?.();
     },
 
-    applyShadowPreset: (key: string) => {
+    /** Drop shadow of the selection: color + opacity + blur + offsets; null removes it. */
+    setShadow: (shadow: ShadowStyle | null, opts: ApplyOpts = {}) => {
         const canvas = get().canvas;
-        const preset = SHADOW_PRESETS[key];
-        if (!canvas || !preset) return;
-
-        let last: any = null;
+        if (!canvas) return;
+        let last: fabric.Shadow | null = null;
         canvas.getActiveObjects().forEach((o: any) => {
-            last = new fabric.Shadow({ ...preset });
+            last = shadow ? shadowToFabric(shadow) : null;
             o.set('shadow', last);
+            o.set('dirty', true);
         });
         canvas.requestRenderAll();
         set({ activeObjectShadow: last });
-        get().saveState?.();
+        if (opts.history !== false) get().saveState?.();
     },
 
-    removeShadow: () => {
+    applyShadowPreset: (key: string) => {
+        const preset = SHADOW_PRESETS.find((p) => p.id === key);
+        if (preset) get().setShadow(preset.shadow);
+    },
+
+    removeShadow: () => get().setShadow(null),
+
+    /* ---------- GRADIENT FILL ---------- */
+    /** on-canvas gradient handles (MultiStopGradientTool) on / off */
+    gradientEditing: false,
+
+    setGradientEditing: (on: boolean) => {
+        const g = get().geditor;
+        if (on) {
+            g?.enable?.();
+            // show the handles on the selected shape right away (before: only after another click)
+            const target = collectPaintTargets(get().canvas?.getActiveObjects?.() ?? [], 'fill')[0];
+            if (target) g?.attach?.(target);
+        } else g?.disable?.();
+        set({ gradientEditing: on });
+    },
+
+    /** Paint the selection's fill with a linear / radial gradient (percentage units). */
+    applyGradientFill: (gradient: GradientFill, opts: ApplyOpts = {}) => {
         const canvas = get().canvas;
         if (!canvas) return;
-        canvas.getActiveObjects().forEach((o: any) => o.set('shadow', null));
+        const targets = collectPaintTargets(canvas.getActiveObjects(), 'fill');
+        if (targets.length === 0) return;
+        targets.forEach((o: any) => {
+            o.set('fill', toFabricGradient(gradient));
+            o.set('dirty', true);
+        });
+        // move the on-canvas handles to the new geometry while editing
+        if (get().gradientEditing) targets.forEach((o: any) => get().geditor?.syncFromObject?.(o));
         canvas.requestRenderAll();
-        set({ activeObjectShadow: null });
-        get().saveState?.();
+        set({ fillMode: 'gradient' });
+        if (opts.history !== false) get().saveState?.();
     },
 
     /* ---------- Fabric object -> Fabric.Path (only works for objects whose SVG has a `d`) ---------- */
@@ -505,118 +340,67 @@ export const createShapeStyleSlice = (set: any, get: any, _store?: any) => ({
     },
 
     /* ---------- BOOLEAN OPERATIONS ---------- */
-    booleanOperation: async (operation = 'union') => {
+    /**
+     * Union / subtract / intersect / exclude / divide / crop on the selected shapes.
+     * Stacking order decides (Figma / Illustrator), not click order; geometry in lib/booleanOps.
+     */
+    booleanOperation: async (operation: string = 'union') => {
         const canvas = get().canvas;
         if (!canvas) return;
+        const op = (BOOLEAN_ALIASES[operation] ?? operation) as BooleanOp;
+        if (!BOOLEAN_OPS.includes(op)) {
+            console.error('[shapeStyle] unknown boolean operation:', operation);
+            return;
+        }
 
         try {
-            const active = canvas.getActiveObject();
-            if (!active || typeOf(active) !== 'activeselection') {
-                alert('Select at least 2 objects');
-                return;
-            }
-
-            if (!(BooleanEngine as any)[operation]) {
-                console.error('Invalid boolean operation:', operation);
-                return;
-            }
-
-            const objects: any[] = active.getObjects();
-
-            // Text cannot be turned into a Paper path here (Fabric v6 has no text.toPath()),
-            // so text is left untouched instead of being removed and re-added.
-            const shapes = objects.filter((o) => !TEXT_TYPES.includes(typeOf(o)));
-            if (shapes.length < 2) {
-                alert('Select at least 2 shapes (text is not supported in boolean operations)');
-                return;
-            }
-
-            // Back to absolute coordinates before reading toSVG()
-            canvas.discardActiveObject();
-
-            const style = extractStyle(shapes[0]);
             const stack = canvas.getObjects();
-            const topIndex = Math.max(...shapes.map((o) => stack.indexOf(o)));
-
-            const scope = new paper.PaperScope();
-            scope.setup(new scope.Size(5000, 5000));
-            scope.activate();
-
-            // Flatten groups: every Path / CompoundPath inside an imported item
-            const toPaths = (item: any): any[] => {
-                if (!item) return [];
-                if (item instanceof scope.Path || item instanceof scope.CompoundPath) return [item];
-                return (item.children ?? []).flatMap(toPaths);
-            };
-
-            const isSplit = ['divide', 'cut', 'xorSplit'].includes(operation);
-            let result: any[] = [];
-
-            for (const obj of shapes) {
-                const item = scope.project.importSVG(obj.toSVG(), {
-                    expandShapes: true,
-                    insert: false,
+            const active = canvas.getActiveObject();
+            const picked: any[] =
+                typeOf(active) === 'activeselection'
+                    ? active.getObjects()
+                    : canvas.getActiveObjects();
+            const shapes = picked
+                .filter((o: any) => !TEXT_TYPES.includes(typeOf(o)))
+                .sort((x: any, y: any) => stack.indexOf(x) - stack.indexOf(y)); // bottom -> top
+            if (shapes.length < 2) {
+                void get().alertDialog({
+                    title: 'Select 2 or more shapes',
+                    message: 'Boolean operations combine shapes. Text is not supported.',
                 });
-                const paths = toPaths(item)
-                    .map(convertStrokeToPath)
-                    .filter((p) => p && typeof p.divide === 'function');
-
-                for (const path of paths) {
-                    if (result.length === 0) {
-                        result.push(path);
-                        continue;
-                    }
-
-                    if (isSplit) {
-                        const next: any[] = [];
-                        result.forEach((base) => {
-                            let pieces = (BooleanEngine as any)[operation](base, path);
-                            if (!pieces) return;
-                            if (!Array.isArray(pieces)) pieces = [pieces];
-                            pieces.forEach((p: any) => {
-                                if (p && typeof p.divide === 'function') next.push(p);
-                            });
-                        });
-                        result = next;
-                    } else {
-                        const reduced = (BooleanEngine as any)[operation](result[0], path);
-                        if (reduced) result = [reduced];
-                    }
-                }
-            }
-
-            if (result.length === 0) {
-                alert('The operation produced no shape');
                 return;
             }
 
-            // Export WITHOUT bounds:'content'. That option moved every piece to the origin, and the
-            // old code then put ALL pieces on the selection centre (split results were stacked, and
-            // intersect/subtract results landed in the wrong place). Coordinates are already absolute.
-            const body = result.map((p) => p.exportSVG({ asString: true, precision: 3 })).join('');
-            const { objects: parsed } = await fabric.loadSVGFromString(
-                `<svg xmlns="http://www.w3.org/2000/svg">${body}</svg>`,
-            );
-            const created = (parsed || []).filter(Boolean) as fabric.Object[];
-            if (created.length === 0) return;
-
-            created.forEach((o) => o.set({ ...style, strokeUniform: true }));
-
-            // Keep the z-order of the originals (Fabric v6: insertAt(index, ...objects))
-            canvas.remove(...shapes);
-            canvas.insertAt(Math.max(0, topIndex - shapes.length + 1), ...created);
-
-            if (created.length > 1) {
-                canvas.setActiveObject(new fabric.ActiveSelection(created, { canvas }));
-            } else {
-                canvas.setActiveObject(created[0]);
+            // absolute coordinates before reading the geometry: shapes inside a multi-selection
+            // are stored relative to it (Fabric 7); removeAll() puts them back on the canvas grid
+            if (typeOf(active) === 'activeselection') active.removeAll();
+            canvas.discardActiveObject();
+            const created = await computeBoolean(op, shapes);
+            if (created.length === 0) {
+                canvas.setActiveObject(new fabric.ActiveSelection(shapes, { canvas }));
+                canvas.requestRenderAll();
+                void get().alertDialog({
+                    title: 'Nothing left',
+                    message: 'The shapes do not overlap, so this operation leaves no shape.',
+                });
+                return;
             }
 
+            // the result takes the originals' place in the stack
+            const index = Math.min(...shapes.map((o: any) => stack.indexOf(o)));
+            canvas.remove(...shapes);
+            canvas.insertAt(Math.max(0, index), ...created);
+            canvas.setActiveObject(
+                created.length > 1 ? new fabric.ActiveSelection(created, { canvas }) : created[0],
+            );
             canvas.requestRenderAll();
             get().saveState?.();
         } catch (err) {
-            console.error('Boolean operation error:', err);
-            alert('Boolean operation failed. Check console for details.');
+            console.error('[shapeStyle] boolean operation failed:', err);
+            void get().alertDialog({
+                title: 'Boolean operation failed',
+                message: 'Something went wrong. Check the console for details.',
+            });
         }
     },
 
@@ -627,28 +411,35 @@ export const createShapeStyleSlice = (set: any, get: any, _store?: any) => ({
 
         const active = canvas.getActiveObject();
         if (!active || typeOf(active) !== 'activeselection') {
-            alert('Select 2 objects (target + clip shape)');
+            void get().alertDialog({
+                title: 'Select 2 objects',
+                message: 'Select a shape and, on top of it, the shape to use as the mask.',
+            });
             return;
         }
 
         const objects: any[] = active.getObjects();
         if (objects.length !== 2) {
-            alert('Select exactly 2 objects');
+            void get().alertDialog({
+                title: 'Select exactly 2 objects',
+                message: 'Clipping needs one target and one clip shape.',
+            });
             return;
         }
 
-        const [a, b] = objects;
-        const [target, clipper] =
-            typeOf(a) === 'image' ? [a, b] : typeOf(b) === 'image' ? [b, a] : [a, b];
+        // stacking order decides (Illustrator clipping mask): the TOP shape is the mask
+        const stack = canvas.getObjects();
+        const [target, clipper] = [...objects].sort(
+            (x: any, y: any) => stack.indexOf(x) - stack.indexOf(y),
+        );
 
         // Back to absolute coordinates BEFORE cloning/positioning
+        active.removeAll();
         canvas.discardActiveObject();
 
-        // Wait for the image element if it is still loading
-        const el = target.getElement?.();
-        if (el && !el.complete) {
-            await new Promise((resolve) => el.addEventListener('load', resolve, { once: true }));
-        }
+        // Wait for the image source if it is still loading (a filtered image draws from a
+        // canvas: ready, and waiting on its `load` never ended)
+        await whenImageReady(target);
 
         // Fabric v6: clone() returns a Promise (the callback version was v5)
         const clip = await clipper.clone();

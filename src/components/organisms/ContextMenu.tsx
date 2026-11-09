@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useStore } from '../../store';
 
 export const ContextMenu = () => {
@@ -6,6 +7,16 @@ export const ContextMenu = () => {
     const closeMenu = useStore((s) => s.closeMenu);
     const x = useStore((s) => s.x);
     const y = useStore((s) => s.y);
+
+    // Escape closes it, like every other menu (BUG-128)
+    useEffect(() => {
+        if (!visible) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') closeMenu();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [visible, closeMenu]);
 
     if (!visible) return null;
 
@@ -30,8 +41,6 @@ export const ContextMenu = () => {
     // 3. Nothing to show
     if (finalItems.length === 0) return null;
 
-    console.log(finalItems);
-
     return (
         <>
             {/* backdrop */}
@@ -40,12 +49,12 @@ export const ContextMenu = () => {
             {/* menu */}
             <div
                 className="fixed z-50 min-w-[220px] rounded-lg
-                   bg-white shadow-lg border border-stone-200 p-1"
+                   bg-surface shadow-lg border border-line p-1"
                 style={{ top: y, left: x }}
             >
                 {finalItems.map((item, i) => {
                     if (item.type === 'divider') {
-                        return <div key={item.id ?? i} className="my-1 h-px bg-stone-200" />;
+                        return <div key={item.id ?? i} className="my-1 h-px bg-surface-strong" />;
                     }
 
                     return (
@@ -59,7 +68,7 @@ export const ContextMenu = () => {
                             className="
                                 flex w-full items-center justify-between
                                 rounded-lg px-3 py-2 text-sm
-                                hover:bg-gray-100
+                                hover:bg-surface-muted
                                 disabled:opacity-40
                             "
                         >
@@ -69,7 +78,7 @@ export const ContextMenu = () => {
                             </span>
 
                             {item.shortcut && (
-                                <span className="text-xs text-gray-400">{item.shortcut}</span>
+                                <span className="text-xs text-ink-subtle">{item.shortcut}</span>
                             )}
                         </button>
                     );

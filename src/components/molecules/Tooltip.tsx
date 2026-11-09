@@ -131,13 +131,13 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, position = 'top', chi
                               left: coords.left,
                           }}
                           className={
-                              'animate-tooltip z-[9999] rounded-md bg-white px-3 py-1.5 text-[11px] font-medium text-gray-900 shadow-[0_8px_24px_rgba(0,0,0,0.18)] whitespace-nowrap pointer-events-none animate-tooltip-min'
+                              'animate-tooltip z-[9999] rounded-md border border-line-strong bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-ink shadow-[0_8px_24px_rgba(0,0,0,0.18)] whitespace-nowrap pointer-events-none animate-tooltip-min'
                           }
                       >
                           {content}
 
                           <div
-                              className={`absolute w-1.5 h-1.5 bg-white rotate-45 ${
+                              className={`absolute w-1.5 h-1.5 bg-surface-raised rotate-45 ${
                                   finalPos === 'top'
                                       ? 'bottom-[-3px] left-1/2 -translate-x-1/2'
                                       : finalPos === 'bottom'

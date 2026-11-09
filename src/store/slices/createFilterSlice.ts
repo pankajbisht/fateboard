@@ -1,6 +1,7 @@
 // store/slices/filterSlice.ts
 // import { StateCreator } from 'zustand';
 import * as fabric from 'fabric';
+import type { StateCreator } from 'zustand';
 
 export type FilterState = {
     brightness: number; // -1 → 1
@@ -14,7 +15,8 @@ export type FilterState = {
     grayscale: boolean;
     sepia: boolean;
     invert: boolean;
-    opacity: number; // 0 → 1
+    /** BUG-002: was `opacity` (shared with the selection and the brush) */
+    filterOpacity: number; // 0 → 1
 };
 
 export type FilterActions = {
@@ -36,51 +38,25 @@ export const defaultFilters: FilterState = {
     grayscale: false,
     sepia: false,
     invert: false,
-    opacity: 1,
+    filterOpacity: 1,
 };
 
+/**
+ * Applies the brightness/contrast part of `filters` to an image (Fabric 7 API).
+ * Not used by the mounted Filter tab (it uses useImageFilters); kept for the dead-code-free API.
+ */
 export function applyFabricFilters(
-    obj: fabric.Object,
+    obj: fabric.FabricObject,
     filters: FilterState,
     canvas: fabric.Canvas,
 ) {
-    const f: fabric.IBaseFilter[] = [];
+    if (!(obj instanceof fabric.FabricImage)) return;
+
+    const f: InstanceType<typeof fabric.filters.BaseFilter>[] = [];
 
     if (filters.brightness !== 0)
-        f.push(new fabric.Image.filters.Brightness({ brightness: filters.brightness }));
-
-    if (filters.contrast !== 0)
-        f.push(new fabric.Image.filters.Contrast({ contrast: filters.contrast }));
-
-    // if (filters.saturation !== 0)
-    //     f.push(new fabric.Image.filters.Saturation({ saturation: filters.saturation }));
-
-    // if (filters.blur > 0)
-    //     f.push(new fabric.Image.filters.Blur({ blur: filters.blur }));
-
-    // if (filters.noise > 0)
-    //     f.push(new fabric.Image.filters.Noise({ noise: filters.noise }));
-
-    // if (filters.pixelate > 1)
-    //     f.push(new fabric.Image.filters.Pixelate({ blocksize: filters.pixelate }));
-
-    // if (filters.hue !== 0)
-    //     f.push(new fabric.Image.filters.HueRotation({ rotation: filters.hue }));
-
-    // if (filters.gamma.some(v => v !== 1))
-    //     f.push(new fabric.Image.filters.Gamma({ gamma: filters.gamma }));
-
-    // if (filters.grayscale)
-    //     f.push(new fabric.Image.filters.Grayscale());
-
-    // if (filters.sepia)
-    //     f.push(new fabric.Image.filters.Sepia());
-
-    // if (filters.invert)
-    //     f.push(new fabric.Image.filters.Invert());
-
-    // if (filters.opacity < 1)
-    //     f.push(new fabric.Image.filters.Opacity({ opacity: filters.opacity }));
+        f.push(new fabric.filters.Brightness({ brightness: filters.brightness }));
+    if (filters.contrast !== 0) f.push(new fabric.filters.Contrast({ contrast: filters.contrast }));
 
     obj.filters = f;
     obj.applyFilters();

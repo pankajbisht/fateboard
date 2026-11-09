@@ -1,177 +1,206 @@
-import { TransformInput } from '@/components/molecules/TransformInput';
-import { EffectSection } from './EffectSection';
-import { useStore } from '@/store';
 import { useState } from 'react';
-import Dropdown from '@/components/atoms/Dropdown';
+import type * as fabric from 'fabric';
+import { TransformInput } from '@/components/molecules/TransformInput';
+import { SelectField } from '@/components/molecules/SelectField';
+import { SegmentedControl } from '@/components/molecules/SegmentedControl';
+import LabeledToggle from '@/components/molecules/LabeledToggle';
+import { Field } from '@/components/molecules/Field';
+import { useStore } from '@/store';
+import { LIMITS } from '@/lib/patternRules';
+import { EffectSection } from './EffectSection';
+import { useActiveObjects } from './useActiveObjects';
 
-const modeList = [
-    { label: 'ring', value: 'Ring' },
-    { label: 'spiral', value: 'Spiral' },
+type Mode = 'ring' | 'spiral';
+type Anchor = 'TL' | 'TC' | 'TR' | 'CL' | 'CC' | 'CR' | 'BL' | 'BC' | 'BR';
+
+// label = what the user sees, value = what we store (they were swapped before,
+// so the slice received "Ring"/"Spiral" and `mode === 'spiral'` never matched)
+const modeList: { label: string; value: Mode }[] = [
+    { label: 'Ring', value: 'ring' },
+    { label: 'Spiral', value: 'spiral' },
 ];
 
-const anchorList = [
-    { label: 'TL', value: 'TL' },
-    { label: 'TC', value: 'TC' },
-    { label: 'TR', value: 'TR' },
-    { label: 'CL', value: 'CL' },
-    { label: 'CC', value: 'CC' },
-    { label: 'CR', value: 'CR' },
-    { label: 'BL', value: 'BL' },
-    { label: 'BC', value: 'BC' },
-    { label: 'BR', value: 'BR' },
-];
+const anchorList = (['TL', 'TC', 'TR', 'CL', 'CC', 'CR', 'BL', 'BC', 'BR'] as Anchor[]).map(
+    (a) => ({
+        label: a,
+        value: a,
+    }),
+);
+
+const ANCHOR_FACTORS: Record<Anchor, [number, number]> = {
+    TL: [0, 0],
+    TC: [0.5, 0],
+    TR: [1, 0],
+    CL: [0, 0.5],
+    CC: [0.5, 0.5],
+    CR: [1, 0.5],
+    BL: [0, 1],
+    BC: [0.5, 1],
+    BR: [1, 1],
+};
+
+/**
+ * Pivot = anchor point of the object's bounding box, optionally pushed further
+ * away from the object's centre by `distance`.
+ * (For the centre anchor, "away" is straight down, so the object sits at 12 o'clock.)
+ * Without this, a centre pivot puts the pivot on the object itself and every
+ * copy lands on the same spot.
+ */
+const getPivot = (obj: fabric.Object, anchor: Anchor, distance: number) => {
+    obj.setCoords();
+    const rect = obj.getBoundingRect();
+    const [fx, fy] = ANCHOR_FACTORS[anchor];
+    const anchorPt = { x: rect.left + rect.width * fx, y: rect.top + rect.height * fy };
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    let dirX = anchorPt.x - cx;
+    let dirY = anchorPt.y - cy;
+    const len = Math.hypot(dirX, dirY);
+    if (len === 0) {
+        dirX = 0;
+        dirY = 1;
+    } else {
+        dirX /= len;
+        dirY /= len;
+    }
+    return { x: anchorPt.x + dirX * distance, y: anchorPt.y + dirY * distance };
+};
+
+// raw strings are kept in state so "-", "0." and an empty box can be typed;
+// they are parsed and clamped only when the effect is applied
+const num = (raw: string, fallback: number, min: number, max: number) => {
+    const n = parseFloat(raw);
+    return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : fallback;
+};
 
 export const RepeatRadially = () => {
-    const { canvas, repeatRadially } = useStore();
-    const activeObject = canvas?.getActiveObject();
+    const canvas = useStore((s: any) => s.canvas);
+    const repeatRadially = useStore((s: any) => s.repeatRadially);
 
-    const [count, setCount] = useState(6);
-    const [gap, setGap] = useState(0);
-    const [mode, setMode] = useState<'ring' | 'spiral'>('ring');
-    const [startAngle, setStartAngle] = useState(0);
+    const activeObjects = useActiveObjects(canvas);
+    const multiple = activeObjects.length > 1;
+    const target: fabric.Object | null =
+        activeObjects.length === 1 ? (canvas?.getActiveObject() ?? null) : null;
+
+    const [fields, setFields] = useState({
+        count: '6',
+        distance: '100',
+        gap: '0',
+        startAngle: '0',
+        scalePct: '0',
+        jitter: '0',
+    });
+    const [mode, setMode] = useState<Mode>('ring');
+    const [anchor, setAnchor] = useState<Anchor>('CC');
     const [clockwise, setClockwise] = useState(true);
-    const [scaleStep, setScaleStep] = useState(0);
     const [rotateAlongPath, setRotateAlongPath] = useState(false);
     const [opacityFade, setOpacityFade] = useState(false);
-    const [jitter, setJitter] = useState(0);
-    const [anchor, setAnchor] = useState('CC');
 
-    const getPivotFromAnchor = (obj, anchor) => {
-        const rect = obj.getBoundingRect(true, true);
-        const map = {
-            TL: { x: rect.left, y: rect.top },
-            TC: { x: rect.left + rect.width / 2, y: rect.top },
-            TR: { x: rect.left + rect.width, y: rect.top },
-            CL: { x: rect.left, y: rect.top + rect.height / 2 },
-            CC: { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 },
-            CR: { x: rect.left + rect.width, y: rect.top + rect.height / 2 },
-            BL: { x: rect.left, y: rect.top + rect.height },
-            BC: { x: rect.left + rect.width / 2, y: rect.top + rect.height },
-            BR: { x: rect.left + rect.width, y: rect.top + rect.height },
-        };
-        return map[anchor] ?? map.CC;
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const field = (key: keyof typeof fields) => (v: number) =>
+        setFields((p) => ({ ...p, [key]: String(v) }));
+
+    const handleApply = async () => {
+        if (!target || !repeatRadially) return;
+        setBusy(true);
+        setError(null);
+        try {
+            // pivot is computed now (not during render) so it always matches the current object position
+            const pivot = getPivot(target, anchor, num(fields.distance, 0, 0, 5000));
+            await repeatRadially(target, {
+                count: Math.round(num(fields.count, 6, 2, LIMITS.maxClones + 1)),
+                pivotX: pivot.x,
+                pivotY: pivot.y,
+                gap: num(fields.gap, 0, -1000, 1000),
+                mode,
+                startAngle: num(fields.startAngle, 0, -360, 360),
+                clockwise,
+                scaleStep: num(fields.scalePct, 0, -90, 500) / 100, // UI is in %, slice wants a fraction
+                rotateAlongPath,
+                opacityFade,
+                jitter: num(fields.jitter, 0, 0, 500),
+            });
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Could not repeat the object.');
+        } finally {
+            setBusy(false);
+        }
     };
 
-    if (!activeObject) return null;
-
-    const pivot = getPivotFromAnchor(activeObject, anchor);
-
     return (
-        <EffectSection
-            title="Repeat Radially"
-            disabled={!activeObject}
-            onApply={() =>
-                repeatRadially(activeObject, {
-                    count,
-                    pivotX: pivot.x,
-                    pivotY: pivot.y,
-                    gap,
-                    mode,
-                    startAngle,
-                    clockwise,
-                    scaleStep,
-                    rotateAlongPath,
-                    opacityFade,
-                    jitter,
-                })
-            }
-        >
+        <EffectSection title="Repeat Radially" disabled={!target || busy} onApply={handleApply}>
+            {!target && (
+                <p className="text-caption text-accent-700">
+                    {multiple
+                        ? 'Group the selected objects (Ctrl+G) to repeat them.'
+                        : 'Select an object to repeat around a pivot.'}
+                </p>
+            )}
+
             <TransformInput
-                label="Count"
-                value={count}
-                onChange={(v) => setCount(parseInt(v) || 2)}
-            />
-            <TransformInput label="Gap" value={gap} onChange={(v) => setGap(parseInt(v) || 0)} />
-            <TransformInput
-                label="Start Angle"
-                value={startAngle}
-                onChange={(v) => setStartAngle(parseInt(v) || 0)}
+                label="Count (incl. original)"
+                value={fields.count}
+                onChange={field('count')}
             />
             <TransformInput
-                label="Scale Step"
-                value={scaleStep}
-                onChange={(v) => setScaleStep(parseFloat(v) || 0)}
+                label="Pivot distance"
+                value={fields.distance}
+                onChange={field('distance')}
             />
-            <TransformInput
-                label="Jitter"
-                value={jitter}
-                onChange={(v) => setJitter(parseFloat(v) || 0)}
-            />
-
-            <div className="flex flex-col gap-2 mt-2">
-                {/*<label>
-                    Mode:
-                    <select
-                        value={mode}
-                        onChange={(e) => setMode(e.target.value as 'ring' | 'spiral')}
-                    >
-                        <option value="ring">Ring</option>
-                        <option value="spiral">Spiral</option>
-                    </select>
-                </label>*/}
-
-                <label className="flex items-center gap-1 text-[11px] text-gray-500">
-                    <span>Mode:</span>
-                    <Dropdown
-                        options={modeList}
-                        value={mode}
-                        onChange={(value) => {
-                            setMode(value);
-                        }}
-                    />
-                </label>
-
-                <label className="flex items-center gap-1 text-[11px] text-gray-500">
-                    <span>Clockwise:</span>
-                    <input
-                        type="checkbox"
-                        checked={clockwise}
-                        onChange={(e) => setClockwise(e.target.checked)}
-                    />
-                </label>
-
-                <label className="flex items-center gap-1 text-[11px] text-gray-500">
-                    <span>Rotate Along Path:</span>
-                    <input
-                        type="checkbox"
-                        checked={rotateAlongPath}
-                        onChange={(e) => setRotateAlongPath(e.target.checked)}
-                    />
-                </label>
-
-                <label className="flex items-center gap-1 text-[11px] text-gray-500">
-                    <span>Opacity Fade:</span>
-
-                    <input
-                        type="checkbox"
-                        checked={opacityFade}
-                        onChange={(e) => setOpacityFade(e.target.checked)}
-                    />
-                </label>
-            </div>
-
-            <label className="flex items-center gap-1 text-[11px] text-gray-500">
-                <span>Anchor:</span>
-                <Dropdown
-                    value={anchor}
-                    options={anchorList}
-                    onChange={(value) => {
-                        setAnchor(value);
-                    }}
+            {mode === 'spiral' && (
+                <TransformInput
+                    label="Gap per turn"
+                    min={-1000}
+                    value={fields.gap}
+                    onChange={field('gap')}
                 />
-            </label>
+            )}
+            <TransformInput
+                label="Start angle"
+                min={-360}
+                max={360}
+                value={fields.startAngle}
+                onChange={field('startAngle')}
+            />
+            <TransformInput
+                label="Scale step %"
+                min={-100}
+                value={fields.scalePct}
+                onChange={field('scalePct')}
+            />
+            <TransformInput label="Jitter" value={fields.jitter} onChange={field('jitter')} />
 
-            {/*<select
+            <Field label="Mode">
+                <SegmentedControl<Mode>
+                    aria-label="Mode"
+                    size="sm"
+                    options={modeList}
+                    value={mode}
+                    onChange={setMode}
+                />
+            </Field>
+            <SelectField<Anchor>
+                label="Anchor"
+                options={anchorList}
                 value={anchor}
-                onChange={(e) => setAnchor(e.target.value)}
-                className="w-full mt-2"
-            >
-                {['TL', 'TC', 'TR', 'CL', 'CC', 'CR', 'BL', 'BC', 'BR'].map((p) => (
-                    <option key={p} value={p}>
-                        {p}
-                    </option>
-                ))}
-            </select>*/}
+                onChange={setAnchor}
+            />
+            <LabeledToggle label="Clockwise" checked={clockwise} onChange={setClockwise} />
+            <LabeledToggle
+                label="Rotate copies with the ring"
+                checked={rotateAlongPath}
+                onChange={setRotateAlongPath}
+            />
+            <LabeledToggle label="Fade opacity" checked={opacityFade} onChange={setOpacityFade} />
+
+            {error && (
+                <p role="alert" className="text-caption text-danger">
+                    {error}
+                </p>
+            )}
         </EffectSection>
     );
 };

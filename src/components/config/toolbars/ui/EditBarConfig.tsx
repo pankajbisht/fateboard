@@ -1,3 +1,4 @@
+import { Icon } from '@/components/atoms/Icon';
 import { shortcut } from '@/lib/utils/isMac';
 import { useStore } from '@/store';
 
@@ -8,10 +9,10 @@ export const EditBarConfig = [
         title: 'Copy selected object',
         description: 'Copy selected object',
         shortcut: shortcut('⌘C', 'Ctrl+c'),
-        icon: <i className="fa-regular fa-copy" />,
+        icon: <Icon name="copy" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().copy(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { copy } = get();
             copy();
         },
@@ -22,10 +23,10 @@ export const EditBarConfig = [
         title: 'Cut selected object',
         description: 'Cut selected object',
         shortcut: shortcut('⌘X', 'Ctrl+x'),
-        icon: <i className="fa-solid fa-scissors -rotate-90"></i>,
+        icon: <Icon name="scissors" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().cut(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { cut } = get();
             cut();
         },
@@ -36,10 +37,11 @@ export const EditBarConfig = [
         title: 'Paste object',
         description: 'Paste object',
         shortcut: shortcut('⌘V', 'Ctrl+v'),
-        icon: <i className="fa-regular fa-paste" />,
-        when: () => useStore.getState().hasSelection,
+        icon: <Icon name="paste" />,
+        // pasting needs something copied, not a selection (BUG-033)
+        when: () => !!useStore.getState().clipboard,
         onClick: () => useStore.getState().paste(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { paste } = get();
             paste();
         },
@@ -47,27 +49,27 @@ export const EditBarConfig = [
     {
         id: 'duplicate',
         label: 'Duplicate',
-        title: 'Duplicate object',
-        description: 'Duplicate object',
+        title: 'Duplicate on top of the original',
+        description: 'Independent copy exactly on top of the original',
         shortcut: shortcut('⌘D', 'Ctrl+D'),
-        icon: <i className="fa-regular fa-clone" />,
+        icon: <Icon name="clone" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().duplicate(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { duplicate } = get();
             duplicate();
         },
     },
     {
         id: 'clone',
-        label: 'Clone',
-        title: 'Clone selected object',
-        description: 'Clone selected object',
+        label: 'Clone (linked)',
+        title: 'Linked copy: edit any copy and the others follow',
+        description: 'Linked copy on top of the original; editing any copy updates the others',
         shortcut: shortcut('⌥D', 'Alt+D'),
-        icon: <i className="fa-solid fa-layer-group" />,
+        icon: <Icon name="layer-group" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().clone(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { clone } = get();
             clone();
         },
@@ -78,10 +80,11 @@ export const EditBarConfig = [
         title: 'Delete selected object',
         description: 'Delete selected object',
         shortcut: shortcut('⌫', 'Backspace'),
-        icon: <i className="fa-solid fa-trash" />,
+        keys: ['Delete'], // the main delete key on PC keyboards (BUG-103)
+        icon: <Icon name="trash" />,
         when: () => useStore.getState().hasSelection,
         onClick: () => useStore.getState().removeLayer(),
-        handler: ({ get, set }) => {
+        handler: ({ get }) => {
             const { removeLayer } = get();
             removeLayer();
         },

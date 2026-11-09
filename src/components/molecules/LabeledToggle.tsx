@@ -1,31 +1,49 @@
-import clsx from 'clsx';
-import { useState } from 'react';
-import Label from '../atoms/Label';
-import Toggle from '../atoms/Toggle';
+import { useId, useState } from 'react';
+import { Switch } from '../atoms/Switch';
+import { Field } from './Field';
 
+/** Switch with a label on one row. Controlled when `checked` is passed, uncontrolled otherwise. */
 function LabeledToggle({
     label,
+    checked: controlledChecked,
     onChange,
+    hint,
+    disabled,
     className,
 }: {
     label: string;
+    checked?: boolean;
     onChange: (v: boolean) => void;
+    hint?: string;
+    disabled?: boolean;
     className?: string;
 }) {
-    const [checked, setChecked] = useState(false);
-
-    const handleChange = (value: boolean) => {
-        setChecked(value);
-        onChange(value);
-    };
+    const id = useId();
+    const [innerChecked, setInnerChecked] = useState(controlledChecked ?? false);
+    const checked = controlledChecked ?? innerChecked;
 
     return (
-        <div className={clsx('flex items-center space-x-3', className)}>
-            <Label label={label} className="text-[11px] text-gray-500" />
-
-            <Toggle checked={checked} onClick={() => handleChange(!checked)} />
-        </div>
+        <Field
+            inline
+            label={label}
+            htmlFor={id}
+            hint={hint}
+            disabled={disabled}
+            className={className}
+        >
+            <Switch
+                id={id}
+                size="sm"
+                checked={checked}
+                disabled={disabled}
+                onChange={(v) => {
+                    setInnerChecked(v);
+                    onChange(v);
+                }}
+            />
+        </Field>
     );
 }
 
+export { LabeledToggle as SwitchField };
 export default LabeledToggle;
