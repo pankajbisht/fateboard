@@ -203,6 +203,61 @@ describe('project autosave (BUG-004)', () => {
         vi.restoreAllMocks();
     });
 
+    it('an edit made while the saved board is still being read is autosaved (BUG-186)', async () => {
+        // first visit: nothing saved, and the read is slow (IndexedDB under load)
+        const realGet = backend.get;
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => (release = resolve));
+        backend.get = async (key) => {
+            await gate;
+            return realGet(key);
+        };
+
+        unmount();
+        mount();
+        const restoring = state().restoreFromStorage();
+        canvas.add({ type: 'image', id: 'photo' }); // e.g. a photo opened right away
+        release();
+        await restoring;
+        state().initPages();
+        await settle();
+        backend.get = realGet;
+
+        await reload();
+        expect(ids()).toEqual(['photo']);
+    });
+
+    it('any save skipped during the startup read is done once it ends, not only added objects (BUG-186)', async () => {
+        const realGet = backend.get;
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => (release = resolve));
+        backend.get = async (key) => {
+            await gate;
+            return realGet(key);
+        };
+
+        unmount();
+        mount();
+        const restoring = state().restoreFromStorage();
+        state().persist(); // a document change that adds no object
+        release();
+        await restoring;
+        state().initPages();
+        await settle();
+        backend.get = realGet;
+
+        expect(await backend.get('project')).toMatchObject({ app: 'fateboard' });
+    });
+
+    it('nothing is written after a first-visit read when nothing changed', async () => {
+        unmount();
+        mount();
+        await state().restoreFromStorage();
+        state().initPages();
+        await settle();
+        expect(await backend.get('project')).toBeUndefined();
+    });
+
     it('a failed autosave is shown once per failure, with "Save a copy" (BUG-162)', async () => {
         const confirmDialog = vi.fn(async () => true);
         const saveBoard = vi.fn();

@@ -89,6 +89,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
     // While > 0, persist() does nothing. Used during restore / import / clear so a
     // half-loaded or empty canvas can never overwrite the saved data.
     let persistLock = 0;
+    let persistDropped = false; // persist() was called while locked (BUG-186)
     let unloadHandler: (() => void) | null = null;
     // tab hidden (switching away, closing on mobile): save NOW; pagehide can be too late for the
     // async IndexedDB write (BUG-138)
@@ -766,6 +767,8 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             if (!canvas) return false;
 
             persistLock++;
+            persistDropped = false;
+            let saveEditsAfter = false; // edited during the read: saved once unlocked (BUG-186)
 
             try {
                 let saved: StoredBoard | null;
@@ -792,6 +795,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 // nothing saved: the first board starts at the default size
                 if (!saved) {
                     if (canvas.getObjects().length === 0) applyDefaultPreset();
+                    saveEditsAfter = persistDropped;
                     return false;
                 }
 
@@ -822,6 +826,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 return false;
             } finally {
                 persistLock--;
+                if (saveEditsAfter && get().canvas === canvas) get().persist();
             }
         },
 
@@ -1045,7 +1050,10 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
         /** Debounced save of the whole canvas. */
         persist: () => {
-            if (persistLock > 0) return;
+            if (persistLock > 0) {
+                persistDropped = true;
+                return;
+            }
 
             cancelPersist();
 

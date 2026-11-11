@@ -74,13 +74,21 @@ test('undo history keeps one copy of a photo, and undo brings the photo back who
     editor,
     page,
 }) => {
-    // a noisy PNG, so the file is big enough to matter
+    // a noisy PNG, so the file is big enough to matter. Opaque pixels (alpha 255): canvas stores
+    // premultiplied alpha, so translucent noise loses colour detail and Firefox's PNG came out
+    // under the size check below. Real pseudo-random noise (xorshift32) does not compress.
     const dataUrl = await page.evaluate(() => {
         const c = document.createElement('canvas');
         c.width = c.height = 160;
         const ctx = c.getContext('2d')!;
         const img = ctx.createImageData(160, 160);
-        for (let i = 0; i < img.data.length; i++) img.data[i] = (i * 2654435761) >>> 24;
+        let x = 2463534242;
+        for (let i = 0; i < img.data.length; i++) {
+            x ^= x << 13;
+            x ^= x >>> 17;
+            x ^= x << 5;
+            img.data[i] = i % 4 === 3 ? 255 : x & 0xff;
+        }
         ctx.putImageData(img, 0, 0);
         return c.toDataURL('image/png');
     });

@@ -34,7 +34,7 @@ const DATA_FILES = new Set([
 const LEGACY_CEILINGS: Record<string, number> = {
     '/src/store/slices/createNodeEditorSlice.ts': 1718,
     '/src/lib/utils/GradientTool.ts': 1319,
-    '/src/store/slices/createCanvasSlice.ts': 1254,
+    '/src/store/slices/createCanvasSlice.ts': 1262, // +8: BUG-186 (2026-11-11)
     '/src/components/organisms/effects/ui/ExportCanvas.tsx': 1183,
     '/src/store/slices/createLayersSlice.ts': 1067,
     '/src/store/slices/templateSlice.ts': 933,

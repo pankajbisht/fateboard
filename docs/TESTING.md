@@ -21,6 +21,11 @@
 - **CI:** job `e2e` (installs Chromium, runs the suite, uploads `playwright-report` on failure); `build-deploy` `needs: e2e`.
 - **Stability (2026-11-09):** 76 specs on Chromium, 152 / 152 green over two full runs (`--repeat-each=2`);
   the former flaky deselect test 20 / 20. Firefox runs the same specs in CI.
+- **Firefox fixes (2026-11-12):** `openPanel` waits for the side panel to finish widening (`settledCanvasBox`): a click
+  during the 200 ms width transition could press one shape button and release on another as the grid reflowed, so
+  nothing was added (`data-safety` "cannot read is kept", 1 in ~10 runs). The BUG-155 test's PNG is opaque xorshift
+  noise: translucent noise compressed under its 20 000-character check in Firefox. The flaky "imported photo survives
+  a reload" was an app bug (BUG-186).
 
 | Spec | Covers |
 |---|---|
