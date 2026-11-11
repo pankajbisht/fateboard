@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { FontTemplate } from './fontTemplates.config';
 
-import { readLocalList, writeLocalList } from '@/lib/storage/localList';
+import { readLocalList, writeLocalList } from '@/lib/storage';
 
 const LIST = 'fontTemplates'; // stored as fateboard:fontTemplates (BUG-036)
 

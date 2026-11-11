@@ -63,3 +63,23 @@ test.describe('shapes', () => {
         await expect.poll(async () => (await editor.objects()).length).toBe(0);
     });
 });
+
+test('a design page gives new shapes and text a size that fits the page (1920 × 1080: 1.8 ×)', async ({
+    editor,
+    page,
+}) => {
+    await editor.addShape('Rectangle');
+    await editor.openPanel('Text');
+    await page.getByRole('button', { name: 'Add a heading' }).click();
+    const sizes = await page.evaluate(() => {
+        const c = window.__fateboard!.state('canvas') as {
+            getObjects(): { type: string; width: number; scaleX: number; fontSize?: number }[];
+        };
+        const objects = c.getObjects();
+        const rect = objects[0];
+        const heading = objects.filter((o) => o.type === 'textbox').at(-1)!; // the one just added
+        return { rect: Math.round(rect.width * rect.scaleX), heading: heading.fontSize };
+    });
+    expect(sizes.rect).toBe(288); // 160 × 1.8
+    expect(sizes.heading).toBeCloseTo(115.2); // 64 × 1.8
+});

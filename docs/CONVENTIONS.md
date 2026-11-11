@@ -6,7 +6,7 @@ existing code to match unless that is the task.
 ## Formatting & lint
 
 - Prettier (`.prettierrc`): 4-space indent, single quotes, semicolons, trailing commas, `printWidth: 100`, LF.
-  Some files (`createAnimationSlice.ts`, `engine.ts`, `AnimationPanel.tsx`) use 2 spaces; let Prettier fix files you
+  Some files (`createAnimationSlice.ts`, `engine.ts`) use 2 spaces; let Prettier fix files you
   touch.
 - ESLint 9 flat config (`eslint.config.js`): `js.recommended` + `typescript-eslint` recommended. `no-explicit-any`
   and `no-unused-vars` are **warnings** in `src/**`; react-hooks and react-refresh presets are commented out.
@@ -36,6 +36,10 @@ and generic store keys (`items`, `visible`, `x`, `y`, `opacity`, `color`). Use a
   `@animation/` exists in Vite only (not tsconfig), so use `@/animation/...`.
 - Import the store as `import { useStore } from '@store'`. There is no `useEditorStore`.
 - Import Fabric as `import * as fabric from 'fabric'` (or named imports). Never rely on `fabric.fabric`.
+- Import storage only as `@/lib/storage` (never its files). Only `src/lib/storage/**` may use `opendb-store`,
+  `localStorage`, `sessionStorage` or `indexedDB` (`storageBoundary.test.ts`). New persisted data = a function in a
+  domain store there; a new library or backend = a new adapter wired in `lib/storage/index.ts`
+  (docs/ARCHITECTURE.md "Storage layer").
 
 ## TypeScript
 
@@ -114,7 +118,7 @@ changed code:
    call store actions.
 2. Add an item to `organisms/editorsidebar/editorsidebar.config.tsx`:
    `{ id: '<feature>', label, icon: 'fa-solid fa-…', kind: 'panel', panel: <FeaturePanel />, activateTool?: '<tool>' }`.
-3. If it needs props, wrap it in a small container component (see `CanvasSizePanelContainer`). Do not render a
+3. If it needs props, wrap it in a small container component that reads them from the store. Do not render a
    props-driven panel without props (BUG-041).
 
 **Right dock tab:** add `{ id, label, icon, closable, content: () => <Panel/> }` to `components/config/tabs.config.tsx`.
@@ -133,7 +137,7 @@ A tool is a value of `activeTool` (Canvas slice) that changes pointer behaviour.
    options.
 4. Keyboard shortcut: add a command `{ id, label, shortcut: shortcut('⌘X', 'Ctrl+x'), handler: ({get}) => get().setActiveTool('<tool>') }`
    to a `components/config/toolbars/ui/*Config.tsx` that is part of `commandRegistry`. Make sure the shortcut is free:
-   check all `*BarConfig.tsx`, `AnimationPanel` `onKeyDown`, `DrawPanel` (`[`/`]`), `PagePanel` (PageUp/Down),
+   check all `*BarConfig.tsx`, the Animation panel (`animation/animation.logic.ts` `keyCommand`), `DrawPanel` (`[`/`]`), `PagePanel` (PageUp/Down),
    `ExtraBar` (Ctrl+' / Ctrl+;), `createNodeEditorSlice`.
 5. Tests: a unit test for `setActiveTool('<tool>')` flags and an E2E for the pointer flow.
 6. Update CANVAS.md (events) and COMPONENTS.md.

@@ -9,7 +9,7 @@ import { FloatingTextToolbar } from '@/components/organisms/FloatingTextToolbar'
 import { NodeToolbar } from '@/components/organisms/NodeToolbar';
 import { contextMenuRegistry } from '@/components/config/contextMenuRegistry';
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
-import { DEFAULT_CANVAS_PRESET } from './CanvasSizePanel';
+import { DEFAULT_CANVAS_PRESET } from '../board.config';
 import Ruler, { RULER_SIZE, createPointerSource, type RulerUnit } from './Ruler';
 import { isTextFloatTarget } from '@/lib/textTargets';
 import { designRenderRatio } from '@/lib/canvas/renderRatio';
@@ -285,6 +285,19 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
             height: Math.max(1, Math.round(size.height * fitScale * zoom)),
         };
     }, [size?.width, size?.height, fitScale, zoom]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    /* DESIGN: Ctrl / ⌘ + wheel (and a trackpad pinch) over the grey board zooms the page, not the
+       browser. Over the page itself the canvas handles it (createCanvasSlice `handleWheel`) and stops
+       the event, so it is never applied twice. A plain wheel scrolls the board as usual. */
+    useEffect(() => {
+        const el = scrollRef.current;
+        if (isWhiteboard || !el || !canvas) return;
+        const onWheel = (e: WheelEvent) => {
+            if (useStore.getState().wheelNavigate(e)) e.preventDefault();
+        };
+        el.addEventListener('wheel', onWheel, { passive: false });
+        return () => el.removeEventListener('wheel', onWheel);
+    }, [isWhiteboard, canvas]);
 
     /* the store's zoom actions only change state while this board owns the geometry (ADR Q2) */
     useEffect(() => {

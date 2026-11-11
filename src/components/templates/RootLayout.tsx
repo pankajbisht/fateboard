@@ -1,7 +1,7 @@
 import { useStore } from '@/store';
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import db from 'opendb-store';
+import { settingsStorage } from '@/lib/storage';
 import { DialogHost } from '@/components/organisms/DialogHost';
 import { ErrorBoundary } from '@/components/organisms/ErrorBoundary';
 import { ToastHost } from '@/components/organisms/ToastHost';
@@ -11,7 +11,7 @@ function RootLayout() {
     const { pathname } = useLocation();
 
     useEffect(() => {
-        const data = db.local.get('fateboard-settings', {});
+        const data = settingsStorage.load() ?? {};
         useStore.getState().hydrate(data);
         setStore(true);
     }, []);

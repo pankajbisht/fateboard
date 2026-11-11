@@ -1,7 +1,7 @@
 import type { IconName } from '@/components/atoms/Icon';
 import type { ReactNode } from 'react';
 
-export type EditorTool = 'select' | 'pan' | 'draw' | 'node' | 'text';
+export type EditorTool = 'select' | 'pan' | 'draw' | 'node' | 'text' | 'pen' | 'pencil' | 'laser';
 
 export type SidebarActionItem = {
     id: EditorTool;

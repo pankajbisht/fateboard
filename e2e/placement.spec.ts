@@ -23,15 +23,9 @@ test('Pages panel: no size, zoom, export or save / open copies', async ({ editor
     await expect(page.getByRole('combobox', { name: 'Page size' })).toHaveCount(0);
 });
 
-test('page size is set in the Canvas Size panel and drives the artboard', async ({
-    editor,
-    page,
-}) => {
-    await editor.openPanel('Canvas Size');
-    await expect(
-        page
-            .getByRole('searchbox', { name: 'Search canvas formats' })
-            .or(page.getByLabel('Search canvas formats')),
-    ).toBeVisible();
+test('canvas size is set in Settings, not in the left rail', async ({ editor, page }) => {
+    const rail = page.getByRole('navigation', { name: 'Editor tools and panels' });
+    await expect(rail.getByRole('button', { name: 'Shapes', exact: true })).toBeVisible();
+    await expect(rail.getByRole('button', { name: 'Canvas Size', exact: true })).toHaveCount(0);
     await expect(editor.footerView).toContainText('×');
 });

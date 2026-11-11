@@ -51,3 +51,41 @@ test('an imported photo survives a reload', async ({ editor, page }) => {
     );
     expect(src).toBe('data:image/png;');
 });
+
+// opendb-store 3: boards saved by the hand-written IndexedDB code (database `fateboard`, store `kv`)
+// move into the opendb database once, in a real browser, and the old database is deleted.
+test('a board saved before the storage upgrade opens and moves to the new database', async ({
+    editor,
+    page,
+}) => {
+    await editor.addShape('Rectangle');
+    await page.waitForTimeout(1500); // autosave debounce: nothing is written after this
+    await page.evaluate(async () => {
+        const capture = window.__fateboard!.state('captureProject') as (o: object) => unknown;
+        const doc = capture({ thumbnail: false });
+        const done = (req: IDBRequest) =>
+            new Promise((resolve, reject) => {
+                req.onsuccess = () => resolve(req.result);
+                req.onerror = () => reject(req.error);
+            });
+        // a returning user: no new database yet, the board in the old layout
+        await done(indexedDB.deleteDatabase('fateboard-data'));
+        const open = indexedDB.open('fateboard', 1);
+        open.onupgradeneeded = () => open.result.createObjectStore('kv');
+        const db = (await done(open)) as IDBDatabase;
+        await done(db.transaction('kv', 'readwrite').objectStore('kv').put(doc, 'project'));
+        db.close();
+    });
+
+    await page.reload();
+    await page.waitForFunction(() => !!window.__fateboard?.ready());
+    await expect.poll(async () => (await editor.objects()).map((o) => o.type)).toEqual(['rect']);
+    const names = () =>
+        page.evaluate(async () => (await indexedDB.databases()).map((d) => d.name).sort());
+    await expect.poll(names).toEqual(['fateboard-data']);
+
+    // it now lives in the new database only
+    await page.reload();
+    await page.waitForFunction(() => !!window.__fateboard?.ready());
+    await expect.poll(async () => (await editor.objects()).map((o) => o.type)).toEqual(['rect']);
+});

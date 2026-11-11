@@ -3,12 +3,17 @@
  * Real store (all slices composed) + fake canvas + in-memory storage backend. A "reload" = a fresh
  * empty canvas and empty pages state, then `restoreFromStorage()` + `initPages()` like `init()`.
  */
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import db from 'opendb-store';
 import { useStore } from '@store';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
-import { LEGACY_DRAW_KEY, createMemoryBackend, projectStorage } from '@/lib/storage/projectStorage';
+import {
+    LEGACY_DRAW_KEY,
+    UNREADABLE_KEY,
+    createMemoryBackend,
+    projectStorage,
+} from '@/lib/storage';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -129,5 +134,159 @@ describe('project autosave (BUG-004)', () => {
         await reload();
         expect(state().pages).toHaveLength(1);
         expect(ids()).toEqual([]);
+    });
+    it('a saved project that cannot be opened is kept as a backup, not overwritten (BUG-154)', async () => {
+        const doc = {
+            app: 'fateboard',
+            version: 1,
+            currentPageId: 'p',
+            pages: [{ id: 'p', name: 'P', canvasJSON: { objects: [{ type: 'nope', id: 'x' }] } }],
+        };
+        await backend.set('project', doc);
+        const confirmDialog = vi.fn(async () => false);
+        useStore.setState({ confirmDialog } as any);
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        unmount();
+        mount();
+        const load = canvas.loadFromJSON;
+        canvas.loadFromJSON = async (json: any) => {
+            if (json?.objects?.some((o: any) => o.type === 'nope')) throw new Error('unknown type');
+            return load(json);
+        };
+        expect(await state().restoreFromStorage()).toBe(false);
+        state().initPages();
+        canvas.add({ type: 'rect', id: 'new' });
+        await settle();
+
+        expect(await backend.get(UNREADABLE_KEY)).toEqual(doc);
+        expect(confirmDialog).toHaveBeenCalledTimes(1);
+        useStore.setState({ confirmDialog: prev.confirmDialog } as any);
+        vi.restoreAllMocks();
+    });
+
+    it('a saved project that cannot be READ at startup is never written over (BUG-173)', async () => {
+        const doc = {
+            app: 'fateboard',
+            version: 1,
+            currentPageId: 'p',
+            pages: [
+                { id: 'p', name: 'P', canvasJSON: { objects: [{ type: 'rect', id: 'kept' }] } },
+            ],
+        };
+        await backend.set('project', doc);
+        const realGet = backend.get;
+        backend.get = () => Promise.reject(new Error('disk error'));
+        const alertDialog = vi.fn(async () => undefined);
+        useStore.setState({ alertDialog } as any);
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        await reload();
+        canvas.add({ type: 'rect', id: 'new' });
+        await settle();
+        state().clearBoard(); // "New board" must not delete it either
+        await settle();
+
+        backend.get = realGet;
+        expect(await backend.get('project')).toEqual(doc);
+        expect(alertDialog).toHaveBeenCalledTimes(1);
+
+        // once the project can be read again, it opens and autosave works again
+        await reload();
+        expect(ids()).toEqual(['kept']);
+        canvas.add({ type: 'rect', id: 'after' });
+        await settle();
+        const saved: any = await backend.get('project');
+        expect(saved.pages[0].canvasJSON.objects.map((o: any) => o.id)).toEqual(['kept', 'after']);
+
+        useStore.setState({ alertDialog: prev.alertDialog } as any);
+        vi.restoreAllMocks();
+    });
+
+    it('an edit made while the saved board is still being read is autosaved (BUG-186)', async () => {
+        // first visit: nothing saved, and the read is slow (IndexedDB under load)
+        const realGet = backend.get;
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => (release = resolve));
+        backend.get = async (key) => {
+            await gate;
+            return realGet(key);
+        };
+
+        unmount();
+        mount();
+        const restoring = state().restoreFromStorage();
+        canvas.add({ type: 'image', id: 'photo' }); // e.g. a photo opened right away
+        release();
+        await restoring;
+        state().initPages();
+        await settle();
+        backend.get = realGet;
+
+        await reload();
+        expect(ids()).toEqual(['photo']);
+    });
+
+    it('any save skipped during the startup read is done once it ends, not only added objects (BUG-186)', async () => {
+        const realGet = backend.get;
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => (release = resolve));
+        backend.get = async (key) => {
+            await gate;
+            return realGet(key);
+        };
+
+        unmount();
+        mount();
+        const restoring = state().restoreFromStorage();
+        state().persist(); // a document change that adds no object
+        release();
+        await restoring;
+        state().initPages();
+        await settle();
+        backend.get = realGet;
+
+        expect(await backend.get('project')).toMatchObject({ app: 'fateboard' });
+    });
+
+    it('nothing is written after a first-visit read when nothing changed', async () => {
+        unmount();
+        mount();
+        await state().restoreFromStorage();
+        state().initPages();
+        await settle();
+        expect(await backend.get('project')).toBeUndefined();
+    });
+
+    it('a failed autosave is shown once per failure, with "Save a copy" (BUG-162)', async () => {
+        const confirmDialog = vi.fn(async () => true);
+        const saveBoard = vi.fn();
+        useStore.setState({ confirmDialog, saveBoard } as any);
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        const realSet = backend.set;
+        const fail = () => Promise.reject(new Error('quota'));
+
+        backend.set = fail;
+        canvas.add({ type: 'rect', id: 'a' });
+        await settle();
+        canvas.add({ type: 'rect', id: 'b' });
+        await settle();
+        expect(confirmDialog).toHaveBeenCalledTimes(1); // not once per autosave
+        expect(saveBoard).toHaveBeenCalledTimes(1); // the user chose "Save a copy"
+
+        backend.set = realSet; // saving works again...
+        canvas.add({ type: 'rect', id: 'c' });
+        await settle();
+        backend.set = fail; // ...and fails again: the user is told again
+        canvas.add({ type: 'rect', id: 'd' });
+        await settle();
+        expect(confirmDialog).toHaveBeenCalledTimes(2);
+
+        backend.set = realSet;
+        useStore.setState({
+            confirmDialog: prev.confirmDialog,
+            saveBoard: prev.saveBoard,
+        } as any);
+        vi.restoreAllMocks();
     });
 });

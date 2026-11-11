@@ -1,4 +1,5 @@
 import * as fabric from 'fabric';
+import { creationScaleOf } from '@/lib/canvas/creationScale';
 import type { SliceCreator } from '../types';
 import { fontFamilyConfig } from '@/components/config/fontfamily.config';
 import { wirePlaceholderBehavior } from './colorSystemFixes';
@@ -224,18 +225,22 @@ export const createTextSlice: SliceCreator<TextSlice> = (set, get) => ({
         const canvas = get().canvas;
         if (!canvas) return;
 
+        // `fontSize` and `width` are base sizes: sized for the page / zoom (lib/canvas/creationScale)
+        const k = creationScaleOf(get());
         const {
             text = 'Enter text', // placeholder text
-            fontSize = 36,
+            fontSize: baseFontSize = 36,
             bold = false,
             italic = false,
             underline = false,
             fontFamily = 'Arial',
-            width = 200,
+            width: baseWidth = 200,
             textColor = '#000000',
             placeholderColor = '#9ca3af',
         } = textObj;
 
+        const fontSize = baseFontSize * k;
+        const width = baseWidth * k;
         const center = canvas.getVpCenter();
 
         const fabricText = new fabric.Textbox(text, {

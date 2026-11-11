@@ -89,7 +89,7 @@ export const HELP_TOPICS: HelpTopic[] = [
             {
                 title: 'Design page or whiteboard',
                 items: [
-                    'Design is a fixed page with rulers. Choose its size in the Canvas Size panel',
+                    'Design is a fixed page with rulers. Choose its size in Settings > Canvas',
                     'Whiteboard is an endless canvas with no page edges',
                     'Switch with Settings > Canvas > Freehand',
                 ],
@@ -106,7 +106,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 text: 'The editor is built for a desktop or laptop. On a phone you get a notice, and Continue anyway opens it regardless.',
             },
         ],
-        related: ['canvas-size', 'pages', 'export', 'settings'],
+        related: ['pages', 'export', 'settings'],
     },
 
     /* ------------------------------- tools ------------------------------- */
@@ -166,14 +166,14 @@ export const HELP_TOPICS: HelpTopic[] = [
         title: 'Hand',
         icon: 'hand',
         summary: 'Move around the board without touching anything on it.',
-        keywords: 'pan navigate scroll zoom move view',
+        keywords: 'pan navigate scroll zoom move view wheel trackpad pinch',
         sections: [
             {
                 title: 'Move the view',
                 items: [
                     'Press `H` or pick Hand in the left rail',
                     'Drag anywhere to move the view',
-                    'Scroll to zoom while the Hand tool is active',
+                    'Scroll with the mouse wheel or trackpad to move the board (`shift` + wheel moves sideways), with any tool',
                     'Press `V` to go back to Select',
                     'Hold `Space` to drag the view from the Select or Draw tool. Let go and you are back where you were, with your selection intact',
                 ],
@@ -181,6 +181,7 @@ export const HELP_TOPICS: HelpTopic[] = [
             {
                 title: 'Zoom from anywhere',
                 items: [
+                    '`mod` + wheel, or a trackpad pinch, zooms at the pointer',
                     '`mod+=` zooms in and `mod+−` zooms out',
                     '`mod+0` fits the board to the screen',
                     '`mod+1` shows it at actual size',
@@ -247,6 +248,80 @@ export const HELP_TOPICS: HelpTopic[] = [
             },
         ],
         related: ['select', 'draw', 'shapes', 'boolean'],
+    },
+    {
+        id: 'pen',
+        group: 'Tools',
+        title: 'Pen',
+        icon: 'pen-tool',
+        summary:
+            'Draw exact lines and curves point by point, like the pen in Figma or Illustrator.',
+        keywords: 'pen bezier vector path curve anchor point polygon outline',
+        sections: [
+            {
+                title: 'Draw a path',
+                items: [
+                    'Pick the Pen in the left rail (shortcut `P`)',
+                    'Click to place a corner point',
+                    'Click and drag to place a smooth point: the drag pulls out its curve handles',
+                    'Click the first point again to close the shape (the first point grows when you are on it)',
+                    'Press `Enter`, `Escape` or double-click to finish an open path',
+                    '`Backspace` removes the last point while you draw',
+                ],
+            },
+            {
+                title: 'After drawing',
+                items: [
+                    'The path is selected in the Select tool; it is one undo step',
+                    'It has a black outline and no fill: use the palette or the footer to color it',
+                    'Edit its points later with the Node tool (`A`)',
+                    'Picking another tool keeps a path that has two points or more',
+                ],
+            },
+        ],
+        related: ['node', 'pencil', 'shapes'],
+    },
+    {
+        id: 'pencil',
+        group: 'Tools',
+        title: 'Pencil',
+        icon: 'pencil-line',
+        summary: 'Sketch freehand lines quickly, without opening the Draw panel.',
+        keywords: 'pencil freehand sketch line draw scribble',
+        sections: [
+            {
+                title: 'Sketch',
+                items: [
+                    'Pick the Pencil in the left rail (shortcut `shift+P`)',
+                    'Drag on the board to draw a smooth line; draw as many as you like',
+                    'It draws in the drawing color; the palette changes it',
+                    'Its line is thin and plain. For brushes, width, opacity and effects, use Draw',
+                    'Each line is one undo step and can be reshaped with the Node tool',
+                ],
+            },
+        ],
+        related: ['draw', 'pen', 'node'],
+    },
+    {
+        id: 'laser',
+        group: 'Tools',
+        title: 'Laser pointer',
+        icon: 'laser-pointer',
+        summary:
+            'Point things out while you present or share your screen. Nothing is drawn on the board.',
+        keywords: 'laser pointer present presentation highlight point show',
+        sections: [
+            {
+                title: 'Point',
+                items: [
+                    'Pick the Laser pointer in the left rail (shortcut `K`)',
+                    'Drag on the board: a red trail follows and fades away after a second',
+                    'The trail is never saved, never exported and never added to undo',
+                    'Press `Escape` or `V` to go back to Select',
+                ],
+            },
+        ],
+        related: ['hand', 'select'],
     },
     {
         id: 'draw',
@@ -407,28 +482,6 @@ export const HELP_TOPICS: HelpTopic[] = [
 
     /* ----------------------------- organize ------------------------------ */
     {
-        id: 'canvas-size',
-        group: 'Organize',
-        title: 'Canvas Size',
-        icon: 'ruler-combined',
-        summary: 'Formats for social, print and screens, or your own dimensions.',
-        keywords:
-            'page size dimensions format preset instagram custom orientation landscape portrait',
-        open: { panel: 'canvas-size', label: 'Open Canvas Size' },
-        sections: [
-            {
-                title: 'Choose a size',
-                items: [
-                    'Search formats, or filter by category',
-                    'Custom Size takes any width and height',
-                    'Orientation flips between landscape and portrait',
-                    'Each page keeps its own size, and changing it can be undone',
-                ],
-            },
-        ],
-        related: ['pages', 'settings', 'export'],
-    },
-    {
         id: 'pages',
         group: 'Organize',
         title: 'Pages',
@@ -457,7 +510,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 ],
             },
         ],
-        related: ['layers', 'canvas-size', 'basics'],
+        related: ['layers', 'settings', 'basics'],
     },
     {
         id: 'layers',
@@ -516,7 +569,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 ],
             },
         ],
-        related: ['font-templates', 'canvas-size'],
+        related: ['font-templates', 'settings'],
     },
     {
         id: 'font-templates',
@@ -835,16 +888,20 @@ export const HELP_TOPICS: HelpTopic[] = [
             {
                 title: 'Presets',
                 items: [
-                    'Select objects and choose an Entrance, Emphasis or Exit',
-                    'Set the start and length, and how long to repeat an emphasis',
-                    'Stagger makes several objects start one after another',
+                    'Select objects and choose an Entrance, Emphasis or Exit. Hover a preset to preview it',
+                    'Picking another preset of the same kind right away swaps it, so you can try several',
+                    'Starts: at the playhead, at the start, or after the last keyframe of the object',
+                    'Set the duration, and how often an emphasis repeats',
+                    'With several objects selected, a delay staggers them: they start one after another',
                 ],
             },
             {
                 title: 'Keyframes',
                 items: [
                     'With the timeline focused, press `K` to add a keyframe at the playhead',
+                    'Double-click a row of the timeline to add a keyframe there',
                     'Auto-key records a keyframe whenever you change an object',
+                    'Click a keyframe to jump to it and edit its values',
                     'Drag keyframes to retime them, `Delete` to remove them',
                     'Arrow keys step one frame, or nudge selected keyframes. `shift` makes bigger steps',
                 ],
@@ -855,7 +912,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                     '`Space` plays and pauses, `L` loops',
                     '`Home` and `End` jump to the start and finish',
                     '`I` and `O` set the work area',
-                    'Set the playback speed, and `mod` + wheel zooms the timeline',
+                    'Set the timeline length and playback speed. `mod` + wheel zooms the timeline',
                     '`mod+Z` here undoes timeline changes, separately from the board',
                 ],
             },
@@ -908,7 +965,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 ],
             },
         ],
-        related: ['animate', 'basics', 'canvas-size'],
+        related: ['animate', 'basics', 'settings'],
     },
 
     /* ----------------------------- reference ----------------------------- */
@@ -947,13 +1004,14 @@ export const HELP_TOPICS: HelpTopic[] = [
         group: 'Reference',
         title: 'Settings',
         icon: 'gear',
-        summary: 'Theme, color, icon size, board type and units.',
-        keywords: 'preferences dark mode light theme units mm cm inches icon size',
+        summary: 'Theme, color, icon size, board type, canvas size and orientation, units.',
+        keywords:
+            'preferences dark mode light theme units mm cm inches icon size canvas size page size custom size width height dimensions format preset youtube instagram orientation landscape portrait reset',
         sections: [
             {
                 title: 'Appearance',
                 items: [
-                    'Theme: Light, Dark or System',
+                    'Theme: Light, Dark or System. Light is the default',
                     'Color theme changes the brand color for buttons and selections',
                     'Icon size: Small, Medium or Large',
                 ],
@@ -962,11 +1020,20 @@ export const HELP_TOPICS: HelpTopic[] = [
                 title: 'Canvas',
                 items: [
                     'Freehand switches to an endless whiteboard',
+                    'Canvas size: YouTube, Instagram, Facebook, LinkedIn, A4 or Presentation. New boards start at it, and the page you had open takes it when you go back to the editor (Undo brings the old size back)',
+                    'Custom size: type a width and height in your units (1 to 10,000 px), then Apply size. It is used exactly as typed',
+                    'Orientation: landscape or portrait for the canvas size',
                     'Units sets px, mm, cm or in for rulers and size fields',
                 ],
             },
+            {
+                title: 'Reset',
+                items: [
+                    'Reset settings asks first, then restores Light, Fate Blue, Small icons, px, landscape and Presentation 16:9. The page you had open takes that size when you go back to the editor',
+                ],
+            },
         ],
-        related: ['basics', 'canvas-size'],
+        related: ['basics', 'pages'],
     },
     SHORTCUTS_TOPIC,
 ];

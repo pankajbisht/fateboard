@@ -116,4 +116,41 @@ describe('createUndoRedoSlice', () => {
         h.get().unregisterHistoryEvents(canvas);
         expect(canvas.listenerCount('object:added')).toBe(0);
     });
+    it('history holds one copy of an embedded photo, not one per step (BUG-155)', async () => {
+        const src = `data:image/png;base64,${'A'.repeat(200_000)}`;
+        const { canvas, h } = setup([{ type: 'image', id: 'photo', src }]);
+        h.get().initHistory();
+        for (let i = 0; i < 12; i++) {
+            canvas.add({ type: 'rect', id: `r${i}` });
+            h.get().saveState(true);
+        }
+        const chars = h.get().undoStack.reduce((n: number, s: string) => n + s.length, 0);
+        expect(h.get().undoStack).toHaveLength(13);
+        expect(chars).toBeLessThan(src.length);
+
+        // the photo comes back whole
+        await h.get().undo();
+        const restored = canvas.getObjects().find((o: { id: string }) => o.id === 'photo');
+        expect(restored.src).toBe(src);
+        expect(canvas.getObjects()).toHaveLength(12);
+    });
+    it('an undo that cannot load its snapshot changes nothing and does not throw (BUG-154)', async () => {
+        const { canvas, h } = setup();
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        h.get().initHistory();
+        canvas.add({ type: 'rect', id: 'r1' });
+        h.get().saveState(true);
+        const stack = h.get().undoStack;
+        canvas.loadFromJSON = async () => {
+            throw new Error('cannot load');
+        };
+
+        await expect(h.get().undo()).resolves.toBeUndefined();
+
+        expect(h.get().undoStack).toBe(stack);
+        expect(h.get().canRedo).toBe(false);
+        expect(h.get()._isRestoring).toBe(false);
+        expect(canvas.getObjects()).toHaveLength(1);
+        vi.restoreAllMocks();
+    });
 });

@@ -1,5 +1,13 @@
 import type { StateCreator } from 'zustand';
-import db from 'opendb-store';
+import { settingsStorage } from '@/lib/storage';
+import {
+    CANVAS_ORIENTATIONS,
+    CANVAS_PRESETS,
+    DEFAULT_CANVAS_PRESET,
+    orientPreset,
+    type CanvasOrientation,
+} from '@/components/organisms/board/board.config';
+import type { CanvasPreset } from '@/components/organisms/board/board.type';
 
 /* -------------------------------------------------------------------------- */
 /*  Types & constants                                                          */
@@ -7,9 +15,6 @@ import db from 'opendb-store';
 
 export const THEME_MODES = ['light', 'dark', 'system'] as const;
 export const ICON_SIZES = ['sm', 'md', 'lg'] as const;
-export const PAGE_FORMATS = ['A3', 'A4', 'A5', 'LETTER', 'CUSTOM'] as const;
-export const ORIENTATIONS = ['LANDSCAPE', 'PORTRAIT'] as const;
-export const BACKGROUND_STYLES = ['none', 'grid', 'ruled', 'dots', 'isometric'] as const;
 export const UNITS = ['px', 'mm', 'cm', 'in'] as const;
 
 /** Color themes (brand scale for the whole app). CSS: `:root[data-theme='…']` in index.css. */
@@ -23,103 +28,68 @@ export const COLOR_THEMES = [
 ] as const;
 export type ColorTheme = (typeof COLOR_THEMES)[number]['id'];
 const COLOR_THEME_IDS = COLOR_THEMES.map((t) => t.id) as readonly ColorTheme[];
+const CANVAS_PRESET_IDS = CANVAS_PRESETS.map((p) => p.id);
 
 export type ThemeMode = (typeof THEME_MODES)[number];
 export type IconSize = (typeof ICON_SIZES)[number];
-export type PageFormat = (typeof PAGE_FORMATS)[number];
-export type Orientation = (typeof ORIENTATIONS)[number];
-export type BackgroundStyle = (typeof BACKGROUND_STYLES)[number];
 export type Unit = (typeof UNITS)[number];
 
-export interface CustomSize {
-    /** millimetres */
-    width: number;
-    /** millimetres */
-    height: number;
-}
-
+/**
+ * Per-browser preferences. Only what the editor reads lives here: page size, background, grid and
+ * snap were saved but never read and were removed (owner, 2026-11-11). A document's own settings
+ * (each page's size and background) are stored with the document.
+ */
 export interface Settings {
     mode: ThemeMode;
     /** Brand color theme for the whole app (works with light / dark mode). */
     colorTheme: ColorTheme;
     iconSize: IconSize;
-    backgroundStyle: BackgroundStyle;
-    /** Canvas / page colour as #rrggbb. */
-    backgroundColor: string;
-    /** Spacing of the background pattern and the snap grid, in px. */
-    gridSize: number;
-    snapToGrid: boolean;
-    showRulers: boolean;
     /** Unit shown on rulers and in size fields. */
     unit: Unit;
-    orientation: Orientation;
     /** Infinite canvas when true, fixed page when false. */
     freehand: boolean;
-    /** Derived: 'FREEHAND' while freehand is on, otherwise lastPageFormat. */
-    format: PageFormat | 'FREEHAND';
-    /** Remembered so turning freehand off restores the user's previous page. */
-    lastPageFormat: PageFormat;
-    customSize: CustomSize;
+    /**
+     * Settings > Canvas size: a `CANVAS_PRESETS` id, or `'custom'` for `customCanvasSize`. New boards
+     * start at it, and a change resizes the open page.
+     */
+    defaultCanvasPresetId: string;
+    /** Settings > Orientation: the canvas size is used in it. */
+    canvasOrientation: CanvasOrientation;
+    /** Settings > Canvas size > Custom size, in whole px (kept while a preset is chosen). */
+    customCanvasSize: CustomCanvasSize;
 }
 
-/** Portrait dimensions in millimetres. */
-export const PAGE_SIZES_MM: Record<Exclude<PageFormat, 'CUSTOM'>, CustomSize> = {
-    A3: { width: 297, height: 420 },
-    A4: { width: 210, height: 297 },
-    A5: { width: 148, height: 210 },
-    LETTER: { width: 216, height: 279 },
-};
+export type CustomCanvasSize = { width: number; height: number };
 
-export const CUSTOM_SIZE_LIMITS = { min: 50, max: 2000 } as const;
-export const GRID_SIZE_LIMITS = { min: 4, max: 200 } as const;
+/** `defaultCanvasPresetId` of the custom size. */
+export const CUSTOM_CANVAS_ID = 'custom';
 
-const STORAGE_KEY = 'fateboard-settings';
+/** Custom size limits in px: the same as pages accept from a file (`MAX_PAGE_PX`). */
+export const CUSTOM_CANVAS_LIMITS = { min: 1, max: 10000 } as const;
 
+/** A side of a custom size: a whole number of px inside the limits. */
+export const isCanvasSide = (n: unknown): n is number =>
+    typeof n === 'number' &&
+    Number.isInteger(n) &&
+    n >= CUSTOM_CANVAS_LIMITS.min &&
+    n <= CUSTOM_CANVAS_LIMITS.max;
+
+/** What a new user gets and what Reset restores (owner, 2026-11-11). */
 export const DEFAULT_SETTINGS: Settings = {
-    mode: 'system',
+    mode: 'light',
     colorTheme: 'fate',
-    iconSize: 'md',
-    backgroundStyle: 'ruled',
-    backgroundColor: '#ffffff',
-    gridSize: 24,
-    snapToGrid: false,
-    showRulers: true,
+    iconSize: 'sm',
     unit: 'px',
-    orientation: 'LANDSCAPE',
     // design (fixed page) first; whiteboard is opt-in (DECISIONS Q3)
     freehand: false,
-    format: 'A4',
-    lastPageFormat: 'A4',
-    customSize: { width: 210, height: 297 },
+    defaultCanvasPresetId: DEFAULT_CANVAS_PRESET.id,
+    canvasOrientation: 'landscape',
+    customCanvasSize: { width: 1920, height: 1080 },
 };
 
 /* -------------------------------------------------------------------------- */
 /*  Pure helpers (safe to unit test)                                           */
 /* -------------------------------------------------------------------------- */
-
-export const clampDimension = (
-    value: unknown,
-    fallback: number = CUSTOM_SIZE_LIMITS.min,
-): number => {
-    const n = Number(value);
-    if (!Number.isFinite(n)) return fallback;
-    return Math.min(CUSTOM_SIZE_LIMITS.max, Math.max(CUSTOM_SIZE_LIMITS.min, Math.round(n)));
-};
-
-export const isHexColor = (value: unknown): value is string =>
-    typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
-
-export const clampGridSize = (
-    value: unknown,
-    fallback: number = DEFAULT_SETTINGS.gridSize,
-): number => {
-    const n = Number(value);
-    if (!Number.isFinite(n)) return fallback;
-    return Math.min(GRID_SIZE_LIMITS.max, Math.max(GRID_SIZE_LIMITS.min, Math.round(n)));
-};
-
-const bool = (value: unknown, fallback: boolean): boolean =>
-    typeof value === 'boolean' ? value : fallback;
 
 const pick = <T extends string>(value: unknown, allowed: readonly T[], fallback: T): T =>
     typeof value === 'string' && (allowed as readonly string[]).includes(value)
@@ -127,73 +97,67 @@ const pick = <T extends string>(value: unknown, allowed: readonly T[], fallback:
         : fallback;
 
 /**
- * Turns anything (corrupt storage, old versions, partial data) into a valid
- * Settings object. Also migrates the legacy `backgroundStyle1` key.
+ * Turns anything (corrupt storage, old versions, partial data) into a valid Settings object.
+ * Fields from older versions that nothing reads are dropped.
  */
 export function sanitizeSettings(raw: unknown): Settings {
     const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-
-    const freehand = typeof r.freehand === 'boolean' ? r.freehand : DEFAULT_SETTINGS.freehand;
-
-    // Older saves stored the page format in `format` and had no `lastPageFormat`.
-    const legacyFormat = r.format !== 'FREEHAND' ? r.format : undefined;
-    const lastPageFormat = pick(
-        r.lastPageFormat ?? legacyFormat,
-        PAGE_FORMATS,
-        DEFAULT_SETTINGS.lastPageFormat,
-    );
-
-    const custom = (r.customSize && typeof r.customSize === 'object' ? r.customSize : {}) as Record<
-        string,
-        unknown
-    >;
 
     return {
         mode: pick(r.mode, THEME_MODES, DEFAULT_SETTINGS.mode),
         colorTheme: pick(r.colorTheme, COLOR_THEME_IDS, DEFAULT_SETTINGS.colorTheme),
         iconSize: pick(r.iconSize, ICON_SIZES, DEFAULT_SETTINGS.iconSize),
-        backgroundStyle: pick(
-            r.backgroundStyle ?? r.backgroundStyle1,
-            BACKGROUND_STYLES,
-            DEFAULT_SETTINGS.backgroundStyle,
-        ),
-        backgroundColor: isHexColor(r.backgroundColor)
-            ? r.backgroundColor.toLowerCase()
-            : DEFAULT_SETTINGS.backgroundColor,
-        gridSize: clampGridSize(r.gridSize),
-        snapToGrid: bool(r.snapToGrid, DEFAULT_SETTINGS.snapToGrid),
-        showRulers: bool(r.showRulers, DEFAULT_SETTINGS.showRulers),
         unit: pick(r.unit, UNITS, DEFAULT_SETTINGS.unit),
-        orientation: pick(r.orientation, ORIENTATIONS, DEFAULT_SETTINGS.orientation),
-        freehand,
-        format: freehand ? 'FREEHAND' : lastPageFormat,
-        lastPageFormat,
-        customSize: {
-            width: clampDimension(custom.width, DEFAULT_SETTINGS.customSize.width),
-            height: clampDimension(custom.height, DEFAULT_SETTINGS.customSize.height),
-        },
+        freehand: typeof r.freehand === 'boolean' ? r.freehand : DEFAULT_SETTINGS.freehand,
+        defaultCanvasPresetId: pick(
+            r.defaultCanvasPresetId,
+            [...CANVAS_PRESET_IDS, CUSTOM_CANVAS_ID],
+            DEFAULT_SETTINGS.defaultCanvasPresetId,
+        ),
+        canvasOrientation: pick(
+            r.canvasOrientation,
+            CANVAS_ORIENTATIONS,
+            DEFAULT_SETTINGS.canvasOrientation,
+        ),
+        customCanvasSize: sanitizeCustomSize(r.customCanvasSize),
     };
 }
 
+const sanitizeCustomSize = (raw: unknown): CustomCanvasSize => {
+    const size = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+    return isCanvasSide(size.width) && isCanvasSide(size.height)
+        ? { width: size.width, height: size.height }
+        : { ...DEFAULT_SETTINGS.customCanvasSize };
+};
+
 /**
- * Final page size in millimetres with orientation applied,
- * or null for the infinite (freehand) canvas.
+ * The preset a new board starts with, in the chosen orientation. Always a new object, so changing a
+ * page never changes the setting.
  */
-export function getCanvasSize(settings: Settings): CustomSize | null {
-    if (settings.freehand) return null;
-
-    const base =
-        settings.lastPageFormat === 'CUSTOM'
-            ? settings.customSize
-            : PAGE_SIZES_MM[settings.lastPageFormat];
-
-    const long = Math.max(base.width, base.height);
-    const short = Math.min(base.width, base.height);
-
-    return settings.orientation === 'LANDSCAPE'
-        ? { width: long, height: short }
-        : { width: short, height: long };
+export function getDefaultCanvasPreset(settings: Settings): CanvasPreset {
+    const preset =
+        settings.defaultCanvasPresetId === CUSTOM_CANVAS_ID
+            ? customPreset(settings.customCanvasSize)
+            : (CANVAS_PRESETS.find((p) => p.id === settings.defaultCanvasPresetId) ??
+              DEFAULT_CANVAS_PRESET);
+    return orientPreset(preset, settings.canvasOrientation);
 }
+
+/** A custom size as a preset; `orientPreset` gives it its `custom-<w>x<h>` id. */
+const customPreset = ({ width, height }: CustomCanvasSize): CanvasPreset => ({
+    id: CUSTOM_CANVAS_ID,
+    label: 'Custom size',
+    category: 'Custom',
+    width,
+    height,
+    icon: 'ruler-combined',
+});
+
+/** Same canvas size (id and px), so only a real change resizes the open page. */
+const sizeKey = (settings: Settings) => {
+    const { id, width, height } = getDefaultCanvasPreset(settings);
+    return `${id}:${width}x${height}`;
+};
 
 /* -------------------------------------------------------------------------- */
 /*  Theme                                                                      */
@@ -228,13 +192,22 @@ export function applyIconSize(size: IconSize): void {
 /*  Persistence                                                                */
 /* -------------------------------------------------------------------------- */
 
-function persist(settings: Settings): void {
-    try {
-        db.local.set(STORAGE_KEY, settings);
-    } catch (error) {
-        // Storage can be full, blocked or unavailable (private mode). Never crash the UI for it.
-        console.error('[settings] Failed to save settings', error);
+/**
+ * Set when Settings > Canvas size or Orientation changes; the editor resizes the page that was open
+ * and clears it. Stored, not in memory: Settings is another page, and a reload must not lose it.
+ */
+function markCanvasSizePending(): void {
+    if (!settingsStorage.markCanvasSizePending()) {
+        console.error('[settings] Failed to save the canvas size change');
     }
+}
+
+/** True once after a canvas size change, then false until the next change. */
+const takeCanvasSizePending = (): boolean => settingsStorage.takeCanvasSizePending();
+
+function persist(settings: Settings): void {
+    // Storage can be full, blocked or unavailable (private mode). Never crash the UI for it.
+    if (!settingsStorage.save(settings)) console.error('[settings] Failed to save settings');
 }
 
 /* -------------------------------------------------------------------------- */
@@ -254,16 +227,25 @@ export interface SettingsSlice {
     setMode: (mode: ThemeMode) => void;
     setIconSize: (size: IconSize) => void;
     setColorTheme: (theme: ColorTheme) => void;
-    setBackgroundStyle: (style: BackgroundStyle) => void;
-    setBackgroundColor: (color: string) => void;
-    setSnapToGrid: (snap: boolean) => void;
-    setShowRulers: (show: boolean) => void;
     setUnit: (unit: Unit) => void;
     setFreehand: (freehand: boolean) => void;
     toggleFreehand: () => void;
-    setFormat: (format: PageFormat) => void;
-    setCustomSize: (size: Partial<CustomSize>) => void;
+    /** Settings > Canvas size: a `CANVAS_PRESETS` id or `'custom'` (anything else is ignored). */
+    setDefaultCanvasPreset: (presetId: string) => void;
+    /** Settings > Orientation: landscape or portrait for the canvas size. */
+    setCanvasOrientation: (orientation: CanvasOrientation) => void;
+    /**
+     * Settings > Canvas size > Custom size, in px. Selects it and sets the orientation from it, so it
+     * is used exactly as typed. False (nothing changes) for a size outside `CUSTOM_CANVAS_LIMITS`.
+     */
+    setCustomCanvasSize: (width: number, height: number) => boolean;
+    /** Every setting back to `DEFAULT_SETTINGS`, applied to the page at once. */
     resetSettings: () => void;
+    /**
+     * True once after Canvas size or Orientation changed in Settings (then false until the next
+     * change). The Canvas slice takes it when the editor loads and resizes the open page.
+     */
+    takePendingCanvasSize: () => boolean;
 
     /** Kept for existing callers. Prefer the specific setters above. */
     updateSetting: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
@@ -287,6 +269,7 @@ export const createSettingSlice: StateCreator<SettingsSlice, [], [], SettingsSli
         if (next.iconSize !== prev.iconSize) applyIconSize(next.iconSize);
         if (next.colorTheme !== prev.colorTheme) applyColorTheme(next.colorTheme);
         persist(next);
+        if (sizeKey(next) !== sizeKey(prev)) markCanvasSizePending();
     };
 
     return {
@@ -294,7 +277,7 @@ export const createSettingSlice: StateCreator<SettingsSlice, [], [], SettingsSli
 
         load: async () => {
             try {
-                const saved = await Promise.resolve(db.local.get(STORAGE_KEY));
+                const saved = settingsStorage.load();
                 get().hydrate(saved);
             } catch (error) {
                 console.error('[settings] Failed to load settings', error);
@@ -327,39 +310,33 @@ export const createSettingSlice: StateCreator<SettingsSlice, [], [], SettingsSli
         setMode: (mode) => commit({ mode }),
         setIconSize: (iconSize) => commit({ iconSize }),
         setColorTheme: (colorTheme) => commit({ colorTheme }),
-        setBackgroundStyle: (backgroundStyle) => commit({ backgroundStyle }),
-        setBackgroundColor: (color) => {
-            if (isHexColor(color)) commit({ backgroundColor: color.toLowerCase() }); // ignore half-typed values
-        },
-        setSnapToGrid: (snapToGrid) => commit({ snapToGrid }),
-        setShowRulers: (showRulers) => commit({ showRulers }),
         setUnit: (unit) => commit({ unit }),
 
         setFreehand: (freehand) => commit({ freehand }),
         toggleFreehand: () => commit({ freehand: !get().settings.freehand }),
 
-        setFormat: (format) => {
-            if (get().settings.freehand) return; // page size has no meaning on an infinite canvas
-            commit({ lastPageFormat: format });
+        setDefaultCanvasPreset: (presetId) => {
+            if (presetId === CUSTOM_CANVAS_ID || CANVAS_PRESET_IDS.includes(presetId))
+                commit({ defaultCanvasPresetId: presetId });
         },
 
-        setCustomSize: (size) => {
-            const current = get().settings.customSize;
+        setCanvasOrientation: (canvasOrientation) => commit({ canvasOrientation }),
+
+        setCustomCanvasSize: (width, height) => {
+            if (!isCanvasSide(width) || !isCanvasSide(height)) return false;
+            const current = get().settings.canvasOrientation;
             commit({
-                customSize: {
-                    width:
-                        size.width !== undefined
-                            ? clampDimension(size.width, current.width)
-                            : current.width,
-                    height:
-                        size.height !== undefined
-                            ? clampDimension(size.height, current.height)
-                            : current.height,
-                },
+                defaultCanvasPresetId: CUSTOM_CANVAS_ID,
+                customCanvasSize: { width, height },
+                // a square has no orientation of its own: keep the chosen one
+                canvasOrientation:
+                    width === height ? current : width > height ? 'landscape' : 'portrait',
             });
+            return true;
         },
 
         resetSettings: () => commit({ ...DEFAULT_SETTINGS }),
+        takePendingCanvasSize: () => takeCanvasSizePending(),
 
         updateSetting: (key, value) => commit({ [key]: value } as Partial<Settings>),
         applyTheme: (mode) => applyTheme(mode),

@@ -9,6 +9,11 @@ updates:
           day: monday
       versioning-strategy: increase
       open-pull-requests-limit: 10
+      ignore:
+          # typescript-eslint peers on typescript <6.1.0; a TS major breaks `npm ci` (ERESOLVE).
+          # Remove once typescript-eslint supports the next TypeScript major.
+          - dependency-name: typescript
+            update-types: [version-update:semver-major]
       groups:
           # one PR for all patch/minor dev-tool bumps; majors and runtime deps stay separate
           dev-tooling:

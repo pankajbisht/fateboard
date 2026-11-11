@@ -15,7 +15,7 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 | Preview | `npm run preview` | serves `dist/` on 0.0.0.0 |
 | Lint | `npm run lint` | ESLint flat config; `--max-warnings 254` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
 | Format | `npm run format` / `npm run format:check` | Prettier, `src/**` |
-| Typecheck | `npm run type-check` | `tsc -p tsconfig.app.json` + `tsconfig.node.json`, must be 0 errors |
+| Typecheck | `npm run type-check` | app + strict island (`tsconfig.strict.json`) + node + e2e configs, must be 0 errors |
 | All checks | `npm run check` | lint + type-check + format:check |
 | Unit tests | `npm run test:run` (CI) · `npm test` (watch) | Vitest + jsdom |
 | Coverage | `npm run test:coverage` | HTML at `coverage/index.html`; `npm run report` = coverage + E2E (docs/TESTING.md "Health report") |
@@ -26,7 +26,7 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 ```
 src/
   main.tsx, App.tsx, app/rootRouter.tsx   entry + routes
-  store/index.ts                          ONE zustand store = spread of 25 slice creators (order matters)
+  store/index.ts                          ONE zustand store = spread of 24 slice creators (order matters)
   store/slices/                           create<Name>Slice.ts (canvas, pages, undo, layers, animation, …)
   store/brushConfig.ts                    brush presets/engines
   animation/                              keyframe engine + video export (WebCodecs / MediaRecorder)
@@ -35,7 +35,7 @@ src/
   components/organisms/editorsidebar/editorsidebar.config.tsx  left panels
   components/config/tabs.config.tsx       right dock tabs
   components/config/toolbars/ui/*Config.tsx  toolbar buttons = keyboard commands
-  lib/                                    serialization, storage (IndexedDB project + localList), units, keyboard (canvasKeysBlocked), canvas (renderRatio), patterns, connectors, gradient tool, utils
+  lib/                                    serialization, storage (`@/lib/storage`: the only persistence layer), units, keyboard (canvasKeysBlocked), canvas (renderRatio), patterns, connectors, gradient tool, utils
   hooks/                                  keyboard shortcuts, shape catalog/factory
   feature/import/                         image/SVG/JSON import
   test/                                   test helpers: fakeCanvas.ts, sliceHarness.ts (not shipped)
@@ -58,6 +58,7 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 - Errors: actions never throw to React; `try/catch` + `console.error('[slice] …')` + return falsy.
 - Keys: shortcuts are commands (`shortcut`, `keys`, `enabled`, `allowWhileTyping`); other canvas key listeners return early on `canvasKeysBlocked()`.
 - Sizes shown to users go through `lib/units` (Settings > Units); documents are stored in px.
+- Storage: import `@/lib/storage` only; `opendb-store` and browser storage APIs only inside `src/lib/storage` (guard test).
 
 ## Slice pattern rules
 
@@ -83,6 +84,7 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 ## Definition of done
 
 - [ ] Root cause fixed; related issues listed, not silently fixed.
+- [ ] No file over its size ceiling (`fileBudget.test.ts`); new code in focused modules.
 - [ ] Failing test written first, now passing (unit/RTL and, for user flows, Playwright).
 - [ ] `npm run lint` (0 errors), `npm run type-check`, `npm run test:run`, `npm run build` all pass.
 - [ ] Matching `docs/` file updated; bug marked `fixed (<ref>)` in `docs/BUGS.md`; decisions logged in `docs/DECISIONS.md`.
@@ -101,10 +103,14 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 - [Roadmap](docs/ROADMAP.md): milestones + features with blocking bugs
 - [Decisions](docs/DECISIONS.md): inferred ADRs + open questions (Q1–Q12)
 - [Production readiness](docs/PRODUCTION_READINESS.md): verdict, scorecard, what is left (P0 / P1 / P2)
+- [Code review](docs/CODE_REVIEW.md): findings R-01…R-09, refactor roadmap, guardrails
+- [Agent workflow](docs/AGENT_WORKFLOW.md): skills `fate-task` / `fate-review` / `fate-refactor` / `fate-readiness`, agents `fate-reviewer` / `fate-architect` / `fate-verifier`
 - [Design](docs/DESIGN.md): brand tokens (colors from the logo), text styles, radius, contrast rules, dark mode, panel rules
 
 ## How we work
 
+- **Use the repo's agent workflow** (docs/AGENT_WORKFLOW.md): skill `fate-task` for any change, `fate-refactor` for
+  splitting files, `fate-reviewer` / `fate-verifier` agents before calling work done.
 - **One task per session.** Start by restating the task, reading the relevant `docs/` files, then **plan first**
   (files to touch, tests to add, risks). Wait for approval if the plan touches a public slice API or a decision in Q1–Q12.
 - **Root-cause fixes only.** No symptom patches. If you find related issues, list them in the report (and add them to

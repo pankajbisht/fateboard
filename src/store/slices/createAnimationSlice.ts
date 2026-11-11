@@ -25,6 +25,7 @@ import {
     type Track,
     type Tracks,
 } from '@/animation/engine';
+import { absoluteProps } from '@/animation/absoluteProps';
 import {
     WEBCODECS_UNSUPPORTED,
     downloadBlob,
@@ -98,6 +99,8 @@ export interface AnimationSlice {
     pause: () => void;
     togglePlay: () => void;
     stop: () => void;
+    /** Plays [from, to] once and stops at `to`, whatever loop / the work area say (preset preview). */
+    previewRange: (from: number, to: number) => void;
     seek: (ms: number) => void;
     stepFrames: (n: number) => void;
 
@@ -167,6 +170,7 @@ export const createAnimationSlice: StateCreator<
 > = (set, get, store) => {
     const getCanvas = () => get().canvas;
     let offRestEvents: (() => void) | null = null;
+    let preview: [number, number] | null = null; // span of a running previewRange
 
     // Track edits are document changes: autosave the project (pages keep the tracks, BUG-010).
     // Keyframe history per page (Q7, BUG-141): park the page you leave, bring back the one you open.
@@ -191,26 +195,6 @@ export const createAnimationSlice: StateCreator<
             (get() as unknown as { persist?: () => void }).persist?.();
         }
     });
-
-    /** Keeps `rest` in step with edits made outside the animation (see registerAnimationEvents). */
-    /** Rest props of an object in canvas coordinates, also inside a multi-selection (BUG-142). */
-    const absoluteProps = (obj: fabric.FabricObject) => {
-        const live = readProps(obj);
-        if (!obj.group) return live;
-        // children of an ActiveSelection hold group-relative values: decompose the full matrix onto a
-        // stand-in with the same box so left / top follow the object's own origin
-        const ghost = new fabric.Rect({
-            width: obj.width,
-            height: obj.height,
-            strokeWidth: obj.strokeWidth,
-            strokeUniform: obj.strokeUniform,
-            originX: obj.originX,
-            originY: obj.originY,
-        });
-        fabric.util.applyTransformToObject(ghost, obj.calcTransformMatrix());
-        const abs = readProps(ghost);
-        return { ...live, ...abs, fill: live.fill, stroke: live.stroke, opacity: live.opacity };
-    };
 
     const refreshOne = (obj: fabric.FabricObject, tracks: Tracks): Tracks | null => {
         const id = getAnimId(obj);
@@ -256,6 +240,7 @@ export const createAnimationSlice: StateCreator<
         if (changed) set({ tracks });
     };
     const range = (): [number, number] => {
+        if (preview) return preview;
         const { workIn, workOut, animDuration } = get();
         const out = clamp(workOut ?? animDuration, 0, animDuration);
         return [clamp(workIn, 0, out), out];
@@ -318,6 +303,16 @@ export const createAnimationSlice: StateCreator<
         return tracks[id];
     };
 
+    /** Earliest and latest time among the selected keyframes ([Infinity, -Infinity] when none). */
+    const selectedSpan = (): [number, number] => {
+        const { tracks, selectedKeyframes } = get();
+        const times = selectedKeyframes.flatMap((ref) => {
+            const k = tracks[ref.objectId]?.keyframes.find((x) => x.id === ref.keyframeId);
+            return k ? [k.time] : [];
+        });
+        return [Math.min(...times), Math.max(...times)];
+    };
+
     const mapSelected = (fn: (k: Keyframe, track: Track) => Keyframe) => {
         const sel = get().selectedKeyframes;
         if (!sel.length) return;
@@ -336,6 +331,28 @@ export const createAnimationSlice: StateCreator<
         applyAt(get().currentTime);
     };
 
+    /** Undo (`past`) / redo (`future`): swaps the newest snapshot of that stack with the live tracks. */
+    const stepHistory = (from: 'past' | 'future') => {
+        const s = get();
+        const snap = s[from][s[from].length - 1];
+        if (!snap) return;
+        get().pause();
+        const c = getCanvas();
+        // a track the snapshot does not have leaves its object at rest, not mid-animation (BUG-180)
+        if (c)
+            for (const tr of Object.values(s.tracks))
+                if (!snap.tracks[tr.objectId]) restoreObject(c, tr);
+        const to = from === 'past' ? 'future' : 'past';
+        set({
+            [from]: s[from].slice(0, -1),
+            [to]: [...s[to], { tracks: s.tracks, animDuration: s.animDuration }],
+            tracks: snap.tracks,
+            animDuration: snap.animDuration,
+            selectedKeyframes: [],
+        } as Partial<AnimationSlice>);
+        applyAt(get().currentTime);
+    };
+
     const tick = (now: number) => {
         const s = get();
         if (!s.isPlaying) return;
@@ -343,9 +360,10 @@ export const createAnimationSlice: StateCreator<
         let t = s.currentTime + (now - lastTs) * s.playbackRate;
         lastTs = now;
         if (t >= b) {
-            if (s.loop && b > a) {
+            if (s.loop && b > a && !preview) {
                 t = a + ((t - a) % (b - a));
             } else {
+                preview = null;
                 applyAt(b);
                 set({ currentTime: b, isPlaying: false });
                 return;
@@ -401,6 +419,7 @@ export const createAnimationSlice: StateCreator<
             rafId = requestAnimationFrame(tick);
         },
         pause: () => {
+            preview = null;
             cancelAnimationFrame(rafId);
             if (get().isPlaying) set({ isPlaying: false });
         },
@@ -408,6 +427,14 @@ export const createAnimationSlice: StateCreator<
         stop: () => {
             get().pause();
             get().seek(range()[0]);
+        },
+        previewRange: (from, to) => {
+            if (get().exportState.status === 'rendering') return;
+            get().pause();
+            const a = clamp(from, 0, get().animDuration);
+            preview = [a, clamp(to, a, get().animDuration)];
+            get().seek(a);
+            get().play();
         },
         seek: (ms) => {
             const t = clamp(ms, 0, get().animDuration);
@@ -423,34 +450,8 @@ export const createAnimationSlice: StateCreator<
 
         /* ───────── history ───────── */
         beginEdit: (key) => pushHistory(key),
-        animUndo: () => {
-            const { past, future, tracks, animDuration } = get();
-            const prev = past[past.length - 1];
-            if (!prev) return;
-            get().pause();
-            set({
-                past: past.slice(0, -1),
-                future: [...future, { tracks, animDuration }],
-                tracks: prev.tracks,
-                animDuration: prev.animDuration,
-                selectedKeyframes: [],
-            });
-            applyAt(get().currentTime);
-        },
-        animRedo: () => {
-            const { past, future, tracks, animDuration } = get();
-            const next = future[future.length - 1];
-            if (!next) return;
-            get().pause();
-            set({
-                future: future.slice(0, -1),
-                past: [...past, { tracks, animDuration }],
-                tracks: next.tracks,
-                animDuration: next.animDuration,
-                selectedKeyframes: [],
-            });
-            applyAt(get().currentTime);
-        },
+        animUndo: () => stepHistory('past'),
+        animRedo: () => stepHistory('future'),
 
         /* ───────── keyframes ───────── */
         addKeyframe: (time) => {
@@ -508,37 +509,20 @@ export const createAnimationSlice: StateCreator<
         },
 
         moveSelectedTo: (anchor, time) => {
-            const { tracks, selectedKeyframes, animDuration } = get();
+            const { tracks, animDuration } = get();
             const anchorKf = tracks[anchor.objectId]?.keyframes.find(
                 (k) => k.id === anchor.keyframeId,
             );
             if (!anchorKf) return;
-            let min = Infinity;
-            let max = -Infinity;
-            for (const ref of selectedKeyframes) {
-                const k = tracks[ref.objectId]?.keyframes.find((x) => x.id === ref.keyframeId);
-                if (k) {
-                    min = Math.min(min, k.time);
-                    max = Math.max(max, k.time);
-                }
-            }
+            const [min, max] = selectedSpan();
             if (!isFinite(min)) return;
             const delta = clamp(Math.round(time - anchorKf.time), -min, animDuration - max);
             if (!delta) return;
             mapSelected((k) => ({ ...k, time: k.time + delta }));
         },
         nudgeSelected: (deltaMs) => {
-            const { selectedKeyframes, tracks, animDuration } = get();
-            if (!selectedKeyframes.length) return;
-            let min = Infinity;
-            let max = -Infinity;
-            for (const ref of selectedKeyframes) {
-                const k = tracks[ref.objectId]?.keyframes.find((x) => x.id === ref.keyframeId);
-                if (k) {
-                    min = Math.min(min, k.time);
-                    max = Math.max(max, k.time);
-                }
-            }
+            const { animDuration } = get();
+            const [min, max] = selectedSpan();
             if (!isFinite(min)) return;
             const delta = clamp(deltaMs, -min, animDuration - max);
             if (!delta) return;

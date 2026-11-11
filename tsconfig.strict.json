@@ -1,0 +1,15 @@
+{
+    // Strict island (docs/CODE_REVIEW.md, R-01): the app config is not strict yet. Folders listed here are
+    // checked with full strict mode; a folder joins when it passes, and never leaves. Goal: the whole of src.
+    "extends": "./tsconfig.app.json",
+    "compilerOptions": {
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noEmit": true
+    },
+    "include": ["src/lib/storage/**/*.ts", "src/types/**/*.d.ts", "src/vite-env.d.ts"],
+    "exclude": ["src/**/__tests__/**", "src/**/*.test.ts", "src/**/*.test.tsx"]
+}

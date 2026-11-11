@@ -95,6 +95,24 @@ const MAX_LINES_PER_AXIS = 1500; // safety cap
 // Semi-transparent grey is visible on both light and dark canvases.
 const MINOR_LINE_COLOR = 'rgba(128, 128, 128, 0.22)';
 const MAJOR_LINE_COLOR = 'rgba(128, 128, 128, 0.45)';
+/** Whiteboard dot grid (FigJam / Miro / Excalidraw look): a dot per cell, a stronger one every 5. */
+const MINOR_DOT_COLOR = 'rgba(128, 128, 128, 0.45)';
+const MAJOR_DOT_COLOR = 'rgba(128, 128, 128, 0.7)';
+const MINOR_DOT_PX = 1.5;
+const MAJOR_DOT_PX = 2.5;
+
+export type GridStyle = 'dots' | 'lines';
+type BoardMode = 'design' | 'whiteboard' | null | undefined;
+
+/** The whiteboard shows a dot grid, a design page a line grid (graph paper). */
+export const gridStyleFor = (boardMode: BoardMode): GridStyle =>
+    boardMode === 'whiteboard' ? 'dots' : 'lines';
+
+/** Grid default per mode: on for the whiteboard, off for a design page (a clean page). */
+const GRID_ON_BY_DEFAULT: Record<'design' | 'whiteboard', boolean> = {
+    design: false,
+    whiteboard: true,
+};
 
 // Industry-standard snap colour (Figma red). Magenta '#FF00FF'-style is the Illustrator / Canva look.
 const GUIDE_COLOR = '#F24822';
@@ -313,6 +331,48 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
         ctx.stroke(major);
     };
 
+    /** Whiteboard: one dot per grid crossing (same spacing, zoom and snap as the line grid). */
+    const paintDots = (ctx: CanvasRenderingContext2D, canvas: fabric.Canvas) => {
+        const size = get().gridSize;
+        const vpt = canvas.viewportTransform;
+        const zoom = vpt[0];
+        const cell = size * zoom;
+
+        if (cell * MAJOR_LINE_EVERY < MIN_MAJOR_SPACING_PX) return;
+        const showMinor = cell >= MIN_MINOR_SPACING_PX;
+
+        const width = canvas.getWidth();
+        const height = canvas.getHeight();
+        const firstX = Math.floor(-vpt[4] / zoom / size);
+        const lastX = Math.ceil((width - vpt[4]) / zoom / size);
+        const firstY = Math.floor(-vpt[5] / zoom / size);
+        const lastY = Math.ceil((height - vpt[5]) / zoom / size);
+        if (lastX - firstX > MAX_LINES_PER_AXIS || lastY - firstY > MAX_LINES_PER_AXIS) return;
+
+        const minor = new Path2D();
+        const major = new Path2D();
+        for (let i = firstX; i <= lastX; i++) {
+            const majorX = mod(i, MAJOR_LINE_EVERY) === 0;
+            const x = i * size * zoom + vpt[4];
+            for (let j = firstY; j <= lastY; j++) {
+                const isMajor = majorX && mod(j, MAJOR_LINE_EVERY) === 0;
+                if (!isMajor && !showMinor) continue;
+                const y = j * size * zoom + vpt[5];
+                const d = isMajor ? MAJOR_DOT_PX : MINOR_DOT_PX;
+                (isMajor ? major : minor).rect(x - d / 2, y - d / 2, d, d);
+            }
+        }
+        ctx.fillStyle = MINOR_DOT_COLOR;
+        ctx.fill(minor);
+        ctx.fillStyle = MAJOR_DOT_COLOR;
+        ctx.fill(major);
+    };
+
+    const paintBoardGrid = (ctx: CanvasRenderingContext2D, canvas: fabric.Canvas) =>
+        gridStyleFor((get() as { boardMode?: BoardMode }).boardMode) === 'dots'
+            ? paintDots(ctx, canvas)
+            : paintGrid(ctx, canvas);
+
     const paintGuides = (ctx: CanvasRenderingContext2D, canvas: fabric.Canvas) => {
         if (guides.length === 0) return;
 
@@ -388,7 +448,7 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
         if (!canvas || !ctx || !isMainContext(ctx, canvas)) return;
 
         withScreenSpace(ctx, canvas, () => {
-            if (gridEnabled && !gridPaintedInBackground) paintGrid(ctx, canvas);
+            if (gridEnabled && !gridPaintedInBackground) paintBoardGrid(ctx, canvas);
             paintGuides(ctx, canvas);
         });
     };
@@ -635,7 +695,7 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
             patchable._renderBackground = function (this: unknown, ctx: CanvasRenderingContext2D) {
                 originalRenderBackground.call(this, ctx);
                 if (get().gridEnabled && isMainContext(ctx, canvas)) {
-                    withScreenSpace(ctx, canvas, () => paintGrid(ctx, canvas));
+                    withScreenSpace(ctx, canvas, () => paintBoardGrid(ctx, canvas));
                 }
             };
             gridPaintedInBackground = true;
@@ -678,6 +738,17 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
             detachListeners?.();
             detachListeners = null;
         }
+    });
+
+    // Grid default per board mode: entering the whiteboard shows the dot grid, entering a design
+    // page starts clean. Leaving the editor (mode null) and coming back to the same mode keeps the
+    // user's choice.
+    let lastMode: 'design' | 'whiteboard' | null = null;
+    store.subscribe((state) => {
+        const mode = (state as { boardMode?: BoardMode }).boardMode;
+        if ((mode !== 'design' && mode !== 'whiteboard') || mode === lastMode) return;
+        lastMode = mode;
+        get().setGridEnabled(GRID_ON_BY_DEFAULT[mode]);
     });
 
     // Covers the case where the canvas already exists when this slice is created.

@@ -38,15 +38,15 @@ test('each page keeps its size; the canvas is the page; clicks hit the shape und
     expect(first.backstore).toEqual(first.page);
     expect(first.vpt).toEqual([1, 0, 0, 1, 0, 0]);
 
-    // page 2 gets a different size
+    // page 2 gets a different size: Settings > Canvas size resizes the page that was open
     await editor.openPanel('Pages');
     await page.getByRole('button', { name: 'Add page' }).click();
-    await editor.openPanel('Canvas Size');
-    await page
-        .getByRole('button', { name: /Instagram Post/ })
-        .first()
-        .click();
-    await expect.poll(async () => (await geometry(editor)).page).not.toEqual(first.page);
+    await page.waitForTimeout(1500); // autosave: page 2 is the open page
+    await page.goto('/setting');
+    await page.getByRole('combobox', { name: 'Canvas size' }).click();
+    await page.getByRole('option', { name: /Instagram Post/ }).click();
+    await editor.open();
+    await expect.poll(async () => (await geometry(editor)).page).toEqual([1080, 1080]);
     const second = await geometry(editor);
     await expect.poll(async () => (await geometry(editor)).backstore).toEqual(second.page);
 

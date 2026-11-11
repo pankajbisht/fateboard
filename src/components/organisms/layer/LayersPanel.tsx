@@ -45,6 +45,35 @@ import type {
 } from '@/store/slices/createLayersSlice';
 import { Input } from '@/components/atoms/Input';
 import { visibleRange } from './visibleRange';
+import { EditBarConfig } from '@/components/config/toolbars/ui/EditBarConfig';
+import { GroupBarConfig } from '@/components/config/toolbars/ui/GroupBarConfig';
+import { LAYERCONTROL_ACTIONS } from '@/components/config/toolbars/ui/LayerControlBarConfig';
+import { LockBarConfig } from '@/components/config/toolbars/ui/LockBarConfig';
+
+/**
+ * Key labels come from the commands that own the keys (BUG-152): the menu used to carry its own
+ * list, and six of those keys did nothing.
+ */
+const keysOf = (commands: readonly { id: string; shortcut?: string }[], id: string) =>
+    commands.find((command) => command.id === id)?.shortcut;
+
+const KEYS = {
+    copy: keysOf(EditBarConfig, 'copy'),
+    paste: keysOf(EditBarConfig, 'paste'),
+    duplicate: keysOf(EditBarConfig, 'duplicate'),
+    delete: keysOf(EditBarConfig, 'delete'),
+    group: keysOf(GroupBarConfig, 'group'),
+    ungroup: keysOf(GroupBarConfig, 'ungroup'),
+    lock: keysOf(LockBarConfig, 'lock'),
+    unlock: keysOf(LockBarConfig, 'unlock'),
+    toFront: keysOf(LAYERCONTROL_ACTIONS, 'bringtofront'),
+    forward: keysOf(LAYERCONTROL_ACTIONS, 'bringforward'),
+    backward: keysOf(LAYERCONTROL_ACTIONS, 'sendbackward'),
+    toBack: keysOf(LAYERCONTROL_ACTIONS, 'sendtoback'),
+};
+
+/** `Group (Ctrl+G)`, or just the name when the command has no key. */
+const withKeys = (label: string, keys?: string) => (keys ? `${label} (${keys})` : label);
 
 /* All logic lives in layersSlice. This file only reads `layers` / `selectedLayerIds`
  * and calls slice actions. */
@@ -540,39 +569,43 @@ export default function LayersPanel() {
     const menuItems = (id: string | number): MenuItem[] => {
         const layer = layers.find((l) => l.id === id);
         return [
-            { label: 'Duplicate', shortcut: 'Ctrl+D', onClick: () => store.duplicateLayer(id) },
-            { label: 'Copy', shortcut: 'Ctrl+C', onClick: store.copy },
+            {
+                label: 'Duplicate',
+                shortcut: KEYS.duplicate,
+                onClick: () => store.duplicateLayer(id),
+            },
+            { label: 'Copy', shortcut: KEYS.copy, onClick: store.copy },
             {
                 label: 'Paste',
-                shortcut: 'Ctrl+V',
+                shortcut: KEYS.paste,
                 onClick: store.paste,
                 disabled: !store.canPaste(),
             },
             {
                 label: 'Group',
-                shortcut: 'Ctrl+G',
+                shortcut: KEYS.group,
                 onClick: () => store.groupLayers(),
                 disabled: selected.length < 2,
                 dividerBefore: true,
             },
             {
                 label: 'Ungroup',
-                shortcut: 'Ctrl+Shift+G',
+                shortcut: KEYS.ungroup,
                 onClick: store.ungroupSelected,
                 disabled: !layer?.isGroup,
             },
             {
                 label: 'Bring to front',
-                shortcut: 'Ctrl+Shift+]',
+                shortcut: KEYS.toFront,
                 onClick: store.bringToFront,
                 dividerBefore: true,
             },
-            { label: 'Bring forward', shortcut: 'Ctrl+]', onClick: store.bringForward },
-            { label: 'Send backward', shortcut: 'Ctrl+[', onClick: store.sendBackward },
-            { label: 'Send to back', shortcut: 'Ctrl+Shift+[', onClick: store.sendToBack },
+            { label: 'Bring forward', shortcut: KEYS.forward, onClick: store.bringForward },
+            { label: 'Send backward', shortcut: KEYS.backward, onClick: store.sendBackward },
+            { label: 'Send to back', shortcut: KEYS.toBack, onClick: store.sendToBack },
             {
                 label: layer?.locked ? 'Unlock' : 'Lock',
-                shortcut: 'Ctrl+/',
+                shortcut: layer?.locked ? KEYS.unlock : KEYS.lock,
                 onClick: () => store.toggleLayerLock(id),
                 dividerBefore: true,
             },
@@ -581,7 +614,7 @@ export default function LayersPanel() {
             { label: 'Show all layers', onClick: store.showAllLayers },
             {
                 label: 'Delete',
-                shortcut: 'Del',
+                shortcut: KEYS.delete,
                 onClick: () => store.removeLayer(),
                 danger: true,
                 dividerBefore: true,
@@ -606,28 +639,30 @@ export default function LayersPanel() {
 
             <div className="flex items-center gap-0.5 px-3 pt-2">
                 <IconButton
-                    label="Group (Ctrl+G)"
+                    label={withKeys('Group', KEYS.group)}
                     disabled={selected.length < 2}
                     onClick={() => store.groupLayers()}
                 >
                     <GroupIcon size={15} />
                 </IconButton>
                 <IconButton
-                    label="Ungroup (Ctrl+Shift+G)"
+                    label={withKeys('Ungroup', KEYS.ungroup)}
                     disabled={!single?.isGroup}
                     onClick={store.ungroupSelected}
                 >
                     <Ungroup size={15} />
                 </IconButton>
                 <IconButton
-                    label="Duplicate (Ctrl+D)"
+                    label={withKeys('Duplicate', KEYS.duplicate)}
                     disabled={!selected.length}
                     onClick={store.duplicate}
                 >
                     <Copy size={15} />
                 </IconButton>
                 <IconButton
-                    label={allLocked ? 'Unlock (Ctrl+/)' : 'Lock (Ctrl+/)'}
+                    label={
+                        allLocked ? withKeys('Unlock', KEYS.unlock) : withKeys('Lock', KEYS.lock)
+                    }
                     disabled={!selected.length}
                     onClick={() => store.toggleLayerLock()}
                 >
@@ -635,7 +670,7 @@ export default function LayersPanel() {
                 </IconButton>
                 <span className="flex-1" />
                 <IconButton
-                    label="Delete (Del)"
+                    label={withKeys('Delete', KEYS.delete)}
                     disabled={!selected.length || allLocked}
                     onClick={() => store.removeLayer()}
                 >

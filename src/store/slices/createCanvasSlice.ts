@@ -6,8 +6,9 @@ import { MultiStopGradientTool } from '@/lib/utils/GradientTool';
 import { DEFAULT_CANVAS_PRESET } from '@/components/organisms/board/board.config';
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
-import { projectStorage } from '@/lib/storage/projectStorage';
+import { projectStorage, type StoredBoard } from '@/lib/storage';
 import { emptyAnimation } from '@/animation/engine';
+import { getDefaultCanvasPreset } from './createSettingSlice';
 
 /**
  * Custom properties saved with every object.
@@ -19,7 +20,18 @@ export const SERIALIZE_PROPS: string[] = [...CUSTOM_PROPS];
 // Autosave goes through `projectStorage` (IndexedDB, whole project: BUG-004 / Q5).
 const PERSIST_DELAY_MS = 300;
 
-type CanvasTool = 'select' | 'pan' | 'draw' | 'node';
+/** Firefox reports some wheels in lines (`deltaMode` 1). */
+const WHEEL_LINE_PX = 16;
+/**
+ * Zoom per wheel pixel. A mouse notch (~100 px) zooms ~14 %; a trackpad pinch sends many small
+ * deltas, so it gets a stronger rate to feel the same.
+ */
+const WHEEL_ZOOM_RATE = 0.0015;
+const PINCH_ZOOM_RATE = 0.01;
+const PINCH_DELTA_MAX = 50;
+
+/** Pen (P), Pencil (Shift + P) and Laser (K) work with `createDrawingToolsSlice` / the brush slice. */
+type CanvasTool = 'select' | 'pan' | 'draw' | 'node' | 'pen' | 'pencil' | 'laser';
 
 type CanvasObject = any;
 type CanvasInstance = fabric.Canvas;
@@ -42,6 +54,22 @@ const typeOf = (object: CanvasObject): string => String(object?.type ?? '').toLo
 
 const isGradient = (fill: unknown): boolean => fill instanceof fabric.Gradient;
 
+/** Hands `json` to the browser as a download. */
+const downloadText = (json: string, fileName: string) => {
+    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+    const link = document.createElement('a');
+
+    link.href = url;
+    link.download = fileName;
+
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    // Give the browser time to start the download.
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
 export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown) => {
     // Private lifecycle state: these values are not part of Zustand.
     let panCanvas: CanvasInstance | null = null;
@@ -61,10 +89,16 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
     // While > 0, persist() does nothing. Used during restore / import / clear so a
     // half-loaded or empty canvas can never overwrite the saved data.
     let persistLock = 0;
+    let persistDropped = false; // persist() was called while locked (BUG-186)
     let unloadHandler: (() => void) | null = null;
     // tab hidden (switching away, closing on mobile): save NOW; pagehide can be too late for the
     // async IndexedDB write (BUG-138)
     let visibilityHandler: (() => void) | null = null;
+    // The saved project could not be read (BUG-173): nothing writes over it or deletes it until a
+    // later read works, because the editor shows an empty board, not the user's project.
+    let savedProjectUnread = false;
+    // A failed autosave was shown; shown again only after a save works in between (BUG-162).
+    let saveFailureShown = false;
 
     const cancelPersist = () => {
         if (persistTimer !== undefined) {
@@ -79,17 +113,66 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
      * so a half-loaded canvas never lands in the wrong page.
      */
     const writeProjectToStorage = () => {
+        if (savedProjectUnread) return;
         try {
             const doc = get().captureProject?.({ thumbnail: false });
 
             if (!doc) return;
 
-            projectStorage.save(doc).catch((error) => {
-                console.error('[canvas] failed to save the project:', error);
-            });
+            projectStorage
+                .save(doc)
+                .then(() => {
+                    saveFailureShown = false;
+                })
+                .catch((error) => {
+                    console.error('[canvas] failed to save the project:', error);
+                    reportSaveFailure();
+                });
         } catch (error) {
             console.error('[canvas] failed to serialize the project:', error);
         }
+    };
+
+    /** The autosave failed (storage full, blocked, private mode): say so once (BUG-162). */
+    const reportSaveFailure = () => {
+        if (saveFailureShown) return;
+        saveFailureShown = true;
+        void Promise.resolve(
+            get().confirmDialog?.({
+                title: "Your board isn't being saved",
+                message:
+                    'This browser refused to save your board (its storage may be full or blocked). Save a copy so you keep your work. Saving is retried with every change.',
+                confirmLabel: 'Save a copy',
+                cancelLabel: 'Not now',
+            }),
+        ).then((saveCopy) => {
+            if (saveCopy) get().saveBoard();
+        });
+    };
+
+    /**
+     * The saved board could not be opened (BUG-154). The editor starts empty and the next
+     * autosave would replace the only copy, so it is kept under its own key first and the user
+     * is offered the file.
+     */
+    const keepUnreadableBoard = async (saved: StoredBoard) => {
+        const raw = saved.kind === 'project' ? saved.project : saved.canvasJSON;
+        try {
+            await projectStorage.keepUnreadable(raw);
+        } catch (error) {
+            console.error('[canvas] failed to keep the unreadable board:', error);
+        }
+        void Promise.resolve(
+            get().confirmDialog?.({
+                title: "Your saved board couldn't be opened",
+                message:
+                    'A new empty board was started. Your saved board was kept: download it now so you have the file.',
+                confirmLabel: 'Download saved board',
+                cancelLabel: 'Not now',
+            }),
+        ).then((download) => {
+            if (download) downloadText(JSON.stringify(raw), 'unreadable-board.fateboard');
+        });
     };
 
     /** Write any pending debounced save immediately (dispose, tab close). */
@@ -123,6 +206,21 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         unloadHandler = null;
     };
 
+    /**
+     * A new board starts at Settings > Canvas size. Plain state, not `setSelectedPreset`:
+     * it is the base of the new board, not an edit (no undo step, no autosave of its own).
+     */
+    const applyDefaultPreset = () => {
+        const settings = get().settings;
+        if (!settings) return;
+        const preset = getDefaultCanvasPreset(settings);
+        set(
+            { selectedPreset: preset, pageWidth: preset.width, pageHeight: preset.height },
+            false,
+            'canvas/defaultPreset',
+        );
+    };
+
     const cleanupEditingSession = (commit = false) => {
         get().closeShapeTextEditor?.(commit);
     };
@@ -138,31 +236,6 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
     };
 
     const panHandlers = {
-        wheel: (opt: CanvasEvent) => {
-            const canvas = get().canvas;
-            const event = opt?.e;
-
-            if (!canvas || !event) return;
-
-            const factor = Math.pow(0.999, event.deltaY);
-
-            // ONE zoom path (BUG-025): the page slice's setZoom keeps `zoom` and the view in step.
-            // Design: zoom state only (CanvasBoard re-draws); whiteboard: around the pointer.
-            if (get().boardMode === 'design') {
-                get().setZoom(get().zoom * factor);
-            } else {
-                // offsetX/Y are CSS pixels; Fabric expects canvas pixels
-                const k = getCssToCanvasScale(canvas);
-                get().setZoom(canvas.getZoom() * factor, {
-                    x: event.offsetX * k,
-                    y: event.offsetY * k,
-                });
-            }
-
-            event.preventDefault();
-            event.stopPropagation();
-        },
-
         down: (opt: CanvasEvent) => {
             const canvas = get().canvas;
 
@@ -218,10 +291,16 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         },
     };
 
+    /** Wheel delta in px (Firefox may report lines or pages). */
+    const wheelPx = (e: WheelEvent, canvas: CanvasInstance) => {
+        const unit =
+            e.deltaMode === 1 ? WHEEL_LINE_PX : e.deltaMode === 2 ? canvas.getHeight() || 800 : 1;
+        return { dx: (e.deltaX || 0) * unit, dy: (e.deltaY || 0) * unit };
+    };
+
     const detachPanHandlers = (canvas: CanvasInstance | null = panCanvas) => {
         if (!canvas) return;
 
-        canvas.off('mouse:wheel', panHandlers.wheel);
         canvas.off('mouse:down', panHandlers.down);
         canvas.off('mouse:move', panHandlers.move);
         canvas.off('mouse:up', panHandlers.up);
@@ -336,7 +415,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             set({
                 activeTool: tool,
-                isDrawingMode: tool === 'draw',
+                isDrawingMode: tool === 'draw' || tool === 'pencil',
                 isPanning: false,
             });
 
@@ -371,6 +450,24 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                     break;
                 }
 
+                case 'pencil': {
+                    // freehand like Draw, with the pencil's own style (brush slice, BUG-021)
+                    canvas.isDrawingMode = true;
+                    get().initBrush?.();
+                    canvas.selection = false;
+                    break;
+                }
+
+                case 'pen':
+                case 'laser': {
+                    // the drawing-tools slice takes the clicks; nothing on the board is picked
+                    canvas.discardActiveObject();
+                    canvas.selection = false;
+                    canvas.skipTargetFind = true;
+                    canvas.defaultCursor = 'crosshair';
+                    break;
+                }
+
                 case 'node': {
                     // Fabric selection / moving off: the node editor slice handles clicks
                     // (click a shape to edit its nodes). Objects themselves are not touched.
@@ -402,10 +499,54 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             panCanvas = canvas;
 
-            canvas.on('mouse:wheel', panHandlers.wheel);
             canvas.on('mouse:down', panHandlers.down);
             canvas.on('mouse:move', panHandlers.move);
             canvas.on('mouse:up', panHandlers.up);
+        },
+
+        /**
+         * Mouse wheel / trackpad on the board, like FigJam / Excalidraw / Figma. Whiteboard: scroll
+         * moves the board (Shift + wheel sideways), Ctrl / ⌘ + wheel or a trackpad pinch zooms at
+         * the pointer. Design page: Ctrl / ⌘ + wheel zooms the page (through `setZoom`, the one zoom
+         * path); a plain wheel is left to the browser, which scrolls the board. Returns true when
+         * the wheel was used: the caller cancels the browser's own scroll / page zoom.
+         */
+        wheelNavigate: (e: WheelEvent): boolean => {
+            const canvas = get().canvas;
+            if (!canvas || !e) return false;
+
+            const { dx, dy } = wheelPx(e, canvas);
+            const zoomGesture = e.ctrlKey || e.metaKey; // a pinch arrives as Ctrl + wheel
+            const rate = Math.abs(dy) < PINCH_DELTA_MAX ? PINCH_ZOOM_RATE : WHEEL_ZOOM_RATE;
+            const factor = Math.exp(-dy * rate);
+
+            if (get().boardMode !== 'whiteboard') {
+                if (!zoomGesture) return false;
+                get().setZoom(get().zoom * factor);
+                return true;
+            }
+
+            // offsetX/Y are CSS pixels; Fabric expects canvas pixels
+            const k = getCssToCanvasScale(canvas);
+            if (zoomGesture) {
+                get().setZoom(canvas.getZoom() * factor, {
+                    x: (e.offsetX ?? 0) * k,
+                    y: (e.offsetY ?? 0) * k,
+                });
+            } else {
+                // a mouse has one wheel: Shift turns it into a sideways scroll
+                const [panX, panY] = e.shiftKey && !dx ? [dy, 0] : [dx, dy];
+                canvas.relativePan(new fabric.Point(-panX * k, -panY * k));
+                canvas.requestRenderAll();
+            }
+            return true;
+        },
+
+        handleWheel: (opt: CanvasEvent) => {
+            const e = opt?.e as WheelEvent | undefined;
+            if (!e || !get().wheelNavigate(e)) return;
+            e.preventDefault();
+            e.stopPropagation(); // the board's own listener (grey area, CanvasBoard) must not repeat it
         },
 
         /**
@@ -415,7 +556,8 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         beginTemporaryPan: () => {
             const { canvas, activeTool } = get();
             if (!canvas || temporaryPan) return false;
-            if (activeTool !== 'select' && activeTool !== 'draw') return false;
+            if (activeTool !== 'select' && activeTool !== 'draw' && activeTool !== 'pencil')
+                return false;
             // something else owns the pointer (line drawing, gradient handles)
             if (activeTool === 'select' && !canvas.selection) return false;
 
@@ -521,14 +663,21 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             cancelPersist();
 
-            // New board = new project: one empty page, and no saved copy.
-            projectStorage.clear().catch((error) => {
-                console.error('[canvas] failed to clear the saved project:', error);
-            });
+            // New board = new project: one empty page, and no saved copy. A project that could not
+            // be read is kept: the user never saw it (BUG-173).
+            if (!savedProjectUnread) {
+                projectStorage.clear().catch((error) => {
+                    console.error('[canvas] failed to clear the saved project:', error);
+                });
+            }
 
             get().loadAnimationData?.(emptyAnimation());
+            applyDefaultPreset();
             set({ pages: [], currentPageId: null }, false, 'canvas/clearBoard:pages');
             get().initPages?.();
+            // a new board is a new history: without a base snapshot the first change could
+            // not be undone (BUG-156)
+            get().initHistory?.();
 
             set({
                 selectedObject: null,
@@ -618,32 +767,66 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             if (!canvas) return false;
 
             persistLock++;
+            persistDropped = false;
+            let saveEditsAfter = false; // edited during the read: saved once unlocked (BUG-186)
 
             try {
-                const saved = await projectStorage.load();
-
-                if (!saved) return false;
+                let saved: StoredBoard | null;
+                try {
+                    saved = await projectStorage.load();
+                    savedProjectUnread = false;
+                } catch (error) {
+                    // Not "nothing saved": the project may be there. Never write over it (BUG-173).
+                    console.error('[canvas] the saved board could not be read:', error);
+                    savedProjectUnread = true;
+                    void Promise.resolve(
+                        get().alertDialog?.({
+                            title: "Your saved board couldn't be read",
+                            message:
+                                'This browser did not let fateboard read its saved board (for example in a private window). It is kept as it is, and changes are not saved automatically until you reload. Use Save to keep a file of your work.',
+                        }),
+                    );
+                    return false;
+                }
 
                 // Canvas was disposed/replaced while we were reading.
                 if (get().canvas !== canvas) return false;
 
+                // nothing saved: the first board starts at the default size
+                if (!saved) {
+                    if (canvas.getObjects().length === 0) applyDefaultPreset();
+                    saveEditsAfter = persistDropped;
+                    return false;
+                }
+
                 // The user already started drawing; don't clobber it.
                 if (canvas.getObjects().length > 0) return false;
 
-                if (saved.kind === 'project') {
-                    // every page + the page that was open (BUG-004)
-                    return (await get().importProject?.(saved.project)) === true;
+                let opened = false;
+                try {
+                    if (saved.kind === 'project') {
+                        // every page + the page that was open (BUG-004)
+                        opened = (await get().importProject?.(saved.project)) === true;
+                    } else {
+                        // Saved before projects were autosaved: becomes Page 1 (initPages adopts it).
+                        await get().importJSON(saved.canvasJSON, { persist: false });
+                        opened = true;
+                    }
+                } catch (error) {
+                    console.error('[canvas] the saved board could not be loaded:', error);
+                }
+                if (!opened) {
+                    applyDefaultPreset(); // an empty new board replaces it
+                    await keepUnreadableBoard(saved);
                 }
 
-                // Saved before projects were autosaved: becomes Page 1 (initPages adopts it).
-                await get().importJSON(saved.canvasJSON, { persist: false });
-
-                return true;
+                return opened;
             } catch (error) {
                 console.error('Failed to restore canvas from storage:', error);
                 return false;
             } finally {
                 persistLock--;
+                if (saveEditsAfter && get().canvas === canvas) get().persist();
             }
         },
 
@@ -658,22 +841,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                     get().exportProject?.() ??
                     JSON.stringify(serializeCanvas(canvas, SERIALIZE_PROPS));
 
-                const blob = new Blob([json], {
-                    type: 'application/json',
-                });
-
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-
-                link.href = url;
-                link.download = 'drawing.fateboard';
-
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-
-                // Give the browser time to start the download.
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                downloadText(json, 'drawing.fateboard');
             } catch (error) {
                 console.error('Failed to export canvas:', error);
             }
@@ -773,9 +941,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         },
 
         defaultSettings: () => {
-            const { format, orientation } = get().settings;
-
-            get().setPageFormat(format, orientation);
+            // the page size comes from `selectedPreset` (BUG-007); the format only tells a
+            // whiteboard from a page (export scale)
+            get().setPageFormat(get().settings.freehand ? 'Freehand' : 'A4', 'landscape');
             get().setBrush();
         },
 
@@ -827,7 +995,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                     .catch((err) => console.error('[init] restore failed', err))
                     .finally(() => {
                         // The surface may have been disposed (mode switch) while restoring.
-                        if (get().canvas === canvas) get().initPages();
+                        if (get().canvas !== canvas) return;
+                        get().initPages();
+                        get().applyCanvasSizeSetting();
                     });
             } catch (error) {
                 get().unregisterCanvasEvents(canvas);
@@ -880,7 +1050,10 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
         /** Debounced save of the whole canvas. */
         persist: () => {
-            if (persistLock > 0) return;
+            if (persistLock > 0) {
+                persistDropped = true;
+                return;
+            }
 
             cancelPersist();
 
@@ -903,6 +1076,18 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
         flushPersist: () => {
             flushPersist();
+        },
+
+        /**
+         * Settings > Canvas size / Orientation changed since the editor was last open: the open
+         * page takes that size, as one undo step (owner, 2026-11-11). A whiteboard has no page
+         * size, so the change waits for the next design board.
+         */
+        applyCanvasSizeSetting: () => {
+            const { canvas, settings } = get();
+            if (!canvas || !settings || settings.freehand) return;
+            if (!get().takePendingCanvasSize?.()) return;
+            get().setSelectedPreset(getDefaultCanvasPreset(settings));
         },
 
         /**
@@ -1017,6 +1202,8 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 'selection:cleared': get().handleSelectionClear,
                 'mouse:down': get().handleMouseDown,
                 'mouse:dblclick': get().handleDBLClick,
+                // wheel / trackpad: scroll and zoom in every tool (not only the Hand)
+                'mouse:wheel': get().handleWheel,
                 'object:modified': get().handleObjectChange,
                 // live transform panel while dragging handles
                 'object:moving': get().handleTransformSync,

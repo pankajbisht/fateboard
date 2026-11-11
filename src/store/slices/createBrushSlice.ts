@@ -1,4 +1,5 @@
 import * as fabric from 'fabric';
+import { creationScaleOf } from '@/lib/canvas/creationScale';
 import {
     BLEND_MODES,
     DEFAULT_BRUSH_STATE,
@@ -354,6 +355,38 @@ class VariableWidthBrush extends (fabric.PencilBrush as any) {
 /* brush factory                                                       */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Pencil tool (Shift + P): a plain smooth line in the drawing colour. It never reads or changes the
+ * Draw panel's brush settings: while it is active the brush is built from these instead.
+ */
+export const PENCIL_BASE_WIDTH = 2;
+type DrawingSettings = Record<string, unknown> & { activeTool?: unknown };
+
+const pencilState = <S extends DrawingSettings>(s: S): S => ({
+    ...s,
+    brush: 'pencil',
+    width: Math.max(
+        1,
+        PENCIL_BASE_WIDTH * creationScaleOf(s as Parameters<typeof creationScaleOf>[0]),
+    ),
+    brushOpacity: 1,
+    smoothing: 4,
+    lineCap: 'round',
+    lineJoin: 'round',
+    lineStyle: 'solid',
+    straightLine: false,
+    blend: 'source-over',
+    shadowBlur: 0,
+    shadowOffsetX: 0,
+    shadowOffsetY: 0,
+    symmetry: 'none',
+    fillEnabled: false,
+});
+
+/** The settings the canvas draws with: the Draw panel's, or the Pencil's while it is active. */
+const drawingState = <S extends DrawingSettings>(s: S): S =>
+    s.activeTool === 'pencil' ? pencilState(s) : s;
+
 function buildShadow(s: any) {
     if (!(s.shadowBlur > 0 || s.shadowOffsetX || s.shadowOffsetY)) return null;
     const base = s.shadowMatchColor ? s.color : s.brushShadowColor;
@@ -529,9 +562,9 @@ async function mirrorPath(canvas: any, path: any, s: any) {
 function ensureHooks(canvas: any, get: any) {
     if (canvas[HOOK_FLAG]) return;
     canvas[HOOK_FLAG] = true; // a re-created canvas is a new object, so it gets hooked again
-    canvas.on('before:path:created', (opt: any) => styleNewPath(opt?.path, get()));
+    canvas.on('before:path:created', (opt: any) => styleNewPath(opt?.path, drawingState(get())));
     canvas.on('path:created', (opt: any) => {
-        mirrorPath(canvas, opt?.path, get()).catch((e) =>
+        mirrorPath(canvas, opt?.path, drawingState(get())).catch((e) =>
             console.error('[brush] mirror failed', e),
         );
     });
@@ -605,7 +638,7 @@ export const createBrushSlice = (set: any, get: any, _store: any) => {
         const canvas = s.canvas;
         if (!canvas) return;
         ensureHooks(canvas, get);
-        canvas.freeDrawingBrush = buildBrush(canvas, s);
+        canvas.freeDrawingBrush = buildBrush(canvas, drawingState(s));
         canvas.freeDrawingCursor = s.cursor;
         canvas.requestRenderAll();
     };
@@ -618,8 +651,8 @@ export const createBrushSlice = (set: any, get: any, _store: any) => {
         next.cursor =
             partial?.cursor ??
             buildBrushCursor(
-                merged.width * (s.canvas?.getZoom?.() ?? 1),
-                merged.brush === 'eraser',
+                drawingState(merged).width * (s.canvas?.getZoom?.() ?? 1),
+                drawingState(merged).brush === 'eraser',
             );
         set(next, false, label);
         apply();

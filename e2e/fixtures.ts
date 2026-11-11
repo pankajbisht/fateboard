@@ -82,7 +82,12 @@ export class Editor {
         const rail = this.page.getByRole('navigation', { name: 'Editor tools and panels' });
         const button = rail.getByRole('button', { name: label, exact: true });
         // the rail toggles: clicking the open panel's button would close it
-        if ((await button.getAttribute('aria-pressed')) !== 'true') await button.click();
+        if ((await button.getAttribute('aria-pressed')) !== 'true') {
+            await button.click();
+            // the panel widens (200 ms) and its grid reflows: a click before that can press one
+            // button and release on another, so nothing is clicked (Firefox flake, 2026-11-12)
+            await this.settledCanvasBox();
+        }
     }
 
     /** Right dock: open a tab (Fill & Shadow, Export, …). */

@@ -1,20 +1,11 @@
-import { useStore } from '@/store';
 import { DrawPanel } from '../DrawPanel';
 import TemplateGallery from '../effects/ui/TemplateGallery';
 import { TextPanel } from '../TextPanel';
-import { CanvasSizePanel } from '../board';
 import FontTemplatePanel from '../fonts';
 import LayersPanel from '../layer/LayersPanel';
 import PagePanel from '../page/PagePanel';
 import { ShapePanel } from '../ShapePanel';
-
-function CanvasSizePanelContainer() {
-    const selectedPreset = useStore((state) => state.selectedPreset);
-
-    const setSelectedPreset = useStore((state) => state.setSelectedPreset);
-
-    return <CanvasSizePanel selectedPreset={selectedPreset} onSelectPreset={setSelectedPreset} />;
-}
+import { shortcut } from '@/lib/utils/isMac';
 
 const editorsidebarconfig = [
     {
@@ -39,6 +30,27 @@ const editorsidebarconfig = [
         kind: 'action',
     },
     {
+        id: 'pen',
+        shortcut: 'P',
+        label: 'Pen',
+        icon: 'pen-tool',
+        kind: 'action',
+    },
+    {
+        id: 'pencil',
+        shortcut: shortcut('⇧P', 'Shift+P'),
+        label: 'Pencil',
+        icon: 'pencil-line',
+        kind: 'action',
+    },
+    {
+        id: 'laser',
+        shortcut: 'K',
+        label: 'Laser pointer',
+        icon: 'laser-pointer',
+        kind: 'action',
+    },
+    {
         id: 'draw',
         label: 'Draw',
         icon: 'pencil',
@@ -60,14 +72,6 @@ const editorsidebarconfig = [
         kind: 'panel',
         activateTool: 'text',
         panel: <TextPanel />,
-    },
-    {
-        id: 'canvas-size',
-        label: 'Canvas Size',
-        icon: 'ruler-combined',
-        kind: 'panel',
-        fullSize: true,
-        panel: <CanvasSizePanelContainer />,
     },
     {
         id: 'templates',

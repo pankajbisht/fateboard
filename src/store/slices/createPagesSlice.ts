@@ -1,9 +1,14 @@
 import type * as fabric from 'fabric';
 import type { SliceCreator } from '../types';
 import type { Orientation, PageFormat } from '@lib/types/page';
-import { DEFAULT_PAGE_BACKGROUND, isFreehand, type CustomPageSize } from './createPageSlice';
+import {
+    DEFAULT_PAGE_BACKGROUND,
+    MAX_PAGE_PX,
+    isFreehand,
+    type CustomPageSize,
+} from './createPageSlice';
 import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
-import type { ProjectDoc } from '@/lib/storage/projectStorage';
+import type { ProjectDoc } from '@/lib/storage';
 import { emptyAnimation, type AnimationData } from '@/animation/engine';
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
 
@@ -101,11 +106,19 @@ const makeThumbnail = (canvas: fabric.Canvas): string | undefined => {
     }
 };
 
+/** A page side the editor can show: a file must not ask for a canvas of any size (BUG-157). */
+const isPageSide = (n: unknown): n is number =>
+    typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= MAX_PAGE_PX;
+
 const isPreset = (p: unknown): p is CanvasPreset =>
     !!p &&
     typeof p === 'object' &&
-    Number((p as CanvasPreset).width) > 0 &&
-    Number((p as CanvasPreset).height) > 0;
+    isPageSide((p as CanvasPreset).width) &&
+    isPageSide((p as CanvasPreset).height);
+
+/** Thumbnails are shown in an `<img>`: only an embedded image, never an address to fetch (BUG-157). */
+const isThumbnail = (t: unknown): t is string =>
+    typeof t === 'string' && t.startsWith('data:image/');
 
 /** Canvas slice: THE page size (BUG-007). */
 type PresetPeers = {
@@ -119,6 +132,11 @@ const isAnimationData = (a: unknown): a is AnimationData =>
     !!(a as AnimationData).tracks &&
     typeof (a as AnimationData).tracks === 'object';
 
+/** Dialog slice: tell the user when a page cannot be opened. */
+type DialogPeers = {
+    alertDialog?: (options: { title: string; message?: string }) => Promise<void>;
+};
+
 /** Animation slice API used here (kept optional: the pages slice also runs without it in tests). */
 type AnimationPeers = {
     getAnimationData?: () => AnimationData;
@@ -126,8 +144,7 @@ type AnimationPeers = {
     pause?: () => void;
 };
 
-const isValidSize = (s: any): s is CustomPageSize =>
-    !!s && Number.isFinite(s.w) && Number.isFinite(s.h) && s.w > 0 && s.h > 0;
+const isValidSize = (s: any): s is CustomPageSize => !!s && isPageSide(s.w) && isPageSide(s.h);
 
 const normalizePage = (raw: any, index: number, used: Set<string>): Page => {
     let id = typeof raw?.id === 'string' && raw.id ? raw.id : newId();
@@ -138,8 +155,10 @@ const normalizePage = (raw: any, index: number, used: Set<string>): Page => {
         id,
         name: typeof raw?.name === 'string' && raw.name.trim() ? raw.name : `Page ${index + 1}`,
         canvasJSON: raw?.canvasJSON && typeof raw.canvasJSON === 'object' ? raw.canvasJSON : null,
-        thumbnail: typeof raw?.thumbnail === 'string' ? raw.thumbnail : undefined,
-        format: (raw?.format ?? 'Freehand') as PageFormat,
+        thumbnail: isThumbnail(raw?.thumbnail) ? raw.thumbnail : undefined,
+        format: (typeof raw?.format === 'string' && raw.format
+            ? raw.format
+            : 'Freehand') as PageFormat,
         orientation: raw?.orientation === 'portrait' ? 'portrait' : 'landscape',
         customSize: isValidSize(raw?.customSize) ? raw.customSize : null,
         background: typeof raw?.background === 'string' ? raw.background : DEFAULT_PAGE_BACKGROUND,
@@ -193,15 +212,22 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
         return pages.map((p) => (p.id === currentPageId ? { ...p, ...snap } : p));
     };
 
-    /** Load a page into the canvas and make it current. */
-    const showPage = async (nextPages: Page[], targetId: string) => {
+    /**
+     * Load a page into the canvas and make it current. Resolves false when the page cannot be
+     * loaded: Fabric replaces the objects only after all of them are built, so the canvas still
+     * shows the page that was open, and the page list and current page go back to match it
+     * (BUG-154). Without that, the old content was autosaved into the page that failed.
+     */
+    const showPage = async (nextPages: Page[], targetId: string): Promise<boolean> => {
         const canvas = get().canvas;
         const target = nextPages.find((p) => p.id === targetId);
-        if (!canvas || !target) return;
+        if (!canvas || !target) return false;
 
         const anim = get() as unknown as AnimationPeers;
         anim.pause?.(); // playback must not drive the page that is being swapped out
 
+        const before = { pages: get().pages, currentPageId: get().currentPageId };
+        const { renderOnAddRemove } = canvas;
         set(
             { pages: nextPages, currentPageId: targetId, isPageSwitching: true },
             false,
@@ -213,7 +239,15 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
             // canvas rendered before objects existed. loadFromJSON also replaces
             // the objects itself, so the extra canvas.clear() is gone.
             await canvas.loadFromJSON(target.canvasJSON ?? EMPTY_JSON);
+        } catch (err) {
+            console.error('[pages] failed to load page', err);
+            // Fabric switches this off for the load and only switches it back on success
+            canvas.renderOnAddRemove = renderOnAddRemove;
+            set({ ...before, isPageSwitching: false }, false, 'pages/show:failed');
+            return false;
+        }
 
+        try {
             // Restore this page's own size/orientation/background (FIX: pages used to
             // share one global size).
             set(
@@ -249,12 +283,21 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
                 );
             }
         } catch (err) {
-            console.error('[pages] failed to load page', err);
+            console.error('[pages] failed to set up page', err);
         } finally {
             set({ isPageSwitching: false }, false, 'pages/show:end');
         }
         // The page list / current page changed (an empty page loads without object events).
         get().persist?.();
+        return true;
+    };
+
+    /** Tells the user a page could not be opened (the slice also runs without dialogs in tests). */
+    const reportUnreadablePage = (name: string) => {
+        void (get() as unknown as DialogPeers).alertDialog?.({
+            title: "Can't open page",
+            message: `"${name}" has content this version of Fateboard cannot read. The page was left unchanged.`,
+        });
     };
 
     const insertAfter = (list: Page[], index: number, page: Page) => {
@@ -309,8 +352,8 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
                     updatedAt: now,
                 };
 
-                await showPage(insertAfter(saved, refIndex, page), page.id);
-                return page.id;
+                const shown = await showPage(insertAfter(saved, refIndex, page), page.id);
+                return shown ? page.id : null;
             }),
 
         duplicatePage: (id) =>
@@ -333,8 +376,9 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
                     updatedAt: now,
                 };
 
-                await showPage(insertAfter(saved, index, copy), copy.id);
-                return copy.id;
+                if (await showPage(insertAfter(saved, index, copy), copy.id)) return copy.id;
+                reportUnreadablePage(src.name);
+                return null;
             }),
 
         // FIX: deleting the active page changed currentPageId but left the old page's
@@ -348,8 +392,18 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
 
                 const remaining = saved.filter((p) => p.id !== id);
                 if (id === get().currentPageId) {
-                    const fallback = remaining[Math.min(index, remaining.length - 1)];
-                    await showPage(remaining, fallback.id);
+                    // the neighbour first, then any other page that loads
+                    const neighbour = remaining[Math.min(index, remaining.length - 1)];
+                    const order = [neighbour, ...remaining.filter((p) => p !== neighbour)];
+                    let shown = false;
+                    for (const page of order) {
+                        shown = await showPage(remaining, page.id);
+                        if (shown) break;
+                    }
+                    if (!shown) {
+                        reportUnreadablePage(neighbour.name);
+                        return false;
+                    }
                 } else {
                     set({ pages: remaining }, false, 'pages/delete');
                     get().persist?.();
@@ -386,8 +440,9 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
             runExclusive(async () => {
                 if (toId === get().currentPageId) return;
                 const saved = withCurrentSaved();
-                if (!saved.some((p) => p.id === toId)) return;
-                await showPage(saved, toId);
+                const target = saved.find((p) => p.id === toId);
+                if (!target) return;
+                if (!(await showPage(saved, toId))) reportUnreadablePage(target.name);
             }),
 
         goToNextPage: () => step(1),
@@ -477,9 +532,13 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
                         .map((p, i) => normalizePage(p, i, used));
                     if (!pages.length) return false;
 
-                    const target = pages.find((p) => p.id === data?.currentPageId) ?? pages[0];
-                    await showPage(pages, target.id);
-                    return true;
+                    // the page that was open, else the first page that loads; a page that cannot
+                    // be read stays in the project untouched (BUG-154)
+                    const wanted = pages.find((p) => p.id === data?.currentPageId) ?? pages[0];
+                    for (const page of [wanted, ...pages.filter((p) => p !== wanted)]) {
+                        if (await showPage(pages, page.id)) return true;
+                    }
+                    return false;
                 } catch (err) {
                     console.error('[pages] import failed', err);
                     return false;

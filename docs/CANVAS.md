@@ -32,7 +32,7 @@ Mount path: `pages/Editor/Editor.tsx` → `<CanvasBoard mode pageSize>` → `Can
      document stays at true pixels and only CSS is scaled. Rulers + artboard are DOM.
    - Floating text toolbar position recomputed on `after:render`.
 5. Other slices/panels attach on their own: Notebook (via `store.subscribe` on `canvas` change), LayersPanel →
-   `bindLayerEvents`, AnimationPanel → `bindAutoKey`, PagePanel → `initPages` + autosave listener, Brush hooks.
+   `bindLayerEvents`, AnimationPanel → `bindAutoKey` (leaving the tab pauses playback and turns auto-key off, BUG-181), PagePanel → `initPages` + autosave listener, Brush hooks.
 
 ## Dispose
 
@@ -118,6 +118,11 @@ completion callback). Only the canvas, pages and undo slices call it; other code
   cancelled, shape text committed, canvas text typing finished), then `undo` flushes a pending change, moves the top
   to redo and restores the previous snapshot; `redo` does the reverse.
 - `restore(json)`: `_isRestoring = true`, `await loadFromJSON`, discard selection, `clearToolbar`, `persist()`.
+  When the load fails the canvas is unchanged, so the stacks go back too (BUG-154).
+- **Photos are stored once (BUG-155):** a snapshot is written with `snapshotAssets.stringify`, which replaces
+  every `data:` URL of 2048 characters or more with a token, and read with `snapshotAssets.parse`. The pool lives
+  in the undo slice's closure and is shared by every page. Never `JSON.parse` a snapshot string yourself.
+- **New board** calls `initHistory()`, so the empty board is the base snapshot (BUG-156).
 - **Per page (Q7):** see STATE.md §10. Undo can never load another page.
 - Keyboard: ⌘Z / ⌘⇧Z (Ctrl on Windows) through the command registry; also from a number field with nothing
   half-typed (`data-history-passthrough`) and from canvas text typing (Fabric's `data-fabric="textarea"`), which
@@ -131,15 +136,25 @@ One geometry owner per board (decision Q2, BUG-007 fixed 2026-11-07); `src/store
 
 | Board | Canvas size | Viewport | Zoom | Pan |
 |---|---|---|---|---|
-| **Design** (fixed page) | `CanvasBoard` only: backstore = page px (`selectedPreset`), CSS size = fit × zoom | always identity | Page `setZoom` changes `zoom` state only; CanvasBoard redraws (footer, toolbar, Hand-tool wheel, UI `actualSize`) | Hand tool scrolls the board (`[data-board-scroll]`) |
-| **Whiteboard** (infinite) | `CanvasBoard` only: canvas = host size | Page slice only: `setZoom(z, point)` (`zoomToPoint`), `zoomToRect(rect)`, `applyPageSize` (reset 1:1) | same actions; `zoom` always equals the viewport zoom (BUG-025) | Hand tool `relativePan` |
+| **Design** (fixed page) | `CanvasBoard` only: backstore = page px (`selectedPreset`), CSS size = fit × zoom | always identity | Page `setZoom` changes `zoom` state only; CanvasBoard redraws (footer, toolbar, Ctrl / ⌘ + wheel or pinch, UI `actualSize`) | the wheel scrolls the board natively (`[data-board-scroll]`); Hand tool drags it |
+| **Whiteboard** (infinite) | `CanvasBoard` only: canvas = host size | Page slice only: `setZoom(z, point)` (`zoomToPoint`), `zoomToRect(rect)`, `applyPageSize` (reset 1:1) | same actions; `zoom` always equals the viewport zoom (BUG-025); Ctrl / ⌘ + wheel or pinch zooms at the pointer | wheel / trackpad `relativePan` (Shift + wheel sideways), Hand tool drag |
 
 The page size has **one source**, `selectedPreset` (Canvas slice). `setSelectedPreset` is a document change: one undo
 step (snapshots carry the page size under `fateboardPage`), autosaved, and stored per page (`Page.preset`, BUG-109).
 `applyPageSize` never writes the canvas in design; it resets `zoom` and mirrors `pageWidth` / `pageHeight`.
 Templates set the page size and put their content on the page: no artboard rect, clip path or own viewport (BUG-139).
 Only temporary writers remain: PNG / video export set an identity viewport and restore it afterwards.
-Wheel zoom stays a Hand-tool gesture (attached in `enablePan`).
+**Wheel / trackpad (2026-11-11)**, one action, `wheelNavigate(e)` (Canvas slice), registered as `mouse:wheel` for every
+tool and, in design, on the board's scroll container for the grey area (CanvasBoard; the canvas handler stops the event so
+it never runs twice). Whiteboard: scroll pans, Shift + wheel pans sideways, Ctrl / ⌘ + wheel (a trackpad pinch arrives
+as Ctrl + wheel) zooms at the pointer. Design: Ctrl / ⌘ + wheel zooms the page instead of the browser; a plain wheel is
+left to the browser. Line-based deltas (Firefox) count 16 px a line; pinch deltas (< 50) zoom at a stronger rate.
+
+**Size of new objects (2026-11-11):** `lib/canvas/creationScale.ts`. Base sizes (shape catalog, Text panel presets,
+text-in-shape 18 px, stroke 2 px, pictures 400 px on the longer side) are a whiteboard at 100 %. Design: × the page's
+shorter side / 600 (1920 × 1080 → 1.8, like Canva sizing by page); whiteboard: × 1 / viewport zoom (same on-screen
+size at any zoom, like FigJam). Explicit sizes are kept; pictures are never enlarged. New objects land at
+`getVpCenter()` (page centre in design).
 
 Coordinates: in design mode the CSS size is smaller than the backstore. Pointer maths must multiply CSS px by
 `canvas.getWidth() / upperCanvasEl.getBoundingClientRect().width` (`getCssToCanvasScale`). `calcOffset()` is

@@ -35,7 +35,6 @@ describe('help topics', () => {
             'draw',
             'shapes',
             'text',
-            'canvas-size',
             'templates',
             'fonttemplates',
             'Pages',
@@ -95,7 +94,6 @@ describe('help topics', () => {
 
     it.each([
         ['PDF export', /\bpdf\b/i],
-        ['a P key for the Pencil', /`P`/],
         ['an S key for Shapes', /`S`/],
         ['a T key for Text', /`T`/],
         ['a C key for colors', /`C`/],
@@ -103,5 +101,12 @@ describe('help topics', () => {
         ['Shift to keep proportions', /shift[^.]*(keep|maintain)[^.]*(proportion|aspect)/i],
     ])('does not promise %s', (_name, claim) => {
         expect(allText).not.toMatch(claim);
+    });
+
+    it('documents the real keys of the Pen, Pencil and Laser pointer', () => {
+        const topic = (id: string) => topicText(HELP_TOPICS.find((t) => t.id === id)!);
+        expect(topic('pen')).toMatch(/`P`/);
+        expect(topic('pencil')).toMatch(/`shift\+P`/);
+        expect(topic('laser')).toMatch(/`K`/);
     });
 });

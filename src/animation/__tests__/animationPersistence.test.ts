@@ -10,7 +10,7 @@ import { applyTracksAt, ensureAnimId, readProps, type Track } from '@/animation/
 import { serializeCanvas } from '@/lib/serialization';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
-import { createMemoryBackend, projectStorage } from '@/lib/storage/projectStorage';
+import { createMemoryBackend, projectStorage } from '@/lib/storage';
 
 const rect = (props: Record<string, unknown> = {}) =>
     new fabric.Rect({

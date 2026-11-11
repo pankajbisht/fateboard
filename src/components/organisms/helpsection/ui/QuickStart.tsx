@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 
 import { Icon } from '@/components/atoms/Icon';
 import { FOCUS_RING } from '@/components/atoms/control.styles';
-import { readLocalList, writeLocalList } from '@/lib/storage/localList';
+import { readLocalList, writeLocalList } from '@/lib/storage';
 
 import { HELP_CARD } from './helpParts';
 

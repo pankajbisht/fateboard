@@ -1,4 +1,4 @@
-import { readLocalList, writeLocalList } from '@/lib/storage/localList';
+import { readLocalList, writeLocalList } from '@/lib/storage';
 import * as fabric from 'fabric';
 import { nanoid } from 'nanoid';
 import {

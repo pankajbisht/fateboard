@@ -92,8 +92,41 @@ export const CANVAS_PRESETS: CanvasPreset[] = [
 ];
 
 /** The preset a new board starts with: Full HD 16:9, the usual default of design tools. Lives here (not in
- *  CanvasSizePanel) so store slices can import it without importing a component that imports the store
+ *  a component) so store slices can import it without importing a component that imports the store
  *  (circular import). */
 export const DEFAULT_CANVAS_PRESET: CanvasPreset = CANVAS_PRESETS.find(
     (preset) => preset.id === 'presentation-16-9',
 )!;
+
+/** Settings > Canvas > Orientation: the canvas size is used in it (owner, 2026-11-11). */
+export type CanvasOrientation = 'landscape' | 'portrait';
+export const CANVAS_ORIENTATIONS: readonly CanvasOrientation[] = ['landscape', 'portrait'];
+
+const SWAP_SUFFIX = '@swapped';
+
+/** `youtube-shorts@swapped` -> `youtube-shorts`, so a rotated preset still matches its format. */
+export const basePresetId = (id: string) => id.replace(SWAP_SUFFIX, '');
+
+/**
+ * The same format with its long side horizontal (landscape) or vertical (portrait). A square size
+ * stays as it is. A rotated preset keeps its format's id with `@swapped`; a size that is not a
+ * preset gets an id from its dimensions.
+ */
+export function orientPreset(preset: CanvasPreset, orientation: CanvasOrientation): CanvasPreset {
+    const base = basePresetId(preset.id);
+    const long = Math.max(preset.width, preset.height);
+    const short = Math.min(preset.width, preset.height);
+    const width = orientation === 'landscape' ? long : short;
+    const height = orientation === 'landscape' ? short : long;
+
+    const original = CANVAS_PRESETS.find((p) => p.id === base);
+    const isOriginalSize = !!original && original.width === width && original.height === height;
+
+    const id = !original
+        ? `custom-${width}x${height}` // custom size: id follows the dimensions
+        : isOriginalSize
+          ? base
+          : `${base}${SWAP_SUFFIX}`;
+
+    return { ...preset, id, width, height };
+}

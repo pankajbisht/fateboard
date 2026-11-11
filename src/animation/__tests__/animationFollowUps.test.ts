@@ -10,7 +10,7 @@ import { useStore } from '@store';
 import { ensureAnimId, readProps, type Track } from '@/animation/engine';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
-import { createMemoryBackend, projectStorage } from '@/lib/storage/projectStorage';
+import { createMemoryBackend, projectStorage } from '@/lib/storage';
 
 let canvas: any;
 let prev: any;
