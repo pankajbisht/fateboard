@@ -1,5 +1,6 @@
 import type { SliceCreator } from '../types';
 import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
+import { createSnapshotAssets } from '@/lib/snapshotAssets';
 
 /** Snapshots keep every custom prop (BUG-003): text shapes, connectors, locks, filters, layers. */
 export const SERIALIZE_PROPS: string[] = [...CUSTOM_PROPS];
@@ -80,12 +81,23 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
     /** Parked history of the pages that are not shown. */
     const pageStacks = new Map<string, { undo: string[]; redo: string[] }>();
     const peers = () => get() as unknown as UndoRedoSlice & Peers;
+    /** Embedded photos are kept once for every snapshot of every page (BUG-155). */
+    const assets = createSnapshotAssets();
 
     /** Canvas content + page size, as one string (equal strings = nothing changed). */
     const snapshot = (canvas: HistoryCanvas): string => {
         const json = serializeCanvas(canvas, SERIALIZE_PROPS);
         const page = peers().selectedPreset;
-        return JSON.stringify(page ? { ...json, [PAGE_KEY]: page } : json);
+        return assets.stringify(page ? { ...json, [PAGE_KEY]: page } : json);
+    };
+
+    /** Snapshots were dropped: let go of the photos only they used. */
+    const pruneAssets = () => {
+        if (!assets.size()) return;
+        const { undoStack, redoStack } = peers();
+        const live = [...undoStack, ...redoStack];
+        for (const parked of pageStacks.values()) live.push(...parked.undo, ...parked.redo);
+        assets.prune(live);
     };
 
     const cancelTimer = () => {
@@ -96,8 +108,15 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
     // Takes the snapshot and pushes it on the stack
     const commit = (force = false) => {
         cancelTimer();
-        const { canvas, _isRestoring, _historyPaused, undoStack, MAX_HISTORY, isPageSwitching } =
-            peers();
+        const {
+            canvas,
+            _isRestoring,
+            _historyPaused,
+            undoStack,
+            redoStack,
+            MAX_HISTORY,
+            isPageSwitching,
+        } = peers();
         if (!canvas || _isRestoring || _historyPaused > 0) return;
         if (isPageSwitching && !force) return; // loading a page is not an edit
 
@@ -111,6 +130,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
             canUndo: next.length > 1,
             canRedo: false,
         });
+        if (redoStack.length || next.length <= undoStack.length) pruneAssets();
     };
 
     /**
@@ -136,7 +156,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
         const { canvas } = peers();
         set({ _isRestoring: true });
         try {
-            const { [PAGE_KEY]: page, ...json } = JSON.parse(state) as Record<string, unknown>;
+            const { [PAGE_KEY]: page, ...json } = assets.parse(state) as Record<string, unknown>;
             await canvas.loadFromJSON(json);
             const current = peers().selectedPreset;
             const saved = page as Peers['selectedPreset'];
@@ -161,6 +181,28 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
         }
     };
 
+    /**
+     * A snapshot that cannot be loaded leaves the canvas as it was (Fabric replaces the objects
+     * only after all of them are built), so the stacks go back too: history and canvas stay in
+     * step, and the action never throws (BUG-154).
+     */
+    const restoreOrRevert = async (
+        state: string,
+        before: { undoStack: string[]; redoStack: string[] },
+    ) => {
+        try {
+            await restore(state);
+        } catch (error) {
+            console.error('[history] could not restore a snapshot', error);
+            set({
+                undoStack: before.undoStack,
+                redoStack: before.redoStack,
+                canUndo: before.undoStack.length > 1,
+                canRedo: before.redoStack.length > 0,
+            });
+        }
+    };
+
     const runUndo = async () => {
         const { canvas, _isRestoring, isPageSwitching } = peers();
         if (!canvas || _isRestoring || isPageSwitching) return;
@@ -182,7 +224,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
             canRedo: true,
         });
 
-        await restore(target);
+        await restoreOrRevert(target, { undoStack, redoStack });
     };
 
     const runRedo = async () => {
@@ -204,7 +246,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
             canRedo: rest.length > 0,
         });
 
-        await restore(next);
+        await restoreOrRevert(next, { undoStack, redoStack });
     };
 
     /**
@@ -253,7 +295,13 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
         // pages that no longer exist drop their history
         if (state.pages !== prevState.pages && pageStacks.size) {
             const ids = new Set((state.pages ?? []).map((p) => p.id));
-            for (const id of pageStacks.keys()) if (!ids.has(id)) pageStacks.delete(id);
+            let dropped = false;
+            for (const id of pageStacks.keys()) {
+                if (ids.has(id)) continue;
+                pageStacks.delete(id);
+                dropped = true;
+            }
+            if (dropped) pruneAssets();
         }
     });
 
@@ -284,6 +332,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
         clearHistory: () => {
             cancelTimer();
             set({ undoStack: [], redoStack: [], canUndo: false, canRedo: false });
+            pruneAssets();
         },
 
         // Call once after the canvas is ready AND after any saved JSON has been loaded.

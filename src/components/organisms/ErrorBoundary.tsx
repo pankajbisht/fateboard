@@ -1,7 +1,7 @@
 import { Component, useState, type ErrorInfo, type ReactNode } from 'react';
 import { Button } from '@/components/atoms/Button';
 import { Icon } from '@/components/atoms/Icon';
-import { projectStorage } from '@/lib/storage/projectStorage';
+import { projectStorage } from '@/lib/storage';
 
 /**
  * Catches render errors below it so a crash never leaves a blank page. Mounted in RootLayout

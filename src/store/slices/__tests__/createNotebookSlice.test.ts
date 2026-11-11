@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { createHarness } from '@/test/sliceHarness';
-import { createNotebookSlice } from '../createNotebookSlice';
+import { createNotebookSlice, gridStyleFor } from '../createNotebookSlice';
 
 const make = () => createHarness([createNotebookSlice as never], { canvas: null });
 
@@ -26,5 +26,32 @@ describe('notebook slice defaults', () => {
         const { get } = make();
         get().toggleGrid();
         expect(get().gridEnabled).toBe(true);
+    });
+});
+
+describe('grid default per board mode (whiteboard tools show a dot grid; design pages start clean)', () => {
+    it('entering the whiteboard turns the grid on; entering a design page turns it off', () => {
+        const h = make();
+        h.set({ boardMode: 'whiteboard' });
+        expect(h.get().gridEnabled).toBe(true);
+        h.set({ boardMode: 'design' });
+        expect(h.get().gridEnabled).toBe(false);
+    });
+
+    it('the user’s choice stays while the mode stays (leaving the editor and coming back)', () => {
+        const h = make();
+        h.set({ boardMode: 'whiteboard' });
+        h.get().toggleGrid(); // off
+        h.set({ boardMode: null }); // editor closed (Settings)
+        h.set({ boardMode: 'whiteboard' });
+        expect(h.get().gridEnabled).toBe(false);
+    });
+});
+
+describe('grid style', () => {
+    it('the whiteboard grid is dots; the design grid is lines', () => {
+        expect(gridStyleFor('whiteboard')).toBe('dots');
+        expect(gridStyleFor('design')).toBe('lines');
+        expect(gridStyleFor(null)).toBe('lines');
     });
 });

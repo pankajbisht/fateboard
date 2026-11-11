@@ -7,7 +7,7 @@
 | UI | React 19 (`StrictMode`), react-router-dom 7 (`BrowserRouter`) | 19.2.x / 7.7.x |
 | Canvas | **Fabric.js 7.1.0** (docs/code comments still say v6) | 7.1.0 |
 | State | zustand 5 (`devtools` middleware) | 5.0.11 |
-| Persistence | IndexedDB (project autosave, `lib/storage/projectStorage`), opendb-store (`db.local`, settings) + raw `localStorage` | opendb 2.0.1 |
+| Persistence | One storage layer, `@/lib/storage` (see "Storage layer"): projects in IndexedDB, settings and small libraries in localStorage | opendb-store 3.0.0 |
 | Styling | Tailwind CSS 4 (`@tailwindcss/vite`), Font Awesome 7, lucide-react | |
 | Geometry | paper.js (boolean ops, geometry engine) | 0.12.x |
 | Export | mp4-muxer (WebCodecs MP4); PNG / SVG / JSON via Fabric | |
@@ -21,7 +21,7 @@ Node: `.nvmrc` = v26.13.0. Deploy: GitHub Pages via `.github/workflows/ci.yml` �
 
 ```
 src/main.tsx → App.tsx → app/rootRouter.tsx (BrowserRouter + RouteSeo)
-  └─ templates/RootLayout   (hydrates settings from opendb, then renders <Outlet/> inside ErrorBoundary; DialogHost + ToastHost)
+  └─ templates/RootLayout   (hydrates settings from `settingsStorage`, then renders <Outlet/> inside ErrorBoundary; DialogHost + ToastHost)
        ├─ /                 pages/web/WhiteboardMarketingSite   (marketing; has its own MiniWhiteboard)
        ├─ /draw             pages/Editor/Editor.tsx             ← the editor
        ├─ /setting          pages/Setting/EditorSettingPage     (Preferences)
@@ -110,8 +110,8 @@ flowchart LR
   end
 
   FC[(fabric.Canvas)]
-  IDB[(IndexedDB fateboard/kv<br/>project: all pages + animation)]
-  DB[(opendb<br/>fateboard-settings)]
+  IDB[(IndexedDB fateboard-data via opendb<br/>project: all pages + animation)]
+  DB[(localStorage via opendb<br/>fateboard-settings)]
   LS[(localStorage<br/>shapes, patterns, fonts, share)]
 
   TB -- runCommand / getState().action --> Store
@@ -156,13 +156,42 @@ Event flow, step by step:
 | Flow | Entry | Format | Notes |
 |---|---|---|---|
 | Autosave | `persist()` | the whole project (`captureProject`: every page + its animation; live canvas → current page; `serializeCanvas`, animated objects at rest) → IndexedDB key `project` | Locked (`persistLock`) during import/clear/restore; skipped while a page loads (BUG-004) |
-| Restore | `init` → `restoreFromStorage()` → `importProject(project)` (all pages, the page that was open) → `initPages()` (no-op when pages exist) | same | Skips if objects already exist. An old localStorage `drawJson` board is loaded with `importJSON` and adopted as Page 1, then removed on the first save |
+| Restore | `init` → `restoreFromStorage()` → `importProject(project)` (all pages, the page that was open) → `initPages()` (no-op when pages exist) | same | Skips if objects already exist. An old localStorage `drawJson` board is loaded with `importJSON` and adopted as Page 1, then removed on the first save. A saved board that cannot be opened is copied to the key `project.unreadable` and offered as a download; the editor starts empty (BUG-154). A saved board that cannot be **read** (storage blocked or failing) is never written over: autosave and New board's clear stop until a later read works, and a dialog says so (BUG-173). A failed autosave opens one "Save a copy" dialog (BUG-162) |
 | Save file | FileBar → `saveBoard()` | downloads `drawing.fateboard` (the whole project, same format as the autosave) | |
-| Open file | FileBar "Open" button → hidden `<input>` → `feature/import/importFile` | `.png/.jpg/.webp` → image, `.svg` → SVG, `.fateboard/.json`: a project → `importProject`; a single board → `importFabricJSON` → store `importJSON(json, { undoable: true })` (persist lock, autosave, one undo step; a broken file shows a dialog) | |
+| Open file | FileBar "Open" button → hidden `<input>` → `feature/import/importFile` | `.png/.jpg/.webp` → image, `.svg` → SVG, `.fateboard/.json`: a project → `importProject`; a single board → `importFabricJSON` → store `importJSON(json, { undoable: true })` (persist lock, autosave, one undo step; a broken file shows a dialog) | A project opens on the first page that loads; when no page loads the open board stays as it is and a dialog says so (BUG-154). An SVG or image that cannot be read shows a dialog (BUG-158). Thumbnails and page sizes from a file are checked (BUG-157) |
 | Project | `exportProject()` / `importProject()` (Save / Open in the top bar) | `{app:'fateboard', version:1, currentPageId, pages[{…, animation?}]}` | Same document is autosaved (BUG-004) |
 | Share | removed until there is a backend (decision Q6, BUG-028) | | The link only ever worked in the same browser; Save Board (`.fateboard`) is the way to hand a board over |
-| Settings | Setting slice | opendb `fateboard-settings` | Validated by `sanitizeSettings` |
+| Settings | Setting slice → `settingsStorage` | localStorage `app.fateboard-settings` (opendb) | Validated by `sanitizeSettings` |
 | Small libraries | custom shapes, patterns, font templates → `lib/storage/localList` | localStorage `fateboard:customShapes` / `fateboard:patterns` / `fateboard:fontTemplates`, `{ v, items }` | Old keys migrated once; never throws (BUG-036) |
+
+## Storage layer
+
+All persistence goes through `src/lib/storage` and the app imports it only as `@/lib/storage`
+(`src/__tests__/storageBoundary.test.ts` fails on `opendb-store`, `localStorage`, `sessionStorage` or `indexedDB`
+anywhere else, and on deep imports of its files).
+
+```
+app (slices, panels)
+  -> domain stores   projectStorage · settingsStorage · readLocalList/writeLocalList · read/writeSessionFlag
+  -> contracts       types.ts: KeyValueBackend (async, rejects on failure) · SyncKeyValue (never throws) · LegacySource
+  -> adapters        adapters/opendbIndexed (IndexedDB) · adapters/opendbLocal (localStorage) · adapters/memory (tests,
+                     no IndexedDB) · adapters/legacyIndexedDb (old layout, read once)
+```
+
+- **Wiring** is in `lib/storage/index.ts` only. To change library or add a backend (e.g. server sync), write an adapter
+  for the contract and swap it there; slices and panels do not change.
+- **Projects**: IndexedDB database `fateboard-data` (opendb namespace `fateboard`), keys `project` and
+  `project.unreadable`. opendb promises never reject and a refused database silently becomes memory, so
+  `opendbIndexed` turns every reported failure back into a rejection and rejects every call after the memory fallback
+  (`opendbBackend.test.ts`, against the real library on fake-indexeddb). A failed read must never look like "nothing
+  saved" (BUG-154, BUG-172).
+- **Old layout**: before opendb-store 3 the project lived in database `fateboard`, store `kv`. The first `load()` copies
+  every entry into the new database, writes `legacy-indexeddb-adopted`, then deletes the old database; a missing old
+  database is never created. If copying fails, `load()` rejects and the old database is kept. Remove
+  `adapters/legacyIndexedDb.ts` once returning users can no longer have it.
+- **Settings** (`settingsStorage`): opendb `local` store, namespace `app`, so values saved by opendb-store 2 still read.
+- **Small libraries** (`localList`) and session flags keep their own raw keys (`fateboard:<name>`); they live in the
+  same folder and follow the same rules (never throw).
 
 ## Bundles and assets
 
@@ -210,4 +239,4 @@ currently resolves to the **animation** history (BUG-001). Details in [CANVAS.md
 - **Layers**: derived list rebuilt from `canvas.getObjects()` (recursive into groups); Fabric is the source of truth.
   UI: `organisms/layer/LayersPanel.tsx`.
 - **Animation**: tracks keyed by `animId` on objects; `applyTracksAt(canvas, tracks, t)` writes props onto live
-  objects; export renders frames through an offscreen compositor. UI: `organisms/AnimationPanel.tsx` (Animate tab).
+  objects; export renders frames through an offscreen compositor. UI: `organisms/animation/` (Animate tab, one file per part; see COMPONENTS.md).

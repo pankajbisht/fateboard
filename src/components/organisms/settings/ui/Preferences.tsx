@@ -1,7 +1,23 @@
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useId, useMemo, useState, type ReactNode } from 'react';
 import { useStore } from '@/store';
-import { type IconSize, type ThemeMode, type Unit } from '@/store/slices/createSettingSlice';
+import {
+    CUSTOM_CANVAS_ID,
+    CUSTOM_CANVAS_LIMITS,
+    getDefaultCanvasPreset,
+    type IconSize,
+    type ThemeMode,
+    type Unit,
+} from '@/store/slices/createSettingSlice';
+import {
+    CANVAS_PRESETS,
+    orientPreset,
+    type CanvasOrientation,
+} from '@/components/organisms/board/board.config';
+import { formatSize, fromUnit, toUnit, unitPrecision } from '@/lib/units';
 import { ColorThemePicker } from './ColorThemePicker';
+import { Button } from '@/components/atoms/Button';
+import { Input } from '@/components/atoms/Input';
+import { Select, type SelectOption } from '@/components/atoms/Select';
 import { Switch } from '@/components/atoms/Switch';
 import { SegmentedControl, type SegmentOption } from '@/components/molecules/SegmentedControl';
 
@@ -19,6 +35,11 @@ const ICON_SIZE_OPTIONS: Option<IconSize>[] = [
     { value: 'sm', label: 'Small' },
     { value: 'md', label: 'Medium' },
     { value: 'lg', label: 'Large' },
+];
+
+const ORIENTATION_OPTIONS: Option<CanvasOrientation>[] = [
+    { value: 'landscape', label: 'Landscape' },
+    { value: 'portrait', label: 'Portrait' },
 ];
 
 const UNIT_OPTIONS: Option<Unit>[] = [
@@ -82,6 +103,85 @@ function Row({
 }
 
 /* -------------------------------------------------------------------------- */
+/*  Custom canvas size                                                         */
+/* -------------------------------------------------------------------------- */
+
+/** px -> the unit, rounded like the unit is shown elsewhere. */
+const inUnit = (px: number, unit: Unit) => {
+    const f = 10 ** unitPrecision(unit);
+    return String(Math.round(toUnit(px, unit) * f) / f);
+};
+
+/**
+ * Width / height for Settings > Canvas size > Custom size, typed in Settings > Units and stored in
+ * whole px (same rules the Canvas Size panel had: px must be whole, other units are rounded to px).
+ */
+function CustomSizeFields({
+    width,
+    height,
+    unit,
+    onApply,
+}: {
+    width: number;
+    height: number;
+    unit: Unit;
+    onApply: (width: number, height: number) => boolean;
+}) {
+    const [w, setW] = useState(() => inUnit(width, unit));
+    const [h, setH] = useState(() => inUnit(height, unit));
+    const [error, setError] = useState('');
+    const { min, max } = CUSTOM_CANVAS_LIMITS;
+
+    const apply = () => {
+        const typedW = Number(w);
+        const typedH = Number(h);
+        const pxOk = unit !== 'px' || (Number.isInteger(typedW) && Number.isInteger(typedH));
+        const pxW = Math.round(fromUnit(typedW, unit));
+        const pxH = Math.round(fromUnit(typedH, unit));
+        if (!pxOk || !onApply(pxW, pxH)) {
+            setError(
+                unit === 'px'
+                    ? `Enter whole-number dimensions between ${min} and ${max.toLocaleString('en')} px.`
+                    : `Enter dimensions between ${inUnit(min, unit)} and ${inUnit(max, unit)} ${unit}.`,
+            );
+            return;
+        }
+        setError('');
+    };
+
+    return (
+        <div className="mt-3 space-y-2">
+            <div className="grid grid-cols-2 gap-2">
+                <Input
+                    label={`Width (${unit})`}
+                    type="number"
+                    min={0}
+                    value={w}
+                    onChange={(e) => setW(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && apply()}
+                />
+                <Input
+                    label={`Height (${unit})`}
+                    type="number"
+                    min={0}
+                    value={h}
+                    onChange={(e) => setH(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && apply()}
+                />
+            </div>
+            {error && (
+                <p role="alert" className="text-caption text-danger">
+                    {error}
+                </p>
+            )}
+            <Button size="sm" variant="secondary" onClick={apply}>
+                Apply size
+            </Button>
+        </div>
+    );
+}
+
+/* -------------------------------------------------------------------------- */
 /*  Page                                                                       */
 /* -------------------------------------------------------------------------- */
 
@@ -92,17 +192,56 @@ function Preferences() {
     const toggleFreehand = useStore((s) => s.toggleFreehand);
     const setColorTheme = useStore((s) => s.setColorTheme);
     const setUnit = useStore((s) => s.setUnit);
+    const setDefaultCanvasPreset = useStore((s) => s.setDefaultCanvasPreset);
+    const setCanvasOrientation = useStore((s) => s.setCanvasOrientation);
+    const setCustomCanvasSize = useStore((s) => s.setCustomCanvasSize);
     const resetSettings = useStore((s) => s.resetSettings);
+    const confirmDialog = useStore((s) => s.confirmDialog);
 
     const freehandLabelId = useId();
-    const [confirmingReset, setConfirmingReset] = useState(false);
+    const canvasSizeLabelId = useId();
 
-    // Don't leave a pending confirmation armed forever.
-    useEffect(() => {
-        if (!confirmingReset) return;
-        const timer = window.setTimeout(() => setConfirmingReset(false), 5000);
-        return () => window.clearTimeout(timer);
-    }, [confirmingReset]);
+    // the size boards get: the custom size after orientation, as the fields show it
+    const canvasSize = getDefaultCanvasPreset(settings);
+    const isCustom = settings.defaultCanvasPresetId === CUSTOM_CANVAS_ID;
+    const custom = isCustom
+        ? canvasSize
+        : getDefaultCanvasPreset({ ...settings, defaultCanvasPresetId: CUSTOM_CANVAS_ID });
+
+    // sizes in the chosen orientation and unit, grouped by category; Custom size last
+    const presetOptions = useMemo<SelectOption[]>(
+        () => [
+            ...CANVAS_PRESETS.map((preset) => {
+                const { width, height } = orientPreset(preset, settings.canvasOrientation);
+                return {
+                    value: preset.id,
+                    label: preset.label,
+                    description: formatSize(width, height, settings.unit),
+                    group: preset.category,
+                    icon: preset.icon,
+                };
+            }),
+            {
+                value: CUSTOM_CANVAS_ID,
+                label: 'Custom size',
+                description: formatSize(custom.width, custom.height, settings.unit),
+                group: 'Custom',
+                icon: 'ruler-combined',
+            },
+        ],
+        [settings.canvasOrientation, settings.unit, custom.width, custom.height],
+    );
+
+    const confirmReset = async () => {
+        const ok = await confirmDialog({
+            title: 'Reset all settings?',
+            message:
+                'Theme, color theme, icon size, board type, canvas size, orientation and units go back to their defaults. The page you had open takes the default size when you go back to the editor.',
+            confirmLabel: 'Reset settings',
+            tone: 'danger',
+        });
+        if (ok) resetSettings();
+    };
 
     const iconPx = ICON_PREVIEW_PX[settings.iconSize];
 
@@ -157,7 +296,7 @@ function Preferences() {
 
             <Section
                 title="Canvas"
-                description="Choose between an endless canvas and a fixed page. Set the page size in the Canvas Size panel."
+                description="Choose between an endless canvas and a fixed page, and the page's size and orientation."
             >
                 <Row
                     title="Freehand"
@@ -170,9 +309,44 @@ function Preferences() {
                         aria-labelledby={freehandLabelId}
                     />
                 </Row>
+
+                <Row title="Orientation" description="Landscape or portrait for the canvas size.">
+                    <SegmentedControl
+                        block={false}
+                        aria-label="Orientation"
+                        value={settings.canvasOrientation}
+                        options={ORIENTATION_OPTIONS}
+                        onChange={setCanvasOrientation}
+                    />
+                </Row>
+
+                {/* the one place to choose the canvas size (no left-rail panel); grid / snap: top bar */}
+                <Row
+                    title="Canvas size"
+                    description="New boards start at this size, and the page you had open takes it when you go back to the editor. Undo brings the old size back."
+                    labelId={canvasSizeLabelId}
+                >
+                    <div className="w-full sm:w-64">
+                        <Select
+                            aria-labelledby={canvasSizeLabelId}
+                            value={settings.defaultCanvasPresetId}
+                            options={presetOptions}
+                            onChange={setDefaultCanvasPreset}
+                        />
+                        {isCustom && (
+                            <CustomSizeFields
+                                // fresh fields when the size changes elsewhere (orientation, unit)
+                                key={`${canvasSize.width}x${canvasSize.height}-${settings.unit}`}
+                                width={canvasSize.width}
+                                height={canvasSize.height}
+                                unit={settings.unit}
+                                onApply={setCustomCanvasSize}
+                            />
+                        )}
+                    </div>
+                </Row>
             </Section>
 
-            {/* page size: Canvas Size panel; grid / snap: top bar (one place per feature) */}
             <Section title="Units">
                 <Row title="Units" description="Used on rulers and size fields.">
                     <SegmentedControl
@@ -185,43 +359,16 @@ function Preferences() {
                 </Row>
             </Section>
 
-            <div className="flex items-center justify-between rounded-xl border border-line bg-surface px-5 py-4">
+            <div className="flex items-center justify-between gap-4 rounded-xl border border-line bg-surface px-5 py-4">
                 <div>
                     <p className="text-sm font-medium text-ink">Reset settings</p>
                     <p className="mt-0.5 text-sm text-ink-muted">
                         Restore every setting on this page to its default.
                     </p>
                 </div>
-
-                {confirmingReset ? (
-                    <div className="flex gap-2">
-                        <button
-                            type="button"
-                            onClick={() => setConfirmingReset(false)}
-                            className="rounded-md px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                resetSettings();
-                                setConfirmingReset(false);
-                            }}
-                            className="rounded-md bg-danger px-3 py-1.5 text-sm font-medium text-white hover:bg-danger-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900"
-                        >
-                            Reset all
-                        </button>
-                    </div>
-                ) : (
-                    <button
-                        type="button"
-                        onClick={() => setConfirmingReset(true)}
-                        className="rounded-md border border-line-strong px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-                    >
-                        Reset
-                    </button>
-                )}
+                <Button variant="danger-outline" size="sm" onClick={() => void confirmReset()}>
+                    Reset settings
+                </Button>
             </div>
         </div>
     );

@@ -1,18 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '@/components/atoms/Icon';
 import { Modal, ModalButton } from '@/components/molecules/Modal';
+import { readSessionFlag, writeSessionFlag } from '@/lib/storage';
 
 /** Below this width the editor's panels and canvas do not fit (owner decision: desktop-only editor). */
 export const SMALL_SCREEN_MAX = 767;
 const DISMISSED_KEY = 'fateboard:small-screen-ok';
 
-const readDismissed = () => {
-    try {
-        return sessionStorage.getItem(DISMISSED_KEY) === '1';
-    } catch {
-        return false; // storage blocked: ask again, never crash
-    }
-};
+const readDismissed = () => readSessionFlag(DISMISSED_KEY); // blocked storage: ask again
 
 const isSmall = () => typeof window !== 'undefined' && window.innerWidth <= SMALL_SCREEN_MAX;
 
@@ -34,11 +29,7 @@ export function SmallScreenNotice() {
     if (!small || dismissed) return null;
 
     const dismiss = () => {
-        try {
-            sessionStorage.setItem(DISMISSED_KEY, '1');
-        } catch {
-            /* storage blocked: dismissed for this page view only */
-        }
+        writeSessionFlag(DISMISSED_KEY); // blocked storage: dismissed for this page view only
         setDismissed(true);
     };
 

@@ -14,7 +14,7 @@ import type { DesignTemplate } from '@/components/organisms/effects/designTempla
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
-import { createMemoryBackend, projectStorage } from '@/lib/storage/projectStorage';
+import { createMemoryBackend, projectStorage } from '@/lib/storage';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -107,9 +107,9 @@ describe('design board: store actions never write canvas geometry (BUG-007)', ()
 
     it('wheel zoom changes the zoom state, not the viewport', () => {
         const before = state().zoom;
-        state().enablePan(); // wheel zoom is a Hand-tool gesture
         canvas.fire('mouse:wheel', {
             e: {
+                ctrlKey: true, // Ctrl / ⌘ + wheel or a trackpad pinch zooms; a plain wheel scrolls
                 deltaY: -200,
                 offsetX: 10,
                 offsetY: 10,
@@ -187,9 +187,9 @@ describe('whiteboard: one zoom path (BUG-025)', () => {
     beforeEach(() => mount('whiteboard'));
 
     it('wheel zoom keeps the zoom state in step with the viewport', () => {
-        state().enablePan(); // wheel zoom is a Hand-tool gesture
         canvas.fire('mouse:wheel', {
             e: {
+                ctrlKey: true,
                 deltaY: -200,
                 offsetX: 10,
                 offsetY: 10,

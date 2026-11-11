@@ -13,6 +13,6 @@ test('millimetres in Settings show up in the editor size fields', async ({ edito
     await expect(editor.footerView).toContainText('mm'); // page size label
     await editor.addShape('Rectangle');
     const width = page.getByRole('banner').getByRole('spinbutton', { name: 'Width' });
-    // 160 px wide = 42.3 mm
-    await expect.poll(async () => Number(await width.inputValue())).toBeCloseTo(42.3, 1);
+    // a new rectangle on the 1920 × 1080 page is 160 × 1.8 = 288 px wide = 76.2 mm
+    await expect.poll(async () => Number(await width.inputValue())).toBeCloseTo(76.2, 1);
 });

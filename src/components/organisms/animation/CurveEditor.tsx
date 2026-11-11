@@ -1,13 +1,14 @@
 import { useRef } from 'react';
-import { Select } from '../atoms/Select';
-import { SegmentedControl } from '../molecules/SegmentedControl';
+import { Select } from '../../atoms/Select';
+import { SegmentedControl } from '../../molecules/SegmentedControl';
 import {
     EASING_NAMES,
     NAMED_BEZIER,
     easeKeyframe,
     type Bezier,
     type EasingName,
-} from '@animation/engine';
+} from '@/animation/engine';
+import { EASING_LABELS } from './animation.labels';
 
 interface Props {
     easing: EasingName;
@@ -80,6 +81,7 @@ export default function CurveEditor({ easing, bezier, onChange, mixed }: Props) 
                     (e.currentTarget as SVGCircleElement).setPointerCapture(e.pointerId);
                 }}
                 onPointerUp={() => (dragging.current = null)}
+                onPointerCancel={() => (dragging.current = null)}
             />
         </g>
     );
@@ -107,7 +109,7 @@ export default function CurveEditor({ easing, bezier, onChange, mixed }: Props) 
                     value={mixed ? '' : easing}
                     placeholder="Mixed"
                     onChange={(v) => onChange({ easing: v as EasingName })}
-                    options={EASING_NAMES.map((n) => ({ value: n, label: n }))}
+                    options={EASING_NAMES.map((n) => ({ value: n, label: EASING_LABELS[n] }))}
                 />
             )}
 

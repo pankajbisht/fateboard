@@ -4,15 +4,17 @@
  */
 import { describe, expect, it } from 'vitest';
 
-const SRC = import.meta.glob<string>('/src/components/organisms/AnimationPanel.tsx', {
+const FILES = import.meta.glob<string>('/src/components/organisms/animation/*.tsx', {
     query: '?raw',
     import: 'default',
     eager: true,
-})['/src/components/organisms/AnimationPanel.tsx'];
+});
+const SRC = Object.values(FILES).join('\n');
 
 describe('Animation panel number fields (BUG-092)', () => {
     it('has no per-keystroke number inputs', () => {
         expect(SRC).not.toMatch(/type="number"/);
-        expect(SRC.match(/<NumberField\b/g)?.length ?? 0).toBeGreaterThanOrEqual(7);
+        // keyframe time + values, preset duration / repeat / delay, timeline length
+        expect(SRC.match(/<NumberField\b/g)?.length ?? 0).toBeGreaterThanOrEqual(6);
     });
 });

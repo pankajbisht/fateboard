@@ -1,6 +1,6 @@
 /**
  * One place per feature (owner decision, 2026-11-07). Each capability has exactly one home:
- *   page size            -> left "Canvas Size" panel
+ *   canvas size          -> Settings > Canvas (size + orientation; no left-rail panel)
  *   zoom                 -> footer (− slider + % Fit)
  *   save / open project  -> top bar File (whole project)
  *   export image / video -> right dock "Export" tab
@@ -36,7 +36,7 @@ describe('one place per feature', () => {
 
     it('Settings: only preferences that work (no page size, background or snap copies)', () => {
         const s = src('settings/ui/Preferences.tsx');
-        // page size / orientation -> Canvas Size panel
+        // the old page format / custom size setters stay gone (Settings > Canvas size is a preset)
         expect(s).not.toMatch(/setFormat|setOrientation|setCustomSize/);
         // these settings were saved but never read by the editor (grid / snap live in the top bar)
         expect(s).not.toMatch(/setSnapToGrid|setBackgroundStyle|setBackgroundColor|setGridSize/);

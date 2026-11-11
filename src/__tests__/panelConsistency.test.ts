@@ -18,7 +18,6 @@ const PANELS = [
     'organisms/DrawPanel.tsx',
     'organisms/ShapePanel.tsx',
     'organisms/TextPanel.tsx',
-    'organisms/board/ui/CanvasSizePanel.tsx',
     'organisms/effects/ui/TemplateGallery.tsx',
     'organisms/fonts/FontTemplatePanel.tsx',
     'organisms/page/PagePanel.tsx',
@@ -29,9 +28,14 @@ const PANELS = [
     'organisms/effects/ui/RuleEditor.tsx',
     'organisms/filter/ui/Filters.tsx',
     'organisms/effects/ui/ExportCanvas.tsx',
-    'organisms/AnimationPanel.tsx',
     'organisms/FillShadowPanel.tsx',
 ].map((p) => `/src/components/${p}`);
+
+/** The Animate tab is one file per part (organisms/animation/). */
+const ANIMATION = Object.keys(SOURCES).filter((f) =>
+    f.startsWith('/src/components/organisms/animation/'),
+);
+PANELS.push(...ANIMATION);
 
 const hits = (files: string[], re: RegExp) =>
     files.flatMap((file) =>
@@ -83,11 +87,23 @@ describe('panel consistency', () => {
     });
 
     it('AnimationPanel buttons are the shared atoms (Button / IconButton / SegmentedControl)', () => {
-        const file = '/src/components/organisms/AnimationPanel.tsx';
-        // Only the timeline keyframe markers may be raw <button>s (absolutely positioned diamonds).
-        const raw = hits([file], /<button\b/);
-        expect(raw).toHaveLength(1);
-        expect(hits([file], /<svg\b|text-white|an-hover/)).toEqual([]);
+        expect(ANIMATION.length).toBeGreaterThan(5);
+        // Raw <button>s: only the timeline keyframe marker (an absolutely positioned diamond) and
+        // the preset tile (a gallery tile with a preview stage).
+        const raw = hits(ANIMATION, /<button\b/).map((at) => at.replace(/:\d+$/, ''));
+        expect(raw.sort()).toEqual([
+            '/src/components/organisms/animation/PresetTile.tsx',
+            '/src/components/organisms/animation/TimelineTrack.tsx',
+        ]);
+        // the curve editor draws its graph; nothing else hand-draws icons
+        const files = ANIMATION.filter((f) => !f.endsWith('/CurveEditor.tsx'));
+        expect(hits(files, /<svg\b|an-hover/)).toEqual([]);
+        expect(
+            hits(
+                files.filter((f) => !f.endsWith('/PresetTile.tsx')),
+                /text-white/,
+            ),
+        ).toEqual([]);
     });
 
     it('the animation theme CSS does not override control colours', () => {
@@ -103,15 +119,14 @@ describe('panel consistency', () => {
     it('the final action of a panel is PanelAction (same look as "Export PNG")', () => {
         const withFinalAction = [
             'organisms/effects/ui/ExportCanvas.tsx',
-            'organisms/AnimationPanel.tsx',
+            'organisms/animation/ExportSection.tsx',
             'organisms/effects/ui/EffectSection.tsx',
-            'organisms/board/ui/CanvasSizePanel.tsx',
             'organisms/ShapePanel.tsx',
             'organisms/fonts/FontTemplatePanel.tsx',
         ].map((p) => `/src/components/${p}`);
         for (const file of withFinalAction) expect(SOURCES[file], file).toMatch(/<PanelAction\b/);
         // Panel-level destructive actions share the same shape, in the danger tone.
-        expect(SOURCES['/src/components/organisms/AnimationPanel.tsx']).toMatch(
+        expect(SOURCES['/src/components/organisms/animation/AnimationPanel.tsx']).toMatch(
             /<PanelAction\s[^>]*tone="danger"[^>]*>\s*Clear all animations/,
         );
         // No hand-made "big primary" buttons left: full-width / large Buttons are PanelAction.

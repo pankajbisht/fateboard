@@ -10,7 +10,7 @@ describe('default canvas size', () => {
         });
     });
 
-    it('is one of the presets shown in the Canvas Size panel', () => {
+    it('is one of the presets offered in Settings > Canvas size', () => {
         expect(CANVAS_PRESETS).toContain(DEFAULT_CANVAS_PRESET);
     });
 });

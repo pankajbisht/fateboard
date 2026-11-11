@@ -8,7 +8,7 @@ import { useStore } from '@store';
 import type { DesignTemplate } from '@/components/organisms/effects/designTemplate.types';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
-import { createMemoryBackend, projectStorage } from '@/lib/storage/projectStorage';
+import { createMemoryBackend, projectStorage } from '@/lib/storage';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 

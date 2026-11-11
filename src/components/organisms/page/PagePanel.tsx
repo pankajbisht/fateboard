@@ -301,7 +301,7 @@ export default function PagePanel() {
                 })}
             </div>
 
-            {/* page size lives in the left "Canvas Size" panel; zoom in the footer (one place each) */}
+            {/* canvas size lives in Settings > Canvas; zoom in the footer (one place each) */}
             <PanelSection title="Page">
                 <PaintTargetSwatch
                     id="page-background"

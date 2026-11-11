@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createAnimationSlice } from '../createAnimationSlice';
 import { createHarness } from '@/test/sliceHarness';
 import { createFakeCanvas } from '@/test/fakeCanvas';
@@ -158,5 +158,47 @@ describe('createAnimationSlice', () => {
         other.h.get().loadAnimationData(data);
         expect(Object.keys(other.h.get().tracks)).toEqual(Object.keys(data.tracks));
         expect(other.h.get().past).toHaveLength(0);
+    });
+
+    // BUG-180: the track is gone after the undo, so nothing else would bring the object back
+    it('undoing a new track puts its object back at rest, redo animates it again', () => {
+        const { h, target } = setup();
+        h.get().applyPreset('fadeOut', { start: 0, duration: 500 });
+        h.get().seek(500);
+        expect(target.opacity).toBe(0);
+        h.get().animUndo();
+        expect(h.get().tracks).toEqual({});
+        expect(target.opacity).toBe(1);
+        expect(target.__animRest).toBeUndefined();
+        h.get().animRedo();
+        expect(target.opacity).toBe(0);
+    });
+
+    // BUG-176: the preview after adding a preset plays that preset only
+    it('previewRange plays one span once and stops at its end, whatever loop / work area say', () => {
+        const frames: FrameRequestCallback[] = [];
+        vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+        vi.stubGlobal('cancelAnimationFrame', () => {});
+        const now = vi.spyOn(performance, 'now').mockReturnValue(0);
+        try {
+            const { h } = setup();
+            h.get().setLoop(true);
+            h.get().setWorkArea(0, 500);
+            h.get().previewRange(1000, 1600);
+            expect(h.get().isPlaying).toBe(true);
+            expect(h.get().currentTime).toBe(1000);
+            frames.shift()!(400);
+            expect(h.get().currentTime).toBe(1400);
+            frames.shift()!(900);
+            expect(h.get().currentTime).toBe(1600);
+            expect(h.get().isPlaying).toBe(false);
+            // normal playback is back on the work area
+            h.get().play();
+            expect(h.get().currentTime).toBe(0);
+            h.get().pause();
+        } finally {
+            vi.unstubAllGlobals();
+            now.mockRestore();
+        }
     });
 });

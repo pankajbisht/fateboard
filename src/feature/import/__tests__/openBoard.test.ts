@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useStore } from '@/store';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
-import { createMemoryBackend, projectStorage } from '@/lib/storage/projectStorage';
+import { createMemoryBackend, projectStorage } from '@/lib/storage';
 import { importFile } from '..';
 
 let canvas: any;
@@ -52,6 +52,41 @@ describe('open a single-board file (BUG-101)', () => {
         await importFile(canvas, file('broken.json', '{"objects": "nope"'));
         expect(ids()).toEqual(['mine']);
         expect(alertDialog).toHaveBeenCalled();
+        useStore.setState({ alertDialog: prev.alertDialog } as any);
+    });
+    it('a project file with a page that cannot be read shows a dialog and keeps the open board (BUG-154)', async () => {
+        const alertDialog = vi.fn(async () => undefined);
+        useStore.setState({ alertDialog } as any);
+        const load = canvas.loadFromJSON;
+        canvas.loadFromJSON = async (json: any) => {
+            if (json?.objects?.some((o: any) => o.type === 'nope')) throw new Error('unknown type');
+            return load(json);
+        };
+        const project = {
+            app: 'fateboard',
+            pages: [{ id: 'p1', name: 'Bad', canvasJSON: { objects: [{ type: 'nope' }] } }],
+        };
+        const before = state().currentPageId;
+
+        await importFile(canvas, file('bad.fateboard', JSON.stringify(project)));
+        await tick(400);
+
+        expect(alertDialog).toHaveBeenCalled();
+        expect(state().currentPageId).toBe(before);
+        expect(ids()).toEqual(['mine']);
+        const saved = state().captureProject().pages;
+        expect(saved.map((p: any) => p.id)).toEqual([before]);
+        useStore.setState({ alertDialog: prev.alertDialog } as any);
+    });
+
+    it('an SVG or image that cannot be read shows a dialog (BUG-158)', async () => {
+        const alertDialog = vi.fn(async () => undefined);
+        useStore.setState({ alertDialog } as any);
+        vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+        await importFile(canvas, new File(['<svg></svg>'], 'empty.svg', { type: 'image/svg+xml' }));
+        expect(alertDialog).toHaveBeenCalledTimes(1);
+        expect(ids()).toEqual(['mine']);
         useStore.setState({ alertDialog: prev.alertDialog } as any);
     });
 });

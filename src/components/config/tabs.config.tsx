@@ -1,4 +1,4 @@
-import AnimationPanel from '../organisms/AnimationPanel';
+import AnimationPanel from '../organisms/animation/AnimationPanel';
 import ExportCanvas from '../organisms/effects/ui/ExportCanvas';
 import { PathEffects } from '../organisms/effects/ui/PathEffects';
 import { RepeatAlongPath } from '../organisms/effects/ui/RepeatAlongPath';

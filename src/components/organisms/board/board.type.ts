@@ -9,8 +9,3 @@ export type CanvasPreset = {
     height: number;
     icon: IconName;
 };
-
-export type CanvasSizePanelProps = {
-    selectedPreset: CanvasPreset;
-    onSelectPreset: (preset: CanvasPreset) => void;
-};

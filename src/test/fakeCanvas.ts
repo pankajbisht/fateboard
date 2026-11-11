@@ -31,6 +31,8 @@ export interface FakeCanvas {
     setViewportTransform: (vpt: number[]) => void;
     calcOffset: () => void;
     getZoom: () => number;
+    /** Like Fabric: the scene point at the middle of the view. */
+    getVpCenter: () => { x: number; y: number };
     zoomToPoint: (point: { x: number; y: number }, zoom: number) => void;
     toDataURL: (opts?: unknown) => string;
     clear: () => void;
@@ -156,6 +158,10 @@ export function createFakeCanvas(
         },
         calcOffset: () => undefined,
         getZoom: () => canvas.viewportTransform[0],
+        getVpCenter: () => {
+            const [zoom, , , , tx, ty] = canvas.viewportTransform;
+            return { x: (width / 2 - tx) / zoom, y: (height / 2 - ty) / zoom };
+        },
         zoomToPoint: (_point, zoom) => {
             canvas.viewportTransform = [
                 zoom,

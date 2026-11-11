@@ -94,8 +94,8 @@ function interactivity(object: { selectable?: boolean; evented?: boolean; locked
 }
 
 /**
- * The page preset for a template size: the matching Canvas Size preset when there is one, else a
- * custom size shaped like the ones the Canvas Size panel makes.
+ * The page preset for a template size: the matching canvas preset when there is one, else a
+ * custom size (`custom-<w>x<h>`).
  */
 function templatePagePreset(size: { width: number; height: number }): CanvasPreset {
     const known = CANVAS_PRESETS.find((p) => p.width === size.width && p.height === size.height);

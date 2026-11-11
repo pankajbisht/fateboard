@@ -25,7 +25,7 @@
 | Spec | Covers |
 |---|---|
 | `smoke.spec.ts` | editor shell; routes `/`, `/setting`, `/help`, 404 |
-| `shapes.spec.ts` | add shape, type W + click canvas (commit before deselect), counter ± / Shift, footer fill / stroke toggles, disabled with nothing selected, Backspace deletes |
+| `shapes.spec.ts` | add shape, type W + click canvas (commit before deselect), counter ± / Shift, footer fill / stroke toggles, disabled with nothing selected, Backspace deletes; new shapes and text on a 1920 × 1080 page are 1.8 × the base size (BUG-169) |
 | `text.spec.ts` | one text float (font, size, style, align) for text boxes and sticky notes; no header text tools |
 | `color.spec.ts` | palette strip swatch + ring, All colors grid, custom picker hex + Recent |
 | `many-objects.spec.ts` | busy boards: Layers list mounts only part of a long list and stays usable; hover outline on the top canvas in the right place (retina), nothing left behind |
@@ -35,19 +35,21 @@
 | `zoom.spec.ts` | footer zoom − / + / 100% / Fit |
 | `file.spec.ts` | Save downloads the whole project (all pages); Open restores it |
 | `export.spec.ts` | Export tab downloads a real PNG (signature checked) |
-| `settings.spec.ts` | theme / icon size apply and persist; only working preferences; Large icons size swatches |
+| `settings.spec.ts` | theme / icon size apply and persist; only working preferences; Large icons size swatches; a new visitor on a dark device gets Light, Fate Blue, Small, px; Reset asks, can be cancelled, restores every default and keeps it after a reload; Settings > Canvas size resizes the open page when the editor loads (one undo step, not again on reload) and New board starts at it; Orientation portrait gives a portrait first board; no Canvas Size panel in the left rail; Custom size typed in mm resizes the open page as typed (794 × 1123 px) |
 | `seo.spec.ts` | hash links redirect, per-route head, build files; SEO fallback hidden while the app loads, visible without JS (BUG-144) |
 | `persistence.spec.ts` | autosave survives reload; all pages + the open page survive reload (BUG-004); an imported photo survives reload (BUG-121) |
 | `mobile.spec.ts` | 390 × 844: the editor shows the desktop-only notice, Continue anyway is remembered for the session; the landing page has no notice and no horizontal scroll |
 | `a11y.spec.ts` | axe (WCAG 2.1 A / AA + best-practice) on `/`, `/draw`, `/setting`, `/help`, light + dark, reduced motion: zero violations |
 | `units.spec.ts` | Settings > Units (mm) shows in the footer page size and the top-bar W field (BUG-082) |
-| `whiteboard.spec.ts` | whiteboard with the grid on shows one grid renderer (BUG-107) |
+| `whiteboard.spec.ts` | whiteboard starts with its dot grid on, one grid renderer (BUG-107); the wheel moves the board, Ctrl + wheel zooms, a shape added while zoomed out keeps its on-screen size (BUG-169, BUG-171) |
 | `keyboard.spec.ts` | Delete key deletes like Backspace (BUG-103); ⌘B / ⌘I / ⌘U style text (BUG-096) |
-| `geometry.spec.ts` | two pages with different sizes keep them across switches and reload; backstore = page, identity viewport; a click selects the shape under the cursor (BUG-007, BUG-109) |
+| `geometry.spec.ts` | two pages with different sizes (page 2 resized from Settings > Canvas size) keep them across switches and reload; backstore = page, identity viewport; a click selects the shape under the cursor (BUG-007, BUG-109) |
 | `templates.spec.ts` | applying a template shows an Undo toast; Undo brings the previous content back (BUG-009) |
-| `animation.spec.ts` | a keyframe survives reload; each page has its own timeline (BUG-010, Q12) |
-| `placement.spec.ts` | one place per feature in the real UI |
+| `animation.spec.ts` | a keyframe survives reload; each page has its own timeline (BUG-010, Q12); presets swap, preview only the new one, the track shows the object's name (BUG-176, BUG-177); Space pauses after a click on Play (BUG-178) |
+| `placement.spec.ts` | one place per feature in the real UI; canvas size is in Settings, not the left rail |
 | `layout.spec.ts` | no horizontal scroll, header / footer inside the window, footer 16 px inset (both viewports) |
+| `data-safety.spec.ts` | New board: the first change can be undone (BUG-156); a project file with a page that cannot be read shows a dialog and leaves the board and the autosave alone (BUG-154); undo history holds one copy of a photo and undo brings it back whole (BUG-155) |
+| `drawing-tools.spec.ts` | Pen (P): clicks + a drag make a closed path, selected, one undo step; Enter finishes an open path, Backspace removes the last point; Pencil (Shift + P) draws a path and leaves the Draw brush as it was; Laser (K) shows red pixels on the top canvas that fade to none, adds nothing, Undo stays disabled |
 | `known-bugs.spec.ts` | expected failures for open bugs (none open today) |
 
 ## Current state (after batch 1, 2026-11-06)
@@ -121,6 +123,13 @@ playwright.config.ts
 ```
 
 Existing `src/__tests__/` can stay; new tests go next to the code they test.
+
+**Storage tests** (`src/lib/storage/__tests__/`): adapters run against the real opendb-store on `fake-indexeddb`
+(`import 'fake-indexeddb/auto'`; a fresh `IDBFactory` or database name per test, because opendb shares one
+connection per database name). They pin the contract the app relies on: failed reads/writes reject, a refused
+database rejects every call, a save started before a load is read by it, and the old `fateboard/kv` layout is
+adopted once. Slice and component tests use `projectStorage.useBackend(createMemoryBackend())` from `@/lib/storage`.
+`e2e/persistence.spec.ts` checks the move from the old database in a real browser.
 
 ## Mocking Fabric.js
 
@@ -230,7 +239,7 @@ Today CI enforces a **ratchet** at the current level (`vitest.config.ts` `covera
 | Layers | unit | sync from canvas, lock blocks delete/move, group/ungroup keeps world transform, z-order ops |
 | Canvas geometry | integration + E2E | preset switch: backstore = preset, VPT identity; pointer hits the object under the cursor (BUG-007: `store/__tests__/geometryOwner.test.ts`, `e2e/geometry.spec.ts`) |
 | Keyboard | RTL + E2E | shortcuts run the right command; typing in inputs/text editing is ignored; panel-scoped keys don't leak (BUG-018); Ctrl+O never clears (BUG-040) |
-| Animation | unit + integration | sampling/easing, presets, keyframe edits + undo, rest state never saved (BUG-011), data persists per page (BUG-010): `animation/__tests__/animationPersistence.test.ts`, `e2e/animation.spec.ts` |
+| Animation | unit + integration | sampling/easing, presets, keyframe edits + undo, rest state never saved (BUG-011), data persists per page (BUG-010): `animation/__tests__/animationPersistence.test.ts`, `e2e/animation.spec.ts`; the panel (presets, timeline, keys, leaving the tab): `organisms/animation/__tests__/` |
 | Export | integration + E2E | PNG dimensions = page size at 1×; JSON export re-imports; video export produces a non-empty file (Chromium) |
 | Templates | integration + E2E | applied template fits the artboard (BUG-008); previous content recoverable (BUG-009: `store/__tests__/templateUndo.test.ts`, `e2e/templates.spec.ts`) |
 | Crash recovery | RTL | render error → fallback with Reload / Download autosave / confirmed clear (`organisms/__tests__/ErrorBoundary.test.tsx`) |

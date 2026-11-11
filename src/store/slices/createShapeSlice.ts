@@ -1,4 +1,5 @@
-import { readLocalList, writeLocalList } from '@/lib/storage/localList';
+import { readLocalList, writeLocalList } from '@/lib/storage';
+import { creationScaleOf } from '@/lib/canvas/creationScale';
 import type { SliceCreator } from '../types';
 import * as fabric from 'fabric';
 import { getShapeDef, setCustomShapes, type ShapeDef } from '@hooks/shape/shapeCatalog';
@@ -137,7 +138,8 @@ function buildBase(
 
 /** Build the fabric object for a catalog entry (wraps it with a textbox when def.text). */
 function buildShape(def: ShapeDef, raw: Record<string, any>): fabric.Object | null {
-    const { width, height, radius, rx, ry, ...style } = raw;
+    // textSize: the font size of a text shape's text (sticky notes, labelled shapes)
+    const { width, height, radius, rx, ry, textSize = 18, ...style } = raw;
 
     // size: explicit width/height > legacy radius / rx / ry > catalog default
     let w: number = width ?? def.w;
@@ -185,7 +187,7 @@ function buildShape(def: ShapeDef, raw: Record<string, any>): fabric.Object | nu
 
     const text = new fabric.Textbox('', {
         width: Math.max(w * inset - 8, 24),
-        fontSize: 18,
+        fontSize: textSize,
         fontFamily: TEXT_FONT,
         fill: '#111827',
         textAlign: 'center',
@@ -515,6 +517,10 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get) => {
                 Object.entries(options).filter(([, v]) => v !== undefined),
             );
 
+            // sized for the page / zoom it lands on (lib/canvas/creationScale); explicit sizes win
+            const k = creationScaleOf(get());
+            const sized = ['width', 'height', 'radius', 'rx', 'ry'].some((key) => key in clean);
+
             const merged = {
                 left: center.x,
                 top: center.y,
@@ -522,10 +528,12 @@ export const createShapeSlice: SliceCreator<ShapeSlice> = (set, get) => {
                 originY: 'center',
                 hasControls: true,
                 customType: 'shape',
+                ...(sized ? {} : { width: def.w * k, height: def.h * k }),
+                textSize: 18 * k,
                 // new shapes: white background + black border (not the store's colours)
                 fill: def.fill ?? DEFAULT_FILL,
                 stroke: DEFAULT_STROKE,
-                strokeWidth: DEFAULT_STROKE_WIDTH,
+                strokeWidth: DEFAULT_STROKE_WIDTH * k,
                 strokeUniform: true, // stroke keeps its width when the shape is resized
                 strokeLineJoin: 'round',
                 strokeLineCap: 'round',

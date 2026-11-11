@@ -104,7 +104,8 @@
 
 /* Dark mode: same token names, navy surfaces that sit with the brand blue (docs/DESIGN.md). */
 /* Settings > Icon size: one scale for every editor chrome icon (top toolbars, left / right rails,
-   bottom bar). Set by applyIconSize() as data-icon-size on <html>; md is the default. */
+   bottom bar). Set by applyIconSize() as data-icon-size on <html> (Settings default: sm). The bare :root values
+   (md) only apply before the settings are read. */
 :root {
     --ui-btn: 28px; /* toolbar / footer icon button */
     --ui-icon: 15px; /* icon inside it */

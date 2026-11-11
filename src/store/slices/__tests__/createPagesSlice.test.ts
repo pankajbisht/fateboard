@@ -112,4 +112,105 @@ describe('createPagesSlice', () => {
         const { h } = setup();
         expect(h.get().exportPageAsDataURL()).toMatch(/^data:image\/png/);
     });
+    describe('a page that cannot be loaded (BUG-154)', () => {
+        /** Like Fabric: an object of an unknown type rejects the load and leaves the canvas as it was. */
+        const failOn = (canvas: ReturnType<typeof createFakeCanvas>, type: string) => {
+            const load = canvas.loadFromJSON;
+            canvas.loadFromJSON = async (json) => {
+                const objects = (json as { objects?: { type?: string }[] })?.objects ?? [];
+                if (objects.some((o) => o.type === type))
+                    throw new Error(`No class registered for ${type}`);
+                return load(json);
+            };
+        };
+        const broken = { objects: [{ type: 'nope', id: 'x' }] };
+
+        it('switchPage stays on the current page and keeps both pages as they were', async () => {
+            const { canvas, h } = setup();
+            failOn(canvas, 'nope');
+            const first = h.get().currentPageId;
+            const second = await h.get().addPage();
+            await h.get().switchPage(first);
+            h.set({
+                pages: h
+                    .get()
+                    .pages.map((p: { id: string }) =>
+                        p.id === second ? { ...p, canvasJSON: broken } : p,
+                    ),
+            });
+
+            await h.get().switchPage(second);
+
+            expect(h.get().currentPageId).toBe(first);
+            expect(h.get().isPageSwitching).toBe(false);
+            expect(ids(canvas)).toEqual(['r1']);
+            const saved = h.get().captureProject().pages;
+            expect(saved[0].canvasJSON.objects.map((o: { id: string }) => o.id)).toEqual(['r1']);
+            expect(saved[1].canvasJSON).toEqual(broken);
+        });
+
+        it('importProject opens the first page that loads and keeps the broken one untouched', async () => {
+            const { canvas, h } = setup();
+            failOn(canvas, 'nope');
+            const ok = await h.get().importProject({
+                currentPageId: 'bad',
+                pages: [
+                    { id: 'bad', name: 'Bad', canvasJSON: broken },
+                    {
+                        id: 'good',
+                        name: 'Good',
+                        canvasJSON: { objects: [{ type: 'rect', id: 'g' }] },
+                    },
+                ],
+            });
+            expect(ok).toBe(true);
+            expect(h.get().currentPageId).toBe('good');
+            expect(ids(canvas)).toEqual(['g']);
+            expect(h.get().captureProject().pages[0].canvasJSON).toEqual(broken);
+        });
+
+        it('importProject fails and keeps the open project when no page loads', async () => {
+            const { canvas, h } = setup();
+            failOn(canvas, 'nope');
+            const before = h.get().pages;
+            const ok = await h
+                .get()
+                .importProject({ pages: [{ id: 'bad', name: 'Bad', canvasJSON: broken }] });
+            expect(ok).toBe(false);
+            expect(h.get().pages).toBe(before);
+            expect(h.get().currentPageId).toBe(before[0].id);
+            expect(ids(canvas)).toEqual(['r1']);
+        });
+    });
+
+    describe('values from a project file are checked (BUG-157)', () => {
+        const open = async (page: Record<string, unknown>) => {
+            const { h } = setup([]);
+            await h
+                .get()
+                .importProject({ pages: [{ id: 'p', canvasJSON: { objects: [] }, ...page }] });
+            return h.get().pages[0];
+        };
+
+        it('a thumbnail must be an embedded image, never a remote address', async () => {
+            const { h } = setup([]);
+            await h.get().importProject({
+                pages: [
+                    { id: 'shown', canvasJSON: { objects: [] } },
+                    { id: 'remote', thumbnail: 'https://tracker.test/pixel.png' },
+                    { id: 'embedded', thumbnail: 'data:image/png;base64,AAAA' },
+                ],
+            });
+            const [, remote, embedded] = h.get().pages;
+            expect(remote.thumbnail).toBeUndefined();
+            expect(embedded.thumbnail).toBe('data:image/png;base64,AAAA');
+        });
+
+        it('a page size outside the editor limits is dropped', async () => {
+            const preset = { id: 'x', label: 'x', category: 'Custom', width: 9e9, height: 100 };
+            expect((await open({ preset })).preset).toBeUndefined();
+            const custom = await open({ customSize: { w: 9e9, h: 100 } });
+            expect(custom.customSize).toBeNull();
+        });
+    });
 });

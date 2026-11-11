@@ -13,7 +13,7 @@ Owner decision 2026-11-07; guarded by `src/__tests__/featurePlacement.test.ts`.
 
 | Feature | The one place | Removed copies |
 |---|---|---|
-| Page size / orientation | left **Canvas Size** panel | Pages panel "Page setup", Settings page size / orientation |
+| Canvas size + orientation | **Settings > Canvas** (new boards start at it; the open page takes it when the editor loads again) | left-rail Canvas Size panel (removed 2026-11-11), Pages panel "Page setup" |
 | Zoom (in / out / %, 100%, fit) | **footer** `ZoomControl` (+ keyboard) | top Zoom bar, Pages panel "View" |
 | Save / Open | top bar **File** (whole project, all pages; old single-board files still open) | Pages panel "Save project / Open project" |
 | Export image / video | right dock **Export** tab | Pages panel "Export PNG" |
@@ -75,14 +75,13 @@ body scrolls with standard padding and section spacing.
 
 | Item id | Kind | Component | Props | Slices used |
 |---|---|---|---|---|
-| `select`, `pan`, `node` | action | none | none | `setActiveTool` via `EditorPage.handleToolChange`. Rail pressed state comes from the store's `activeTool` (`EditorSidebar activeTool` prop): tools light up from the store, panels only while open; tooltips show the shortcut (`shortcut` on the item) |
+| `select`, `pan`, `node`, `pen`, `pencil`, `laser` | action | none | none | `setActiveTool` via `EditorPage.handleToolChange` (keys V, H, A, P, Shift + P, K; commands in `ToolBarConfig`). Rail pressed state comes from the store's `activeTool` (`EditorSidebar activeTool` prop): tools light up from the store, panels only while open; tooltips show the shortcut (`shortcut` on the item) |
 | `draw` | panel (+tool `draw`) | `DrawPanel` (`organisms/DrawPanel.tsx`) | none | Brush (all), Canvas; reads `color`/`opacity`/`shadowColor`/`fillColor` (*shared*); `undo/redo` if present (Animation); window `[`/`]` keys |
 | `shapes` | panel | `ShapePanel` | `{ closePanel?(type?) }` | Shape (`addShape` via `useShapeFactory`, `activeConnector, updateConnectorStyle, normalizePathData, customShapes, saveSelectionAsShape, saveCustomPath, removeCustomShape`), Text (`strokeWidth` *shared*) |
 | `text` | panel (+tool `text` → `addText({})`) | `TextPanel` | none | Text (`addText`, `updateText`, `setTextCase`, `fonts`); reads the selection live via `hooks/useActiveText` (canvas events). Sections: Add text presets, Font (family, size, B/I/U/S, case, alignment), Spacing, Color (+ highlight), Effects (outline, shadow, opacity). |
-| `canvas-size` | panel | `CanvasSizePanel` via container | `Partial<{ selectedPreset, onSelectPreset }>` | Canvas (`selectedPreset, setSelectedPreset`), `setWorkspaceMode` (*missing*, optional-called) |
 | `templates` | panel | `TemplateGallery` | `{ className?, loading? }` | Template (all) |
 | `fonttemplates` | panel | `FontTemplatePanel` | none | Canvas (`canvas, persist`), UndoRedo; `localStorage` `fateboard:fontTemplates` |
-| `Pages` | panel | `PagePanel` | none | Pages (list, add / duplicate / delete / rename / reorder, PageUp / PageDown), Page (`pageBackground` via `PaintTargetSwatch`), Clear page. **No** page size (Canvas Size panel), zoom (footer), export (Export tab) or save / open (top bar File). |
+| `Pages` | panel | `PagePanel` | none | Pages (list, add / duplicate / delete / rename / reorder, PageUp / PageDown), Page (`pageBackground` via `PaintTargetSwatch`), Clear page. **No** page size (Settings > Canvas), zoom (footer), export (Export tab) or save / open (top bar File). |
 | `layers` | panel | `LayersPanel` (rows windowed, see CANVAS "Performance notes") | none | Layers (`layers, selectedLayerIds, bindLayerEvents` + actions), Canvas |
 
 ## Right dock tabs (`config/tabs.config.tsx`)
@@ -96,7 +95,7 @@ Rendered inside `PanelLayout` by `DockRoot` (title = tab label, close collapses 
 | `along-path` | `RepeatAlongPath` | advanceOperation (`addObject, removeObject, repeatAlongPath`), Canvas, Page (`scale`) |
 | `filter` | `Filters` (+ `useImageFilters`, `filterEngine`) | Canvas, UndoRedo (`saveState`) via `useImageFilters`; the Filter slice is **not** used by any mounted UI (only dead `Brightness.tsx`) |
 | `export` | `ExportCanvas` | Canvas via `useStore()` no selector; own export pipeline (PNG/JPEG/SVG/JSON, crop, background) |
-| `animate` | `AnimationPanel` (+ `CurveEditor { easing, bezier, onChange, mixed? }`, `useAnimationTheme`) | Animation (all), Canvas; React `onKeyDown` shortcuts (BUG-018) |
+| `animate` | `organisms/animation/AnimationPanel` (composition; parts below) | Animation (all), Canvas; React `onKeyDown` shortcuts (BUG-018) |
 
 ## Other routes
 
@@ -104,7 +103,7 @@ Rendered inside `PanelLayout` by `DockRoot` (title = tab label, close collapses 
 |---|---|---|---|
 | `RootLayout` | `templates/RootLayout.tsx` | none | `db.local.get('fateboard-settings')` → `hydrate`; renders `<Outlet/>` after hydration |
 | `WhiteboardMarketingSite`, `MiniWhiteboard`, `ImageSlider` | `pages/web/*` | none | marketing; `MiniWhiteboard` is a plain 2D `<canvas>` (no Fabric, no store) |
-| `EditorSettingPage` → `Preferences` | `pages/Setting`, `organisms/settings/ui/Preferences.tsx` | none | Setting: Appearance (theme, colour theme, icon size), Canvas (Freehand on / off; points to the Canvas Size panel), Units, Reset. Only preferences the editor reads: page size, orientation, background pattern / colour, grid spacing and snap were removed (saved but never read; page size lives in Canvas Size, grid / snap in the top bar). |
+| `EditorSettingPage` → `Preferences` | `pages/Setting`, `organisms/settings/ui/Preferences.tsx` | none | Setting (+ Dialog `confirmDialog`): Appearance (theme, colour theme, icon size), Canvas (Freehand on / off; Orientation = landscape / portrait; Canvas size = a `Select` of `CANVAS_PRESETS` shown in that orientation and unit, plus Custom size (width / height `Input`s in Settings > Units and Apply size; px must be whole, other units round to px; 1–10,000 px). The only place to choose a size: new boards start at it and the open page takes it when the editor loads again), Units, Reset (`Button variant="danger-outline"`, asks with the app's confirm dialog, then `resetSettings`). Only preferences the editor reads: page size, orientation, background pattern / colour, grid spacing and snap were removed (saved but never read; grid / snap live in the top bar). |
 | `CommandPalette` | `pages/Command/CommandPalette.tsx` | `{ commands }` | static `commandRegistry` |
 | `HelpPage` | `pages/HelpPage/HelpPage.tsx` | none | shell (search, topic nav, `?topic=` / `&section=`). Content is data in `organisms/helpsection/helpTopics.ts`; keys in `helpShortcuts.ts` (commands read from the registry); views in `helpsection/ui/` (`HelpHome`, `EditorMap`, `QuickStart`, `TopicView`, `ShortcutExplorer`, `demos/`). A new left rail panel or dock tab needs a topic, or `helpTopics.test.ts` fails |
 | `NotFoundPage` | `pages/NotFound/NotFoundPage.tsx` | none | keyboard mini-game |
@@ -161,7 +160,7 @@ Props are local and simple; read the file. (`components/portals/*` is used only 
 |---|---|---|
 | `useKeyboardShortcuts` | `hooks/keyboard/useKeyboardShortcuts.ts` | window keydown → match `commands[].shortcut` (via `replaceToShortcut`) → `runCommand` |
 | `useShapeFactory` | `hooks/shape/useShapeFactory.ts` | shape panel actions (add/drag-to-create shapes, connectors, custom shapes) |
-| `useAnimationTheme` | `components/hooks/useAnimationTheme.ts` | light/dark CSS vars for AnimationPanel |
+| `useAnimationTheme` | `components/hooks/useAnimationTheme.ts` | light/dark CSS vars for the Animation panel |
 | `useActiveObjects` | `organisms/effects/ui/useActiveObjects.ts` | subscribe to canvas selection |
 | `useImageFilters` | `organisms/filter/ui/useImageFilters.ts` | apply filters to selected images, flush to history |
 | `useSearch` | `hooks/useSearch.tsx` | command palette search |
@@ -185,3 +184,23 @@ there is no rotation handle). Capsule (`FLOAT_BAR_CLASS`). Reads `nodeMode`, `se
 `breakPathAtSelectedNode`, `moveSelectedNode`, `exitNodeMode` (Done), `cancelNodeMode` (Cancel). Disabled states
 from `selectedNode.canDelete / canBreak`; Close / Open path swaps on `selectedNode.closed`.
 
+## Animation panel (`organisms/animation/`)
+
+The Animate tab is laid out in the order people work: what is selected, add an animation, timeline, keyframe,
+export. `AnimationPanel.tsx` only composes; each part reads the store with its own selectors.
+
+| File | Job |
+|---|---|
+| `AnimationPanel.tsx` | Composition, `bindAutoKey`, "Clear all animations". Leaving the tab pauses playback and turns auto-key off (BUG-181) |
+| `SelectionSummary.tsx` | What is selected on the canvas, whether it is animated, remove its animation |
+| `PresetPicker.tsx` + `PresetTile.tsx` + `presetDemos.ts` | Presets as tiles that play on hover. The preset just added is swapped by the next pick of the same kind, and re-timed by the timing fields, until another edit, another selection or the playhead leaving it. Starts: playhead / start / after last. Preview = `previewRange` |
+| `Transport.tsx` | Play, step, loop, keyframe undo / redo, snap, speed, timecode |
+| `Timeline.tsx` + `TimelineRuler.tsx` + `TimelineTrack.tsx` | Ruler (scrub, work area), one row per track (name, mute / remove on hover, keyframes, property rows), timeline length, zoom. Click a keyframe = select + seek; double-click a row = keyframe there |
+| `KeyframeTools.tsx` | "Keyframe at playhead", Auto-key |
+| `KeyframeInspector.tsx` + `CurveEditor.tsx` | Easing (named or custom bezier), time and values of one keyframe (lengths in Settings > Units, scale / opacity in %) |
+| `ExportSection.tsx` + `export.config.ts` | Video / PNG export settings and progress |
+| `animation.logic.ts` | Pure: timecode, ruler ticks, snapping, preset start / end, `keyCommand` (key → panel command) |
+| `animation.labels.ts` | Names for properties and easings, value formatting |
+| `useAnimationCanvas.ts` | `useCanvasSelection` (selection events), `usePresentIds` (object added / removed) |
+| `useAnimationKeys.ts` | Runs `keyCommand`; handled keys stop here (BUG-018); Space rule = `useSpacePan` (BUG-178) |
+| `useKeyframeDrag.ts` | Select / drag keyframe markers (3 px before a press becomes a drag; one undo step per drag) |

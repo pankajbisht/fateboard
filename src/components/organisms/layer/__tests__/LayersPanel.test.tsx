@@ -5,6 +5,9 @@ import { useStore } from '@store';
 import type { LayerItem } from '@/store/slices/createLayersSlice';
 
 import LayersPanel from '../LayersPanel';
+import { LAYERCONTROL_ACTIONS } from '@/components/config/toolbars/ui/LayerControlBarConfig';
+import { LockBarConfig } from '@/components/config/toolbars/ui/LockBarConfig';
+import { GroupBarConfig } from '@/components/config/toolbars/ui/GroupBarConfig';
 
 const ROW = 44;
 
@@ -167,5 +170,24 @@ describe('LayersPanel with many layers', () => {
         });
 
         expect(screen.getByText('Layer 1999')).toBeInTheDocument();
+    });
+    it('the right-click menu and the buttons show the keys that really work (BUG-152)', () => {
+        const { layers } = makeLayers(1);
+        useStore.setState({ layers, selectedLayerIds: ['layer-0'] } as never);
+        render(<LayersPanel />);
+
+        fireEvent.contextMenu(options()[0]);
+
+        const menu = screen.getByRole('menu').textContent ?? '';
+        // these were shown before and no key handler listens for them
+        for (const dead of ['Ctrl+]', 'Ctrl+[', 'Ctrl+/', 'Ctrl+Shift+G'])
+            expect(menu).not.toContain(dead);
+        const real = [
+            ...LAYERCONTROL_ACTIONS.map((a) => a.shortcut),
+            LockBarConfig.find((a) => a.id === 'lock')?.shortcut,
+            GroupBarConfig.find((a) => a.id === 'ungroup')?.shortcut,
+        ];
+        for (const keys of real) expect(menu).toContain(keys);
+        expect(screen.queryByRole('button', { name: /Ctrl\+\// })).toBeNull();
     });
 });

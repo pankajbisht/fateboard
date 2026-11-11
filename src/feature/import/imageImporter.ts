@@ -1,5 +1,9 @@
 import * as fabric from 'fabric';
-import { useStore } from './../../store'; // your Zustand store
+import { useStore } from '@/store';
+import { creationScaleOf } from '@/lib/canvas/creationScale';
+
+/** A new picture's longer side, before the page / zoom scale (lib/canvas/creationScale). */
+export const IMAGE_BASE_SIZE = 400;
 
 /**
  * Enable full transformations for any Fabric object
@@ -41,28 +45,27 @@ function readAsDataURL(file: Blob): Promise<string> {
 export async function importImage(canvas: fabric.Canvas, file: File) {
     if (!canvas || !file) return;
 
-    const { pageWidth, pageHeight, scale } = useStore.getState();
-
     try {
         const url = await readAsDataURL(file);
 
         // Load image (Fabric v6+ returns a Promise)
         const img: fabric.Image = await fabric.Image.fromURL(url);
 
-        // Compute position
-        const x = (pageWidth / 2) * scale;
-        const y = (pageHeight / 2) * scale;
-
+        // the middle of what is shown: the page centre on a design page (identity viewport), the
+        // view centre on a whiteboard. Before, the page centre was multiplied by the fit scale, so
+        // pictures landed in the upper left of a design page.
+        const center = canvas.getVpCenter();
         img.set({
-            left: x,
-            top: y,
+            left: center.x,
+            top: center.y,
             originX: 'center',
             originY: 'center',
         });
 
-        // Scale image to fit canvas width (optional)
-        const cw = canvas.getWidth();
-        img.scaleToWidth(Math.min(400, cw * 0.7));
+        // longer side fitted to the base size for this page / zoom; small pictures are not enlarged
+        const target = IMAGE_BASE_SIZE * creationScaleOf(useStore.getState());
+        const longer = Math.max(img.width || 0, img.height || 0);
+        if (longer > target) img.scale(target / longer);
 
         // Enable all transformations
         enableTransform(img);
@@ -77,5 +80,10 @@ export async function importImage(canvas: fabric.Canvas, file: File) {
         useStore.getState().syncFromObject(img);
     } catch (err) {
         console.error('[import] image load failed', err);
+        // a broken or unsupported picture must say so (BUG-158)
+        void useStore.getState().alertDialog({
+            title: "Can't open image",
+            message: `"${file.name}" is not an image this browser can read.`,
+        });
     }
 }

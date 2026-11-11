@@ -125,7 +125,7 @@ Settings > Appearance > **Color theme**: Fate Blue (default), Ocean, Violet, Ros
 - Verified with real screenshots (headless Chrome, dark class on `<html>`): toolbars, rails, Text / Shapes / Layers panels, dock, footer.
 - Guarded by `src/__tests__/darkMode.test.ts` (no fixed neutral classes, no hex in chrome components, contrast of every token pair).
 
-Settings → Theme (Light / Dark / System) runs `applyTheme()`, which toggles `.dark` on `<html>`. In `index.css`:
+Settings → Theme (Light / Dark / System; Light is the default, so a new visitor on a dark device still starts light) runs `applyTheme()`, which toggles `.dark` on `<html>`. In `index.css`:
 
 - `@custom-variant dark (&:where(.dark, .dark *))`, so `dark:` follows the app setting, not only the OS.
 - `.dark { … }` re-defines the semantic tokens: `surface` `#0f1726`, `surface-muted` `#172135`,
@@ -154,7 +154,7 @@ Rules (enforced by `__tests__/panelConsistency.test.ts`):
 - No `<h2>` title bars, `PanelHeader` or `DockTemplate` in panels.
 - No `bg-white`, neutral `bg-*-50…200` or dark `bg-*-700…950` in panels: use `surface*` tokens.
 - Status colours are `danger` / `success` / `accent` (warnings), never raw red / green / amber / teal.
-- **Icon size (Settings > Small / Medium / Large)** drives every editor chrome icon through one mechanism: `applyIconSize()` sets `data-icon-size` on `<html>`, and `index.css` maps it to `--ui-btn` / `--ui-icon` (top toolbars, text toolbar groups, footer) and `--ui-rail` / `--ui-rail-btn` / `--ui-rail-icon` (left and right rails). Toolbar/footer icon buttons use `IconButton size="chrome"`; rail buttons use `railButtonBase`. Never read `settings.iconSize` in a component to size icons (guarded by `iconSize.test.tsx`). Panels keep their fixed density.
+- **Icon size (Settings > Small / Medium / Large; Small is the default)** drives every editor chrome icon through one mechanism: `applyIconSize()` sets `data-icon-size` on `<html>`, and `index.css` maps it to `--ui-btn` / `--ui-icon` (top toolbars, text toolbar groups, footer) and `--ui-rail` / `--ui-rail-btn` / `--ui-rail-icon` (left and right rails). Toolbar/footer icon buttons use `IconButton size="chrome"`; rail buttons use `railButtonBase`. Never read `settings.iconSize` in a component to size icons (guarded by `iconSize.test.tsx`). Panels keep their fixed density.
 - **Bottom bar (`footer/ui/Footer.tsx`)**: 16 px inset on both sides (`px-4`, same as panel content), 12 px between the style controls and the view group, which starts after a divider (`pl-3`). Guarded by `Footer.test.tsx`.
   | Size | toolbar button / icon | rail width / button / icon |
   |---|---|---|

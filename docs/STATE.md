@@ -1,7 +1,7 @@
 # State (zustand store)
 
 One store: `useStore` in `src/store/index.ts`, created with `create(devtools(combinedSlice))`. Devtools are enabled
-only when `NODE_ENV === 'development'`. `combinedSlice(set, get, store)` **object-spreads 25 slice creators**
+only when `NODE_ENV === 'development'`. `combinedSlice(set, get, store)` **object-spreads 24 slice creators**
 (24 distinct, because `createPageSlice` appears twice). **If two slices define the same key, the one spread later
 silently wins.** 14 keys collide today (`undo`, `redo`, `clipboard` fixed 2026-11-07, Q1). That is the root cause of several bugs (see [Key collisions](#key-collisions)).
 
@@ -18,9 +18,10 @@ Spread order (it matters):
 (each spread once; 18 geometryEngine removed, the second Page spread removed: BUG-002 / BUG-030)
 ```
 
-Persistence summary: only `settings` (opendb key `fateboard-settings`) and the live canvas JSON (opendb key
-`drawJson`) are saved. Everything else in the store is lost on reload unless a slice saves it itself (custom shapes,
-patterns and font templates use raw `localStorage`).
+Persistence summary: `settings` (`settingsStorage`, localStorage key `fateboard-settings`) and the whole project
+(`projectStorage`, IndexedDB) are saved, both through `@/lib/storage` (docs/ARCHITECTURE.md "Storage layer").
+Everything else in the store is lost on reload unless a slice saves it itself (custom shapes, patterns and font
+templates use `readLocalList` / `writeLocalList` from the same module).
 
 > Dependencies below come from a static scan of `get().x` usage, checked by hand for the core slices.
 > "Risks" link to [BUGS.md](BUGS.md).
@@ -57,8 +58,7 @@ handlers, selection → toolbar state, JSON import/export and debounced autosave
 **State:** `canvas`, `activeTool` (`'select'|'pan'|'draw'|'node'`), `isPanning`, `isDrawingMode`, `freeDrawingBrush`
 (unused), `activePanel` (unused), `selectedObject` (**overloaded**: a Fabric object for textboxes, the string
 `'shape'`, or `null`), `showTextToolbar`, `isEditingText`, `hasActiveShape`, `geditor` (MultiStopGradientTool),
-`cw`/`ch` (container size, only set when `settings.freehand`), `selectedPreset` (CanvasPreset, default from
-CanvasSizePanel).
+`cw`/`ch` (container size, only set when `settings.freehand`), `selectedPreset` (CanvasPreset: the open page's size; a new board takes Settings > Canvas size).
 Private closure state (not in zustand): `panCanvas`, `persistTimer`, `eventHandlers`, `persistLock` (counter that
 blocks saves during load/clear), `unloadHandler`.
 
@@ -66,9 +66,9 @@ blocks saves during load/clear), `unloadHandler`.
 `canvas.dispose()`), `registerCanvasEvents`, `unregisterCanvasEvents`, `setActiveTool`, `enablePan`, `disablePan`, `beginTemporaryPan`, `endTemporaryPan`,
 `setSelectedPreset`, `hasMultipleSelection`, `filterUnlockedSelection`, `setSelectedObject`, `syncFromObject`,
 `setToolbar`, `clearToolbar`, `loadLib`, `defaultSettings`, `clearBoard` (New board = new project: one empty page, empty
-animation, autosave deleted), `exportJSON`,
-`importJSON(json, {persist})`, `restoreFromStorage` (loads the autosaved **project** through
-`lib/storage/projectStorage` → Pages `importProject`; an old `drawJson` board → `importJSON`, adopted as Page 1), `saveBoard` (downloads `drawing.fateboard` = the whole project via Pages `exportProject`; falls back to the canvas JSON when pages are absent), `persist`,
+animation, autosave deleted, new history with a base snapshot: BUG-156), `exportJSON`,
+`importJSON(json, {persist})`, `setActiveTool` also takes `'pen'`, `'pencil'` and `'laser'` (Pen / Laser: selection off, crosshair; Pencil: drawing mode, the brush slice builds the Pencil brush), `wheelNavigate(e)` (wheel / trackpad: whiteboard scroll pans and Ctrl / ⌘ + wheel or pinch zooms; design Ctrl / ⌘ + wheel zooms the page; returns true when used) and `handleWheel` (its `mouse:wheel` listener, every tool), `applyCanvasSizeSetting` (Settings > Canvas size changed: the open page takes it, one undo step; called by `init` after `initPages`), `restoreFromStorage` (loads the autosaved **project** through
+`lib/storage/projectStorage` → Pages `importProject`; an old `drawJson` board → `importJSON`, adopted as Page 1; a saved board that cannot be opened is kept under the storage key `project.unreadable` and offered as a download, BUG-154), `saveBoard` (downloads `drawing.fateboard` = the whole project via Pages `exportProject`; falls back to the canvas JSON when pages are absent), `persist`,
 `flushPersist` (`persist` saves the whole project from Pages `captureProject({ thumbnail: false })`; skipped while
 `isPageSwitching` and before pages exist), `handlePersistEvent`, `handleSelectionChange`, `handleSelectionClear`, `handleMouseDown` (no-op),
 `handleObjectChange`, `handleDBLClick`.
@@ -76,7 +76,7 @@ animation, autosave deleted), `exportJSON`,
 **Depends on:** Shape (`installShapeBehavior`, `editShapeText`, `closeShapeTextEditor`), UndoRedo (`saveState`,
 `pause/resumeHistory`, `initHistory`, `registerHistoryEvents`), Page (`setPageFormat`), Pages (`initPages`,
 `captureProject`, `importProject`, `isPageSwitching`, `pages`, `currentPageId`), Animation (`registerAnimationEvents`,
-`loadAnimationData`), Setting (`settings`), Brush
+`loadAnimationData`), Dialog (`confirmDialog`, optional), Setting (`settings`, `getDefaultCanvasPreset`), Brush
 (`setBrush`, `color`, `width`), ShapeStyle (`fill`, `clearGradientSession`, `fillMode`), Transform
 (`updateFromFabric`). Also imports `updateMaster`, `MultiStopGradientTool`. Node tool: `setActiveTool('node')` turns Fabric
 selection off (`selection=false`, `skipTargetFind=true`) and calls NodeEditor `enterNodeMode` when something is selected; it never changes objects.
@@ -103,6 +103,10 @@ fillColor, fillOpacity, straightLine, symmetry, symmetryCenter, eraserMode, rece
 **Owner of `canvas.freeDrawingBrush`** (the only writer, BUG-021: the Editor effect and the draw tool used to overwrite
 its colour / width). (Shared keys fixed: brush opacity / shadow colour are
 `brushOpacity` / `brushShadowColor`, BUG-019/020.) There is an existing (possibly stale) test: `src/__tests__/store/brushSlice.test.ts`.
+**Pencil tool (2026-11-11):** while `activeTool === 'pencil'` the brush is built from `drawingState(s)`: a plain
+pencil brush, width `PENCIL_BASE_WIDTH` (2) × `creationScale`, opacity 1, smooth, solid, no blend / shadow / fill /
+mirror, in the drawing colour (`color`). The Draw panel's settings are never read or changed for it; finished
+lines are styled the same way (`before:path:created`).
 
 ## 3. UI: `createUiSlice.ts`
 
@@ -165,8 +169,16 @@ animation (`animation?: AnimationData`, Q12). The whole list is autosaved as one
 object for autosave; null until pages exist), `importProject(json string | project object)`. Page-only changes (rename,
 move, delete, apply format, every page switch) call Canvas `persist`.
 Async ops are serialized through a module-level promise queue `runExclusive`.
+**A page that cannot be loaded (BUG-154):** `showPage` resolves false and puts `pages` and `currentPageId` back (the
+canvas still shows the page that was open, because Fabric replaces the objects only after all of them are built).
+`switchPage`, `duplicatePage` and `deletePage` then show a dialog; `addPage` / `duplicatePage` resolve null;
+`importProject` tries the page that was open, then the others in order, and resolves false when none loads. A page
+that cannot be read stays in the project untouched.
+**Values from a file (BUG-157):** `normalizePage` keeps a thumbnail only when it is `data:image/…` and a preset or
+custom size only when both sides are inside `MAX_PAGE_PX`.
 **Depends on:** Canvas (`canvas`, `persist`), Page (`pageFormat`, `orientation`, `customSize`, `pageBackground`,
-`applyPageSize`, `pageWidth`), Animation (`getAnimationData`, `loadAnimationData`, `pause`).
+`applyPageSize`, `pageWidth`), Animation (`getAnimationData`, `loadAnimationData`, `pause`), Dialog (`alertDialog`,
+optional).
 **Risks:** queue is global (BUG-035); keyframe history resets on page switch (BUG-141).
 
 ## 7. Background (patterns): `createBackgroundSlice.ts`
@@ -227,9 +239,15 @@ the shape text editor is committed, canvas text typing is finished (one step).
 **Page switch:** a pending change is flushed into the old page; changes made while a page loads are not recorded; a
 page seen for the first time gets a base snapshot once loaded; a page with history re-bases its top on the page
 as loaded (so the next undo is a real one).
+**Embedded files (BUG-155):** a snapshot holds a short token for every `data:` URL of 2048 characters or more; the
+file itself is kept once, in a closure pool (`lib/snapshotAssets.ts`) shared by all snapshots of all pages. The pool
+lets go of files when the snapshots that used them are dropped (history limit, a new change after an undo,
+`clearHistory`, a deleted page). Snapshot strings are therefore not plain document JSON: only this slice reads them.
+**A snapshot that cannot be loaded (BUG-154):** the stacks go back to what they were, the error is logged and
+`undo` / `redo` still resolve.
 **Depends on:** Canvas (`canvas`, `clearToolbar`, `persist`), Pages (`currentPageId`, `isPageSwitching`, `pages`),
 NodeEditor (`nodeEditor`, `cancelNodeMode`), Shape (`closeShapeTextEditor`); optional `rebuildLinks` (does not exist).
-**Risks:** BUG-027. Full-JSON snapshots (images stored as `src`) cost memory on large boards.
+**Risks:** BUG-027. Snapshots are still whole-page JSON, so a page with thousands of objects costs memory per step.
 
 ## 11. Transform: `createTransformSlice.ts`
 
@@ -277,15 +295,31 @@ pages drop (BUG-003).
 
 ## 16. Setting: `createSettingSlice.ts`
 
-**Purpose:** user preferences, validated by `sanitizeSettings`, persisted to opendb `fateboard-settings`, theme
+**Purpose:** user preferences, validated by `sanitizeSettings`, persisted through `settingsStorage` (`@/lib/storage`, key `fateboard-settings`), theme
 application.
-**State:** `settings: { mode, iconSize, backgroundStyle, backgroundColor, gridSize, snapToGrid, showRulers, unit,
-orientation ('LANDSCAPE'|'PORTRAIT'), freehand: boolean, format, lastPageFormat, customSize (mm) }`.
+**State:** `settings: { mode, colorTheme, iconSize, unit, freehand: boolean, defaultCanvasPresetId (a preset id or
+'custom'), canvasOrientation: 'landscape' | 'portrait', customCanvasSize: { width, height } (whole px, 1–10,000) }`. Defaults (`DEFAULT_SETTINGS`, owner 2026-11-11): Light, Fate Blue,
+Small icons, px, design board, `presentation-16-9`, landscape, custom size 1920 × 1080.
+The page-size, background, grid, snap and rulers fields were saved but never read and were removed (owner,
+2026-11-11); `sanitizeSettings` drops them from older saves and keeps the rest.
 **Actions:** `load` (unused; `RootLayout` calls `hydrate` instead), `hydrate`, `initTheme` (unused), `setMode`,
-`setIconSize`, `setBackgroundStyle`*, `setBackgroundColor`*, (`setGridSize` removed: Notebook owns it), `setSnapToGrid`,
-`setShowRulers`, `setUnit` (rulers and size fields, via `lib/units` + `hooks/useUnit`; values stay in px), `setFreehand`, `toggleFreehand`, `setFormat`, (`setOrientation` removed: Page owns it),
-`setCustomSize`, `resetSettings`, `updateSetting`, `applyTheme`, `opendbSave`. (*collision)
-Pure helpers worth unit testing: `sanitizeSettings`, `getCanvasSize`, `clampDimension`, `clampGridSize`, `isHexColor`.
+`setIconSize`, `setColorTheme`, `setUnit` (rulers and size fields, via `lib/units` + `hooks/useUnit`; values stay in
+px), `setFreehand`, `toggleFreehand`, `setDefaultCanvasPreset(presetId)` (a `CANVAS_PRESETS` id; anything else is
+ignored; `'custom'` selects the custom size), `setCanvasOrientation` (landscape / portrait for the canvas size; a custom
+size is turned too), `setCustomCanvasSize(width, height)` (px; selects Custom size and sets the orientation from it,
+so it is used exactly as typed; false and no change outside 1–10,000 or for fractions), `resetSettings` (every field back to `DEFAULT_SETTINGS`; theme, color theme and icon size are applied to
+`<html>` at once), `takePendingCanvasSize()` (true once after the resulting canvas size changed, then false; switching the orientation
+of a square size is not a change; the
+marker is stored under `fateboard-canvas-size-pending`, so it survives a reload), `updateSetting`, `applyTheme`,
+`opendbSave`.
+Pure helpers: `sanitizeSettings`, `getDefaultCanvasPreset(settings)` (the preset in the chosen orientation via
+`orientPreset` from `board.config.ts`; always a new object, so a page never changes the setting).
+**Canvas size (owner, 2026-11-11):** Settings > Canvas is the only place to choose a size; there is no left-rail
+panel. The Canvas slice gives a new board that size (the first board when nothing is saved, a saved board that cannot
+be opened, New board) as plain state: the base of the new board, not an undo step. A change in Settings resizes the
+page that was open when the editor loads again (`applyCanvasSizeSetting`, after `initPages`): one undo step,
+autosaved. Other pages, and pages sized by a template, keep their size until they are open during a change. A
+whiteboard has no page size: the change waits for the next design board.
 **Risks:** BUG-015 (consumers compare `freehand` to strings), BUG-023.
 
 ## 17. advanceOperation: `advanceOperationSlice.ts` (+ `lib/patternRules.ts`, `lib/pathRepeat.ts`)
@@ -362,12 +396,16 @@ One undo step incl. the page size; then `showToast` with Undo, Q11).
 **Purpose:** grid painted behind objects (patches Fabric's internal `_renderBackground`) and smart snapping to
 grid/objects with guides while moving/scaling. Re-attaches itself via `store.subscribe` when `canvas` changes.
 **State:** `gridEnabled` (false), `gridSize` (20), `snapEnabled` (false), `snapToObjects` (true, applies once snap is on), `snapThreshold`.
-Grid and snap start off (2026-11-07, see DECISIONS). This is the only grid renderer in both modes (the whiteboard CSS
-dot grid was removed, BUG-107).
+Snap starts off (2026-11-07). The grid follows the board mode (2026-11-11): entering the whiteboard turns it on,
+entering a design page turns it off; leaving the editor and coming back to the same mode keeps the user's choice
+(closure `lastMode`, `store.subscribe` on `boardMode`). Style per mode (`gridStyleFor`): whiteboard = dots (a dot per
+cell, a stronger one every 5), design = lines. This is the only grid renderer in both modes (the whiteboard CSS dot
+grid was removed, BUG-107).
+**Depends on:** Page (`boardMode`).
 **Actions:** `setGridEnabled`, `toggleGrid`, `setGridSize`, `setSnapEnabled`, `toggleSnap`, `setSnapToObjects`,
 `toggleSnapToObjects`, `setSnapThreshold`, `drawGrid`.
 **Risks:** relies on a private Fabric method (`_renderBackground`), so it may break on a Fabric upgrade. `settings.snapToGrid`/`settings.gridSize` are
-separate, unconnected values.
+separate (removed from Settings 2026-11-11), unconnected values.
 
 ## 24. Dialog: `createDialogSlice.ts` (+ `organisms/DialogHost.tsx`, `molecules/Modal.tsx`)
 
@@ -384,6 +422,22 @@ Promise<void>`, `resolveDialog(result)` (used by `DialogHost`), `showToast({ mes
 `fileActions.newBoard`, `PagePanel` (delete / clear page), `AnimationPanel` (clear all), Template (`showToast`).
 **Risks:** none known. Slices should not `await` an alert (it resolves only when the user dismisses it).
 
+## 26. DrawingTools: `createDrawingToolsSlice.ts` (+ `lib/canvas/penPath.ts`, `lib/canvas/laserTrail.ts`)
+
+**Purpose:** the Pen tool (P) and the Laser pointer (K), added 2026-11-11. Spread before Animation.
+**State:** `penPointCount` (points of the Pen path being drawn), `laserStrokeCount` (laser strokes still fading).
+**Actions:** `finishPenPath({ close? })` (one `fabric.Path`: black 2 px outline × `creationScale`, no fill
+`rgba(0,0,0,0)`, `customType: 'shape'`, selected in the Select tool; under two points it cancels), `cancelPenPath`.
+**How:** `store.subscribe` on `activeTool` / `canvas` attaches the tool's listeners only while it is active (same pattern
+as the node tool). Pen: click = corner, drag = smooth point (`mirrorHandle`), click the first point = closed,
+Enter / Escape / double-click = open, Backspace / Delete = last point off (a capture-phase key listener stops the
+event, so it never deletes the selection). Leaving the Pen keeps a path of two points or more. Laser: drag draws
+strokes with timestamps, a `requestAnimationFrame` loop fades them (`LASER_LIFE_MS` = 1000) and stops when none are
+left; Escape = Select. Both paint only on `canvas.contextTop` in scene space (sizes in screen px via `screenScale`):
+no helper objects, nothing in history, autosave or exports.
+**Depends on:** Canvas (`canvas`, `activeTool`, `setActiveTool`, `setToolbar`), Page (`boardMode`, `pageWidth`,
+`pageHeight` for `creationScale`), NodeEditor (`screenScale`).
+
 ## 25. Animation: `createAnimationSlice.ts` (+ `src/animation/engine.ts`, `exportVideo.ts`)
 
 **Purpose:** keyframe timeline (per-object tracks), presets (entrance/emphasis/exit, typewriter), easing/bezier
@@ -392,7 +446,8 @@ fast path; MediaRecorder realtime fallback).
 **State:** `animDuration`, `animFps`, `currentTime`, `isPlaying`, `loop`, `playbackRate`, `autoKey`, `snap`, `workIn`,
 `workOut`, `tracks`, `selectedKeyframes`, `keyframeClipboard`, `past`, `future`, `exportState`.
 **Actions:** `setAnimDuration`, `setAnimFps`, `setLoop`, `setPlaybackRate`, `setAutoKey`, `setSnap`, `setWorkArea`,
-`play`, `pause`, `togglePlay`, `stop`, `seek`, `stepFrames`, `beginEdit`, `animUndo`, `animRedo` (Q1 rename), `addKeyframe`,
+`play`, `pause`, `togglePlay`, `stop`, `previewRange` (plays one span once, ignores loop / work area: the preview
+after adding a preset), `seek`, `stepFrames`, `beginEdit`, `animUndo`, `animRedo` (Q1 rename), `addKeyframe`,
 `updateKeyframe`, `updateSelectedCurve`, `moveSelectedTo`, `nudgeSelected`, `deleteSelected`, `selectKeyframe`,
 `selectAllKeyframes`, `copyKeyframes`, `pasteKeyframes`, `selectObject`, `toggleMute`, `applyPreset`, `clearTrack`,
 `clearAllAnimations`, `bindAutoKey` (returns disposer), `exportVideo`, `cancelExport`, `getAnimationData`,
@@ -403,7 +458,9 @@ A store subscription calls Canvas `persist` when `tracks`, `animDuration`, `anim
 are saved with their page, BUG-010). The engine marks an object shown animated with `__animRest` (runtime only) and
 `serializeCanvas` writes those rest values, so no save holds mid-animation values (BUG-011).
 **Depends on:** Canvas (`canvas`, `persist`).
-Keyframe history (`past` / `future`) is kept per page (Q7). Export renders the board's current view.
+Keyframe history (`past` / `future`) is kept per page (Q7). Undo / redo put an object back at rest when its track
+disappears (BUG-180). Export renders the board's current view. `absoluteProps` (rest values inside a
+multi-selection) lives in `src/animation/absoluteProps.ts`.
 **Risks:** none open. The Animation panel's own ⌘Z / ⌘Y run `animUndo` / `animRedo` and
 stop the event, so the canvas history does not run too. `src/components/organisms/effects/ui/Engine.tsx` is a
 second, older animation engine (dead).
