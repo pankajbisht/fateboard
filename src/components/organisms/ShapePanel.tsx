@@ -5,6 +5,7 @@ import { useStore } from '@store';
 import { useShapeFactory } from '@hooks/shape/useShapeFactory';
 import {
     SHAPE_CATEGORIES,
+    SHAPE_CATEGORY_INFO as CATEGORY_INFO,
     shapeIconPath,
     type ShapeCategory,
     type ShapeDef,
@@ -26,20 +27,6 @@ import { Chip } from '@/components/atoms/Chip';
 /* -------------------------------------------------------------------------- */
 /* Static info                                                                */
 /* -------------------------------------------------------------------------- */
-
-const CATEGORY_INFO: Record<ShapeCategory, { title: string; hint: string }> = {
-    text: { title: 'Text Shapes', hint: 'Double-click to type inside. Great for flowcharts.' },
-    basic: { title: 'Basic', hint: 'Rectangles, circles, triangles and polygons.' },
-    arcs: { title: 'Arcs', hint: 'Half circles, rings, pie slices, crescent.' },
-    stars: { title: 'Stars', hint: 'Stars, sparkles and bursts.' },
-    symbols: { title: 'Symbols', hint: 'Heart, check, cloud, sun, pin and more.' },
-    arrows: { title: 'Arrows', hint: 'Line arrows and block arrows.' },
-    callouts: { title: 'Callouts', hint: 'Speech and thought bubbles.' },
-    notes: { title: 'Notes', hint: 'Text paper, sticky note, flag, brackets.' },
-    flow: { title: 'Flowchart', hint: 'Database, document.' },
-    lines: { title: 'Lines & Curves', hint: 'Line, curve, zigzag.' },
-    custom: { title: 'My Shapes', hint: 'Shapes you saved yourself.' },
-};
 
 const CONNECTOR_CARDS: {
     mode: ConnectorMode;

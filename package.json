@@ -14,7 +14,7 @@
         "prebuild": "npm run type-check",
         "clean": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\"",
         "preview": "vite preview --host 0.0.0.0",
-        "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 254",
+        "lint": "eslint . --ext .ts,.tsx,.js,.jsx --max-warnings 249",
         "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
         "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
         "check": "npm run lint && npm run type-check && npm run format:check",

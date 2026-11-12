@@ -97,3 +97,31 @@ editorTest('the Draw link arrives ready to draw', async ({ editor, page }) => {
     await page.waitForFunction(() => !!window.__fateboard?.ready());
     await expect.poll(() => editor.state('activeTool')).toBe('draw');
 });
+
+test('search opens a real-world example, and Play builds its picture step by step', async ({ page }) => {
+    await page.goto('/help');
+    await search(page).fill('neon sign');
+    await page.getByRole('list', { name: 'Search results' }).getByRole('link').first().click();
+
+    await expect(page).toHaveURL(/topic=draw&section=example-glowing-neon-sign/);
+    const examples = page.getByRole('region', { name: 'Real-world examples' });
+    await expect(examples).toBeInViewport();
+    const slide = examples.getByRole('group', { name: '1 of 2: Glowing neon sign' });
+    await expect(slide).toBeVisible();
+
+    await examples.getByRole('button', { name: 'Next example' }).click();
+    const mandala = examples.getByRole('group', { name: '2 of 2: Mandala with mirror drawing' });
+    await expect(mandala).toBeVisible();
+
+    const status = mandala.getByRole('status');
+    await expect(status).toHaveText('Step 1 of 4');
+    await mandala.getByRole('button', { name: 'Play steps' }).click();
+    await expect(status).toHaveText('Step 2 of 4', { timeout: 6000 });
+    await expect(mandala.getByRole('img', { name: 'The board at step 2' })).toBeVisible();
+
+    await mandala.getByRole('button', { name: 'Pause steps' }).click();
+    await mandala.getByRole('group', { name: /^Steps:/ }).press('End');
+    await expect(status).toHaveText('Result');
+    await expect(mandala.getByRole('img', { name: 'The finished board' })).toBeVisible();
+    await expect(mandala.getByRole('link', { name: /try it: open draw/i })).toBeVisible();
+});

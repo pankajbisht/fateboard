@@ -16,6 +16,7 @@ import { AnimateDemo } from './demos/AnimateDemo';
 import { BrushesDemo, ShapesDemo } from './demos/CatalogDemos';
 import { ExportDemo } from './demos/ExportDemo';
 import { FiltersDemo } from './demos/FiltersDemo';
+import { ExampleSlider } from './ExampleSlider';
 import { NodeDemo } from './demos/NodeDemo';
 import { GridDemo, PathDemo, RadialDemo } from './demos/RepeatDemos';
 import { HELP_CARD, HELP_PILL_LINK, HELP_PRIMARY_LINK, RichText } from './helpParts';
@@ -119,6 +120,8 @@ export function TopicView({ topic }: { topic: HelpTopic }) {
                     })}
                 </div>
             )}
+
+            <ExampleSlider key={topic.id} topic={topic} />
 
             {!!topic.related?.length && (
                 <section>

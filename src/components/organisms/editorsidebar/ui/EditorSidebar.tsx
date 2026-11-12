@@ -109,7 +109,11 @@ export function EditorSidebar({
                               item.kind === 'action'
                                   ? item.id === activeTool
                                   : (item.id === activeId && expanded) ||
-                                    (!!item.activateTool && item.activateTool === activeTool)
+                                    (!!item.activateTool &&
+                                        item.activateTool === activeTool &&
+                                        // Brush and Draw share the Draw tool: only the one in use lights up
+                                        (activePanel?.activateTool !== activeTool ||
+                                            item.id === activeId))
                 }
                 expanded={expanded && activePanel !== null}
                 canExpand={activePanel !== null}

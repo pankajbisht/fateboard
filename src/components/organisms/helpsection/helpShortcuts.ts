@@ -7,6 +7,10 @@ import { commandRegistry } from '@/components/config/commandConfig';
 import { buildCombo } from '@/hooks/keyboard/useKeyboardShortcuts';
 import { isMac, replaceToShortcut } from '@/lib/utils/isMac';
 
+import { ALT, inlineCaps, keyCaps, MOD, SHIFT } from './keyCaps';
+
+export { inlineCaps, keyCaps };
+
 export const HELP_SHORTCUT_CATEGORIES = [
     'Tools',
     'File',
@@ -35,44 +39,6 @@ export interface HelpShortcut {
     /** Offered in practice mode. */
     practice?: boolean;
     matches: (e: KeyboardEvent) => boolean;
-}
-
-const MOD = isMac ? '⌘' : 'Ctrl';
-const SHIFT = isMac ? '⇧' : 'Shift';
-const ALT = isMac ? '⌥' : 'Alt';
-
-const WORD_KEYS: Record<string, string> = { equal: '=', minus: '−' };
-const WINDOWS_MODIFIER_ORDER = ['Ctrl', 'Shift', 'Alt'];
-
-const prettyKey = (key: string): string => {
-    const lower = key.toLowerCase();
-    if (WORD_KEYS[lower]) return WORD_KEYS[lower]!;
-    const digit = /^digit(\d)$/.exec(lower);
-    if (digit) return digit[1]!;
-    return key.length === 1 ? key.toUpperCase() : key;
-};
-
-/** A registry shortcut string ('⌘⇧↓', 'Shift+Ctrl+↓', '⌘+equal') as separate key caps. */
-export function keyCaps(shortcut: string): string[] {
-    const parts = shortcut.length > 1 && shortcut.includes('+') ? shortcut.split('+') : [shortcut];
-    const caps = parts
-        .filter(Boolean)
-        .flatMap((part) => {
-            const [, glyphs = '', rest = ''] = /^([⌘⇧⌥⌃]*)(.*)$/u.exec(part) ?? [];
-            return [...glyphs, rest].filter(Boolean);
-        })
-        .map(prettyKey);
-    const rank = (cap: string) => {
-        const i = WINDOWS_MODIFIER_ORDER.indexOf(cap);
-        return i === -1 ? WINDOWS_MODIFIER_ORDER.length : i;
-    };
-    return [...caps].sort((a, b) => rank(a) - rank(b));
-}
-
-/** A key mark from help text (`mod+shift+U`) as key caps for this platform. */
-export function inlineCaps(mark: string): string[] {
-    const named: Record<string, string> = { mod: MOD, shift: SHIFT, alt: ALT };
-    return mark.split('+').map((key) => named[key] ?? key);
 }
 
 const CODE_CAPS: Record<string, string> = {
@@ -121,6 +87,7 @@ const CATEGORY_BY_ID: Record<string, HelpShortcutCategory> = {
     'tool-pen': 'Tools',
     'tool-pencil': 'Tools',
     'tool-laser': 'Tools',
+    'tool-brush': 'Tools',
     newfile: 'File',
     open: 'File',
     save: 'File',

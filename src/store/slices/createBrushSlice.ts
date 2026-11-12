@@ -1,5 +1,7 @@
 import * as fabric from 'fabric';
-import { creationScaleOf } from '@/lib/canvas/creationScale';
+import { closeIfNearStart } from '@/lib/canvas/autoClose';
+import { drawingState } from '../pencilStyle';
+import { screenScale } from '@/lib/canvas/screenScale';
 import {
     BLEND_MODES,
     DEFAULT_BRUSH_STATE,
@@ -23,8 +25,8 @@ import {
  *   contain blend mode, opacity, fill and shadow.
  */
 
-type Pt = { x: number; y: number };
-type Sample = { x: number; y: number; f: number };
+import { VariableWidthBrush, type Pt } from '../brushes/variableWidthBrush';
+import { createNibBrush } from '../brushes/nibBrush';
 
 const ERASER_PREVIEW = 'rgba(110, 110, 110, 0.45)';
 const HOOK_FLAG = '__fbBrushHooks';
@@ -142,250 +144,8 @@ class StrokeEraserBrush extends (fabric.PencilBrush as any) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Ink + Calligraphy: variable-width brush producing a filled shape    */
-/* ------------------------------------------------------------------ */
-
-function smoothSamples(pts: Sample[], passes: number): Sample[] {
-    let cur = pts;
-    for (let k = 0; k < passes; k++) {
-        if (cur.length < 3) break;
-        const prev = cur;
-        cur = prev.map((p, i) =>
-            i === 0 || i === prev.length - 1
-                ? p
-                : {
-                      x: (prev[i - 1].x + 2 * p.x + prev[i + 1].x) / 4,
-                      y: (prev[i - 1].y + 2 * p.y + prev[i + 1].y) / 4,
-                      f: (prev[i - 1].f + 2 * p.f + prev[i + 1].f) / 4,
-                  },
-        );
-    }
-    return cur;
-}
-
-class VariableWidthBrush extends (fabric.PencilBrush as any) {
-    mode: 'ink' | 'calligraphy' = 'ink';
-    smoothing = 2;
-    taper = 4; // 0..10, ink only
-    nibAngle = Math.PI / 4; // calligraphy only
-    samples: Sample[] = [];
-    lastT = 0;
-    factor = 0.7;
-
-    /** Pen pressure when a stylus is used, otherwise drawing speed (fast = thin). */
-    addSample(p: Pt, e?: any): boolean {
-        const last = this.samples[this.samples.length - 1];
-        const zoom = this.canvas.getZoom?.() ?? 1;
-        const now = performance.now();
-        const pen = e && e.pointerType === 'pen' && e.pressure > 0;
-
-        if (last) {
-            const d = Math.hypot(p.x - last.x, p.y - last.y);
-            if (d < 1.2 / zoom) return false;
-            if (this.mode === 'ink') {
-                const target = pen
-                    ? 0.15 + 0.85 * e.pressure
-                    : clamp(1.1 - ((d * zoom) / Math.max(now - this.lastT, 1)) * 0.4, 0.3, 1);
-                this.factor = this.factor * 0.7 + target * 0.3;
-            }
-        } else if (this.mode === 'ink') {
-            this.factor = pen ? 0.15 + 0.85 * e.pressure : 0.7;
-        }
-
-        this.lastT = now;
-        this.samples.push({ x: p.x, y: p.y, f: this.mode === 'ink' ? this.factor : 1 });
-        return true;
-    }
-
-    outline(final: boolean): Pt[] {
-        let pts: Sample[] = this.samples.map((s: Sample) => ({ ...s }));
-        if (!pts.length) return [];
-        if (pts.length === 1) pts = [pts[0], { ...pts[0], x: pts[0].x + 0.01 }];
-        pts = smoothSamples(pts, Math.round(this.smoothing / 2));
-
-        const len: number[] = [0];
-        for (let i = 1; i < pts.length; i++) {
-            len[i] = len[i - 1] + Math.hypot(pts[i].x - pts[i - 1].x, pts[i].y - pts[i - 1].y);
-        }
-        const total = len[len.length - 1];
-        const taperLen = this.mode === 'ink' ? this.taper * this.width * 1.5 : 0;
-        const half = this.width / 2;
-
-        const L: Pt[] = [];
-        const R: Pt[] = [];
-        const radii: number[] = [];
-        const normals: Pt[] = [];
-
-        for (let i = 0; i < pts.length; i++) {
-            const a = pts[Math.max(0, i - 1)];
-            const b = pts[Math.min(pts.length - 1, i + 1)];
-            let dx = b.x - a.x;
-            let dy = b.y - a.y;
-            const dl = Math.hypot(dx, dy) || 1;
-            dx /= dl;
-            dy /= dl;
-
-            let nx: number;
-            let ny: number;
-            let r: number;
-            if (this.mode === 'calligraphy') {
-                nx = Math.cos(this.nibAngle);
-                ny = Math.sin(this.nibAngle);
-                r = half;
-            } else {
-                nx = -dy;
-                ny = dx;
-                let f = pts[i].f;
-                if (taperLen > 0) {
-                    const t0 = len[i] / taperLen;
-                    const t1 = final ? (total - len[i]) / taperLen : 1; // end taper only on release
-                    f *= clamp(Math.min(t0, t1), 0.08, 1);
-                }
-                r = half * f;
-            }
-            normals.push({ x: nx, y: ny });
-            radii.push(r);
-            L.push({ x: pts[i].x + nx * r, y: pts[i].y + ny * r });
-            R.push({ x: pts[i].x - nx * r, y: pts[i].y - ny * r });
-        }
-
-        const poly: Pt[] = [...L];
-        const cap = (i: number, startAngle: number) => {
-            const out: Pt[] = [];
-            for (let k = 1; k < 8; k++) {
-                const ang = startAngle - (Math.PI * k) / 8;
-                out.push({
-                    x: pts[i].x + Math.cos(ang) * radii[i],
-                    y: pts[i].y + Math.sin(ang) * radii[i],
-                });
-            }
-            return out;
-        };
-        const last = pts.length - 1;
-        if (this.mode === 'ink')
-            poly.push(...cap(last, Math.atan2(normals[last].y, normals[last].x)));
-        for (let i = last; i >= 0; i--) poly.push(R[i]);
-        if (this.mode === 'ink')
-            poly.push(...cap(0, Math.atan2(normals[0].y, normals[0].x) + Math.PI));
-        return poly;
-    }
-
-    drawPreview() {
-        const canvas = this.canvas;
-        const ctx = canvas.contextTop;
-        canvas.clearContext(ctx);
-        const poly = this.outline(false);
-        if (poly.length < 3) return;
-
-        const v = canvas.viewportTransform;
-        ctx.save();
-        ctx.transform(v[0], v[1], v[2], v[3], v[4], v[5]);
-        if (this.shadow) {
-            const z = canvas.getZoom() * (canvas.getRetinaScaling?.() ?? 1);
-            ctx.shadowColor = this.shadow.color;
-            ctx.shadowBlur = this.shadow.blur * z;
-            ctx.shadowOffsetX = this.shadow.offsetX * z;
-            ctx.shadowOffsetY = this.shadow.offsetY * z;
-        }
-        ctx.fillStyle = this.color;
-        ctx.beginPath();
-        ctx.moveTo(poly[0].x, poly[0].y);
-        for (let i = 1; i < poly.length; i++) ctx.lineTo(poly[i].x, poly[i].y);
-        ctx.closePath();
-        ctx.fill('nonzero');
-        ctx.restore();
-    }
-
-    finalizePath() {
-        const canvas = this.canvas;
-        const poly = this.outline(true);
-        if (poly.length < 3) return;
-        const d =
-            'M ' + poly.map((p) => `${+p.x.toFixed(2)} ${+p.y.toFixed(2)}`).join(' L ') + ' Z';
-        const path = new fabric.Path(d, {
-            fill: this.color,
-            stroke: null,
-            strokeWidth: 0,
-            objectCaching: true,
-            shadow: this.shadow
-                ? new fabric.Shadow({
-                      color: this.shadow.color,
-                      blur: this.shadow.blur,
-                      offsetX: this.shadow.offsetX,
-                      offsetY: this.shadow.offsetY,
-                  })
-                : null,
-        } as any);
-        canvas.fire('before:path:created', { path });
-        canvas.add(path);
-        canvas.requestRenderAll();
-        path.setCoords();
-        canvas.fire('path:created', { path });
-    }
-
-    onMouseDown(_pointer: Pt, ctx?: any) {
-        this.samples = [];
-        if (ctx?.e && ctx.e.button > 0) return; // primary button only
-        this.lastT = performance.now();
-        this.factor = 0.7;
-        this.addSample(_pointer, ctx?.e);
-        this.drawPreview();
-    }
-    onMouseMove(pointer: Pt, ctx?: any) {
-        if (!this.samples.length) return;
-        if (this.addSample(pointer, ctx?.e)) this.drawPreview();
-    }
-    onMouseUp() {
-        const canvas = this.canvas;
-        try {
-            if (this.samples.length) this.finalizePath();
-        } finally {
-            this.samples = [];
-            canvas.clearContext(canvas.contextTop);
-        }
-        return false; // drawing finished
-    }
-    // the canvas calls this when it re-renders mid-stroke
-    _render() {
-        if (this.samples.length) this.drawPreview();
-    }
-}
-
-/* ------------------------------------------------------------------ */
 /* brush factory                                                       */
 /* ------------------------------------------------------------------ */
-
-/**
- * Pencil tool (Shift + P): a plain smooth line in the drawing colour. It never reads or changes the
- * Draw panel's brush settings: while it is active the brush is built from these instead.
- */
-export const PENCIL_BASE_WIDTH = 2;
-type DrawingSettings = Record<string, unknown> & { activeTool?: unknown };
-
-const pencilState = <S extends DrawingSettings>(s: S): S => ({
-    ...s,
-    brush: 'pencil',
-    width: Math.max(
-        1,
-        PENCIL_BASE_WIDTH * creationScaleOf(s as Parameters<typeof creationScaleOf>[0]),
-    ),
-    brushOpacity: 1,
-    smoothing: 4,
-    lineCap: 'round',
-    lineJoin: 'round',
-    lineStyle: 'solid',
-    straightLine: false,
-    blend: 'source-over',
-    shadowBlur: 0,
-    shadowOffsetX: 0,
-    shadowOffsetY: 0,
-    symmetry: 'none',
-    fillEnabled: false,
-});
-
-/** The settings the canvas draws with: the Draw panel's, or the Pencil's while it is active. */
-const drawingState = <S extends DrawingSettings>(s: S): S =>
-    s.activeTool === 'pencil' ? pencilState(s) : s;
 
 function buildShadow(s: any) {
     if (!(s.shadowBlur > 0 || s.shadowOffsetX || s.shadowOffsetY)) return null;
@@ -405,12 +165,14 @@ function buildBrush(canvas: any, s: any) {
     let brush: any;
 
     if (eraser && s.eraserMode === 'stroke') brush = new StrokeEraserBrush(canvas);
+    else if (engine === 'nib') brush = createNibBrush(canvas, s);
     else if (engine === 'ink' || engine === 'calligraphy') {
         brush = new (VariableWidthBrush as any)(canvas);
         brush.mode = engine;
         brush.smoothing = s.smoothing;
         brush.taper = s.taper;
         brush.nibAngle = (s.nibAngle * Math.PI) / 180;
+        brush.speedWidth = s.speedWidth !== false;
     } else if (engine === 'circle') brush = new fabric.CircleBrush(canvas);
     else if (engine === 'spray') brush = new fabric.SprayBrush(canvas);
     else if (engine === 'pattern' || engine === 'texture') {
@@ -514,6 +276,8 @@ function styleNewPath(path: any, s: any) {
     }
 
     path.set({ perPixelTargetFind: true, targetFindTolerance: 4, isFreehand: true });
+    if (s.autoClose && path instanceof fabric.Path && s.canvas)
+        closeIfNearStart(path as never, Math.max(12 / screenScale(s.canvas), s.width * 1.5));
     if (!usesRgbaColor(s.brush)) path.set('opacity', s.brushOpacity); // textures, spray, dots, pattern
 
     const blend = s.blend && s.blend !== 'source-over' ? s.blend : undefined;
@@ -616,6 +380,7 @@ const DEFAULT_PRESET_KEYS: Record<string, true> = {
     marker: true,
     ink: true,
     calligraphy: true,
+    nib: true,
     highlighter: true,
     neon: true,
     chalk: true,

@@ -5,6 +5,11 @@ import { RepeatAlongPath } from '../organisms/effects/ui/RepeatAlongPath';
 import { RepeatRadially } from '../organisms/effects/ui/RepeatRadially';
 import Filters from '../organisms/filter/ui/Filters';
 import { FillShadowPanel } from '../organisms/FillShadowPanel';
+import TemplateGallery from '../organisms/effects/ui/TemplateGallery';
+import FontTemplatePanel from '../organisms/fonts';
+import { AutomataPanel } from '../organisms/generators/AutomataPanel';
+import { FractalPanel } from '../organisms/generators/FractalPanel';
+import { MacroPanel } from '../organisms/generators/MacroPanel';
 
 export const TABS_CONFIG = [
     {
@@ -13,6 +18,22 @@ export const TABS_CONFIG = [
         icon: 'palette',
         closable: false,
         content: () => <FillShadowPanel />,
+    },
+    {
+        id: 'templates',
+        label: 'Templates',
+        icon: 'table-cells-large',
+        closable: false,
+        fullSize: true,
+        content: () => <TemplateGallery />,
+    },
+    {
+        id: 'fonttemplates',
+        label: 'Font Templates',
+        icon: 'text-height',
+        closable: false,
+        fullSize: true,
+        content: () => <FontTemplatePanel />,
     },
     {
         id: 'tiling',
@@ -42,6 +63,28 @@ export const TABS_CONFIG = [
         icon: 'sliders',
         closable: false,
         content: () => <Filters />,
+    },
+
+    {
+        id: 'fractals',
+        label: 'Fractals',
+        icon: 'snowflake',
+        closable: false,
+        content: () => <FractalPanel />,
+    },
+    {
+        id: 'automata',
+        label: 'Cellular Automata',
+        icon: 'cellular-automata',
+        closable: false,
+        content: () => <AutomataPanel />,
+    },
+    {
+        id: 'macro',
+        label: 'Macro',
+        icon: 'macro',
+        closable: false,
+        content: () => <MacroPanel />,
     },
 
     {

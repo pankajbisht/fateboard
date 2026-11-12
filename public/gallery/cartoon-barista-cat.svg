@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Grumpy Barista</title>
+  <defs>
+    <linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8e7cf"/>
+      <stop offset="1" stop-color="#efd3ad"/>
+    </linearGradient>
+    <linearGradient id="counter" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8a5636"/>
+      <stop offset="1" stop-color="#5e3620"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffe7a8" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffe7a8" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="fur" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6a75a"/>
+      <stop offset="1" stop-color="#e5823a"/>
+    </linearGradient>
+  </defs>
+  <g id="step-1">
+    <rect width="480" height="360" fill="url(#wall)"/>
+    <path d="M0 222 L480 222" stroke="#e2c299" stroke-width="3"/>
+    <circle cx="110" cy="92" r="70" fill="url(#glow)"/>
+    <line x1="110" y1="0" x2="110" y2="52" stroke="#4a2a18" stroke-width="3"/>
+    <path d="M86 74 Q88 52 110 50 Q132 52 134 74 Z" fill="#2f7d62" stroke="#4a2a18" stroke-width="3"/>
+    <ellipse cx="110" cy="76" rx="10" ry="5" fill="#fff3c4"/>
+    <rect x="20" y="132" width="132" height="8" rx="2" fill="#9a6040"/>
+    <rect x="30" y="100" width="22" height="32" rx="4" fill="#d9eef0" stroke="#4a2a18" stroke-width="2.5"/>
+    <rect x="30" y="112" width="22" height="20" rx="3" fill="#6b3f26"/>
+    <rect x="58" y="94" width="26" height="38" rx="5" fill="#d9eef0" stroke="#4a2a18" stroke-width="2.5"/>
+    <rect x="58" y="108" width="26" height="24" rx="4" fill="#c9a26b"/>
+    <path d="M94 132 L98 112 L124 112 L128 132 Z" fill="#fffaf2" stroke="#4a2a18" stroke-width="2.5"/>
+    <path d="M126 116 Q138 118 134 128" stroke="#4a2a18" stroke-width="2.5" fill="none"/>
+    <path d="M146 132 Q140 116 146 104 Q150 96 156 104" stroke="#3f8a5d" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M134 132 L140 120 L152 120 L156 132 Z" fill="#c45c3c"/>
+  </g>
+  <g id="step-2">
+    <rect x="352" y="34" width="110" height="140" rx="6" fill="#2f3b36" stroke="#9a6040" stroke-width="7"/>
+    <text x="407" y="64" font-family="Georgia, serif" font-size="17" font-weight="700" fill="#f2efe6" text-anchor="middle">MENU</text>
+    <path d="M374 72 L440 72" stroke="#f2efe6" stroke-width="1.5" opacity="0.6"/>
+    <text x="368" y="94" font-family="Georgia, serif" font-size="12" fill="#f2efe6">Espresso</text>
+    <text x="446" y="94" font-family="Georgia, serif" font-size="12" fill="#f2efe6" text-anchor="end">3</text>
+    <text x="368" y="114" font-family="Georgia, serif" font-size="12" fill="#f2efe6">Latte</text>
+    <text x="446" y="114" font-family="Georgia, serif" font-size="12" fill="#f2efe6" text-anchor="end">4</text>
+    <text x="368" y="134" font-family="Georgia, serif" font-size="12" fill="#f2efe6">Cold brew</text>
+    <text x="446" y="134" font-family="Georgia, serif" font-size="12" fill="#f2efe6" text-anchor="end">5</text>
+    <text x="368" y="158" font-family="Georgia, serif" font-size="12" font-style="italic" fill="#ffd6a5">Smiles</text>
+    <text x="446" y="158" font-family="Georgia, serif" font-size="12" font-style="italic" fill="#ffd6a5" text-anchor="end">n/a</text>
+  </g>
+  <g id="step-3">
+    <path d="M168 334 Q166 236 250 230 Q334 236 332 334 Z" fill="url(#fur)" stroke="#4a2a18" stroke-width="4"/>
+    <path d="M202 250 Q250 264 298 250 L310 334 L190 334 Z" fill="#2f7d62" stroke="#4a2a18" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M206 252 L196 236" stroke="#2f7d62" stroke-width="6" stroke-linecap="round"/>
+    <path d="M294 252 L304 236" stroke="#2f7d62" stroke-width="6" stroke-linecap="round"/>
+    <rect x="226" y="268" width="48" height="18" rx="9" fill="#fffaf2"/>
+    <text x="250" y="281" font-family="Inter, Arial, sans-serif" font-size="10" font-weight="700" fill="#2f7d62" text-anchor="middle">MOCHI</text>
+  </g>
+  <g id="step-4">
+    <polygon points="184,148 194,70 238,112" fill="url(#fur)" stroke="#4a2a18" stroke-width="4" stroke-linejoin="round"/>
+    <polygon points="196,130 200,90 224,114" fill="#f7b9a1"/>
+    <polygon points="316,148 306,70 262,112" fill="url(#fur)" stroke="#4a2a18" stroke-width="4" stroke-linejoin="round"/>
+    <polygon points="304,130 300,90 276,114" fill="#f7b9a1"/>
+    <path d="M176 172 Q174 108 250 104 Q326 108 324 172 Q326 228 250 232 Q174 228 176 172 Z" fill="url(#fur)" stroke="#4a2a18" stroke-width="4"/>
+    <path d="M236 108 Q242 122 236 134" stroke="#c9671f" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M250 106 L250 130" stroke="#c9671f" stroke-width="6" stroke-linecap="round"/>
+    <path d="M264 108 Q258 122 264 134" stroke="#c9671f" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <path d="M178 168 L196 166" stroke="#c9671f" stroke-width="5" stroke-linecap="round"/>
+    <path d="M180 182 L196 178" stroke="#c9671f" stroke-width="5" stroke-linecap="round"/>
+    <path d="M322 168 L304 166" stroke="#c9671f" stroke-width="5" stroke-linecap="round"/>
+    <path d="M320 182 L304 178" stroke="#c9671f" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <g id="step-5">
+    <path d="M212 180 Q216 222 250 224 Q284 222 288 180 Q270 194 250 194 Q230 194 212 180 Z" fill="#fde7d3"/>
+    <ellipse cx="220" cy="162" rx="17" ry="13" fill="#fffbea" stroke="#4a2a18" stroke-width="3"/>
+    <ellipse cx="223" cy="166" rx="6" ry="8" fill="#3a2a1a"/>
+    <circle cx="225" cy="164" r="2" fill="#ffffff"/>
+    <path d="M200 146 L242 146 L242 162 L200 155 Z" fill="#f09b4f"/>
+    <path d="M202 155 L239 162" stroke="#4a2a18" stroke-width="4" stroke-linecap="round"/>
+    <ellipse cx="280" cy="162" rx="17" ry="13" fill="#fffbea" stroke="#4a2a18" stroke-width="3"/>
+    <ellipse cx="277" cy="166" rx="6" ry="8" fill="#3a2a1a"/>
+    <circle cx="279" cy="164" r="2" fill="#ffffff"/>
+    <path d="M258 146 L300 146 L300 155 L258 162 Z" fill="#f09b4f"/>
+    <path d="M261 162 L298 155" stroke="#4a2a18" stroke-width="4" stroke-linecap="round"/>
+    <path d="M202 138 L236 148" stroke="#4a2a18" stroke-width="5" stroke-linecap="round"/>
+    <path d="M298 138 L264 148" stroke="#4a2a18" stroke-width="5" stroke-linecap="round"/>
+    <path d="M243 184 L257 184 L250 193 Z" fill="#e46f7a" stroke="#4a2a18" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M250 193 L250 200" stroke="#4a2a18" stroke-width="2.5"/>
+    <path d="M236 210 Q250 200 264 210" stroke="#4a2a18" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M214 196 L172 190" stroke="#4a2a18" stroke-width="2" stroke-linecap="round"/>
+    <path d="M214 204 L174 208" stroke="#4a2a18" stroke-width="2" stroke-linecap="round"/>
+    <path d="M286 196 L328 190" stroke="#4a2a18" stroke-width="2" stroke-linecap="round"/>
+    <path d="M286 204 L326 208" stroke="#4a2a18" stroke-width="2" stroke-linecap="round"/>
+  </g>
+  <g id="step-6">
+    <rect x="0" y="300" width="480" height="60" fill="url(#counter)"/>
+    <rect x="0" y="294" width="480" height="12" fill="#a8704a"/>
+    <path d="M0 306 L480 306" stroke="#4a2a18" stroke-width="3"/>
+    <path d="M60 326 L140 326 M300 340 L420 340" stroke="#4a2a18" stroke-width="2" opacity="0.4"/>
+    <ellipse cx="206" cy="298" rx="22" ry="12" fill="url(#fur)" stroke="#4a2a18" stroke-width="4"/>
+    <path d="M200 292 L200 302 M210 292 L210 302" stroke="#4a2a18" stroke-width="2"/>
+    <ellipse cx="300" cy="298" rx="22" ry="12" fill="url(#fur)" stroke="#4a2a18" stroke-width="4"/>
+    <path d="M296 292 L296 302 M306 292 L306 302" stroke="#4a2a18" stroke-width="2"/>
+    <path d="M332 250 Q326 236 334 226 Q342 216 336 204" stroke="#b08a6a" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round"/>
+    <path d="M350 248 Q344 232 352 222 Q360 212 354 198" stroke="#b08a6a" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round"/>
+    <ellipse cx="342" cy="298" rx="38" ry="7" fill="#fffaf2" stroke="#4a2a18" stroke-width="3"/>
+    <path d="M368 266 Q390 268 386 282 Q382 292 364 290" stroke="#4a2a18" stroke-width="4" fill="none"/>
+    <path d="M314 260 L370 260 L364 294 Q342 300 320 294 Z" fill="#fffaf2" stroke="#4a2a18" stroke-width="4" stroke-linejoin="round"/>
+    <ellipse cx="342" cy="260" rx="28" ry="7" fill="#b07a4f" stroke="#4a2a18" stroke-width="3"/>
+    <path d="M342 264 Q332 258 336 255 Q340 253 342 256 Q344 253 348 255 Q352 258 342 264 Z" fill="#f8e7cf"/>
+    <path d="M320 276 L364 276" stroke="#2f7d62" stroke-width="5"/>
+  </g>
+</svg>

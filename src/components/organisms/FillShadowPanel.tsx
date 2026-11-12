@@ -5,7 +5,6 @@ import { useSelectionStyle } from '@hooks/useSelectionStyle';
 import {
     DEFAULT_GRADIENT,
     GRADIENT_PRESETS,
-    SHADOW_PRESETS,
     gradientCss,
     insertStop,
     reverseStops,
@@ -13,11 +12,9 @@ import {
     type FillKind,
     type GradientFill,
     type GradientStop,
-    type ShadowStyle,
 } from '@/lib/fillStyle';
 import { Icon } from '../atoms/Icon';
 import { IconButton } from '../atoms/IconButton';
-import { Chip } from '../atoms/Chip';
 import { Field } from '../molecules/Field';
 import { PanelSection } from '../molecules/PanelSection';
 import { SliderField } from '../molecules/LabeledSlider';
@@ -25,6 +22,8 @@ import LabeledToggle from '../molecules/LabeledToggle';
 import { SegmentedControl } from '../molecules/SegmentedControl';
 import { PaintTargetSwatch } from '../molecules/PaintTargetSwatch';
 import { EmptyState } from '../molecules/EmptyState';
+import { FillHarmony } from './FillHarmony';
+import { ShadowControls } from './ShadowControls';
 
 const FILL_TYPES: { value: FillKind; label: string }[] = [
     { value: 'none', label: 'None' },
@@ -325,88 +324,11 @@ function GradientControls({
     );
 }
 
-/* ------------------------------- shadow ------------------------------- */
-
-const sameShadow = (a: ShadowStyle, b: ShadowStyle) =>
-    a.color === b.color &&
-    Math.abs(a.opacity - b.opacity) < 0.01 &&
-    a.blur === b.blur &&
-    a.offsetX === b.offsetX &&
-    a.offsetY === b.offsetY;
-
-function ShadowControls({
-    shadow,
-    onChange,
-}: {
-    shadow: ShadowStyle | null;
-    onChange: (s: ShadowStyle | null, history?: boolean) => void;
-}) {
-    const slider = (key: 'blur' | 'offsetX' | 'offsetY', label: string, min: number, max: number) =>
-        shadow && (
-            <SliderField
-                label={label}
-                min={min}
-                max={max}
-                step={1}
-                unit="px"
-                value={shadow[key]}
-                onChange={(v) => onChange({ ...shadow, [key]: v }, false)}
-                onCommit={(v) => onChange({ ...shadow, [key]: v })}
-            />
-        );
-
-    return (
-        <>
-            <LabeledToggle
-                label="Shadow"
-                checked={!!shadow}
-                onChange={(on) => onChange(on ? SHADOW_PRESETS[0].shadow : null)}
-            />
-            {shadow && (
-                <>
-                    <div className="flex flex-wrap gap-1">
-                        {SHADOW_PRESETS.map((p) => (
-                            <Chip
-                                key={p.id}
-                                active={sameShadow(p.shadow, shadow)}
-                                onClick={() => onChange(p.shadow)}
-                            >
-                                {p.label}
-                            </Chip>
-                        ))}
-                    </div>
-                    <Field label="Shadow color" inline>
-                        <PaintTargetSwatch
-                            id="shadow-color"
-                            label="Shadow color"
-                            value={shadow.color}
-                            onChange={(color) => onChange({ ...shadow, color })}
-                        />
-                    </Field>
-                    <SliderField
-                        label="Shadow opacity"
-                        min={0}
-                        max={100}
-                        step={1}
-                        unit="%"
-                        value={pct(shadow.opacity)}
-                        onChange={(v) => onChange({ ...shadow, opacity: v / 100 }, false)}
-                        onCommit={(v) => onChange({ ...shadow, opacity: v / 100 })}
-                    />
-                    {slider('blur', 'Blur', 0, 100)}
-                    {slider('offsetX', 'Offset X', -100, 100)}
-                    {slider('offsetY', 'Offset Y', -100, 100)}
-                </>
-            )}
-        </>
-    );
-}
-
 /* -------------------------------- panel ------------------------------- */
 
 /**
  * Right dock "Fill & Shadow": fill type (none / solid / linear / radial) with a full gradient
- * editor, and the drop shadow. Reads the selection live from the canvas; writes only through
+ * editor, color harmonies of the fill, and the drop shadow. Reads the selection live from the canvas; writes only through
  * store actions (undoable; slider drags preview without undo steps and commit on release).
  */
 export function FillShadowPanel() {
@@ -482,6 +404,19 @@ export function FillShadowPanel() {
                     {fill.gradient && (
                         <GradientControls gradient={fill.gradient} onChange={gradient} />
                     )}
+                </PanelSection>
+            )}
+
+            {style.canFill && (
+                <PanelSection title="Color harmony">
+                    <FillHarmony
+                        fill={fill}
+                        onSolid={(c) => {
+                            setFill(c);
+                            refresh();
+                        }}
+                        onGradient={gradient}
+                    />
                 </PanelSection>
             )}
 

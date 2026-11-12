@@ -1,10 +1,12 @@
 import * as fabric from 'fabric';
+import { BRUSH_PRESETS } from './brushPresets';
 
 export type BrushType =
     | 'pencil'
     | 'marker'
     | 'ink'
     | 'calligraphy'
+    | 'nib'
     | 'highlighter'
     | 'neon'
     | 'chalk'
@@ -22,6 +24,7 @@ export type BrushEngine =
     | 'neon' // pencil + light core + colored glow
     | 'ink' // variable-width filled shape (pressure / speed / taper)
     | 'calligraphy' // fixed-angle flat nib, filled shape
+    | 'nib' // Inkscape-style calligraphy pen: thinning, angle, fixation, caps (store/brushes/nibBrush.ts)
     | 'texture' // pencil with a grainy pattern stroke
     | 'pattern'
     | 'spray'
@@ -49,157 +52,7 @@ export interface BrushPreset {
     spray?: 'spray' | 'airbrush' | 'splatter';
 }
 
-export const BRUSH_ORDER: BrushType[] = [
-    'pencil',
-    'marker',
-    'ink',
-    'calligraphy',
-    'highlighter',
-    'neon',
-    'chalk',
-    'crayon',
-    'pattern',
-    'spray',
-    'airbrush',
-    'splatter',
-    'circle',
-    'eraser',
-];
-
-export const BRUSH_PRESETS: Record<BrushType, BrushPreset> = {
-    pencil: {
-        label: 'Pen',
-        engine: 'pencil',
-        width: 4,
-        maxWidth: 60,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 2,
-    },
-    marker: {
-        label: 'Marker',
-        engine: 'pencil',
-        width: 14,
-        maxWidth: 100,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 3,
-    },
-    ink: {
-        label: 'Ink brush',
-        engine: 'ink',
-        width: 10,
-        maxWidth: 60,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 3,
-    },
-    calligraphy: {
-        label: 'Calligraphy',
-        engine: 'calligraphy',
-        width: 12,
-        maxWidth: 60,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 3,
-    },
-    highlighter: {
-        label: 'Highlighter',
-        engine: 'pencil',
-        width: 24,
-        maxWidth: 100,
-        opacity: 0.4,
-        lineCap: 'square',
-        smoothing: 4,
-        blend: 'multiply',
-    },
-    neon: {
-        label: 'Neon',
-        engine: 'neon',
-        width: 6,
-        maxWidth: 40,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 3,
-    },
-    chalk: {
-        label: 'Chalk',
-        engine: 'texture',
-        texture: 'chalk',
-        width: 18,
-        maxWidth: 100,
-        opacity: 0.9,
-        lineCap: 'round',
-        smoothing: 2,
-    },
-    crayon: {
-        label: 'Crayon',
-        engine: 'texture',
-        texture: 'crayon',
-        width: 14,
-        maxWidth: 80,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 2,
-    },
-    pattern: {
-        label: 'Pattern',
-        engine: 'pattern',
-        width: 20,
-        maxWidth: 80,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 0,
-    },
-    spray: {
-        label: 'Spray',
-        engine: 'spray',
-        spray: 'spray',
-        width: 30,
-        maxWidth: 120,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 0,
-    },
-    airbrush: {
-        label: 'Airbrush',
-        engine: 'spray',
-        spray: 'airbrush',
-        width: 40,
-        maxWidth: 150,
-        opacity: 0.8,
-        lineCap: 'round',
-        smoothing: 0,
-    },
-    splatter: {
-        label: 'Splatter',
-        engine: 'spray',
-        spray: 'splatter',
-        width: 40,
-        maxWidth: 120,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 0,
-    },
-    circle: {
-        label: 'Dots',
-        engine: 'circle',
-        width: 20,
-        maxWidth: 80,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 0,
-    },
-    eraser: {
-        label: 'Eraser',
-        engine: 'eraser',
-        width: 24,
-        maxWidth: 150,
-        opacity: 1,
-        lineCap: 'round',
-        smoothing: 2,
-    },
-};
+export { BRUSH_ORDER, BRUSH_PRESETS } from './brushPresets';
 
 export const getPreset = (b: string): BrushPreset =>
     BRUSH_PRESETS[b as BrushType] ?? BRUSH_PRESETS.pencil;
@@ -209,10 +62,10 @@ export const getEngine = (b: string): BrushEngine => getPreset(b).engine;
 export const isStrokeBrush = (b: string) =>
     ['pencil', 'neon', 'texture', 'pattern'].includes(getEngine(b));
 /** Custom filled-shape brushes (pressure / nib). */
-export const isVariableBrush = (b: string) => ['ink', 'calligraphy'].includes(getEngine(b));
+export const isVariableBrush = (b: string) => ['ink', 'calligraphy', 'nib'].includes(getEngine(b));
 /** Brushes whose color carries alpha directly (others get object-level opacity). */
 export const usesRgbaColor = (b: string) =>
-    ['pencil', 'neon', 'ink', 'calligraphy'].includes(getEngine(b));
+    ['pencil', 'neon', 'ink', 'calligraphy', 'nib'].includes(getEngine(b));
 
 export const BLEND_MODES: { value: BlendMode; label: string }[] = [
     { value: 'source-over', label: 'Normal' },

@@ -8,6 +8,14 @@ import {
     type CanvasOrientation,
 } from '@/components/organisms/board/board.config';
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
+import {
+    DEFAULT_GRID_PREFS,
+    clampGridSize,
+    isGridStyle,
+    sanitizeGridPrefs,
+    type GridMode,
+    type GridPrefs,
+} from '@/lib/canvas/grid';
 
 /* -------------------------------------------------------------------------- */
 /*  Types & constants                                                          */
@@ -57,6 +65,8 @@ export interface Settings {
     canvasOrientation: CanvasOrientation;
     /** Settings > Canvas size > Custom size, in whole px (kept while a preset is chosen). */
     customCanvasSize: CustomCanvasSize;
+    /** Top bar > Grid options: style and cell size per board mode (the Notebook slice reads it). */
+    grid: Record<GridMode, GridPrefs>;
 }
 
 export type CustomCanvasSize = { width: number; height: number };
@@ -85,6 +95,7 @@ export const DEFAULT_SETTINGS: Settings = {
     defaultCanvasPresetId: DEFAULT_CANVAS_PRESET.id,
     canvasOrientation: 'landscape',
     customCanvasSize: { width: 1920, height: 1080 },
+    grid: DEFAULT_GRID_PREFS,
 };
 
 /* -------------------------------------------------------------------------- */
@@ -120,6 +131,7 @@ export function sanitizeSettings(raw: unknown): Settings {
             DEFAULT_SETTINGS.canvasOrientation,
         ),
         customCanvasSize: sanitizeCustomSize(r.customCanvasSize),
+        grid: sanitizeGridPrefs(r.grid),
     };
 }
 
@@ -239,6 +251,8 @@ export interface SettingsSlice {
      * is used exactly as typed. False (nothing changes) for a size outside `CUSTOM_CANVAS_LIMITS`.
      */
     setCustomCanvasSize: (width: number, height: number) => boolean;
+    /** Grid style and / or cell size of one board mode (validated; the size is clamped). */
+    setGridPrefs: (mode: GridMode, patch: Partial<GridPrefs>) => void;
     /** Every setting back to `DEFAULT_SETTINGS`, applied to the page at once. */
     resetSettings: () => void;
     /**
@@ -333,6 +347,16 @@ export const createSettingSlice: StateCreator<SettingsSlice, [], [], SettingsSli
                     width === height ? current : width > height ? 'landscape' : 'portrait',
             });
             return true;
+        },
+
+        setGridPrefs: (mode, patch) => {
+            // invalid fields are ignored (sanitizing would turn them into the default instead)
+            const grid = get().settings.grid;
+            const next = { ...grid[mode] };
+            if (isGridStyle(patch.style)) next.style = patch.style;
+            const size = clampGridSize(patch.size);
+            if (size !== null) next.size = size;
+            commit({ grid: { ...grid, [mode]: next } });
         },
 
         resetSettings: () => commit({ ...DEFAULT_SETTINGS }),

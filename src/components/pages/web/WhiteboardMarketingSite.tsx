@@ -1,7 +1,16 @@
 import Brand from '../../atoms/Brand';
 import { useNavigate } from 'react-router-dom';
-import ImageSlider from './ImageSlider';
+import { BuildStage } from './BuildStage';
 import MiniWhiteboard from './MiniWhiteboard';
+import { GallerySection } from './gallery/GallerySection';
+
+/** Header links: section id, label. */
+const NAV_LINKS = [
+    ['features', 'Features'],
+    ['interactive', 'Demo'],
+    ['process', 'Action'],
+    ['gallery', 'Gallery'],
+] as const;
 
 /* =========================================================
    MAIN PAGE
@@ -67,13 +76,6 @@ export default function WhiteboardMarketingSite() {
             title: 'Planning',
             description: 'Sketch flows, layouts, ideas and plans without getting in your way.',
         },
-    ];
-
-    const images = [
-        './web/blank_canvas.png',
-        './web/draw_canvas.png',
-        './web/shape_canvas.png',
-        './web/text_canvas.png',
     ];
 
     return (
@@ -186,29 +188,16 @@ export default function WhiteboardMarketingSite() {
 
                     {/* Navigation */}
                     <nav className="flex items-center gap-1 sm:gap-2">
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('features')}
-                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
-                        >
-                            Features
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('interactive')}
-                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
-                        >
-                            Demo
-                        </button>
-
-                        <button
-                            type="button"
-                            onClick={() => scrollToSection('process')}
-                            className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
-                        >
-                            Action
-                        </button>
+                        {NAV_LINKS.map(([id, label]) => (
+                            <button
+                                key={id}
+                                type="button"
+                                onClick={() => scrollToSection(id)}
+                                className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
+                            >
+                                {label}
+                            </button>
+                        ))}
 
                         <button
                             type="button"
@@ -468,50 +457,11 @@ export default function WhiteboardMarketingSite() {
                             </p>
                         </div>
 
-                        <div className="mt-16 grid items-center gap-14 lg:grid-cols-[.7fr_1.3fr]">
-                            <div className="space-y-8">
-                                {[
-                                    {
-                                        number: '01',
-                                        title: 'Draw Naturally',
-                                        description:
-                                            'Pick a shape or pen and draw freely, just like on a real whiteboard.',
-                                    },
-                                    {
-                                        number: '02',
-                                        title: 'Adjust as You Go',
-                                        description:
-                                            'Resize, recolor, and tweak elements until it feels right.',
-                                    },
-                                    {
-                                        number: '03',
-                                        title: 'Bring It to Life',
-                                        description:
-                                            'Watch your board come alive with smooth visual flow.',
-                                    },
-                                ].map((item) => (
-                                    <div key={item.number} className="group flex gap-5">
-                                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-600 text-sm font-bold text-white shadow-lg shadow-primary-200 transition duration-300 group-hover:scale-110">
-                                            {item.number}
-                                        </div>
-
-                                        <div>
-                                            <h3 className="font-bold text-gray-900">
-                                                {item.title}
-                                            </h3>
-
-                                            <p className="mt-2 text-sm leading-6 text-gray-500">
-                                                {item.description}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <ImageSlider images={images} />
-                        </div>
+                        <BuildStage />
                     </div>
                 </section>
+
+                <GallerySection />
 
                 {/* =====================================================
                 COMING SOON

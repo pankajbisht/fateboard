@@ -1,3 +1,4 @@
+import { exampleSectionTitle, type HelpExample } from './helpExamples';
 import type { HelpShortcut } from './helpShortcuts';
 import { type HelpTopic, plainText, SHORTCUTS_TOPIC } from './helpTopics';
 
@@ -20,6 +21,8 @@ const MAX_HITS = 24;
 export function buildHelpIndex(
     topics: readonly HelpTopic[],
     shortcuts: readonly HelpShortcut[],
+    /** Real-world examples by topic id: each one reads as a section of its topic. */
+    examples: Readonly<Record<string, readonly HelpExample[]>> = {},
 ): HelpDoc[] {
     const docs = topics.flatMap((topic) => {
         const base = { topicId: topic.id, topicTitle: topic.title };
@@ -34,6 +37,17 @@ export function buildHelpIndex(
                     ...(section.items ?? []).map((item) => ({
                         ...here,
                         text: plainText(item),
+                        weight: WEIGHT.item,
+                    })),
+                ];
+            }),
+            ...(examples[topic.id] ?? []).flatMap((example) => {
+                const here = { ...base, section: exampleSectionTitle(example) };
+                return [
+                    { ...here, text: example.brief, weight: WEIGHT.section },
+                    ...[...example.steps.map((step) => step.text), example.result].map((line) => ({
+                        ...here,
+                        text: plainText(line),
                         weight: WEIGHT.item,
                     })),
                 ];

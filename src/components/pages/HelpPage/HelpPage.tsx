@@ -12,6 +12,7 @@ import {
     searchHelp,
     searchTerms,
 } from '@/components/organisms/helpsection/helpSearch';
+import { HELP_EXAMPLES } from '@/components/organisms/helpsection/helpExamples';
 import { helpShortcuts } from '@/components/organisms/helpsection/helpShortcuts';
 import {
     findTopic,
@@ -43,7 +44,7 @@ export default function HelpPage() {
     const resultsRef = useRef<HTMLUListElement>(null);
     const mainRef = useRef<HTMLElement>(null);
 
-    const index = useMemo(() => buildHelpIndex(HELP_TOPICS, helpShortcuts()), []);
+    const index = useMemo(() => buildHelpIndex(HELP_TOPICS, helpShortcuts(), HELP_EXAMPLES), []);
     const hits = useMemo(() => searchHelp(index, query), [index, query]);
     const terms = searchTerms(query);
     const searching = terms.length > 0;

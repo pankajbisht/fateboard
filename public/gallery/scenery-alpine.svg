@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Alpine Sunrise</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4c4fb8"/>
+      <stop offset="0.55" stop-color="#e895b8"/>
+      <stop offset="1" stop-color="#ffd9a8"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff4d6" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#fff4d6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="lake" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e7a8c3"/>
+      <stop offset="1" stop-color="#5457b5"/>
+    </linearGradient>
+  </defs>
+  <g id="step-1">
+    <rect width="480" height="360" fill="url(#sky)"/>
+    <circle cx="306" cy="160" r="90" fill="url(#glow)"/>
+    <circle cx="306" cy="164" r="30" fill="#fff6dd"/>
+    <path d="M60 58 Q100 50 150 58 Q120 64 60 58 Z" fill="#ffffff" opacity="0.35"/>
+    <path d="M330 80 Q390 70 450 82 Q400 88 330 80 Z" fill="#ffffff" opacity="0.3"/>
+    <path d="M120 72 L126 66 L132 72 M138 62 L143 57 L148 62" stroke="#3b3d8a" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+  <g id="step-2">
+    <path d="M0 196 L44 150 L80 172 L132 108 L176 156 L210 128 L262 182 L300 150 L352 92 L400 140 L440 118 L480 150 L480 214 L0 214 Z" fill="#c4a3d8"/>
+    <path d="M132 108 L150 128 L140 126 L132 136 L124 128 L116 128 Z" fill="#ffffff" opacity="0.9"/>
+    <path d="M352 92 L374 116 L362 112 L354 122 L346 114 L334 116 Z" fill="#ffffff" opacity="0.9"/>
+    <path d="M210 128 L224 142 L214 140 L206 144 Z" fill="#ffffff" opacity="0.8"/>
+  </g>
+  <g id="step-3">
+    <path d="M0 214 L36 186 L90 210 L150 160 L208 204 L250 178 L300 210 L360 164 L420 200 L480 178 L480 230 L0 230 Z" fill="#8f7cc1"/>
+    <path d="M150 160 L170 178 L158 176 L150 184 L142 176 L132 176 Z" fill="#ffffff" opacity="0.75"/>
+    <path d="M360 164 L378 180 L366 178 L358 186 L352 180 L342 180 Z" fill="#ffffff" opacity="0.75"/>
+  </g>
+  <g id="step-4">
+    <path d="M0 230 L60 210 L130 226 L190 206 L260 228 L330 212 L400 226 L480 208 L480 240 L0 240 Z" fill="#5e559c"/>
+  </g>
+  <g id="step-5">
+    <rect x="0" y="240" width="480" height="70" fill="url(#lake)"/>
+    <path d="M0 240 L60 258 L130 246 L190 262 L260 244 L330 258 L400 246 L480 262 L480 240 Z" fill="#5e559c" opacity="0.55"/>
+    <path d="M0 254 L36 290 L90 262 L150 316 L208 268 L250 296 L300 262 L360 314 L420 274 L480 298 L480 254 Z" fill="#8f7cc1" opacity="0.25"/>
+    <rect x="286" y="246" width="40" height="3" rx="1.5" fill="#fff6dd" opacity="0.8"/>
+    <rect x="276" y="256" width="60" height="3" rx="1.5" fill="#fff6dd" opacity="0.6"/>
+    <rect x="292" y="266" width="28" height="3" rx="1.5" fill="#fff6dd" opacity="0.5"/>
+    <rect x="270" y="278" width="72" height="2" rx="1" fill="#fff6dd" opacity="0.35"/>
+    <rect x="296" y="290" width="20" height="2" rx="1" fill="#fff6dd" opacity="0.3"/>
+    <path d="M40 270 L90 270 M380 284 L440 284 M150 296 L190 296" stroke="#ffffff" stroke-width="1.5" opacity="0.35" stroke-linecap="round"/>
+  </g>
+  <g id="step-6">
+    <path d="M0 306 Q80 294 170 310 Q260 300 340 312 Q420 300 480 308 L480 360 L0 360 Z" fill="#26285a"/>
+    <polygon points="40,320 52,280 64,320" fill="#1b1d45"/>
+    <polygon points="36,300 52,252 68,300" fill="#1b1d45"/>
+    <polygon points="40,280 52,232 64,280" fill="#1b1d45"/>
+    <polygon points="74,322 84,290 94,322" fill="#1b1d45"/>
+    <polygon points="72,304 84,268 96,304" fill="#1b1d45"/>
+    <polygon points="10,318 20,288 30,318" fill="#1b1d45"/>
+    <polygon points="8,300 20,266 32,300" fill="#1b1d45"/>
+    <polygon points="420,322 434,276 448,322" fill="#1b1d45"/>
+    <polygon points="416,300 434,246 452,300" fill="#1b1d45"/>
+    <polygon points="420,276 434,226 448,276" fill="#1b1d45"/>
+    <polygon points="452,322 462,292 472,322" fill="#1b1d45"/>
+    <polygon points="450,306 462,272 474,306" fill="#1b1d45"/>
+    <polygon points="388,324 398,298 408,324" fill="#1b1d45"/>
+    <rect x="200" y="320" width="54" height="5" rx="2" fill="#5e3b2a"/>
+    <path d="M206 320 L210 340 M248 320 L244 340" stroke="#5e3b2a" stroke-width="3"/>
+    <path d="M190 308 Q196 296 204 306 Q212 292 220 306" stroke="#3a3c7a" stroke-width="2" fill="none" opacity="0.8"/>
+  </g>
+</svg>

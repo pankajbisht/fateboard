@@ -35,3 +35,8 @@ blob-report
 
 # test coverage output (npm run test:coverage)
 coverage
+
+# Claude Code: personal files (the shared setup in .claude/ and CLAUDE.md is committed)
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees

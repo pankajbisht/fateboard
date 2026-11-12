@@ -9,7 +9,7 @@ import { shortcut } from '@/lib/utils/isMac';
  */
 const tool = (
     id: string,
-    tool: 'select' | 'pan' | 'node' | 'pen' | 'pencil' | 'laser',
+    tool: 'select' | 'pan' | 'node' | 'pen' | 'pencil' | 'laser' | 'draw',
     label: string,
     key: string,
     icon: Parameters<typeof Icon>[0]['name'],
@@ -31,4 +31,5 @@ export const ToolBarConfig = [
     tool('tool-pen', 'pen', 'Pen', 'P', 'pen-tool'),
     tool('tool-pencil', 'pencil', 'Pencil', shortcut('⇧P', 'Shift+P'), 'pencil-line'),
     tool('tool-laser', 'laser', 'Laser pointer', 'K', 'laser-pointer'),
+    tool('tool-brush', 'draw', 'Brush', 'B', 'paintbrush'), // paints with the current brush
 ];

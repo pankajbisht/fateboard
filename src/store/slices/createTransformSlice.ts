@@ -1,6 +1,7 @@
 import type { SliceCreator } from '../types';
 import * as fabric from 'fabric';
 import type { Transform } from '../../lib/types/transform.type';
+import { isLockedTarget } from '@/lib/canvas/arrange';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -142,6 +143,8 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get) => 
         const { transform: t, canvas } = get();
         const obj = canvas?.getActiveObject();
         if (!canvas || !obj || get()._isSyncing) return;
+        // locked: refuse the edit and show the object's real values again (BUG-189)
+        if (isLockedTarget(obj)) return get().updateFromFabric(obj);
 
         set({ _isSyncing: true });
         try {
@@ -196,7 +199,7 @@ export const createTransformSlice: SliceCreator<TransformSlice> = (set, get) => 
     _reflect: (axis) => {
         const { canvas } = get();
         const obj = canvas?.getActiveObject();
-        if (!canvas || !obj || get()._isSyncing) return;
+        if (!canvas || !obj || get()._isSyncing || isLockedTarget(obj)) return; // BUG-189
         const t = get().transform;
 
         set({ _isSyncing: true });

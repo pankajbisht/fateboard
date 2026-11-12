@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Desert Highway</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d2c6b"/>
+      <stop offset="0.4" stop-color="#d9576b"/>
+      <stop offset="0.8" stop-color="#ff9a5a"/>
+      <stop offset="1" stop-color="#ffd27a"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff1b8"/>
+      <stop offset="1" stop-color="#ffb35c"/>
+    </linearGradient>
+    <linearGradient id="sand" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e2915a"/>
+      <stop offset="1" stop-color="#9c4a35"/>
+    </linearGradient>
+    <linearGradient id="road" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5a3d4e"/>
+      <stop offset="1" stop-color="#2b1c2a"/>
+    </linearGradient>
+  </defs>
+  <g id="step-1">
+    <rect width="480" height="360" fill="url(#sky)"/>
+    <circle cx="40" cy="24" r="1.2" fill="#ffffff" opacity="0.8"/>
+    <circle cx="120" cy="40" r="1" fill="#ffffff" opacity="0.6"/>
+    <circle cx="210" cy="16" r="1.4" fill="#ffffff" opacity="0.8"/>
+    <circle cx="330" cy="30" r="1" fill="#ffffff" opacity="0.6"/>
+    <circle cx="430" cy="20" r="1.3" fill="#ffffff" opacity="0.8"/>
+  </g>
+  <g id="step-2">
+    <circle cx="240" cy="196" r="64" fill="url(#sun)"/>
+    <rect x="182" y="168" width="116" height="5" fill="#ff9a5a" opacity="0.85"/>
+    <rect x="177" y="182" width="126" height="7" fill="#ff9a5a" opacity="0.85"/>
+    <rect x="176" y="198" width="128" height="9" fill="#ffb35c" opacity="0.85"/>
+    <path d="M60 90 Q130 80 200 92 Q140 98 60 90 Z" fill="#ffd1b3" opacity="0.4"/>
+    <path d="M300 110 Q370 100 440 112 Q380 118 300 110 Z" fill="#ffd1b3" opacity="0.35"/>
+  </g>
+  <g id="step-3">
+    <path d="M0 214 L0 176 L20 172 L30 150 L96 150 L104 172 L130 176 L136 214 Z" fill="#b5524a"/>
+    <path d="M320 214 L332 168 L346 164 L352 142 L436 142 L440 160 L470 166 L480 180 L480 214 Z" fill="#b5524a"/>
+    <path d="M30 150 L96 150 L94 156 L32 156 Z" fill="#d9776b"/>
+    <path d="M352 142 L436 142 L434 148 L354 148 Z" fill="#d9776b"/>
+    <path d="M140 214 L150 192 L196 192 L204 214 Z" fill="#8e3b3f"/>
+  </g>
+  <g id="step-4">
+    <path d="M0 214 L480 214 L480 360 L0 360 Z" fill="url(#sand)"/>
+    <path d="M0 214 L60 214 L100 230 L0 250 Z" fill="#c7704a" opacity="0.6"/>
+    <path d="M480 214 L420 214 L380 232 L480 246 Z" fill="#c7704a" opacity="0.6"/>
+  </g>
+  <g id="step-5">
+    <polygon points="232,214 248,214 400,360 80,360" fill="url(#road)"/>
+    <polygon points="238,222 242,222 244,236 236,236" fill="#ffd27a"/>
+    <polygon points="235,248 245,248 248,272 232,272" fill="#ffd27a"/>
+    <polygon points="231,292 249,292 254,330 226,330" fill="#ffd27a"/>
+    <path d="M232 214 L80 360 M248 214 L400 360" stroke="#f2e2c4" stroke-width="2" opacity="0.6"/>
+    <rect x="268" y="226" width="3" height="18" fill="#3a2230"/>
+    <rect x="262" y="220" width="16" height="8" rx="1" fill="#2f6b5b"/>
+  </g>
+  <g id="step-6">
+    <path d="M60 360 L60 262 Q60 252 70 252 Q80 252 80 262 L80 360 Z" fill="#3d1e2a"/>
+    <path d="M60 300 L44 300 Q36 300 36 290 L36 270 Q36 262 42 262 Q48 262 48 270 L48 288 L60 288 Z" fill="#3d1e2a"/>
+    <path d="M80 286 L96 286 L96 266 Q96 258 102 258 Q108 258 108 266 L108 290 Q108 298 100 298 L80 298 Z" fill="#3d1e2a"/>
+    <path d="M420 360 L420 290 Q420 282 428 282 Q436 282 436 290 L436 360 Z" fill="#3d1e2a"/>
+    <path d="M420 320 L408 320 Q402 320 402 312 L402 298 Q402 292 406 292 Q410 292 410 298 L410 310 L420 310 Z" fill="#3d1e2a"/>
+    <path d="M436 306 L446 306 L446 292 Q446 286 450 286 Q454 286 454 292 L454 310 Q454 316 448 316 L436 316 Z" fill="#3d1e2a"/>
+    <ellipse cx="140" cy="300" rx="14" ry="6" fill="#3d1e2a" opacity="0.8"/>
+    <ellipse cx="350" cy="290" rx="10" ry="4" fill="#3d1e2a" opacity="0.7"/>
+    <path d="M170 254 L180 254 M300 262 L316 262 M130 334 L160 334" stroke="#f2b47e" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+    <path d="M300 78 L306 72 L312 78 M318 70 L322 66 L326 70" stroke="#2b1c2a" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

@@ -49,6 +49,7 @@ import { EditBarConfig } from '@/components/config/toolbars/ui/EditBarConfig';
 import { GroupBarConfig } from '@/components/config/toolbars/ui/GroupBarConfig';
 import { LAYERCONTROL_ACTIONS } from '@/components/config/toolbars/ui/LayerControlBarConfig';
 import { LockBarConfig } from '@/components/config/toolbars/ui/LockBarConfig';
+import { useArrangeCan } from '@/hooks/useArrangeState';
 
 /**
  * Key labels come from the commands that own the keys (BUG-152): the menu used to carry its own
@@ -494,6 +495,7 @@ export default function LayersPanel() {
     );
     const single = selected.length === 1 ? selected[0] : null;
     const allLocked = selected.length > 0 && selected.every((l) => l.locked);
+    const can = useArrangeCan(); // same Group / Ungroup rules as the header (BUG-192)
 
     const rows = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -585,14 +587,14 @@ export default function LayersPanel() {
                 label: 'Group',
                 shortcut: KEYS.group,
                 onClick: () => store.groupLayers(),
-                disabled: selected.length < 2,
+                disabled: !can('group'),
                 dividerBefore: true,
             },
             {
                 label: 'Ungroup',
                 shortcut: KEYS.ungroup,
                 onClick: store.ungroupSelected,
-                disabled: !layer?.isGroup,
+                disabled: !can('ungroup'),
             },
             {
                 label: 'Bring to front',
@@ -640,14 +642,14 @@ export default function LayersPanel() {
             <div className="flex items-center gap-0.5 px-3 pt-2">
                 <IconButton
                     label={withKeys('Group', KEYS.group)}
-                    disabled={selected.length < 2}
+                    disabled={!can('group')}
                     onClick={() => store.groupLayers()}
                 >
                     <GroupIcon size={15} />
                 </IconButton>
                 <IconButton
                     label={withKeys('Ungroup', KEYS.ungroup)}
-                    disabled={!single?.isGroup}
+                    disabled={!can('ungroup')}
                     onClick={store.ungroupSelected}
                 >
                     <Ungroup size={15} />

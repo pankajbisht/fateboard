@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Lighthouse Coast</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14213d"/>
+      <stop offset="0.6" stop-color="#3d6a99"/>
+      <stop offset="1" stop-color="#a8d0db"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2f5d87"/>
+      <stop offset="1" stop-color="#0f2240"/>
+    </linearGradient>
+    <linearGradient id="beam" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#fff3b0" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#fff3b0" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="lamp" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff3b0" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#fff3b0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g id="step-1">
+    <rect width="480" height="360" fill="url(#sky)"/>
+    <circle cx="40" cy="30" r="1.3" fill="#ffffff" opacity="0.9"/>
+    <circle cx="96" cy="58" r="1" fill="#ffffff" opacity="0.6"/>
+    <circle cx="150" cy="20" r="1.5" fill="#ffffff"/>
+    <circle cx="220" cy="48" r="1" fill="#ffffff" opacity="0.6"/>
+    <circle cx="260" cy="16" r="1.2" fill="#ffffff" opacity="0.8"/>
+    <circle cx="190" cy="90" r="1" fill="#ffffff" opacity="0.5"/>
+    <circle cx="110" cy="96" r="22" fill="#f4f1de"/>
+    <circle cx="110" cy="96" r="40" fill="#f4f1de" opacity="0.12"/>
+    <path d="M20 150 Q70 140 130 150 Q80 158 20 150 Z" fill="#ffffff" opacity="0.2"/>
+    <path d="M190 120 Q260 110 330 122 Q270 128 190 120 Z" fill="#ffffff" opacity="0.15"/>
+  </g>
+  <g id="step-2">
+    <polygon points="372,88 0,40 0,150" fill="url(#beam)"/>
+  </g>
+  <g id="step-3">
+    <rect x="0" y="214" width="480" height="146" fill="url(#sea)"/>
+    <rect x="0" y="212" width="480" height="3" fill="#a8d0db" opacity="0.6"/>
+    <path d="M120 214 L118 202 L122 202 Z" fill="#0f2240"/>
+    <path d="M112 204 L120 186 L120 204 Z" fill="#e8e8e8"/>
+    <path d="M121 202 L130 196 L121 192 Z" fill="#c9c9c9"/>
+    <path d="M108 210 L134 210 L130 216 L112 216 Z" fill="#0f2240"/>
+    <path d="M20 240 Q40 232 60 240 Q80 248 100 240" stroke="#a8d0db" stroke-width="2" fill="none" opacity="0.5" stroke-linecap="round"/>
+    <path d="M140 260 Q160 252 180 260 Q200 268 220 260" stroke="#a8d0db" stroke-width="2" fill="none" opacity="0.45" stroke-linecap="round"/>
+    <path d="M40 290 Q64 280 88 290 Q112 300 136 290" stroke="#a8d0db" stroke-width="2.5" fill="none" opacity="0.4" stroke-linecap="round"/>
+    <path d="M200 310 Q224 300 248 310 Q272 320 296 310" stroke="#a8d0db" stroke-width="2.5" fill="none" opacity="0.4" stroke-linecap="round"/>
+    <path d="M70 338 Q100 326 130 338 Q160 350 190 338" stroke="#a8d0db" stroke-width="3" fill="none" opacity="0.35" stroke-linecap="round"/>
+    <path d="M230 232 L270 232 M180 222 L210 222" stroke="#f4f1de" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+    <rect x="98" y="220" width="24" height="3" rx="1.5" fill="#f4f1de" opacity="0.6"/>
+    <rect x="92" y="230" width="36" height="3" rx="1.5" fill="#f4f1de" opacity="0.4"/>
+  </g>
+  <g id="step-4">
+    <path d="M290 360 L300 300 L330 262 L320 236 L350 210 L388 200 L430 186 L480 180 L480 360 Z" fill="#1d2b3a"/>
+    <path d="M300 300 L330 262 L350 290 L330 330 Z" fill="#2b3d50"/>
+    <path d="M350 210 L388 200 L380 230 L356 238 Z" fill="#2b3d50"/>
+    <path d="M296 330 Q290 344 300 352 Q310 338 316 340" stroke="#e8f4f8" stroke-width="3" fill="none" opacity="0.7" stroke-linecap="round"/>
+    <path d="M280 352 Q300 342 320 352" stroke="#e8f4f8" stroke-width="2.5" fill="none" opacity="0.6" stroke-linecap="round"/>
+    <ellipse cx="270" cy="350" rx="20" ry="7" fill="#1d2b3a"/>
+  </g>
+  <g id="step-5">
+    <path d="M352 192 L364 92 L380 92 L392 192 Z" fill="#f4f1de" stroke="#14213d" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M357 152 L387 152 L389 168 L355 168 Z" fill="#c1121f"/>
+    <path d="M361 118 L383 118 L385 134 L359 134 Z" fill="#c1121f"/>
+    <rect x="366" y="168" width="12" height="24" rx="5" fill="#14213d"/>
+    <rect x="356" y="84" width="32" height="8" fill="#14213d"/>
+    <circle cx="372" cy="72" r="34" fill="url(#lamp)"/>
+    <rect x="362" y="62" width="20" height="22" fill="#fff3b0" stroke="#14213d" stroke-width="3"/>
+    <path d="M372 62 L372 84" stroke="#14213d" stroke-width="2"/>
+    <path d="M358 62 L372 46 L386 62 Z" fill="#c1121f" stroke="#14213d" stroke-width="3" stroke-linejoin="round"/>
+    <line x1="372" y1="46" x2="372" y2="38" stroke="#14213d" stroke-width="2.5"/>
+  </g>
+  <g id="step-6">
+    <rect x="404" y="170" width="30" height="20" fill="#e9e3d0" stroke="#14213d" stroke-width="2.5"/>
+    <path d="M400 172 L419 156 L438 172 Z" fill="#7a2e2e" stroke="#14213d" stroke-width="2.5" stroke-linejoin="round"/>
+    <rect x="414" y="176" width="8" height="8" fill="#ffd27a"/>
+    <path d="M200 70 Q206 64 212 70 Q218 64 224 70" stroke="#e8f4f8" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <path d="M240 96 Q244 92 248 96 Q252 92 256 96" stroke="#e8f4f8" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </g>
+</svg>

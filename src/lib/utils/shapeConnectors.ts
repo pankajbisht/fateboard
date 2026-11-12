@@ -252,7 +252,7 @@ function elbowGeo(s: Pt, sd: Pt, e: Pt, ed: Pt, hasS: boolean, hasE: boolean): G
     };
 }
 
-function head(tip: Pt, dir: Pt, size: number): string {
+export function head(tip: Pt, dir: Pt, size: number): string {
     const a = 0.5;
     const cos = Math.cos(a);
     const sin = Math.sin(a);

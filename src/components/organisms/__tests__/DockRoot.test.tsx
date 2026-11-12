@@ -26,7 +26,7 @@ describe('DockRoot color columns', () => {
         const tools = screen.getByTestId('dock-tools');
 
         expect(within(tools).getByLabelText('Custom color')).toBeTruthy();
-        expect(within(tools).getByRole('button', { name: 'Enter a hex color' })).toBeTruthy();
+        expect(within(tools).queryByRole('button', { name: 'Enter a hex color' })).toBeNull();
         expect(tools.querySelector('[data-paint]')).toBeNull();
         expect(
             within(tools).getByRole('button', { name: 'Use recent color #ff0000' }),
@@ -50,7 +50,7 @@ describe('DockRoot color columns', () => {
         renderWithRecent();
         const boxes = screen.getByTestId('dock-tools').querySelectorAll('[data-dock-box]');
 
-        expect(boxes.length).toBe(5); // all colors, custom, hex, 2 recent (no EyeDropper in jsdom)
+        expect(boxes.length).toBe(4); // all colors, custom, 2 recent (hex + eyedropper are in custom)
         boxes.forEach((box) => {
             // one size for every box and swatch, following Settings > Icon size
             expect(box.className).toContain('size-[var(--ui-swatch)]');

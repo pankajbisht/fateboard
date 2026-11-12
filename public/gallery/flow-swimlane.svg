@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Order Fulfilment</title>
+  <g id="step-1">
+    <rect width="480" height="360" fill="#ffffff"/>
+    <text x="14" y="26" font-family="Inter, Helvetica, Arial, sans-serif" font-size="15" font-weight="800" fill="#0f172a">Order fulfilment</text>
+    <text x="466" y="26" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" fill="#64748b" text-anchor="end">target: delivered in 48 h</text>
+    <rect x="12" y="40" width="456" height="100" fill="#eff6ff"/>
+    <rect x="12" y="140" width="456" height="100" fill="#f0fdf4"/>
+    <rect x="12" y="240" width="456" height="100" fill="#fff7ed"/>
+    <rect x="12" y="40" width="30" height="100" fill="#dbeafe"/>
+    <rect x="12" y="140" width="30" height="100" fill="#dcfce7"/>
+    <rect x="12" y="240" width="30" height="100" fill="#ffedd5"/>
+    <rect x="12" y="40" width="456" height="300" fill="none" stroke="#cbd5e1" stroke-width="1.5"/>
+    <path d="M12 140 L468 140 M12 240 L468 240 M42 40 L42 340" stroke="#cbd5e1" stroke-width="1.5"/>
+    <text x="27" y="94" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#1e3a8a" text-anchor="middle" transform="rotate(-90 27 90)">Customer</text>
+    <text x="27" y="194" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#14532d" text-anchor="middle" transform="rotate(-90 27 190)">Warehouse</text>
+    <text x="27" y="294" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#7c2d12" text-anchor="middle" transform="rotate(-90 27 290)">Courier</text>
+  </g>
+  <g id="step-2">
+    <rect x="66" y="70" width="88" height="40" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+    <text x="110" y="94" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a" text-anchor="middle">Place order</text>
+    <rect x="170" y="70" width="88" height="40" rx="8" fill="#ffffff" stroke="#dc2626" stroke-width="2"/>
+    <text x="214" y="88" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#7f1d1d" text-anchor="middle">Get delay</text>
+    <text x="214" y="102" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#7f1d1d" text-anchor="middle">email</text>
+    <rect x="352" y="70" width="80" height="40" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="2"/>
+    <text x="392" y="88" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a" text-anchor="middle">Receive</text>
+    <text x="392" y="102" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#1e3a8a" text-anchor="middle">parcel</text>
+    <circle cx="454" cy="90" r="10" fill="#ffffff" stroke="#0f172a" stroke-width="4"/>
+    <polygon points="186,160 222,190 186,220 150,190" fill="#fef3c7" stroke="#d97706" stroke-width="2" stroke-linejoin="round"/>
+    <text x="186" y="187" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#78350f" text-anchor="middle">In</text>
+    <text x="186" y="199" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#78350f" text-anchor="middle">stock?</text>
+    <rect x="248" y="170" width="84" height="40" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="2"/>
+    <text x="290" y="194" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#14532d" text-anchor="middle">Pick &amp; pack</text>
+  </g>
+  <g id="step-3">
+    <rect x="248" y="270" width="84" height="40" rx="8" fill="#ffffff" stroke="#ea580c" stroke-width="2"/>
+    <text x="290" y="294" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#7c2d12" text-anchor="middle">Collect</text>
+    <rect x="352" y="270" width="80" height="40" rx="8" fill="#ffffff" stroke="#ea580c" stroke-width="2"/>
+    <text x="392" y="294" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#7c2d12" text-anchor="middle">Deliver</text>
+  </g>
+  <g id="step-4">
+    <path d="M110 110 L110 190 L144 190" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="152,190 144,185 144,195" fill="#64748b"/>
+    <path d="M186 160 L186 118" stroke="#dc2626" stroke-width="2" fill="none"/>
+    <polygon points="186,110 181,118 191,118" fill="#dc2626"/>
+    <text x="192" y="140" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#dc2626">No</text>
+    <path d="M222 190 L240 190" stroke="#16a34a" stroke-width="2" fill="none"/>
+    <polygon points="248,190 240,185 240,195" fill="#16a34a"/>
+    <text x="232" y="182" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#16a34a" text-anchor="middle">Yes</text>
+    <path d="M258 90 L290 90 L290 162" stroke="#94a3b8" stroke-width="2" fill="none" stroke-dasharray="5 4"/>
+    <polygon points="290,170 285,162 295,162" fill="#94a3b8"/>
+    <text x="296" y="128" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-style="italic" fill="#64748b">restocked</text>
+    <path d="M290 210 L290 262" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="290,270 285,262 295,262" fill="#64748b"/>
+    <path d="M332 290 L344 290" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="352,290 344,285 344,295" fill="#64748b"/>
+    <path d="M392 270 L392 118" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="392,110 387,118 397,118" fill="#64748b"/>
+    <path d="M432 90 L438 90" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="444,90 437,86 437,94" fill="#64748b"/>
+  </g>
+  <g id="step-5">
+    <rect x="380" y="166" width="72" height="48" fill="#fde68a" transform="rotate(3 416 190)"/>
+    <text x="388" y="184" font-family="'Comic Sans MS', 'Marker Felt', cursive" font-size="10" fill="#713f12" transform="rotate(3 416 190)">Scan every</text>
+    <text x="388" y="198" font-family="'Comic Sans MS', 'Marker Felt', cursive" font-size="10" fill="#713f12" transform="rotate(3 416 190)">item twice!</text>
+    <rect x="62" y="262" width="150" height="56" rx="8" fill="#ffffff" stroke="#fdba74" stroke-width="1.5" stroke-dasharray="4 3"/>
+    <text x="72" y="282" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#7c2d12">Failed delivery?</text>
+    <text x="72" y="297" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" fill="#9a3412">2 more tries, then</text>
+    <text x="72" y="310" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" fill="#9a3412">hold at the depot</text>
+  </g>
+</svg>

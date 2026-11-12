@@ -6,6 +6,7 @@ import { shortcut } from '@/lib/utils/isMac';
 import { canvasKeysBlocked } from '@/lib/keyboard/modalOpen';
 import IconButton from '../../../../atoms/IconButton';
 import { Tooltip } from '../../../../molecules/Tooltip';
+import { GridMenu } from './GridMenu';
 
 interface ToolbarAction {
     id: string;
@@ -90,7 +91,7 @@ const ExtraBar = () => {
     return (
         <>
             <ul className="flex items-center gap-0.5">
-                {actions.map((action) => (
+                {actions.map((action) => [
                     <li
                         key={action.id}
                         data-active={action.active ? 'true' : undefined}
@@ -117,8 +118,14 @@ const ExtraBar = () => {
                                 size="chrome"
                             />
                         </Tooltip>
-                    </li>
-                ))}
+                    </li>,
+                    // grid style / size / snap, right after the grid toggle
+                    action.id === 'grid' && (
+                        <li key="grid-options" className="-ml-0.5">
+                            <GridMenu />
+                        </li>
+                    ),
+                ])}
             </ul>
         </>
     );

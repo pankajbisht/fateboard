@@ -9,8 +9,10 @@ This is CLAUDE.md "How we work" + "Definition of done" as steps. One task per se
 
 ## 1. Understand
 - Restate the task in one or two sentences. Find its BUG-xxx / R-xx / roadmap row.
-- Read the `docs/` files for the area (STATE for slices, CANVAS for Fabric, COMPONENTS for panels,
-  ARCHITECTURE "Storage layer" for persistence).
+- Read only the `docs/` **sections** for the area (STATE for slices, CANVAS for Fabric, COMPONENTS for panels,
+  ARCHITECTURE "Storage layer" for persistence): `grep -n '^## ' docs/STATE.md` or `grep -n '<keyword>' docs/*.md`,
+  then Read those lines with offset / limit. Bugs: `grep -n "BUG-0xx" docs/BUGS*.md`. Never read DECISIONS.md or
+  BUGS_ARCHIVE.md whole.
 - Reproduce or locate the root cause. Symptom patches are not accepted.
 
 ## 2. Plan (before editing)
@@ -28,11 +30,13 @@ into a file that is already over budget. Related problems you notice: add them t
 don't fix them silently.
 
 ## 5. Verify
-`npm run check`, `npm run test:run` (or `test:coverage`), `npm run build`, and the E2E specs for the area. The
-`fate-verifier` agent can run the full gate and summarise failures. Then the `fate-reviewer` agent (skill
-`fate-review`) reviews the diff; fix CONFIRMED P0–P2 findings.
+`npm run check`, `npm run test:run` (or `test:coverage`), `npm run build`, and the E2E specs for the area, each
+with summary-only output (CLAUDE.md "Token budget"). For a change over several areas or a risky one, also hand it
+to the `fate-verifier` and `fate-reviewer` agents **with the list of files you changed** (they must not review the
+whole working tree); fix CONFIRMED P0–P2 findings. A small, well-tested change does not need them.
 
 ## 6. Document and report
-- `docs/` updated; `docs/BUGS.md` row → `fixed (<date>): <how> (<tests>)`; decisions logged.
+- `docs/` updated; the bug's row → `fixed (<date>): <how> (<tests>)` and moved to `docs/BUGS_ARCHIVE.md`; a new
+  bug takes the next ID after "Highest ID" in BUGS.md (update it); decisions logged.
 - Final report: what changed and why, files changed, commands run with results, what was not verified, open
   follow-ups. Commit only when the user asks (branch first if on `main`).

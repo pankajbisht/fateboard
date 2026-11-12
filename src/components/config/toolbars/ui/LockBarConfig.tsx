@@ -1,6 +1,7 @@
 import { Icon } from '@/components/atoms/Icon';
 import { shortcut } from '@/lib/utils/isMac';
 import { useStore } from '@/store';
+import { arrangeWhen } from './arrangeWhen';
 
 export const LockBarConfig = [
     {
@@ -10,7 +11,9 @@ export const LockBarConfig = [
         description: 'Lock selected object',
         shortcut: shortcut('⌘L', 'Ctrl+L'),
         icon: <Icon name="lock" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'lock' as const,
+        when: arrangeWhen('lock'),
+        enabled: arrangeWhen('lock'),
         onClick: () => useStore.getState().lock(),
         handler: ({ get }) => {
             const { lock } = get();
@@ -24,7 +27,9 @@ export const LockBarConfig = [
         description: 'Unlock selected object',
         shortcut: shortcut('⌘⇧L', 'Ctrl+Shift+L'),
         icon: <Icon name="lock-open" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'unlock' as const,
+        when: arrangeWhen('unlock'),
+        enabled: arrangeWhen('unlock'),
         onClick: () => useStore.getState().unlock(),
         handler: ({ get }) => {
             const { unlock } = get();

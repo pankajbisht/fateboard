@@ -58,6 +58,7 @@ export const DockRoot = () => {
                         title={activeTab.label}
                         icon={activeTab.icon}
                         onClose={() => setOpen(false)}
+                        fullSize={activeTab.fullSize}
                         scrollRef={scrollRef}
                         onScroll={(e) => {
                             scrollMemory.current[active] = e.currentTarget.scrollTop;

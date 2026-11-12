@@ -71,7 +71,8 @@ const TOOL_BOX =
     'flex size-[var(--ui-swatch)] shrink-0 items-center justify-center border border-line-strong text-[10px] text-ink-muted hover:bg-surface-muted [&_svg]:size-[70%]';
 
 /**
- * The palette's non-swatch tools: all shades, custom picker, hex, eyedropper. Rendered by
+ * The palette's non-swatch tools: all shades and the custom picker (which has the hex field and
+ * the eyedropper, so they get no box of their own). Rendered by
  * DockRoot in the column left of the palette, next to Remove stroke / Remove fill, so the
  * palette column holds only colors. What the palette paints is chosen with the footer
  * Fill/Stroke tiles or a panel's PaintTargetSwatch.
@@ -83,40 +84,24 @@ export function PaletteTools() {
     const current = useCurrentPaintColor();
 
     // one popover at a time; fixed position (the dock column scrolls and would clip it)
-    const [open, setOpen] = useState<null | 'grid' | 'picker' | 'hex'>(null);
+    const [open, setOpen] = useState<null | 'grid' | 'picker'>(null);
     const gridButton = useRef<HTMLButtonElement | null>(null);
     const pickerButton = useRef<HTMLButtonElement | null>(null);
-    const hexButton = useRef<HTMLButtonElement | null>(null);
     const picked = useRef<string | null>(null);
-    const toggle = (which: 'grid' | 'picker' | 'hex') => {
-        if (open === 'picker' || open === 'hex') closePicker(false);
+    const toggle = (which: 'grid' | 'picker') => {
+        if (open === 'picker') closePicker(false);
         setOpen((o) => (o === which ? null : which));
     };
 
     const currentHex = normalizeHex(current) ?? '#000000';
-    const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window;
 
     // the picker applies live; the final color goes to Recent once, when it closes
     const closePicker = (refocus: boolean) => {
-        const opener = open === 'hex' ? hexButton.current : pickerButton.current;
+        const opener = pickerButton.current;
         if (picked.current) commitRecentColor?.(picked.current);
         picked.current = null;
         setOpen(null);
         if (refocus) opener?.focus();
-    };
-
-    const eyedrop = async () => {
-        try {
-            const res = await new (
-                window as unknown as {
-                    EyeDropper: new () => { open: () => Promise<{ sRGBHex: string }> };
-                }
-            ).EyeDropper().open();
-            handleColorChange(res.sRGBHex);
-            commitRecentColor?.(res.sRGBHex);
-        } catch {
-            /* cancelled */
-        }
     };
 
     const pressed = (which: typeof open) =>
@@ -155,40 +140,10 @@ export function PaletteTools() {
                 />
             </Tooltip>
 
-            <Tooltip content="Hex color" position="left">
-                <button
-                    ref={hexButton}
-                    type="button"
-                    data-dock-box
-                    aria-label="Enter a hex color"
-                    aria-haspopup="dialog"
-                    aria-expanded={open === 'hex'}
-                    onClick={() => toggle('hex')}
-                    className={`${TOOL_BOX} ${pressed('hex')}`}
-                >
-                    #
-                </button>
-            </Tooltip>
-
-            {hasEyeDropper && (
-                <Tooltip content="Pick from screen" position="left">
-                    <button
-                        type="button"
-                        data-dock-box
-                        aria-label="Pick a color from the screen"
-                        onClick={eyedrop}
-                        className={TOOL_BOX}
-                    >
-                        <Icon name="eye-dropper" />
-                    </button>
-                </Tooltip>
-            )}
-
-            {(open === 'picker' || open === 'hex') && (
+            {open === 'picker' && (
                 <ColorPickerPopover
-                    anchor={open === 'hex' ? hexButton.current : pickerButton.current}
+                    anchor={pickerButton.current}
                     color={currentHex}
-                    focusHex={open === 'hex'}
                     onChange={(hex) => {
                         picked.current = hex;
                         handleColorChange(hex);

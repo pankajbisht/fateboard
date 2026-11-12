@@ -11,16 +11,20 @@ style nits that Prettier or ESLint already enforce.
 
 ## 0. Scope
 
-- No argument: the current branch vs `main` plus the working tree (`git diff $(git merge-base HEAD main)`, and
-  untracked files from `git status`).
+- Files named by the caller: those files only (`git diff -- <file>` each, or Read for new files). This is the normal
+  case when the main session hands over a task.
+- No argument: the current branch vs `main` plus the working tree. **First run `git diff --shortstat` and
+  `git status --short | wc -l`.** Over ~30 files or ~2,000 changed lines (a big uncommitted tree), do not read it
+  all: ask the caller which files belong to the change, or review the files of the newest feature only and say
+  what you skipped. Read diffs one file at a time (`git diff -- <file>`), never the whole `git diff`.
 - A path, PR number or branch: that target only.
 - Known debt is in `docs/CODE_REVIEW.md` (R-xx) and `docs/BUGS.md` (BUG-xxx). Do not re-report it as new. Do
   report a change that makes it **worse** (a god file grows, a new `any`, a new layering violation).
 
 ## 1. Load the rules (always)
 
-Read `CLAUDE.md`, then the sections of `docs/CONVENTIONS.md` and `docs/ARCHITECTURE.md` that the changed code
-touches. Those rules are the contract; this checklist only points at them.
+Read `CLAUDE.md`, then only the sections of `docs/CONVENTIONS.md` and `docs/ARCHITECTURE.md` that the changed code
+touches (`grep -n '^## ' docs/CONVENTIONS.md`, then Read those lines with offset / limit; not the whole file). Those rules are the contract; this checklist only points at them.
 
 ## 2. Measure
 

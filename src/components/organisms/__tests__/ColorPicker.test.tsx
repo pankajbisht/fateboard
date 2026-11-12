@@ -149,11 +149,25 @@ describe('Custom color / Hex tools open the in-app picker', () => {
         ).toBe('123456');
     });
 
-    it('# opens the same picker with the hex field focused; a typed hex applies live', () => {
+    it('no separate # or eyedropper box: the custom picker has both', () => {
+        (window as unknown as { EyeDropper?: unknown }).EyeDropper = class {};
         render(<PaletteTools />);
-        fireEvent.click(screen.getByRole('button', { name: 'Enter a hex color' }));
+        expect(screen.queryByRole('button', { name: 'Enter a hex color' })).toBeNull();
+        expect(screen.queryByRole('button', { name: 'Pick a color from the screen' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Custom color' }));
+        const dialog = screen.getByRole('dialog', { name: 'Custom color' });
+        expect(within(dialog).getByRole('textbox', { name: 'Hex' })).toBeTruthy();
+        expect(
+            within(dialog).getByRole('button', { name: 'Pick a color from the screen' }),
+        ).toBeTruthy();
+        delete (window as unknown as { EyeDropper?: unknown }).EyeDropper;
+    });
+
+    it('custom picker: a typed hex applies live; Recent gets it once, on close', () => {
+        render(<PaletteTools />);
+        fireEvent.click(screen.getByRole('button', { name: 'Custom color' }));
         const hex = screen.getByRole('textbox', { name: 'Hex' });
-        expect(document.activeElement).toBe(hex);
+        fireEvent.focus(hex);
         fireEvent.change(hex, { target: { value: 'ff8000' } });
         fireEvent.keyDown(hex, { key: 'Enter' });
         expect(handleColorChange).toHaveBeenLastCalledWith('#ff8000');
@@ -162,7 +176,7 @@ describe('Custom color / Hex tools open the in-app picker', () => {
         expect(screen.queryByRole('dialog')).toBeNull();
         expect(commitRecentColor).toHaveBeenCalledTimes(1);
         expect(commitRecentColor).toHaveBeenCalledWith('#ff8000');
-        expect(document.activeElement?.getAttribute('aria-label')).toBe('Enter a hex color');
+        expect(document.activeElement?.getAttribute('aria-label')).toBe('Custom color');
     });
 
     it('closing without a change adds nothing to Recent; only one popover is open at a time', () => {

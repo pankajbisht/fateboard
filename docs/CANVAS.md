@@ -178,7 +178,8 @@ refreshed on pointerdown/scroll/resize because cached offsets go stale.
   objects are cached after an undo or reload (BUG-149). Do not enable caching globally: at 1500 objects it gains 4 ms
   per frame on a GPU and loses 310 ms without one.
 - Notebook grid paints in `_renderBackground` on every render (off by default since 2026-11-07); snap guides on
-  `after:render`.
+  `after:render`. The painters (`lib/canvas/gridPainters.ts`) draw only what is on screen (≤ 1500 lines per axis,
+  ≤ 60,000 dots / crosses, else majors only), hide a level below 6 px spacing and fade minor lines in up to 14 px.
 - Rulers (BUG-105): the pointer lives in a small pointer store (`createPointerSource` in `Ruler.tsx`), not React
   state. A mouse move re-renders only the two 1 px `RulerMarker`s; ticks redraw only when length / origin / scale /
   unit / theme change. The marker sits at the pointer's viewport x / y because the rulers line up with the viewport.

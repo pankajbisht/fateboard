@@ -1,6 +1,7 @@
 import { Icon } from '@/components/atoms/Icon';
 import { shortcut } from '@/lib/utils/isMac';
 import { useStore } from '@/store';
+import { arrangeWhen } from './arrangeWhen';
 
 export const GroupBarConfig = [
     {
@@ -10,7 +11,9 @@ export const GroupBarConfig = [
         description: 'Group selected object',
         shortcut: shortcut('⌘G', 'Ctrl+G'),
         icon: <Icon name="object-group" />,
-        when: () => useStore.getState().hasMultipleSelection(),
+        rule: 'group' as const,
+        when: arrangeWhen('group'),
+        enabled: arrangeWhen('group'),
         onClick: () => useStore.getState().groupLayers(),
         handler: ({ get }) => {
             const { groupLayers } = get();
@@ -24,7 +27,9 @@ export const GroupBarConfig = [
         description: 'Ungroup selected object',
         shortcut: shortcut('⌘⇧U', 'Ctrl+Shift+U'),
         icon: <Icon name="object-ungroup" />,
-        when: () => useStore.getState().isGroupSelected(),
+        rule: 'ungroup' as const,
+        when: arrangeWhen('ungroup'),
+        enabled: arrangeWhen('ungroup'),
         onClick: () => useStore.getState().ungroupSelected(),
         handler: ({ get }) => {
             const { ungroupSelected } = get();

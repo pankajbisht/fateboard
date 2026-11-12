@@ -42,6 +42,7 @@ import {
     FileText,
     FolderOpen,
     Grid2x2,
+    Grid3x3,
     Grip,
     GripHorizontal,
     GripVertical,
@@ -77,6 +78,9 @@ import {
     SendToBack,
     Settings,
     Shapes,
+    Snowflake,
+    Paintbrush,
+    ListVideo,
     Share,
     Share2,
     SlidersHorizontal,
@@ -269,6 +273,12 @@ export const ICONS = {
     redo: Redo2,
     'eye-slash': EyeOff,
     keyframe: Diamond,
+
+    // generators (right dock)
+    snowflake: Snowflake,
+    'cellular-automata': Grid3x3,
+    macro: ListVideo,
+    paintbrush: Paintbrush,
 
     // node editing
     'node-add': DiamondPlus,

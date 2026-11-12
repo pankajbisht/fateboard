@@ -43,6 +43,7 @@
 | `settings.spec.ts` | theme / icon size apply and persist; only working preferences; Large icons size swatches; a new visitor on a dark device gets Light, Fate Blue, Small, px; Reset asks, can be cancelled, restores every default and keeps it after a reload; Settings > Canvas size resizes the open page when the editor loads (one undo step, not again on reload) and New board starts at it; Orientation portrait gives a portrait first board; no Canvas Size panel in the left rail; Custom size typed in mm resizes the open page as typed (794 × 1123 px) |
 | `seo.spec.ts` | hash links redirect, per-route head, build files; SEO fallback hidden while the app loads, visible without JS (BUG-144) |
 | `persistence.spec.ts` | autosave survives reload; all pages + the open page survive reload (BUG-004); an imported photo survives reload (BUG-121) |
+| `gallery.spec.ts` | landing gallery: header link scrolls to it, all 18 artworks load (natural width > 0); Manga filter, a card opens `/gallery/manga-ronin` (title, h1), step groups hidden until their step and shown after (CSS opacity), Ghost shows later steps at 0.12, All pieces returns to `/#gallery` in view; a direct visit is HTTP 200, download link, next-piece link. `a11y.spec.ts` also covers `/gallery/manga-ronin` |
 | `mobile.spec.ts` | 390 × 844: the editor shows the desktop-only notice, Continue anyway is remembered for the session; the landing page has no notice and no horizontal scroll |
 | `a11y.spec.ts` | axe (WCAG 2.1 A / AA + best-practice) on `/`, `/draw`, `/setting`, `/help`, light + dark, reduced motion: zero violations |
 | `units.spec.ts` | Settings > Units (mm) shows in the footer page size and the top-bar W field (BUG-082) |
@@ -56,6 +57,13 @@
 | `data-safety.spec.ts` | New board: the first change can be undone (BUG-156); a project file with a page that cannot be read shows a dialog and leaves the board and the autosave alone (BUG-154); undo history holds one copy of a photo and undo brings it back whole (BUG-155) |
 | `drawing-tools.spec.ts` | Pen (P): clicks + a drag make a closed path, selected, one undo step; Enter finishes an open path, Backspace removes the last point; Pencil (Shift + P) draws a path and leaves the Draw brush as it was; Laser (K) shows red pixels on the top canvas that fade to none, adds nothing, Undo stays disabled |
 | `known-bugs.spec.ts` | expected failures for open bugs (none open today) |
+
+## Guardrails
+
+`src/__tests__/guardrails.test.ts` keeps the suite honest (no `.only` / `.skip` / `xit`, no `@ts-ignore` /
+`@ts-nocheck`, `@ts-expect-error` with a reason, reasonless `eslint-disable` only going down) and
+`storeApi.test.ts` locks the store's public keys (`storeApi.baseline.json`). CI compares every PR's ratchets with its
+base (`scripts/guardrails/check-ratchets.mjs`). Details and approval labels: docs/AGENT_WORKFLOW.md "Guardrails".
 
 ## Current state (after batch 1, 2026-11-06)
 

@@ -18,6 +18,7 @@ export type ShapeCategory =
     | 'callouts'
     | 'notes'
     | 'flow'
+    | '3d'
     | 'lines'
     | 'custom';
 
@@ -694,6 +695,102 @@ export const SHAPES: ShapeDef[] = [
         keywords: 'file page',
     },
 
+    /* ------------------------------- 3D (9) ------------------------------ */
+    // One closed path each: the first sub-path is the filled silhouette, the rest are the visible
+    // edges (drawn by the stroke). No groups or new object types, so undo, save, export, snap and
+    // animation handle them like any other path. Edges need a stroke (every new shape has one).
+    {
+        type: 'cube',
+        label: 'Cube',
+        category: '3d',
+        kind: 'path',
+        w: 120,
+        h: 120,
+        d: 'M 0 30 L 30 0 L 100 0 L 100 70 L 70 100 L 0 100 Z M 0 30 L 70 30 L 100 0 M 70 30 L 70 100',
+        keywords: '3d box block square solid',
+    },
+    {
+        type: 'cuboid',
+        label: 'Box',
+        category: '3d',
+        kind: 'path',
+        w: 170,
+        h: 110,
+        d: 'M 0 25 L 25 0 L 100 0 L 100 75 L 75 100 L 0 100 Z M 0 25 L 75 25 L 100 0 M 75 25 L 75 100',
+        keywords: '3d cuboid rectangular prism brick package',
+    },
+    {
+        type: 'cylinder-3d',
+        label: 'Cylinder',
+        category: '3d',
+        kind: 'path',
+        w: 100,
+        h: 140,
+        d: 'M 0 12 A 50 12 0 0 1 100 12 V 88 A 50 12 0 0 1 0 88 Z M 0 12 A 50 12 0 0 0 100 12',
+        keywords: '3d tube can pipe solid',
+    },
+    {
+        type: 'cone',
+        label: 'Cone',
+        category: '3d',
+        kind: 'path',
+        w: 110,
+        h: 130,
+        d: 'M 50 0 L 100 88 A 50 12 0 0 1 0 88 Z M 0 88 A 50 12 0 0 1 100 88',
+        keywords: '3d funnel traffic solid',
+    },
+    {
+        type: 'sphere',
+        label: 'Sphere',
+        category: '3d',
+        kind: 'path',
+        w: 120,
+        h: 120,
+        d: 'M 0 50 A 50 50 0 1 1 100 50 A 50 50 0 1 1 0 50 Z M 0 50 A 50 14 0 0 0 100 50',
+        keywords: '3d ball globe orb solid',
+    },
+    {
+        type: 'pyramid',
+        label: 'Pyramid',
+        category: '3d',
+        kind: 'path',
+        w: 130,
+        h: 120,
+        d: 'M 50 0 L 100 75 L 65 100 L 0 80 Z M 50 0 L 65 100',
+        keywords: '3d tetrahedron egypt solid',
+    },
+    {
+        type: 'prism',
+        label: 'Prism',
+        category: '3d',
+        kind: 'path',
+        w: 160,
+        h: 110,
+        d: 'M 0 100 L 60 100 L 100 55 L 70 0 L 30 45 Z M 30 45 L 60 100',
+        keywords: '3d triangular prism tent roof wedge solid',
+    },
+    {
+        type: 'hex-prism',
+        label: 'Hexagonal Prism',
+        category: '3d',
+        kind: 'path',
+        w: 110,
+        h: 130,
+        d: 'M 0 15 L 25 0 L 75 0 L 100 15 L 100 85 L 75 100 L 25 100 L 0 85 Z M 0 15 L 25 30 L 75 30 L 100 15 M 25 30 L 25 100 M 75 30 L 75 100',
+        keywords: '3d hexagon column nut pencil solid',
+    },
+    {
+        type: 'torus',
+        label: 'Torus',
+        category: '3d',
+        kind: 'path',
+        evenodd: true, // the hole is a second closed sub-path
+        w: 140,
+        h: 90,
+        d: 'M 0 50 A 50 30 0 1 1 100 50 A 50 30 0 1 1 0 50 Z M 28 48 Q 50 64 72 48 Q 50 36 28 48 Z',
+        keywords: '3d donut ring doughnut solid',
+    },
+
     /* ----------------------------- Lines (3) ---------------------------- */
     {
         type: 'line',
@@ -741,9 +838,26 @@ export const SHAPE_CATEGORIES: { id: ShapeCategory | 'all'; label: string }[] = 
     { id: 'callouts', label: 'Callouts' },
     { id: 'notes', label: 'Notes' },
     { id: 'flow', label: 'Flow' },
+    { id: '3d', label: '3D' },
     { id: 'lines', label: 'Lines' },
     { id: 'custom', label: 'My Shapes' },
 ];
+
+/** Shapes panel section title and hint per category. */
+export const SHAPE_CATEGORY_INFO: Record<ShapeCategory, { title: string; hint: string }> = {
+    text: { title: 'Text Shapes', hint: 'Double-click to type inside. Great for flowcharts.' },
+    basic: { title: 'Basic', hint: 'Rectangles, circles, triangles and polygons.' },
+    arcs: { title: 'Arcs', hint: 'Half circles, rings, pie slices, crescent.' },
+    stars: { title: 'Stars', hint: 'Stars, sparkles and bursts.' },
+    symbols: { title: 'Symbols', hint: 'Heart, check, cloud, sun, pin and more.' },
+    arrows: { title: 'Arrows', hint: 'Line arrows and block arrows.' },
+    callouts: { title: 'Callouts', hint: 'Speech and thought bubbles.' },
+    notes: { title: 'Notes', hint: 'Text paper, sticky note, flag, brackets.' },
+    flow: { title: 'Flowchart', hint: 'Database, document.' },
+    '3d': { title: '3D Shapes', hint: 'Cube, cylinder, cone, sphere, pyramid and more.' },
+    lines: { title: 'Lines & Curves', hint: 'Line, curve, zigzag.' },
+    custom: { title: 'My Shapes', hint: 'Shapes you saved yourself.' },
+};
 
 /** Old type names that still work. */
 const ALIASES: Record<string, string> = {

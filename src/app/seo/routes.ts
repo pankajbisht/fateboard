@@ -1,9 +1,16 @@
 /**
  * One list of public routes and their search / social metadata (docs/ARCHITECTURE.md "SEO").
  * Read by the build (`vite.config.ts` → `prerender.ts`: one static HTML file per route + sitemap) and by the app
- * (`RouteSeo`: updates the head on client-side navigation). Pure data: no DOM, no imports (runs in Node too).
+ * (`RouteSeo`: updates the head on client-side navigation). Pure data: no DOM, and imports only other pure data
+ * modules (runs in Node too).
  * The `/` entry must match `index.html` (guarded by `seo.test.ts`).
  */
+
+import {
+    CATEGORY_LABEL,
+    GALLERY_ITEMS,
+    galleryPath,
+} from '../../components/pages/web/gallery/galleryData';
 
 export interface SeoRoute {
     /** Router path, no trailing slash (`/` for the landing page). */
@@ -61,6 +68,15 @@ export const SEO_ROUTES: readonly SeoRoute[] = [
         heading: 'Fateboard commands',
         intro: 'Search and run every Fateboard editor command.',
     },
+    // one tutorial page per gallery piece
+    ...GALLERY_ITEMS.map((item): SeoRoute => ({
+        path: galleryPath(item),
+        title: `How to Make ${item.title}: ${CATEGORY_LABEL[item.category]} Tutorial | Fateboard`,
+        description: `Step-by-step ${CATEGORY_LABEL[item.category].toLowerCase()} tutorial: ${item.description}`,
+        index: true,
+        heading: `How to make ${item.title}`,
+        intro: `${item.description} Watch it being built step by step in Fateboard, the free online canvas.`,
+    })),
 ];
 
 /** Shown for any path that is not a public route (share links, unknown URLs): never indexed. */

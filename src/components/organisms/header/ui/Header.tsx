@@ -1,7 +1,7 @@
 import { BrandLogo } from '@/components/molecules/BrandLogo';
 import { HeaderViewTool } from '@/components/templates/HeaderViewTool.template';
 import { TopToolbar } from '../../toolbars/ui/TopToolbar';
-import { ShapeToolsHeader } from '../../ShapeToolsHeader';
+import { ToolContextBar } from '../../toolbars/ui/bars/DrawToolOptions';
 
 const Header = () => {
     return (
@@ -10,7 +10,8 @@ const Header = () => {
             <HeaderViewTool
                 brand={<BrandLogo />}
                 toolbar={<TopToolbar />}
-                transform={<ShapeToolsHeader />}
+                // selection X / Y / W / H, or the Pen / Pencil options while one is active
+                transform={<ToolContextBar />}
             ></HeaderViewTool>
         </div>
     );

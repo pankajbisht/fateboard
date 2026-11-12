@@ -11,7 +11,10 @@ export interface CommandEntry {
     enabled?: () => boolean;
     /** Also runs while typing on the canvas (Fabric's hidden textarea), e.g. ⌘B (BUG-096). */
     allowWhileTyping?: boolean;
-    handler: () => void;
+    /** May return a promise (duplicate, paste, undo…): Macro playback waits for it. */
+    handler: () => unknown;
+    /** false = never part of a Macro (file new / open / save would replay downloads and dialogs). */
+    macro?: boolean;
     [key: string]: unknown;
 }
 
@@ -24,7 +27,7 @@ export interface CommandSlice {
 
 type ConfigCommand = {
     id: string;
-    handler: (ctx: { get: () => any; set: (partial: any) => void }) => void;
+    handler: (ctx: { get: () => any; set: (partial: any) => void }) => unknown;
 };
 
 export const createCommandSlice = (set: any, get: any, _store?: unknown): CommandSlice => {
@@ -55,7 +58,9 @@ export const createCommandSlice = (set: any, get: any, _store?: unknown): Comman
 
         runCommand: (id) => {
             const cmd = get().commands.find((c: CommandEntry) => c.id === id);
-            if (cmd) cmd.handler();
+            if (!cmd) return;
+            cmd.handler();
+            get().recordMacroStep?.(id); // Macro slice: kept only while recording
         },
 
         loadCommands,

@@ -1,5 +1,15 @@
 import * as fabric from 'fabric';
 import type { SliceCreator } from '../types';
+import {
+    DEFAULT_GRID_PREFS,
+    clampGridSize,
+    gridModeFor,
+    gridSnapSteps,
+    isGridStyle,
+    type GridPrefs,
+    type GridStyle,
+} from '@/lib/canvas/grid';
+import { paintGridStyle } from '@/lib/canvas/gridPainters';
 
 /* -------------------------------------------------------------------------- */
 /*                                    Types                                   */
@@ -7,7 +17,10 @@ import type { SliceCreator } from '../types';
 
 export interface NotebookSlice {
     gridEnabled: boolean;
+    /** Cell size of the current board mode (mirror of `settings.grid[mode].size`). */
     gridSize: number;
+    /** Grid look of the current board mode (mirror of `settings.grid[mode].style`). */
+    gridStyle: GridStyle;
 
     /** Master switch for all snapping (grid + objects). */
     snapEnabled: boolean;
@@ -18,7 +31,10 @@ export interface NotebookSlice {
 
     setGridEnabled: (enabled: boolean) => void;
     toggleGrid: () => void;
+    /** Saved per board mode in Settings (clamped to 4–200 px). */
     setGridSize: (size: number) => void;
+    /** Saved per board mode in Settings. */
+    setGridStyle: (style: GridStyle) => void;
 
     setSnapEnabled: (enabled: boolean) => void;
     toggleSnap: () => void;
@@ -79,34 +95,12 @@ const DEBUG_SNAP = false;
  */
 const GRID_BEHIND_OBJECTS = true;
 
-const DEFAULT_GRID_SIZE = 20;
-const MIN_GRID_SIZE = 4;
-const MAX_GRID_SIZE = 200;
-const MAJOR_LINE_EVERY = 5; // darker line every 5 cells, like a notebook
 const DEFAULT_SNAP_THRESHOLD = 8;
 const MAX_SNAP_THRESHOLD = 50;
 const MAX_REFERENCE_OBJECTS = 1000;
 const MATCH_EPSILON = 1; // scene units: how close counts as "aligned" for drawing guides
 
-const MIN_MINOR_SPACING_PX = 6; // hide minor lines when zoomed out this far
-const MIN_MAJOR_SPACING_PX = 8; // hide the whole grid when zoomed out this far
-const MAX_LINES_PER_AXIS = 1500; // safety cap
-
-// Semi-transparent grey is visible on both light and dark canvases.
-const MINOR_LINE_COLOR = 'rgba(128, 128, 128, 0.22)';
-const MAJOR_LINE_COLOR = 'rgba(128, 128, 128, 0.45)';
-/** Whiteboard dot grid (FigJam / Miro / Excalidraw look): a dot per cell, a stronger one every 5. */
-const MINOR_DOT_COLOR = 'rgba(128, 128, 128, 0.45)';
-const MAJOR_DOT_COLOR = 'rgba(128, 128, 128, 0.7)';
-const MINOR_DOT_PX = 1.5;
-const MAJOR_DOT_PX = 2.5;
-
-export type GridStyle = 'dots' | 'lines';
 type BoardMode = 'design' | 'whiteboard' | null | undefined;
-
-/** The whiteboard shows a dot grid, a design page a line grid (graph paper). */
-export const gridStyleFor = (boardMode: BoardMode): GridStyle =>
-    boardMode === 'whiteboard' ? 'dots' : 'lines';
 
 /** Grid default per mode: on for the whiteboard, off for a design page (a clean page). */
 const GRID_ON_BY_DEFAULT: Record<'design' | 'whiteboard', boolean> = {
@@ -126,6 +120,7 @@ const BOTTOM_HANDLES = ['bl', 'mb', 'br'];
 const CORNER_HANDLES = ['tl', 'tr', 'bl', 'br'];
 
 const NO_SNAP: AxisSnap = { delta: 0, line: null, kind: null };
+const NO_GRID_STEPS = { x: null, y: null };
 const EMPTY_REFERENCE: Reference = { boxes: [], xs: [], ys: [] };
 
 /* -------------------------------------------------------------------------- */
@@ -286,92 +281,19 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
     const isMainContext = (ctx: CanvasRenderingContext2D, canvas: fabric.Canvas) =>
         ctx.canvas === canvas.getElement();
 
-    const paintGrid = (ctx: CanvasRenderingContext2D, canvas: fabric.Canvas) => {
-        const size = get().gridSize;
-        const vpt = canvas.viewportTransform;
-        const zoom = vpt[0];
-        const cell = size * zoom;
-
-        if (cell * MAJOR_LINE_EVERY < MIN_MAJOR_SPACING_PX) return; // too dense to be useful
-        const showMinor = cell >= MIN_MINOR_SPACING_PX;
-
-        const width = canvas.getWidth();
-        const height = canvas.getHeight();
-
-        const firstX = Math.floor(-vpt[4] / zoom / size);
-        const lastX = Math.ceil((width - vpt[4]) / zoom / size);
-        const firstY = Math.floor(-vpt[5] / zoom / size);
-        const lastY = Math.ceil((height - vpt[5]) / zoom / size);
-        if (lastX - firstX > MAX_LINES_PER_AXIS || lastY - firstY > MAX_LINES_PER_AXIS) return;
-
-        const minor = new Path2D();
-        const major = new Path2D();
-
-        for (let i = firstX; i <= lastX; i++) {
-            const isMajor = mod(i, MAJOR_LINE_EVERY) === 0;
-            if (!isMajor && !showMinor) continue;
-            const x = Math.round(i * size * zoom + vpt[4]) + 0.5; // +0.5 => crisp 1px line
-            const path = isMajor ? major : minor;
-            path.moveTo(x, 0);
-            path.lineTo(x, height);
-        }
-        for (let j = firstY; j <= lastY; j++) {
-            const isMajor = mod(j, MAJOR_LINE_EVERY) === 0;
-            if (!isMajor && !showMinor) continue;
-            const y = Math.round(j * size * zoom + vpt[5]) + 0.5;
-            const path = isMajor ? major : minor;
-            path.moveTo(0, y);
-            path.lineTo(width, y);
-        }
-
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = MINOR_LINE_COLOR;
-        ctx.stroke(minor);
-        ctx.strokeStyle = MAJOR_LINE_COLOR;
-        ctx.stroke(major);
-    };
-
-    /** Whiteboard: one dot per grid crossing (same spacing, zoom and snap as the line grid). */
-    const paintDots = (ctx: CanvasRenderingContext2D, canvas: fabric.Canvas) => {
-        const size = get().gridSize;
-        const vpt = canvas.viewportTransform;
-        const zoom = vpt[0];
-        const cell = size * zoom;
-
-        if (cell * MAJOR_LINE_EVERY < MIN_MAJOR_SPACING_PX) return;
-        const showMinor = cell >= MIN_MINOR_SPACING_PX;
-
-        const width = canvas.getWidth();
-        const height = canvas.getHeight();
-        const firstX = Math.floor(-vpt[4] / zoom / size);
-        const lastX = Math.ceil((width - vpt[4]) / zoom / size);
-        const firstY = Math.floor(-vpt[5] / zoom / size);
-        const lastY = Math.ceil((height - vpt[5]) / zoom / size);
-        if (lastX - firstX > MAX_LINES_PER_AXIS || lastY - firstY > MAX_LINES_PER_AXIS) return;
-
-        const minor = new Path2D();
-        const major = new Path2D();
-        for (let i = firstX; i <= lastX; i++) {
-            const majorX = mod(i, MAJOR_LINE_EVERY) === 0;
-            const x = i * size * zoom + vpt[4];
-            for (let j = firstY; j <= lastY; j++) {
-                const isMajor = majorX && mod(j, MAJOR_LINE_EVERY) === 0;
-                if (!isMajor && !showMinor) continue;
-                const y = j * size * zoom + vpt[5];
-                const d = isMajor ? MAJOR_DOT_PX : MINOR_DOT_PX;
-                (isMajor ? major : minor).rect(x - d / 2, y - d / 2, d, d);
-            }
-        }
-        ctx.fillStyle = MINOR_DOT_COLOR;
-        ctx.fill(minor);
-        ctx.fillStyle = MAJOR_DOT_COLOR;
-        ctx.fill(major);
-    };
-
+    /** The chosen grid style (lib/canvas/gridPainters), in CSS-pixel screen space. */
     const paintBoardGrid = (ctx: CanvasRenderingContext2D, canvas: fabric.Canvas) =>
-        gridStyleFor((get() as { boardMode?: BoardMode }).boardMode) === 'dots'
-            ? paintDots(ctx, canvas)
-            : paintGrid(ctx, canvas);
+        paintGridStyle(
+            ctx,
+            {
+                vpt: canvas.viewportTransform,
+                width: canvas.getWidth(),
+                height: canvas.getHeight(),
+                pixelRatio: canvas.getRetinaScaling(),
+            },
+            get().gridStyle,
+            get().gridSize,
+        );
 
     const paintGuides = (ctx: CanvasRenderingContext2D, canvas: fabric.Canvas) => {
         if (guides.length === 0) return;
@@ -515,8 +437,11 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
         }
 
         const ref = state.snapToObjects ? getReference(canvas, target) : EMPTY_REFERENCE;
-        const gridSize = state.gridEnabled ? state.gridSize : null;
-        if (gridSize === null && ref.boxes.length === 0) {
+        // the lattice of the grid that is shown (isometric: triangle corners, ruled: rows only)
+        const steps = state.gridEnabled
+            ? gridSnapSteps(state.gridStyle, state.gridSize)
+            : NO_GRID_STEPS;
+        if (steps.x === null && steps.y === null && ref.boxes.length === 0) {
             guides = [];
             return;
         }
@@ -527,8 +452,8 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
         // Left edge, centre or right edge — whichever is closest to a snap line.
         const xs = [rect.left, rect.left + rect.width / 2, rect.left + rect.width];
         const ys = [rect.top, rect.top + rect.height / 2, rect.top + rect.height];
-        const sx = bestSnap(xs, ref.xs, gridSize, threshold);
-        const sy = bestSnap(ys, ref.ys, gridSize, threshold);
+        const sx = bestSnap(xs, ref.xs, steps.x, threshold);
+        const sy = bestSnap(ys, ref.ys, steps.y, threshold);
 
         if (DEBUG_SNAP)
             console.debug('[snap] moving', { rect, sx, sy, threshold, objects: ref.boxes.length });
@@ -582,8 +507,11 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
         }
 
         const ref = state.snapToObjects ? getReference(canvas, target) : EMPTY_REFERENCE;
-        const gridSize = state.gridEnabled ? state.gridSize : null;
-        if (gridSize === null && ref.boxes.length === 0) {
+        // the lattice of the grid that is shown (isometric: triangle corners, ruled: rows only)
+        const steps = state.gridEnabled
+            ? gridSnapSteps(state.gridStyle, state.gridSize)
+            : NO_GRID_STEPS;
+        if (steps.x === null && steps.y === null && ref.boxes.length === 0) {
             guides = [];
             return;
         }
@@ -598,11 +526,11 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
 
         let sx =
             movesLeft || movesRight
-                ? edgeSnap(rect.left, rect.width, movesLeft, ref.xs, gridSize, threshold)
+                ? edgeSnap(rect.left, rect.width, movesLeft, ref.xs, steps.x, threshold)
                 : null;
         let sy =
             movesTop || movesBottom
-                ? edgeSnap(rect.top, rect.height, movesTop, ref.ys, gridSize, threshold)
+                ? edgeSnap(rect.top, rect.height, movesTop, ref.ys, steps.y, threshold)
                 : null;
 
         // Corner handles keep the aspect ratio (Shift flips it): the closer snap drives both axes.
@@ -751,6 +679,27 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
         get().setGridEnabled(GRID_ON_BY_DEFAULT[mode]);
     });
 
+    // Style and size live in Settings per board mode (saved); the store keys mirror the current mode.
+    const syncGridPrefs = () => {
+        const s = get();
+        const prefs: GridPrefs | undefined = s.settings?.grid?.[gridModeFor(s.boardMode)];
+        if (!prefs || (prefs.style === s.gridStyle && prefs.size === s.gridSize)) return;
+        set({ gridStyle: prefs.style, gridSize: prefs.size });
+        attachedCanvas?.requestRenderAll();
+    };
+    store.subscribe((state, prevState) => {
+        if (state.settings !== prevState.settings || state.boardMode !== prevState.boardMode)
+            syncGridPrefs();
+    });
+
+    const writeGridPrefs = (patch: Partial<GridPrefs>) => {
+        const s = get();
+        if (typeof s.setGridPrefs === 'function') s.setGridPrefs(gridModeFor(s.boardMode), patch);
+        else set(patch.style ? { gridStyle: patch.style } : { gridSize: patch.size });
+        syncGridPrefs();
+        ensureAttached()?.requestRenderAll();
+    };
+
     // Covers the case where the canvas already exists when this slice is created.
     queueMicrotask(ensureAttached);
 
@@ -759,7 +708,8 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
     return {
         // off by default, like Figma / Canva: a clean page, objects move freely (top bar turns them on)
         gridEnabled: false,
-        gridSize: DEFAULT_GRID_SIZE,
+        gridSize: DEFAULT_GRID_PREFS.design.size,
+        gridStyle: DEFAULT_GRID_PREFS.design.style,
         snapEnabled: false,
         snapToObjects: true,
         snapThreshold: DEFAULT_SNAP_THRESHOLD,
@@ -772,10 +722,12 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
         toggleGrid: () => get().setGridEnabled(!get().gridEnabled),
 
         setGridSize: (size) => {
-            if (!Number.isFinite(size)) return;
-            const next = clamp(Math.round(size), MIN_GRID_SIZE, MAX_GRID_SIZE);
-            if (next !== get().gridSize) set({ gridSize: next });
-            ensureAttached()?.requestRenderAll();
+            const next = clampGridSize(size);
+            if (next !== null) writeGridPrefs({ size: next });
+        },
+
+        setGridStyle: (style) => {
+            if (isGridStyle(style)) writeGridPrefs({ style });
         },
 
         setSnapEnabled: (enabled) => {

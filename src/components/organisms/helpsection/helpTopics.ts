@@ -256,7 +256,8 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: 'pen-tool',
         summary:
             'Draw exact lines and curves point by point, like the pen in Figma or Illustrator.',
-        keywords: 'pen bezier vector path curve anchor point polygon outline',
+        keywords:
+            'pen bezier vector path curve anchor point polygon outline curvature freeform arrow dashed',
         sections: [
             {
                 title: 'Draw a path',
@@ -265,15 +266,30 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Click to place a corner point',
                     'Click and drag to place a smooth point: the drag pulls out its curve handles',
                     'Click the first point again to close the shape (the first point grows when you are on it)',
+                    'Hold `shift` to keep the next segment (or the handle you drag) at 0°, 45° or 90°',
+                    'Hold `alt` while dragging to move only the outgoing handle: a sharp curve corner',
                     'Press `Enter`, `Escape` or double-click to finish an open path',
                     '`Backspace` removes the last point while you draw',
+                    'Click an end of an open path to keep drawing it (it stays one object)',
+                ],
+            },
+            {
+                title: 'Options bar',
+                items: [
+                    'While the Pen is active, the row under the top toolbar shows its options',
+                    'Mode: Pen (click and drag points), Curvature (click; the curve bends smoothly through your points, `alt` + click = sharp corner) or Freeform (drag to draw by hand; it becomes an editable path)',
+                    'Stroke: click the swatch, then pick a color in the palette; Width sets the outline',
+                    'Stroke style: line ends (round, square, flat), corners (round, sharp, bevel), dashes and arrowheads; the button shows a preview',
+                    'Path shape (like Inkscape): Triangle in, Triangle out or Ellipse turn an open path into one filled outline that is thin and thick along its length; Thickness sets the widest part',
+                    'Fill: turn it on to fill closed shapes (open paths are never filled)',
+                    'The hint on the right counts your points and lists the keys',
                 ],
             },
             {
                 title: 'After drawing',
                 items: [
                     'The path is selected in the Select tool; it is one undo step',
-                    'It has a black outline and no fill: use the palette or the footer to color it',
+                    'It uses the options bar stroke and fill: recolor it later with the palette or the footer',
                     'Edit its points later with the Node tool (`A`)',
                     'Picking another tool keeps a path that has two points or more',
                 ],
@@ -287,7 +303,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         title: 'Pencil',
         icon: 'pencil-line',
         summary: 'Sketch freehand lines quickly, without opening the Draw panel.',
-        keywords: 'pencil freehand sketch line draw scribble',
+        keywords: 'pencil freehand sketch line draw scribble pressure stylus straight close',
         sections: [
             {
                 title: 'Sketch',
@@ -295,8 +311,19 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Pick the Pencil in the left rail (shortcut `shift+P`)',
                     'Drag on the board to draw a smooth line; draw as many as you like',
                     'It draws in the drawing color; the palette changes it',
-                    'Its line is thin and plain. For brushes, width, opacity and effects, use Draw',
+                    'Hold `shift` while drawing for a straight line',
+                    'End a line near where it started and it closes into a shape (Auto-close)',
                     'Each line is one undo step and can be reshaped with the Node tool',
+                ],
+            },
+            {
+                title: 'Options bar',
+                items: [
+                    'While the Pencil is active, the row under the top toolbar shows its options',
+                    'Size, Opacity and Smoothing (higher = steadier line)',
+                    'Pressure: a stylus (Apple Pencil, Wacom) makes the line thinner or thicker; a mouse keeps one width',
+                    'Auto-close: turn it off to keep loops open',
+                    "These settings are the Pencil's own; brushes and effects stay in Draw",
                 ],
             },
         ],
@@ -322,6 +349,36 @@ export const HELP_TOPICS: HelpTopic[] = [
             },
         ],
         related: ['hand', 'select'],
+    },
+    {
+        id: 'brush',
+        group: 'Tools',
+        title: 'Brush',
+        icon: 'paintbrush',
+        summary: 'Every brush as a picture: pick one and paint. Includes the Calligraphy pen.',
+        keywords:
+            'brush paintbrush picker calligraphy pen nib thinning fixation angle caps inkscape paint',
+        open: { panel: 'brush', label: 'Open Brush' },
+        sections: [
+            {
+                title: 'Pick and paint',
+                items: [
+                    'Press `B` or pick Brush in the left rail: each tile shows a sample stroke',
+                    'Click a tile and drag on the board. Size, color and effects are in the Draw panel',
+                ],
+            },
+            {
+                title: 'Calligraphy pen',
+                text: "A flat nib like Inkscape's Calligraphy tool. Its options show in the top bar while you paint with it.",
+                items: [
+                    'Width: the nib size',
+                    'Thinning: fast strokes get thinner (negative values make them thicker)',
+                    'Angle: the nib angle; Fixation 100% keeps it, 0% turns the nib across every stroke',
+                    'Caps: round ends',
+                ],
+            },
+        ],
+        related: ['draw', 'pencil'],
     },
     {
         id: 'draw',
@@ -389,6 +446,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Search by name, or filter by category',
                     'Text shapes and sticky notes hold text: double-click to type',
                     'Lines and curves are there too. A plain line is drawn by dragging on the board; Escape cancels it',
+                    'The 3D category has a cube, box, cylinder, cone, sphere, pyramid, prisms and a torus. Their edges are the stroke, so keep a stroke on to see the depth',
                 ],
             },
             {
@@ -442,7 +500,7 @@ export const HELP_TOPICS: HelpTopic[] = [
             },
             {
                 title: 'Font pairings',
-                text: 'Font Templates in the left rail apply a ready-made set of fonts to your text in one click.',
+                text: 'Font Templates in the right dock apply a ready-made set of fonts to your text in one click.',
             },
         ],
         related: ['font-templates', 'color', 'shapes'],
@@ -452,8 +510,10 @@ export const HELP_TOPICS: HelpTopic[] = [
         group: 'Tools',
         title: 'Color',
         icon: 'palette',
-        summary: 'The palette strip, custom colors, the eyedropper and what gets painted.',
-        keywords: 'swatch palette eyedropper hex recent fill stroke picker',
+        summary:
+            'The palette strip, custom colors, harmonies, color formats and what gets painted.',
+        keywords:
+            'swatch palette eyedropper hex recent fill stroke picker harmony complementary analogous triadic split monochromatic rgb hsl hsb cmyk copy',
         sections: [
             {
                 title: 'Paint an object',
@@ -466,11 +526,17 @@ export const HELP_TOPICS: HelpTopic[] = [
                 title: 'Any color',
                 items: [
                     'All colors opens the full grid',
-                    'Custom color opens the picker',
-                    '# takes a hex value',
-                    'The eyedropper picks a color from anywhere on the screen, in browsers that support it',
+                    'Custom color opens the picker: drag in the square, type a hex value, or use its eyedropper to pick a color from anywhere on the screen (in browsers that support it)',
                     'Recent colors keeps what you just used',
                 ],
+            },
+            {
+                title: 'Colors that go together',
+                text: 'The custom color picker and the Color harmony section of Fill & Shadow show the harmonies of the current color: Complementary (high contrast), Analogous (calm), Triadic (colorful but balanced), Split-complementary (contrast, less harsh) and Monochromatic (always safe). Click a color to use it.',
+            },
+            {
+                title: 'Color formats',
+                text: 'In the custom color picker, switch between HEX, RGB, HSL, HSB and CMYK to type the color in that format; the button under the fields copies it, ready to paste.',
             },
             {
                 title: 'Colors inside panels',
@@ -557,7 +623,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: 'table-cells-large',
         summary: 'Start from a finished design and make it yours.',
         keywords: 'gallery starter layout design ready made',
-        open: { panel: 'templates', label: 'Open Templates' },
+        open: { tab: 'templates', label: 'Open Templates' },
         sections: [
             {
                 title: 'Use a template',
@@ -578,7 +644,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: 'text-height',
         summary: 'Ready-made font pairings you can apply or save.',
         keywords: 'typography pairing fonts saved style',
-        open: { panel: 'fonttemplates', label: 'Open Font Templates' },
+        open: { tab: 'fonttemplates', label: 'Open Font Templates' },
         sections: [
             {
                 title: 'Apply and save',
@@ -604,7 +670,7 @@ export const HELP_TOPICS: HelpTopic[] = [
             {
                 title: 'Align and distribute',
                 items: [
-                    'Align left, center, right, top, middle or bottom, with two or more selected',
+                    'Align left, center, right, top, middle or bottom: several objects line up with each other, one object with the page (on a whiteboard, with what you see)',
                     'Distribute spaces three or more evenly',
                     'The buttons are in the top bar and the Layers panel',
                 ],
@@ -614,6 +680,8 @@ export const HELP_TOPICS: HelpTopic[] = [
                 items: [
                     '`mod+G` groups and `mod+shift+U` ungroups',
                     '`mod+L` locks and `mod+shift+L` unlocks',
+                    'A locked object cannot be moved, resized, aligned, grouped or ungrouped until you unlock it',
+                    'Buttons that cannot act on the selection are greyed out',
                 ],
             },
             {
@@ -628,6 +696,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 items: [
                     'Flip horizontal or vertical from the top bar',
                     "`mod+'` shows the grid and `mod+;` turns snapping on or off",
+                    'The arrow next to the grid button picks the grid style (graph, squares, dashed, dots, crosses, isometric, ruled) and its size; each mode remembers its own',
                     'Hold `alt` while dragging to ignore snapping for a moment',
                 ],
             },
@@ -698,8 +767,10 @@ export const HELP_TOPICS: HelpTopic[] = [
         group: 'Effects',
         title: 'Fill and Shadow',
         icon: 'palette',
-        summary: 'Solid colors, gradients you can drag on the object, and soft shadows.',
-        keywords: 'gradient linear radial color stop shadow drop opacity',
+        summary:
+            'Solid colors, gradients you can drag on the object, color harmonies and soft shadows.',
+        keywords:
+            'gradient linear radial color stop shadow drop opacity harmony complementary analogous triadic split monochromatic palette',
         open: { tab: 'appearance', label: 'Open Fill & Shadow' },
         sections: [
             {
@@ -716,6 +787,14 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Reverse flips the gradient and Rotate 90° turns it',
                     'Set the angle, or the center and size of a radial one',
                     'Edit on canvas lets you drag handles on the object; double-click a stop to remove it',
+                ],
+            },
+            {
+                title: 'Color harmony',
+                items: [
+                    'Shows the five color schemes of the fill color: Complementary, Analogous, Triadic, Split-complementary and Monochromatic',
+                    'Click a swatch to fill the selection with that color; the schemes stay put, so you can try them all',
+                    'Gradient turns a scheme into the fill gradient, and the copy button copies its hex values',
                 ],
             },
             {
@@ -872,6 +951,89 @@ export const HELP_TOPICS: HelpTopic[] = [
             },
         ],
         related: ['fill-shadow', 'export'],
+    },
+
+    {
+        id: 'fractals',
+        group: 'Effects',
+        title: 'Fractals',
+        icon: 'snowflake',
+        summary:
+            'Koch snowflake, Sierpinski triangle, fractal tree, dragon and Hilbert curves as vector paths.',
+        keywords:
+            'fractal koch snowflake sierpinski triangle tree dragon hilbert curve recursive generate',
+        open: { tab: 'fractals', label: 'Open Fractals' },
+        sections: [
+            {
+                title: 'Insert a fractal',
+                items: [
+                    'Pick a type, set Depth and Size, then Insert fractal',
+                    'Higher depth adds detail; each type has its own maximum so the page stays fast',
+                    'Fractal tree also has a Branch angle',
+                ],
+            },
+            {
+                title: 'After inserting',
+                text: 'The fractal is one path: recolor it in Fill & Shadow, edit its nodes with the Node tool (A) or repeat it with the Tiling and Rotate tools.',
+            },
+        ],
+        related: ['fill-shadow', 'automata'],
+    },
+    {
+        id: 'automata',
+        group: 'Effects',
+        title: 'Cellular Automata',
+        icon: 'cellular-automata',
+        summary: 'Patterns grown from simple rules: Wolfram 1D rules and the Game of Life.',
+        keywords:
+            'cellular automata automaton rule 30 90 110 game of life conway glider gun pattern grid cells',
+        open: { tab: 'automata', label: 'Open Cellular Automata' },
+        sections: [
+            {
+                title: '1D rule',
+                items: [
+                    'Each row is the next generation of the row above',
+                    'Rule 90 draws a Sierpinski triangle, Rule 30 looks random, Rule 110 builds structures',
+                    'Random first row starts from noise instead of one cell',
+                ],
+            },
+            {
+                title: 'Game of Life',
+                items: [
+                    'Start from random soup, a glider, the Gosper glider gun or a pulsar',
+                    'Generations runs the simulation forward before it is drawn; the edges wrap around',
+                ],
+            },
+            {
+                title: 'Result',
+                text: 'Live cells are drawn as one filled path, sized by Cell size. Insert again for a new random result.',
+            },
+        ],
+        related: ['fractals', 'fill-shadow'],
+    },
+    {
+        id: 'macro',
+        group: 'Effects',
+        title: 'Macro',
+        icon: 'macro',
+        summary: 'Record a sequence of commands and replay it on the selection, several times.',
+        keywords: 'macro record replay repeat automate steps actions batch shortcut',
+        open: { tab: 'macro', label: 'Open Macro' },
+        sections: [
+            {
+                title: 'Record',
+                items: [
+                    'Press Record, use keyboard shortcuts on the canvas (duplicate, group, lock, nudge…), then Stop recording',
+                    'Or pick commands one by one in Add step',
+                    'Remove a step with its × button; Clear empties the list',
+                ],
+            },
+            {
+                title: 'Play',
+                text: 'Set Repeat and press Play macro: every step runs in order on the current selection. Steps that are not possible right now are skipped. Each step can be undone. Macros last for this session.',
+            },
+        ],
+        related: ['shortcuts'],
     },
 
     /* ------------------------------- finish ------------------------------ */

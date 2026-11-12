@@ -1,4 +1,3 @@
-import clsx from 'clsx';
 import {
     useEffect,
     useLayoutEffect,
@@ -7,20 +6,14 @@ import {
     type KeyboardEvent as ReactKeyboardEvent,
     type PointerEvent as ReactPointerEvent,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useStore } from '@store';
-import {
-    hexToRgb,
-    hsvToRgb,
-    normalizeHex,
-    rgbToHex,
-    rgbToHsv,
-    type HSV,
-    type RGB,
-} from '@/lib/colorMath';
+import { hexToRgb, hsvToRgb, normalizeHex, rgbToHex, rgbToHsv, type HSV } from '@/lib/colorMath';
 import { Icon } from '../atoms/Icon';
 import { IconButton } from '../atoms/IconButton';
-import { NumberField } from '../atoms/NumberField';
 import { Swatch } from '../atoms/Swatch';
+import { ColorFormatFields } from '../molecules/ColorFormatFields';
+import { ColorHarmonies } from '../molecules/ColorHarmonies';
 
 type Props = {
     /** Element the popover opens next to (left of it); null = top right corner. */
@@ -31,8 +24,6 @@ type Props = {
     onChange: (hex: string) => void;
     /** `refocus` = return focus to the opener (keyboard close). */
     onClose: (refocus: boolean) => void;
-    /** Focus the hex field on open (the "#" tool). */
-    focusHex?: boolean;
 };
 
 const FALLBACK = '#000000';
@@ -42,19 +33,18 @@ const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n
 
 /**
  * In-app color picker (replaces the browser's own dialog, which looked different on every OS):
- * saturation / brightness square, hue slider, eyedropper, original vs new, hex + R G B, recent
- * colors. Keeps its own HSV so the hue does not jump when a color turns gray.
+ * saturation / brightness square, hue slider, eyedropper, original vs new, hex + the color as
+ * RGB / HSL / HSB / CMYK (copyable), harmonies, recent colors. Keeps its own HSV so the hue does
+ * not jump when a color turns gray.
  */
-export function ColorPickerPopover({ anchor, color, onChange, onClose, focusHex }: Props) {
+export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) {
     const recentColors = useStore((s) => s.recentColors) as string[] | undefined;
     const start = normalizeHex(color) ?? FALLBACK;
     const [original] = useState(start);
     const [hsv, setHsv] = useState<HSV>(() => toHsv(start));
     const hex = hsvHex(hsv);
-    const rgb = hsvToRgb(hsv);
 
     const ref = useRef<HTMLDivElement | null>(null);
-    const hexRef = useRef<HTMLInputElement | null>(null);
     const lastSent = useRef(start);
     const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
 
@@ -83,26 +73,28 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose, focusHex 
         });
     }, [color]);
 
-    // place left of the anchor, kept inside the window.
-    // Until placed it renders with opacity 0 (not visibility:hidden, which cannot take focus).
+    // place left of the anchor, kept inside the window, again when its height changes (harmony
+    // rows). Until placed: opacity 0 (not visibility:hidden, which cannot take focus).
     useLayoutEffect(() => {
         const el = ref.current;
         if (!el) return;
         if (!anchor) return setPos({ top: 8, right: 8 });
-        const a = anchor.getBoundingClientRect();
-        setPos({
-            top: clamp(a.top, 8, Math.max(8, window.innerHeight - el.offsetHeight - 8)),
-            right: window.innerWidth - a.left + 6,
-        });
+        const place = () => {
+            const a = anchor.getBoundingClientRect();
+            setPos({
+                top: clamp(a.top, 8, Math.max(8, window.innerHeight - el.offsetHeight - 8)),
+                right: window.innerWidth - a.left + 6,
+            });
+        };
+        place();
+        const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place);
+        ro?.observe(el);
+        return () => ro?.disconnect();
     }, [anchor]);
 
     useEffect(() => {
-        if (focusHex) {
-            hexRef.current?.focus();
-            hexRef.current?.select();
-        } else ref.current?.querySelector<HTMLElement>('[role="slider"]')?.focus();
-    }, [focusHex]);
-
+        ref.current?.querySelector<HTMLElement>('[role="slider"]')?.focus();
+    }, []);
     // close on a click outside (the opener handles its own click)
     useEffect(() => {
         const onDown = (e: PointerEvent) => {
@@ -187,17 +179,6 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose, focusHex 
         emit({ ...hsv, h: clamp(to[e.key], 0, 360) });
     };
 
-    // hex draft: applied on Enter / blur, Escape or invalid input reverts
-    const [hexDraft, setHexDraft] = useState<string | null>(null);
-    const commitHex = () => {
-        if (hexDraft === null) return;
-        const n = normalizeHex(hexDraft);
-        setHexDraft(null);
-        if (n) emitHex(n);
-    };
-
-    const setChannel = (key: keyof RGB) => (v: number) => emitHex(rgbToHex({ ...rgb, [key]: v }));
-
     const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window;
     const eyedrop = async () => {
         try {
@@ -214,10 +195,9 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose, focusHex 
     };
 
     const pureHue = rgbToHex(hsvToRgb({ h: hsv.h, s: 100, v: 100 }));
-    const fieldBox =
-        'flex h-7 min-w-0 items-center gap-1 rounded-md border border-line-strong bg-surface px-2 text-xs transition-colors hover:border-ink-subtle focus-within:border-primary-500 focus-within:ring-2 focus-within:ring-primary-400/30';
 
-    return (
+    // portalled: inside the dock, the editor header / footer bars would cover it
+    return createPortal(
         <div
             ref={ref}
             role="dialog"
@@ -229,7 +209,7 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose, focusHex 
                     onClose(true);
                 }
             }}
-            className="fixed z-[9999] w-64 rounded-lg border border-line bg-surface p-3 shadow-lg"
+            className="fixed z-[9999] max-h-[calc(100vh-16px)] w-72 overflow-y-auto rounded-lg border border-line bg-surface p-3 shadow-lg"
             style={pos ?? { top: 8, right: 8, opacity: 0 }}
         >
             <div className="mb-2 flex items-center justify-between">
@@ -313,66 +293,8 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose, focusHex 
                 <span aria-hidden title="New" className="flex-1" style={{ backgroundColor: hex }} />
             </div>
 
-            {/* hex + R G B */}
-            <div className="mt-3 grid grid-cols-[1fr_repeat(3,2.5rem)] gap-1.5">
-                <label className={fieldBox}>
-                    <span aria-hidden className="select-none text-ink-subtle">
-                        #
-                    </span>
-                    <input
-                        ref={hexRef}
-                        aria-label="Hex"
-                        spellCheck={false}
-                        maxLength={7}
-                        value={hexDraft ?? hex.slice(1)}
-                        onFocus={(e) => e.currentTarget.select()}
-                        onChange={(e) => setHexDraft(e.target.value.replace(/^#/, ''))}
-                        onBlur={commitHex}
-                        onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                                commitHex();
-                                e.currentTarget.select();
-                            } else if (e.key === 'Escape' && hexDraft !== null) {
-                                e.preventDefault(); // first Escape reverts the field, the next closes
-                                setHexDraft(null);
-                            }
-                        }}
-                        className="w-full min-w-0 bg-transparent font-mono uppercase text-ink outline-none"
-                    />
-                </label>
-                {(
-                    [
-                        ['r', 'Red'],
-                        ['g', 'Green'],
-                        ['b', 'Blue'],
-                    ] as const
-                ).map(([key, name]) => (
-                    <NumberField
-                        key={key}
-                        aria-label={name}
-                        title={name}
-                        value={rgb[key]}
-                        min={0}
-                        max={255}
-                        precision={0}
-                        stepper={false}
-                        onCommit={setChannel(key)}
-                        className="[&_input]:text-center"
-                    />
-                ))}
-                {(['R', 'G', 'B'] as const).map((c, i) => (
-                    <span
-                        key={c}
-                        aria-hidden
-                        className={clsx(
-                            'text-center text-[10px] text-ink-subtle',
-                            i === 0 && 'col-start-2',
-                        )}
-                    >
-                        {c}
-                    </span>
-                ))}
-            </div>
+            <ColorFormatFields hex={hex} hsv={hsv} onHex={emitHex} onHsv={emit} />
+            <ColorHarmonies color={hex} onPick={emitHex} />
 
             {!!recentColors?.length && (
                 <div className="mt-3 border-t border-line pt-2">
@@ -393,8 +315,7 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose, focusHex 
                     </div>
                 </div>
             )}
-        </div>
+        </div>,
+        document.body,
     );
 }
-
-export default ColorPickerPopover;
