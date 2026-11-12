@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { Button } from '../Button';
@@ -73,6 +74,48 @@ describe('Slider', () => {
 
         fireEvent.pointerUp(range);
         expect(onCommit).toHaveBeenCalledTimes(1);
+    });
+
+    it('ignores the late input Firefox sends after the release (BUG-204)', () => {
+        const changes: number[] = [];
+        const onCommit = vi.fn();
+        // a caller like the landing time-lapse: drag = live value, release = settle on a whole step
+        function Scrub() {
+            const [v, setV] = useState(0);
+            return (
+                <Slider
+                    aria-label="Time"
+                    min={0}
+                    max={3}
+                    step={0.01}
+                    value={v}
+                    onChange={(n) => {
+                        changes.push(n);
+                        setV(n);
+                    }}
+                    onCommit={(n) => {
+                        onCommit(n);
+                        setV(Math.round(n));
+                    }}
+                />
+            );
+        }
+        render(<Scrub />);
+        const range = screen.getByRole('slider', { name: 'Time' });
+        // Firefox order: pointerdown, input…, pointerup, input (same value), change
+        fireEvent.pointerDown(range);
+        fireEvent.change(range, { target: { value: '1.5' } });
+        fireEvent.pointerUp(range);
+        expect(onCommit).toHaveBeenCalledWith(1.5);
+        expect(range).toHaveValue('2');
+        fireEvent.change(range, { target: { value: '1.5' } }); // the late echo
+        expect(range).toHaveValue('2'); // the commit stands
+        expect(changes).toEqual([1.5]);
+
+        // the next real drag works as before
+        fireEvent.pointerDown(range);
+        fireEvent.change(range, { target: { value: '1.5' } });
+        expect(changes).toEqual([1.5, 1.5]);
     });
 });
 
