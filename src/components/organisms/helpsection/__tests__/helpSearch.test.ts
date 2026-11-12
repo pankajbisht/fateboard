@@ -67,6 +67,29 @@ describe('searchHelp', () => {
         expect(new Set(hits.map((h) => `${h.topicId}/${h.section}`)).size).toBe(hits.length);
     });
 
+    it('finds a real-world example by a word in its steps, linked to its address', () => {
+        const withExamples = buildHelpIndex(topics, [], {
+            export: [
+                {
+                    id: 'thumb',
+                    title: 'YouTube thumbnail',
+                    brief: 'Right size, small file.',
+                    icon: 'youtube',
+                    steps: [
+                        { text: 'Pick JPEG' },
+                        { text: 'Choose Fill' },
+                        { text: 'Press `mod+S`' },
+                    ],
+                    result: 'A thumbnail.',
+                    scene: [],
+                },
+            ],
+        });
+        const [hit] = searchHelp(withExamples, 'jpeg');
+        expect(hit).toMatchObject({ topicId: 'export', section: 'Example: YouTube thumbnail' });
+        expect(searchHelp(withExamples, 'Ctrl+S')[0]!.text).toBe('Press Ctrl+S');
+    });
+
     it('is empty for a blank query', () => {
         expect(searchHelp(docs, '   ')).toEqual([]);
     });

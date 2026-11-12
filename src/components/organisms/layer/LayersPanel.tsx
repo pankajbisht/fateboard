@@ -45,32 +45,8 @@ import type {
 } from '@/store/slices/createLayersSlice';
 import { Input } from '@/components/atoms/Input';
 import { visibleRange } from './visibleRange';
-import { EditBarConfig } from '@/components/config/toolbars/ui/EditBarConfig';
-import { GroupBarConfig } from '@/components/config/toolbars/ui/GroupBarConfig';
-import { LAYERCONTROL_ACTIONS } from '@/components/config/toolbars/ui/LayerControlBarConfig';
-import { LockBarConfig } from '@/components/config/toolbars/ui/LockBarConfig';
-
-/**
- * Key labels come from the commands that own the keys (BUG-152): the menu used to carry its own
- * list, and six of those keys did nothing.
- */
-const keysOf = (commands: readonly { id: string; shortcut?: string }[], id: string) =>
-    commands.find((command) => command.id === id)?.shortcut;
-
-const KEYS = {
-    copy: keysOf(EditBarConfig, 'copy'),
-    paste: keysOf(EditBarConfig, 'paste'),
-    duplicate: keysOf(EditBarConfig, 'duplicate'),
-    delete: keysOf(EditBarConfig, 'delete'),
-    group: keysOf(GroupBarConfig, 'group'),
-    ungroup: keysOf(GroupBarConfig, 'ungroup'),
-    lock: keysOf(LockBarConfig, 'lock'),
-    unlock: keysOf(LockBarConfig, 'unlock'),
-    toFront: keysOf(LAYERCONTROL_ACTIONS, 'bringtofront'),
-    forward: keysOf(LAYERCONTROL_ACTIONS, 'bringforward'),
-    backward: keysOf(LAYERCONTROL_ACTIONS, 'sendbackward'),
-    toBack: keysOf(LAYERCONTROL_ACTIONS, 'sendtoback'),
-};
+import { useArrangeCan } from '@/hooks/useArrangeState';
+import { KEYS } from './layerKeys';
 
 /** `Group (Ctrl+G)`, or just the name when the command has no key. */
 const withKeys = (label: string, keys?: string) => (keys ? `${label} (${keys})` : label);
@@ -494,6 +470,7 @@ export default function LayersPanel() {
     );
     const single = selected.length === 1 ? selected[0] : null;
     const allLocked = selected.length > 0 && selected.every((l) => l.locked);
+    const can = useArrangeCan(); // same Group / Ungroup rules as the header (BUG-192)
 
     const rows = useMemo(() => {
         const q = query.trim().toLowerCase();
@@ -585,14 +562,14 @@ export default function LayersPanel() {
                 label: 'Group',
                 shortcut: KEYS.group,
                 onClick: () => store.groupLayers(),
-                disabled: selected.length < 2,
+                disabled: !can('group'),
                 dividerBefore: true,
             },
             {
                 label: 'Ungroup',
                 shortcut: KEYS.ungroup,
                 onClick: store.ungroupSelected,
-                disabled: !layer?.isGroup,
+                disabled: !can('ungroup'),
             },
             {
                 label: 'Bring to front',
@@ -640,14 +617,14 @@ export default function LayersPanel() {
             <div className="flex items-center gap-0.5 px-3 pt-2">
                 <IconButton
                     label={withKeys('Group', KEYS.group)}
-                    disabled={selected.length < 2}
+                    disabled={!can('group')}
                     onClick={() => store.groupLayers()}
                 >
                     <GroupIcon size={15} />
                 </IconButton>
                 <IconButton
                     label={withKeys('Ungroup', KEYS.ungroup)}
-                    disabled={!single?.isGroup}
+                    disabled={!can('ungroup')}
                     onClick={store.ungroupSelected}
                 >
                     <Ungroup size={15} />

@@ -18,6 +18,8 @@ export type TabConfig = {
     label: string;
     icon?: IconName;
     closable?: boolean;
+    /** The panel scrolls itself (galleries): PanelLayout adds no scroll or padding. */
+    fullSize?: boolean;
     content: () => ReactElement;
 };
 

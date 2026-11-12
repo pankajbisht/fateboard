@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Fox Detective</title>
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14213d"/>
+      <stop offset="1" stop-color="#0b1424"/>
+    </linearGradient>
+    <linearGradient id="cone" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffe8a3" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#ffe8a3" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="coat" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d9bb8b"/>
+      <stop offset="1" stop-color="#a98a5e"/>
+    </linearGradient>
+    <linearGradient id="fox" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f4843a"/>
+      <stop offset="1" stop-color="#d4581f"/>
+    </linearGradient>
+  </defs>
+  <g id="step-1">
+    <rect width="480" height="360" fill="url(#night)"/>
+    <rect x="0" y="40" width="70" height="250" fill="#1b2a4a"/>
+    <rect x="74" y="90" width="56" height="200" fill="#16233f"/>
+    <rect x="12" y="60" width="12" height="16" fill="#f6c453" opacity="0.8"/>
+    <rect x="40" y="60" width="12" height="16" fill="#2a3b60"/>
+    <rect x="12" y="96" width="12" height="16" fill="#2a3b60"/>
+    <rect x="40" y="96" width="12" height="16" fill="#f6c453" opacity="0.6"/>
+    <rect x="86" y="110" width="10" height="14" fill="#f6c453" opacity="0.5"/>
+    <rect x="108" y="140" width="10" height="14" fill="#2a3b60"/>
+    <rect x="0" y="288" width="480" height="72" fill="#0f1a2e"/>
+    <path d="M0 288 L480 288" stroke="#2a3b60" stroke-width="3"/>
+  </g>
+  <g id="step-2">
+    <polygon points="398,92 426,92 480,360 300,360" fill="url(#cone)"/>
+    <ellipse cx="400" cy="320" rx="90" ry="16" fill="#ffe8a3" opacity="0.18"/>
+    <rect x="408" y="92" width="8" height="200" fill="#2b2f3a"/>
+    <rect x="400" y="284" width="24" height="8" rx="2" fill="#2b2f3a"/>
+    <path d="M396 92 L428 92 L420 72 L404 72 Z" fill="#2b2f3a"/>
+    <rect x="402" y="88" width="20" height="8" rx="2" fill="#ffe8a3"/>
+    <circle cx="412" cy="92" r="18" fill="#ffe8a3" opacity="0.25"/>
+    <ellipse cx="262" cy="316" rx="7" ry="4" fill="#ffe8a3" opacity="0.35"/>
+    <ellipse cx="300" cy="328" rx="7" ry="4" fill="#ffe8a3" opacity="0.35"/>
+    <ellipse cx="380" cy="326" rx="7" ry="4" fill="#ffe8a3" opacity="0.5"/>
+    <ellipse cx="420" cy="314" rx="7" ry="4" fill="#ffe8a3" opacity="0.6"/>
+    <ellipse cx="456" cy="328" rx="7" ry="4" fill="#ffe8a3" opacity="0.7"/>
+  </g>
+  <g id="step-3">
+    <ellipse cx="200" cy="318" rx="74" ry="9" fill="#000000" opacity="0.35"/>
+    <path d="M150 300 Q86 304 80 246 Q104 272 146 262 Z" fill="url(#fox)" stroke="#2b2118" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M80 246 Q84 268 104 280 Q92 262 94 252 Z" fill="#fff4e6"/>
+    <rect x="166" y="296" width="20" height="18" rx="4" fill="#2b2118"/>
+    <rect x="210" y="296" width="20" height="18" rx="4" fill="#2b2118"/>
+    <path d="M144 304 L164 196 Q198 178 234 196 L256 304 Z" fill="url(#coat)" stroke="#2b2118" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M164 196 L184 252 L198 206 Z" fill="#b9996b" stroke="#2b2118" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M234 196 L214 252 L200 206 Z" fill="#b9996b" stroke="#2b2118" stroke-width="3" stroke-linejoin="round"/>
+    <rect x="152" y="256" width="96" height="12" fill="#7d6142" stroke="#2b2118" stroke-width="3"/>
+    <rect x="192" y="254" width="16" height="16" rx="2" fill="none" stroke="#e9c46a" stroke-width="3"/>
+    <circle cx="190" cy="282" r="3.5" fill="#2b2118"/>
+    <circle cx="190" cy="296" r="3.5" fill="#2b2118"/>
+    <path d="M199 206 L199 300" stroke="#2b2118" stroke-width="2" opacity="0.5"/>
+  </g>
+  <g id="step-4">
+    <path d="M228 206 Q262 220 286 244" stroke="#2b2118" stroke-width="26" fill="none" stroke-linecap="round"/>
+    <path d="M228 206 Q262 220 286 244" stroke="#c4a573" stroke-width="18" fill="none" stroke-linecap="round"/>
+    <line x1="292" y1="250" x2="312" y2="270" stroke="#5a3d22" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="290" cy="248" r="11" fill="url(#fox)" stroke="#2b2118" stroke-width="4"/>
+    <circle cx="334" cy="292" r="30" fill="#cfe8ff" opacity="0.3"/>
+    <ellipse cx="338" cy="298" rx="10" ry="7" fill="#ffe8a3" opacity="0.9"/>
+    <circle cx="326" cy="284" r="4" fill="#ffe8a3" opacity="0.9"/>
+    <circle cx="336" cy="280" r="4" fill="#ffe8a3" opacity="0.9"/>
+    <circle cx="346" cy="282" r="4" fill="#ffe8a3" opacity="0.9"/>
+    <circle cx="334" cy="292" r="30" fill="none" stroke="#b08d57" stroke-width="7"/>
+    <path d="M316 276 Q322 268 332 266" stroke="#ffffff" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round"/>
+  </g>
+  <g id="step-5">
+    <polygon points="168,118 150,64 194,96" fill="url(#fox)" stroke="#2b2118" stroke-width="4" stroke-linejoin="round"/>
+    <polygon points="230,118 248,64 204,96" fill="url(#fox)" stroke="#2b2118" stroke-width="4" stroke-linejoin="round"/>
+    <polygon points="166,104 158,78 180,94" fill="#2b2118"/>
+    <polygon points="232,104 240,78 218,94" fill="#2b2118"/>
+    <path d="M158 124 Q158 92 199 90 Q240 92 240 124 Q240 150 220 178 L199 208 L178 178 Q158 150 158 124 Z" fill="url(#fox)" stroke="#2b2118" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M162 138 Q180 142 190 158 Q196 168 199 176 Q202 168 208 158 Q218 142 236 138 Q232 160 220 178 L199 208 L178 178 Q166 160 162 138 Z" fill="#fff4e6"/>
+    <ellipse cx="199" cy="200" rx="8" ry="6" fill="#2b2118"/>
+    <circle cx="196" cy="198" r="2" fill="#ffffff" opacity="0.6"/>
+    <path d="M202 210 Q210 212 216 206" stroke="#2b2118" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M172 136 Q182 126 194 134 Q182 140 172 136 Z" fill="#2b2118"/>
+    <path d="M204 134 Q216 126 226 136 Q216 140 204 134 Z" fill="#2b2118"/>
+    <circle cx="186" cy="133" r="1.8" fill="#ffe8a3"/>
+    <circle cx="216" cy="133" r="1.8" fill="#ffe8a3"/>
+    <path d="M170 124 L192 126" stroke="#2b2118" stroke-width="4" stroke-linecap="round"/>
+    <path d="M206 124 Q218 114 230 118" stroke="#2b2118" stroke-width="4" fill="none" stroke-linecap="round"/>
+  </g>
+  <g id="step-6">
+    <ellipse cx="199" cy="96" rx="72" ry="12" fill="#3d2b1f" stroke="#1a120c" stroke-width="3"/>
+    <path d="M160 96 Q160 56 199 50 Q238 56 238 96 Z" fill="#4a3426" stroke="#1a120c" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M186 54 Q199 64 212 54" stroke="#1a120c" stroke-width="3" fill="none"/>
+    <rect x="160" y="80" width="78" height="11" fill="#1a120c"/>
+    <path d="M170 64 Q178 58 188 58" stroke="#ffffff" stroke-width="3" fill="none" opacity="0.2" stroke-linecap="round"/>
+    <text x="18" y="340" font-family="Georgia, serif" font-size="13" font-style="italic" fill="#ffe8a3" opacity="0.8">Case #042: the missing tart</text>
+  </g>
+</svg>

@@ -12,10 +12,7 @@ export const UndoRedoBarConfig = [
         shortcut: shortcut('⌘z', 'Ctrl+z'),
         icon: <UndoIcon />,
         onClick: () => useStore.getState().undo(),
-        handler: ({ get }) => {
-            const { undo } = get();
-            undo();
-        },
+        handler: ({ get }) => get().undo(), // returned: Macro playback awaits async commands
     },
     {
         id: 'redo',
@@ -25,9 +22,6 @@ export const UndoRedoBarConfig = [
         shortcut: shortcut('⌘⇧z', 'Ctrl+Shift+z'),
         icon: <RedoIcon />,
         onClick: () => useStore.getState().redo(),
-        handler: ({ get }) => {
-            const { redo } = get();
-            redo();
-        },
+        handler: ({ get }) => get().redo(), // returned: Macro playback awaits async commands
     },
 ];

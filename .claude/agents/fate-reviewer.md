@@ -14,6 +14,8 @@ Constraints:
 - Report only findings you verified by reading code or running a command. Mark the rest PLAUSIBLE with what would
   confirm them, or drop them.
 - Known debt (docs/CODE_REVIEW.md R-xx, docs/BUGS.md) is not a new finding unless the change makes it worse.
+- Token budget: review the files the caller names; never dump the whole `git diff` (see the skill's "Scope").
+  Look up a bug with `grep -n "BUG-0xx" docs/BUGS*.md`, never by reading the bug files whole.
 
 Your final message is the whole report (the caller sees nothing else): findings grouped P0 → P3 in the skill's
 format, then files reviewed, commands run, and what you did not review.

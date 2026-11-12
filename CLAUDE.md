@@ -13,7 +13,7 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 | Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build`. Needs `VITE_SITE_URL` in `.env` (see `.env.example`); fails without it |
 | Build (no type-check) | `npm run build:no-check` | `vite build` only; CI uses `npm run build` |
 | Preview | `npm run preview` | serves `dist/` on 0.0.0.0 |
-| Lint | `npm run lint` | ESLint flat config; `--max-warnings 254` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
+| Lint | `npm run lint` | ESLint flat config; `--max-warnings 249` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
 | Format | `npm run format` / `npm run format:check` | Prettier, `src/**` |
 | Typecheck | `npm run type-check` | app + strict island (`tsconfig.strict.json`) + node + e2e configs, must be 0 errors |
 | All checks | `npm run check` | lint + type-check + format:check |
@@ -47,28 +47,27 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 
 ## Coding conventions (summary; full: docs/CONVENTIONS.md)
 
+Area rules load by themselves when you touch those files (`.claude/rules/`: components + hooks, store, canvas,
+tests): selectors, panels, tokens, icons, keys, units, Fabric origins / serialization, slice rules. Always:
+
 - Prettier: 4 spaces, single quotes, width 100, trailing commas. Run `npm run format` on touched files.
 - Import the store via `import { useStore } from '@store'`; aliases `@/`, `@components/`, `@lib/`, `@hooks/`.
-- Components read state with selectors: `useStore((s) => s.x)`. Never `useStore()` without a selector.
-- Fabric: `await canvas.loadFromJSON(json)` (no callback). Always set `originX/originY` (v7 defaults to center).
-- Serialize only through `serializeCanvas` / `CUSTOM_PROPS` (`@/lib/serialization`); a guard test fails on any other canvas `toObject`/`toJSON`.
-- Icons: `<Icon name="…" />` from `@/components/atoms/Icon` (Lucide). Never Font Awesome classes.
-- Panels: content only, inside `templates/PanelLayout` (one header). Build with `PanelSection`/`Field`/`SliderField`/`Select`/`Switch`/`SegmentedControl`/`Chip`/`Input`/`Textarea`/`Button`; panel-level action = `PanelAction`, other buttons `Button size="sm"`/`IconButton`; no raw `<select>`/range/checkbox, no `gray-*`/`white` (use `surface`/`ink`/`line` tokens so dark mode works).
-- UI colors/text/radius: brand tokens only (`bg-primary-600`, `text-primary-ink` for brand text, `text-ink`, `text-title`, `rounded-md`; canvas: `BRAND` from `@lib/theme`). See docs/DESIGN.md.
+- One store: new slices go in `combinedSlice` (`src/store/index.ts`) **before** `createAnimationSlice`; keys unique
+  across slices (`storeKeys.test.ts`); cross-slice deps listed in `docs/STATE.md`.
 - Errors: actions never throw to React; `try/catch` + `console.error('[slice] …')` + return falsy.
-- Keys: shortcuts are commands (`shortcut`, `keys`, `enabled`, `allowWhileTyping`); other canvas key listeners return early on `canvasKeysBlocked()`.
-- Sizes shown to users go through `lib/units` (Settings > Units); documents are stored in px.
 - Storage: import `@/lib/storage` only; `opendb-store` and browser storage APIs only inside `src/lib/storage` (guard test).
 
-## Slice pattern rules
+## Token budget
 
-1. One store. Add slices to `combinedSlice` in `src/store/index.ts`, **before** `createAnimationSlice`.
-2. Every key must be unique across all slices and each slice spread once; `src/__tests__/storeKeys.test.ts` fails otherwise (no collisions left, BUG-002).
-3. Fabric canvas is the source of truth for content; store mirrors UI state; derived lists are rebuilt from canvas.
-4. Only store actions mutate Fabric objects. Document-changing actions: mutate → `requestRenderAll()` → history → autosave.
-5. Canvas listeners: register in one place, keep disposers, unregister on `dispose`; ignore helpers (`excludeFromExport`).
-6. No module-level mutable state in slices (use closures). Type slices with `SliceCreator<YourSlice>`.
-7. Cross-slice dependencies are listed per slice in `docs/STATE.md`; update it when you add one.
+- Docs are large: read **sections**, not files (`grep -n '^## ' docs/X.md`, then Read with offset / limit). Bugs:
+  `grep -n "BUG-0xx" docs/BUGS*.md` (open bugs in BUGS.md, fixed ones in BUGS_ARCHIVE.md). Never read DECISIONS.md
+  or BUGS_ARCHIVE.md whole.
+- Print summaries, not logs: `npm run test:run 2>&1 | grep -E "FAIL|×|Test Files|Tests "`, the same for `check`,
+  `build`, `e2e` (`--reporter=line`); rerun only a failing file for its full message. Run E2E for the touched specs;
+  the full suite only before a PR.
+- Subagents start cold and re-read context: use `fate-reviewer` / `fate-verifier` for multi-area or risky changes
+  and always pass them the list of changed files. Never ask an agent to review the whole working tree.
+- Commit finished work (on a branch, when the owner asks): a huge uncommitted tree makes every diff and review huge.
 
 ## Never do
 
@@ -80,6 +79,7 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 - Never use `alert()`, leave `console.log`, or add `any` to store code.
 - Never edit `node_modules`, `dist/` or `.env`. Never re-add a static import from a slice to a module that imports the store (BUG-048).
 - Never commit with failing lint, type-check, or tests; never skip hooks (`--no-verify`).
+- Never get green by lowering the bar: no raised lint limit / size ceiling, lowered coverage, `.skip` / `.only`, `@ts-ignore`, reasonless `eslint-disable`, or removed store key without the owner (guardrails, docs/AGENT_WORKFLOW.md).
 
 ## Definition of done
 
@@ -87,7 +87,7 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 - [ ] No file over its size ceiling (`fileBudget.test.ts`); new code in focused modules.
 - [ ] Failing test written first, now passing (unit/RTL and, for user flows, Playwright).
 - [ ] `npm run lint` (0 errors), `npm run type-check`, `npm run test:run`, `npm run build` all pass.
-- [ ] Matching `docs/` file updated; bug marked `fixed (<ref>)` in `docs/BUGS.md`; decisions logged in `docs/DECISIONS.md`.
+- [ ] Matching `docs/` file updated; bug marked `fixed (<ref>)` and moved to `docs/BUGS_ARCHIVE.md`; decisions logged in `docs/DECISIONS.md`.
 - [ ] Manually checked in `npm run dev` for UI changes (state what you checked).
 - [ ] Final report lists files changed.
 
@@ -99,19 +99,19 @@ Dead code was deleted in batch 1. Every file under `src/` is now reachable from 
 - [Components](docs/COMPONENTS.md): panels, props, slices used, dead code
 - [Conventions](docs/CONVENTIONS.md): naming, TS, errors, how to add a slice/panel/tool
 - [Testing](docs/TESTING.md): strategy, mocking Fabric, coverage, Playwright plan
-- [Bugs](docs/BUGS.md): audit table (IDs `BUG-0xx`)
+- [Bugs](docs/BUGS.md): open bugs + highest ID (`BUG-0xx`); fixed ones in [BUGS_ARCHIVE.md](docs/BUGS_ARCHIVE.md)
 - [Roadmap](docs/ROADMAP.md): milestones + features with blocking bugs
 - [Decisions](docs/DECISIONS.md): inferred ADRs + open questions (Q1–Q12)
 - [Production readiness](docs/PRODUCTION_READINESS.md): verdict, scorecard, what is left (P0 / P1 / P2)
 - [Code review](docs/CODE_REVIEW.md): findings R-01…R-09, refactor roadmap, guardrails
-- [Agent workflow](docs/AGENT_WORKFLOW.md): skills `fate-task` / `fate-review` / `fate-refactor` / `fate-readiness`, agents `fate-reviewer` / `fate-architect` / `fate-verifier`
+- [Agent workflow](docs/AGENT_WORKFLOW.md): skills `fate-task` / `fate-review` / `fate-refactor` / `fate-readiness` / `fate-new-slice`, agents `fate-reviewer` / `fate-architect` / `fate-verifier` / `fate-debugger`; hooks (guard, format + lint per edit, type-check + related tests at the end of a turn) and path-scoped rules in `.claude/`
 - [Design](docs/DESIGN.md): brand tokens (colors from the logo), text styles, radius, contrast rules, dark mode, panel rules
 
 ## How we work
 
 - **Use the repo's agent workflow** (docs/AGENT_WORKFLOW.md): skill `fate-task` for any change, `fate-refactor` for
-  splitting files, `fate-reviewer` / `fate-verifier` agents before calling work done.
-- **One task per session.** Start by restating the task, reading the relevant `docs/` files, then **plan first**
+  splitting files, `fate-reviewer` / `fate-verifier` agents (given the changed files) for multi-area or risky work.
+- **One task per session.** Start by restating the task, reading the relevant `docs/` sections, then **plan first**
   (files to touch, tests to add, risks). Wait for approval if the plan touches a public slice API or a decision in Q1–Q12.
 - **Root-cause fixes only.** No symptom patches. If you find related issues, list them in the report (and add them to
   `docs/BUGS.md` as `open`). Do not silently fix them.

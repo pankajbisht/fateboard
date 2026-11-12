@@ -14,7 +14,8 @@ Spread order (it matters):
 ```
 1 Canvas  2 Brush  3 UI  4 Layers  5 Page  6 Pages  7 Background  8 Command  9 ShapeStyle  10 UndoRedo
 11 Transform  12 Shape  13 Text  14 BackgroundColor  15 ContextMenu  16 Setting  17 advanceOperation
-19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  25 Animation
+19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  26 DrawingTools  27 Generator  28 Macro
+25 Animation
 (each spread once; 18 geometryEngine removed, the second Page spread removed: BUG-002 / BUG-030)
 ```
 
@@ -103,10 +104,18 @@ fillColor, fillOpacity, straightLine, symmetry, symmetryCenter, eraserMode, rece
 **Owner of `canvas.freeDrawingBrush`** (the only writer, BUG-021: the Editor effect and the draw tool used to overwrite
 its colour / width). (Shared keys fixed: brush opacity / shadow colour are
 `brushOpacity` / `brushShadowColor`, BUG-019/020.) There is an existing (possibly stale) test: `src/__tests__/store/brushSlice.test.ts`.
-**Pencil tool (2026-11-11):** while `activeTool === 'pencil'` the brush is built from `drawingState(s)`: a plain
-pencil brush, width `PENCIL_BASE_WIDTH` (2) × `creationScale`, opacity 1, smooth, solid, no blend / shadow / fill /
-mirror, in the drawing colour (`color`). The Draw panel's settings are never read or changed for it; finished
-lines are styled the same way (`before:path:created`).
+**Pencil tool (2026-11-11, options 2026-11-13):** while `activeTool === 'pencil'` the brush is built from
+`drawingState(s)` (`store/pencilStyle.ts`): the drawing colour (`color`) + `pencilStyle` (DrawingTools slice):
+width × `creationScale`, opacity, smoothing, `pressure` (= the `ink` engine with `taper` 0 and `speedWidth` false:
+a stylus sets the width, a mouse keeps it constant), `autoClose` (`before:path:created` adds `Z` when the stroke ends
+within max(12 screen px, 1.5 × width) of its start, `lib/canvas/autoClose.ts`); no blend / shadow / fill / mirror.
+Shift = straight line (Fabric's `straightLineKey`; the variable-width brush keeps only the first sample). The Draw
+panel's settings are never read or changed for it.
+
+**Brush engines (2026-11-13):** the ink / calligraphy engine (`VariableWidthBrush`) lives in
+`store/brushes/variableWidthBrush.ts` (moved unchanged); the Calligraphy pen (brush `nib`, engine `nib`,
+`store/brushes/nibBrush.ts`) extends it with Inkscape's thinning / angle / fixation / caps (`lib/brushes/nibOutline.ts`)
+from `nibStyle` (DrawingTools). Presets and order are data in `store/brushPresets.ts`, re-exported by `brushConfig.ts`.
 
 ## 3. UI: `createUiSlice.ts`
 
@@ -141,8 +150,17 @@ the others; a different kind, e.g. after the node tool, is replaced by a copy of
 All copies keep every `CUSTOM_PROPS` value; duplicates / pastes drop `linkId` and get a new `id` / `shapeId`.
 **Cross-slice:** UndoRedo calls `syncLinkedClones` in `saveState` (selection) and on `object:modified` (target), so an
 edit and its linked copies are one undo step.
-**Risks:** BUG-003 (layers clone list), BUG-024
-(locks undone by tool switch). `stageRect` ignores pan offset (align-to-canvas is wrong when panned).
+**Arrange rules (2026-11-12):** lock / group / align helpers live in `lib/canvas/arrange.ts` (`setLocked`,
+`syncSelectionLock`, `isLockedTarget`, `viewRect`, `ungroupInto`, `readSelection`, `ARRANGE_RULES`). Locked objects are
+protected: not deleted, aligned, grouped or ungrouped; a multi-selection box carries the lock of its objects
+(BUG-188); the Transform slice refuses panel edits / flips on them (BUG-189). `ungroupSelected` takes apart every
+unlocked group of the selection; `isGroupSelected` = the selection holds an unlocked group. One object aligns to
+`viewRect` (the page in design, the visible area in whiteboard, BUG-191).
+Ungroup takes apart built-in composites (`isTextShape`: text shapes, sticky notes) only when one is selected alone
+(`ungroupable`, until BUG-194 is decided). Canvas `hasMultipleSelection` has no caller in `src/` since Group uses
+`ARRANGE_RULES` (kept: removing a public key needs the owner's yes).
+**Risks:** BUG-003 (layers clone list), BUG-024 (locks undone by tool switch), BUG-193 (distribute with a spanning
+object), BUG-194 (ungroup splits text shapes).
 
 ## 5. Page (page geometry state + the one zoom path): `createPageSlice.ts`
 
@@ -196,10 +214,11 @@ sets a pattern today).
 **Purpose:** command registry for keyboard shortcuts and the command palette.
 **State:** `commands` (from `components/config/commandConfig.tsx` = File, Edit, Group, Lock, Zoom, UndoRedo bar
 configs; each has `id, shortcut, handler({get,set})`).
-**Actions:** `runCommand(id)`, `loadCommands()` (the registry is imported lazily to avoid a store ⇄ slice import cycle,
+**Actions:** `runCommand(id)` (runs the handler, then `recordMacroStep(id)` for the Macro slice), `loadCommands()` (the registry is imported lazily to avoid a store ⇄ slice import cycle,
 BUG-048, so `commands` is `[]` for one tick after the store is created).
 **Depends on:** whatever each command's handler calls (Layers, Canvas, Page, UI, and `undo/redo`, which resolve to
-Animation, BUG-001).
+Animation, BUG-001), Macro (`recordMacroStep`). A handler may return a promise (duplicate, clone, paste, cut, copy,
+delete, undo, redo return theirs, 2026-11-13) so Macro playback can wait for it.
 
 ## 9. ShapeStyle: `createShapeStyleSlice.ts` (+ `colorSystemFixes.ts`)
 
@@ -298,7 +317,8 @@ pages drop (BUG-003).
 **Purpose:** user preferences, validated by `sanitizeSettings`, persisted through `settingsStorage` (`@/lib/storage`, key `fateboard-settings`), theme
 application.
 **State:** `settings: { mode, colorTheme, iconSize, unit, freehand: boolean, defaultCanvasPresetId (a preset id or
-'custom'), canvasOrientation: 'landscape' | 'portrait', customCanvasSize: { width, height } (whole px, 1–10,000) }`. Defaults (`DEFAULT_SETTINGS`, owner 2026-11-11): Light, Fate Blue,
+'custom'), canvasOrientation: 'landscape' | 'portrait', customCanvasSize: { width, height } (whole px, 1–10,000),
+grid: { design, whiteboard: { style: GridStyle, size: 4–200 px } } }` (grid added 2026-11-12, read by the Notebook slice). Defaults (`DEFAULT_SETTINGS`, owner 2026-11-11): Light, Fate Blue,
 Small icons, px, design board, `presentation-16-9`, landscape, custom size 1920 × 1080.
 The page-size, background, grid, snap and rulers fields were saved but never read and were removed (owner,
 2026-11-11); `sanitizeSettings` drops them from older saves and keeps the rest.
@@ -308,7 +328,8 @@ px), `setFreehand`, `toggleFreehand`, `setDefaultCanvasPreset(presetId)` (a `CAN
 ignored; `'custom'` selects the custom size), `setCanvasOrientation` (landscape / portrait for the canvas size; a custom
 size is turned too), `setCustomCanvasSize(width, height)` (px; selects Custom size and sets the orientation from it,
 so it is used exactly as typed; false and no change outside 1–10,000 or for fractions), `resetSettings` (every field back to `DEFAULT_SETTINGS`; theme, color theme and icon size are applied to
-`<html>` at once), `takePendingCanvasSize()` (true once after the resulting canvas size changed, then false; switching the orientation
+`<html>` at once), `setGridPrefs(mode, { style?, size? })` (one board mode; invalid fields ignored, size
+clamped), `takePendingCanvasSize()` (true once after the resulting canvas size changed, then false; switching the orientation
 of a square size is not a change; the
 marker is stored under `fateboard-canvas-size-pending`, so it survives a reload), `updateSetting`, `applyTheme`,
 `opendbSave`.
@@ -395,17 +416,23 @@ One undo step incl. the page size; then `showToast` with Undo, Q11).
 
 **Purpose:** grid painted behind objects (patches Fabric's internal `_renderBackground`) and smart snapping to
 grid/objects with guides while moving/scaling. Re-attaches itself via `store.subscribe` when `canvas` changes.
-**State:** `gridEnabled` (false), `gridSize` (20), `snapEnabled` (false), `snapToObjects` (true, applies once snap is on), `snapThreshold`.
+**State:** `gridEnabled` (false), `gridSize` (20), `gridStyle` (`'lines'`), `snapEnabled` (false), `snapToObjects` (true, applies once snap is on), `snapThreshold`.
 Snap starts off (2026-11-07). The grid follows the board mode (2026-11-11): entering the whiteboard turns it on,
 entering a design page turns it off; leaving the editor and coming back to the same mode keeps the user's choice
-(closure `lastMode`, `store.subscribe` on `boardMode`). Style per mode (`gridStyleFor`): whiteboard = dots (a dot per
-cell, a stronger one every 5), design = lines. This is the only grid renderer in both modes (the whiteboard CSS dot
-grid was removed, BUG-107).
-**Depends on:** Page (`boardMode`).
-**Actions:** `setGridEnabled`, `toggleGrid`, `setGridSize`, `setSnapEnabled`, `toggleSnap`, `setSnapToObjects`,
-`toggleSnapToObjects`, `setSnapThreshold`, `drawGrid`.
-**Risks:** relies on a private Fabric method (`_renderBackground`), so it may break on a Fabric upgrade. `settings.snapToGrid`/`settings.gridSize` are
-separate (removed from Settings 2026-11-11), unconnected values.
+(closure `lastMode`, `store.subscribe` on `boardMode`). **Style and size (2026-11-12):** seven styles
+(`lib/canvas/grid.ts` `GRID_STYLES`: graph lines, squares, dashed, dots, crosses, isometric, ruled), saved per board mode
+in `settings.grid` (defaults: whiteboard dots, design graph lines, 20 px). `gridStyle` / `gridSize` mirror
+`settings.grid[mode]` for the current `boardMode` (one-way: `store.subscribe` on `settings` / `boardMode`); the setters
+write Settings. Painting is `lib/canvas/gridPainters.ts` (`paintGridStyle`); snapping uses the lattice of the grid that
+is shown (`gridSnapSteps`: cells; isometric = per-axis lattice, x every half side, y every triangle height, so corners and
+horizontal-edge midpoints; ruled = rows
+only, x free). This is the only grid renderer in both modes (the whiteboard CSS dot grid was removed, BUG-107).
+**Depends on:** Page (`boardMode`), Setting (`settings.grid`, `setGridPrefs`).
+**Actions:** `setGridEnabled`, `toggleGrid`, `setGridSize` (clamped 4–200, saved per mode), `setGridStyle` (saved per
+mode; unknown styles ignored), `setSnapEnabled`, `toggleSnap`, `setSnapToObjects`, `toggleSnapToObjects`,
+`setSnapThreshold`, `drawGrid`.
+**Risks:** relies on a private Fabric method (`_renderBackground`), so it may break on a Fabric upgrade. The old
+`settings.snapToGrid`/`settings.gridSize` fields (removed 2026-11-11) are still dropped; grid prefs live in `settings.grid`.
 
 ## 24. Dialog: `createDialogSlice.ts` (+ `organisms/DialogHost.tsx`, `molecules/Modal.tsx`)
 
@@ -424,10 +451,28 @@ Promise<void>`, `resolveDialog(result)` (used by `DialogHost`), `showToast({ mes
 
 ## 26. DrawingTools: `createDrawingToolsSlice.ts` (+ `lib/canvas/penPath.ts`, `lib/canvas/laserTrail.ts`)
 
-**Purpose:** the Pen tool (P) and the Laser pointer (K), added 2026-11-11. Spread before Animation.
-**State:** `penPointCount` (points of the Pen path being drawn), `laserStrokeCount` (laser strokes still fading).
-**Actions:** `finishPenPath({ close? })` (one `fabric.Path`: black 2 px outline × `creationScale`, no fill
-`rgba(0,0,0,0)`, `customType: 'shape'`, selected in the Select tool; under two points it cancels), `cancelPenPath`.
+**Purpose:** the Pen tool (P) and the Laser pointer (K), added 2026-11-11; Pen / Pencil options 2026-11-13. Spread
+before Animation. The Pen lives in `drawingTools/penTool.ts` (+ `penStyle.ts`, `penContinue.ts`, `shared.ts`).
+**State:** `penPointCount` (points of the Pen path being drawn), `laserStrokeCount` (laser strokes still fading),
+`penMode` (`'pen' | 'curvature' | 'freeform'`), `penStyle` (`stroke, strokeWidth, fill, fillEnabled, lineCap,
+lineJoin, dash, arrow, shape, shapeWidth`), `pencilStyle` (`width, opacity, smoothing, pressure, autoClose`; read by the
+Brush slice), `nibStyle` (`thinning, angle, fixation, caps`: the Calligraphy pen brush, read by the Brush slice).
+**Pen shape (2026-11-13, Inkscape Pen "Shape"):** with `penStyle.shape` = `triangle-in | triangle-out | ellipse` a NEW
+open path is built as one closed filled outline (`lib/canvas/penShape.ts` `shapedOutline`, full thickness
+`shapeWidth` × `creationScale`, fill = the stroke color, no stroke / dash / arrows). Closed shapes and continued paths
+are unchanged. `setNibStyle(patch)` clamps and, while the brush is `nib`, rebuilds it through `updateBrush`.
+**Actions:** `finishPenPath({ close? })` (one `fabric.Path` in the `penStyle` stroke, width × `creationScale`; fill only
+on closed shapes with `fillEnabled`, else `rgba(0,0,0,0)`; arrowheads on open paths; `customType: 'shape'`, selected
+in the Select tool; under two points it cancels), `cancelPenPath`, `setPenStyle(patch)` / `setPencilStyle(patch)`
+(sanitised: bad values ignored, numbers clamped; `setPencilStyle` rebuilds the brush through `updateBrush` while the
+Pencil is active), `setPenMode(mode)` (keeps a path of two points or more that is being drawn).
+**Pen modes:** Pen (click / drag; Shift 45°, Alt-drag = outgoing handle only; clicking an end of an open path
+continues it: same object, new geometry, one `object:modified`), Curvature (`smoothNodes`: Catmull-Rom handles, Alt +
+click = corner), Freeform (drag; `simplifyPoints` then `smoothNodes`; closed when it ends near its start; repaint once per frame).
+Changing tool or mode keeps a path of two points or more (and a Freeform drag); clicking a path's end and leaving
+without a new point leaves it untouched (no undo step). A page switch drops the path in progress (BUG-206). Enter /
+Space on a focused button or radio activate it; mouse clicks on the options bar keep the focus where it was. Keys whose
+target is in a `role="dialog"` (toolbar popovers) are left alone (BUG-202).
 **How:** `store.subscribe` on `activeTool` / `canvas` attaches the tool's listeners only while it is active (same pattern
 as the node tool). Pen: click = corner, drag = smooth point (`mirrorHandle`), click the first point = closed,
 Enter / Escape / double-click = open, Backspace / Delete = last point off (a capture-phase key listener stops the
@@ -436,7 +481,36 @@ strokes with timestamps, a `requestAnimationFrame` loop fades them (`LASER_LIFE_
 left; Escape = Select. Both paint only on `canvas.contextTop` in scene space (sizes in screen px via `screenScale`):
 no helper objects, nothing in history, autosave or exports.
 **Depends on:** Canvas (`canvas`, `activeTool`, `setActiveTool`, `setToolbar`), Page (`boardMode`, `pageWidth`,
-`pageHeight` for `creationScale`), NodeEditor (`screenScale`).
+`pageHeight` for `creationScale`), NodeEditor (`screenScale`), Brush (`updateBrush`, from `setPencilStyle`). The
+Brush slice reads `pencilStyle` (via `drawingState`) and `screenScale` (auto-close tolerance).
+
+## 27. Generator: `createGeneratorSlice.ts` (+ `lib/generators/fractals.ts`, `lib/generators/automata.ts`)
+
+**Purpose:** the Fractals and Cellular Automata dock tabs (added 2026-11-13). Spread before Animation.
+**State:** none.
+**Actions:** `insertFractal({ kind, depth, size, angle?, color? })` (`koch | sierpinski | tree | dragon | hilbert`; depth
+clamped per kind by `FRACTAL_LIMITS`, about 16k points at most) and `insertAutomaton({ mode, cols, rows, cell?, gap?,
+color?, rule?, seed?, preset?, steps?, density?, wrap? })` (`elementary` = Wolfram rule 0-255, one row per generation;
+`life` = B3/S23 from random / glider / Gosper gun / pulsar, `steps` generations, wrapped edges; sides ≤ 200, steps ≤ 500).
+Each inserts ONE `fabric.Path` at the view centre (origin center, sized × `creationScale`, `name` = the pattern), selects
+it, `saveState()`, `addLayer(path, 'path')`; autosave follows `object:added`. Koch / Sierpinski / cells are filled,
+the line fractals stroked. An empty result (all cells dead) or no canvas returns `null` and adds nothing.
+**Depends on:** Canvas (`canvas`), Page (`boardMode`, `pageWidth`, `pageHeight` for `creationScale`), UndoRedo
+(`saveState`), Layers (`addLayer`).
+
+## 28. Macro: `createMacroSlice.ts`
+
+**Purpose:** the Macro dock tab (added 2026-11-13): record shortcut commands and replay them. Spread before Animation.
+**State:** `macroSteps` (command ids from `commands`), `macroRecording`, `macroPlaying`. Session only: not saved.
+**Actions:** `startMacroRecording` (empties the steps), `stopMacroRecording`, `recordMacroStep(id)` (called by
+`runCommand`; kept only while recording and not playing, unknown ids ignored), `addMacroStep(id)`,
+`removeMacroStep(index)`, `clearMacro`, `playMacro(times = 1)` (1-`MACRO_MAX_TIMES` = 50 rounds; each step in order,
+awaiting a returned promise; disabled steps (`enabled() === false`) are skipped, a throwing step is logged and
+skipped; resolves to the number of steps that ran; a second call while playing returns 0).
+**Limits:** commands with `macro: false` (file New / Open / Save) are never recorded, added or played. Playback
+stops when `canvas` or `currentPageId` changes or `isPageSwitching` is on between steps. Toolbar button clicks (`onClick`) do not go through `runCommand`, so only shortcuts and the panel's Add
+step list are recorded. Each step is its own undo step.
+**Depends on:** Command (`commands`; `runCommand` calls `recordMacroStep`).
 
 ## 25. Animation: `createAnimationSlice.ts` (+ `src/animation/engine.ts`, `exportVideo.ts`)
 

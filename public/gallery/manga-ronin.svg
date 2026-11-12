@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Ronin at Dusk</title>
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b1f47"/>
+      <stop offset="0.45" stop-color="#c8475b"/>
+      <stop offset="1" stop-color="#f6a35c"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd27a"/>
+      <stop offset="1" stop-color="#ff6b4a"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f8dcc2"/>
+      <stop offset="1" stop-color="#eebf9b"/>
+    </linearGradient>
+    <linearGradient id="haori" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#2f3150"/>
+      <stop offset="1" stop-color="#191a2e"/>
+    </linearGradient>
+  </defs>
+  <g id="step-1">
+    <rect width="480" height="360" fill="url(#dusk)"/>
+    <circle cx="240" cy="168" r="122" fill="url(#sun)"/>
+    <rect x="100" y="214" width="280" height="6" fill="#f6a35c" opacity="0.9"/>
+    <rect x="100" y="232" width="280" height="9" fill="#f6a35c" opacity="0.9"/>
+    <rect x="100" y="254" width="280" height="12" fill="#f6a35c" opacity="0.9"/>
+  </g>
+  <g id="step-2">
+    <path d="M0 290 L60 236 L104 270 L170 214 L222 262 L300 226 L350 258 L420 210 L480 250 L480 360 L0 360 Z" fill="#6e2f4f" opacity="0.8"/>
+    <path d="M0 316 L80 280 L150 306 L250 276 L340 304 L420 280 L480 300 L480 360 L0 360 Z" fill="#3b1f47"/>
+  </g>
+  <g id="step-3">
+    <path d="M64 40 L64 172" stroke="#1b1424" stroke-width="2" opacity="0.6"/>
+    <text x="44" y="70" font-family="'Hiragino Mincho ProN', 'Yu Mincho', serif" font-size="30" font-weight="700" fill="#1b1424">浪</text>
+    <text x="44" y="108" font-family="'Hiragino Mincho ProN', 'Yu Mincho', serif" font-size="30" font-weight="700" fill="#1b1424">人</text>
+    <rect x="48" y="122" width="22" height="22" fill="#c0392b"/>
+    <text x="59" y="138" font-family="'Hiragino Mincho ProN', serif" font-size="13" fill="#ffe8d6" text-anchor="middle">侍</text>
+  </g>
+  <g id="step-4">
+    <path d="M290 270 L386 120" stroke="#1b1424" stroke-width="16" stroke-linecap="round"/>
+    <path d="M322 220 L386 120" stroke="#7b2d26" stroke-width="10" stroke-linecap="round"/>
+    <path d="M332 204 L342 210 M342 188 L352 194 M352 172 L362 178 M362 156 L372 162 M372 140 L382 146" stroke="#e9c46a" stroke-width="2"/>
+    <circle cx="387" cy="118" r="7" fill="#c9a227" stroke="#1b1424" stroke-width="3"/>
+    <ellipse cx="318" cy="226" rx="20" ry="7" fill="#c9a227" stroke="#1b1424" stroke-width="3" transform="rotate(-57 318 226)"/>
+  </g>
+  <g id="step-5">
+    <path d="M190 112 Q160 140 170 206 L196 186 Z" fill="#14101c"/>
+    <path d="M290 112 Q320 140 312 206 L286 186 Z" fill="#14101c"/>
+    <path d="M222 206 L222 246 L258 246 L258 206 Z" fill="#e2ad86"/>
+    <path d="M222 222 Q240 232 258 222 L258 212 L222 212 Z" fill="#c98f6a" opacity="0.6"/>
+    <path d="M100 360 Q108 268 198 244 L240 300 L282 244 Q372 268 380 360 Z" fill="url(#haori)" stroke="#0f0d18" stroke-width="3"/>
+    <path d="M198 244 L240 316 L282 244 L270 240 L240 292 L210 240 Z" fill="#e9e4dc" stroke="#0f0d18" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M206 242 L240 302 L274 242" stroke="#b02e3a" stroke-width="4" fill="none"/>
+    <circle cx="166" cy="300" r="13" fill="none" stroke="#e9e4dc" stroke-width="2.5" opacity="0.8"/>
+    <path d="M166 290 L176 300 L166 310 L156 300 Z" fill="#e9e4dc" opacity="0.8"/>
+    <path d="M120 330 L170 330 M300 330 L360 330" stroke="#0f0d18" stroke-width="3" opacity="0.5"/>
+  </g>
+  <g id="step-6">
+    <path d="M192 140 Q190 196 240 226 Q290 196 288 140 Q288 100 240 98 Q192 100 192 140 Z" fill="url(#skin)" stroke="#1b1424" stroke-width="3"/>
+    <path d="M192 150 Q204 156 212 150 L206 140 Z" fill="#d9a07e" opacity="0.5"/>
+    <path d="M182 152 L178 104 Q190 58 240 54 Q292 58 302 104 L298 152 L290 124 L282 146 L272 112 L262 138 L252 106 L240 134 L230 104 L218 138 L210 112 L200 146 L192 122 Z" fill="#14101c"/>
+    <path d="M206 64 Q232 56 262 64" stroke="#3a3350" stroke-width="3" fill="none" opacity="0.8" stroke-linecap="round"/>
+    <ellipse cx="240" cy="46" rx="16" ry="13" fill="#14101c"/>
+    <rect x="230" y="54" width="20" height="7" rx="2" fill="#c0392b"/>
+    <path d="M250 58 Q268 66 276 82" stroke="#c0392b" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <g id="step-7">
+    <path d="M200 150 L230 156" stroke="#14101c" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M280 150 L250 156" stroke="#14101c" stroke-width="4.5" stroke-linecap="round"/>
+    <path d="M204 166 Q216 158 232 164" stroke="#14101c" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M206 167 Q218 178 230 167 Z" fill="#ffffff"/>
+    <ellipse cx="220" cy="169" rx="6" ry="6.5" fill="#8c2f39"/>
+    <circle cx="220" cy="170" r="2.6" fill="#14101c"/>
+    <circle cx="222" cy="167" r="1.6" fill="#ffffff"/>
+    <path d="M276 166 Q264 158 248 164" stroke="#14101c" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M274 167 Q262 178 250 167 Z" fill="#ffffff"/>
+    <ellipse cx="260" cy="169" rx="6" ry="6.5" fill="#8c2f39"/>
+    <circle cx="260" cy="170" r="2.6" fill="#14101c"/>
+    <circle cx="262" cy="167" r="1.6" fill="#ffffff"/>
+    <path d="M240 178 L236 192 L243 192" stroke="#b07a5a" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M230 206 L250 204" stroke="#7a3e2e" stroke-width="2.5" stroke-linecap="round"/>
+    <path d="M276 180 L266 196 M268 182 L276 192" stroke="#b02e3a" stroke-width="2" stroke-linecap="round"/>
+    <path d="M286 152 Q292 178 278 200" stroke="#14101c" stroke-width="2" fill="none" opacity="0.6"/>
+  </g>
+  <g id="step-8">
+    <ellipse cx="380" cy="60" rx="5" ry="3" fill="#ffc8dd" transform="rotate(30 380 60)"/>
+    <ellipse cx="420" cy="140" rx="6" ry="3.5" fill="#ffc8dd" transform="rotate(-20 420 140)"/>
+    <ellipse cx="128" cy="96" rx="5" ry="3" fill="#ffc8dd" transform="rotate(50 128 96)"/>
+    <ellipse cx="96" cy="200" rx="6" ry="3.5" fill="#ffc8dd" transform="rotate(10 96 200)"/>
+    <ellipse cx="440" cy="62" rx="4" ry="2.5" fill="#ffc8dd" opacity="0.7" transform="rotate(-40 440 62)"/>
+    <ellipse cx="350" cy="96" rx="4" ry="2.5" fill="#ffc8dd" opacity="0.7" transform="rotate(70 350 96)"/>
+    <path d="M330 40 Q380 34 440 44" stroke="#ffe8d6" stroke-width="1.5" fill="none" opacity="0.5"/>
+    <path d="M300 74 Q370 66 460 80" stroke="#ffe8d6" stroke-width="1.5" fill="none" opacity="0.35"/>
+  </g>
+</svg>

@@ -3,6 +3,16 @@ import * as fabric from 'fabric';
 import { Group } from 'fabric';
 import { CUSTOM_PROPS } from '@/lib/serialization';
 import { LINK_PROP, canLink, linkedWith, newLinkId, syncLinked } from '@/lib/linkedClones';
+import {
+    isGroup,
+    isSelection,
+    setLocked,
+    syncSelectionLock,
+    ungroupable,
+    ungroupInto,
+    viewRect,
+    type Rect,
+} from '@/lib/canvas/arrange';
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Same slice pattern, same file, same action names as before.
@@ -120,9 +130,6 @@ let pasteCount = 0;
 let anchorId: LayerId | null = null;
 const makeId = () => `l_${Date.now().toString(36)}_${(idCounter++).toString(36)}`;
 
-// fabric v6 types are PascalCase ("ActiveSelection"), so compare with instanceof.
-const isSelection = (o: any) => o instanceof fabric.ActiveSelection;
-const isGroup = (o: any) => o instanceof fabric.Group && !isSelection(o);
 const typeOf = (o: any) => String(o?.type ?? 'object').toLowerCase();
 const same = (a: any, b: any) => String(a) === String(b);
 
@@ -146,32 +153,6 @@ const LABELS: Record<string, string> = {
     group: 'Group',
 };
 const labelOf = (o: FObj) => LABELS[typeOf(o)] ?? 'Layer';
-
-function applyLockStyle(obj: FObj) {
-    obj.set({ hoverCursor: 'not-allowed', moveCursor: 'not-allowed' }); // no opacity change anymore
-}
-function removeLockStyle(obj: FObj) {
-    obj.set({ hoverCursor: null, moveCursor: null });
-}
-
-/** Single lock implementation used by every lock/unlock action. Stays selectable. */
-function setLocked(objs: FObj[], locked: boolean) {
-    objs.forEach((o) => {
-        o.set({
-            lockMovementX: locked,
-            lockMovementY: locked,
-            lockScalingX: locked,
-            lockScalingY: locked,
-            lockRotation: locked,
-            lockSkewingX: locked,
-            lockSkewingY: locked,
-            hasControls: !locked,
-        });
-        o._locked = locked;
-        if (locked) applyLockStyle(o);
-        else removeLockStyle(o);
-    });
-}
 
 /** Padlock badge drawn on the canvas (replaces the old text-object icon, which leaked into
  *  exports, undo history and the z-order). Called from the after:render listener. */
@@ -339,15 +320,6 @@ function placeClone(canvas: FObj, clone: FObj, left: number, top: number) {
     canvas.setActiveObject(clone);
 }
 
-interface Rect {
-    l: number;
-    t: number;
-    r: number;
-    b: number;
-    w: number;
-    h: number;
-}
-
 function rectOf(o: FObj): Rect {
     o.setCoords();
     const c = o.aCoords;
@@ -367,14 +339,6 @@ const unionRect = (rs: Rect[]): Rect => {
     const b = Math.max(...rs.map((r) => r.b));
     return { l, t, r, b, w: r - l, h: b - t };
 };
-
-/** "Canvas" alignment frame. Swap for your artboard rect if you have one. */
-function stageRect(canvas: FObj): Rect {
-    const z = canvas.getZoom() || 1;
-    const w = canvas.getWidth() / z;
-    const h = canvas.getHeight() / z;
-    return { l: 0, t: 0, r: w, b: h, w, h };
-}
 
 /* ───────────────────────────── slice ───────────────────────────── */
 
@@ -675,6 +639,7 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
                     : canvas.getActiveObjects();
             if (!targets.length) return;
             setLocked(targets, !targets.every((o) => o._locked));
+            syncSelectionLock(canvas);
             refresh(canvas);
             commit();
         },
@@ -691,6 +656,7 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
             const canvas = cv();
             if (!canvas) return;
             setLocked(canvas.getActiveObjects(), true);
+            syncSelectionLock(canvas);
             refresh(canvas);
             commit();
         },
@@ -699,6 +665,7 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
             const canvas = cv();
             if (!canvas) return;
             setLocked(canvas.getActiveObjects(), false);
+            syncSelectionLock(canvas);
             refresh(canvas);
             commit();
         },
@@ -707,6 +674,7 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
             const canvas = cv();
             if (!canvas) return;
             setLocked(canvas.getObjects().filter(isLayerObject), locked);
+            syncSelectionLock(canvas);
             refresh(canvas);
             commit();
         },
@@ -787,7 +755,8 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
             const raw: FObj[] = ids
                 ? (ids.map((id) => locate(canvas, id)?.top).filter(Boolean) as FObj[])
                 : canvas.getActiveObjects();
-            const objs = sortByStack(canvas, [...new Set(raw)]);
+            // locked layers stay out: a group around them would move them (BUG-190)
+            const objs = sortByStack(canvas, [...new Set(raw)]).filter((o) => !o._locked);
             if (objs.length < 2) return;
 
             const index = canvas.getObjects().indexOf(objs[0]);
@@ -801,30 +770,18 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
             commit();
         },
 
+        /** Takes apart every unlocked group of the selection (a locked one stays whole, BUG-190). */
         ungroupSelected: () => {
             const canvas = cv();
-            const group = canvas?.getActiveObject();
-            if (!canvas || !isGroup(group)) return;
+            if (!canvas) return;
+            const selected: FObj[] = canvas.getActiveObjects();
+            const groups = ungroupable(selected);
+            if (!groups.length) return;
 
-            const index = canvas.getObjects().indexOf(group);
-            const groupMatrix = group.calcTransformMatrix();
-            const items = group.getObjects().map((o: FObj) => ({
-                o,
-                m: fabric.util.multiplyTransformMatrices(groupMatrix, o.calcOwnMatrix()),
-            }));
-
-            canvas.discardActiveObject();
-            group.removeAll();
-            canvas.remove(group);
-            items.forEach(({ o, m }: any) => {
-                fabric.util.applyTransformToObject(o, m); // bake the group transform into each child
-                o.setCoords();
-            });
-            canvas.insertAt(index, ...items.map((i: any) => i.o));
-            setSelection(
-                canvas,
-                items.map((i: any) => i.o),
-            );
+            canvas.discardActiveObject(); // objects of a multi-selection return to scene coordinates
+            const parts = groups.flatMap((g) => ungroupInto(canvas, g));
+            const others = selected.filter((o) => !groups.includes(o));
+            setSelection(canvas, sortByStack(canvas, [...parts, ...others]));
             refresh(canvas);
             commit();
         },
@@ -871,7 +828,7 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
             get().distributeObjects(direction);
         },
 
-        isGroupSelected: () => isGroup(cv()?.getActiveObject()),
+        isGroupSelected: () => ungroupable(cv()?.getActiveObjects() ?? []).length > 0,
 
         /* ───── clipboard & clones ───── */
 
@@ -998,7 +955,7 @@ export const createLayersSlice: SliceCreator<LayerSlice> = (set, get, _store) =>
             const items = targets.map((o) => ({ o, r: rectOf(o) }));
             const sel = unionRect(items.map((i) => i.r));
             const frame =
-                !distribute && (to === 'canvas' || targets.length === 1) ? stageRect(canvas) : sel;
+                !distribute && (to === 'canvas' || targets.length === 1) ? viewRect(canvas) : sel;
 
             const move = (o: FObj, dx: number, dy: number) => {
                 if (!dx && !dy) return;

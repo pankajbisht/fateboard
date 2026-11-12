@@ -1,66 +1,55 @@
 # Production readiness — fateboard
 
-Reviewed 2026-11-09 on branch `fix/coverage-gate`, after the first CI run on `main`. Evidence: the full quality gate,
-unit tests with coverage, the Playwright suite, axe accessibility scans, a smoke test of the production bundle, a
-dependency audit, a static scan of shipped code and `docs/BUGS.md`.
+**Review 2026-11-13** (skill `fate-readiness`, working tree on `main`, 178 changed / new files not committed: the
+right-dock generators, Brush picker + Calligraphy pen, Pen Path shape, Templates in the dock, the token-budget docs).
+Evidence produced in this run: the full local gate, coverage, a full Playwright run on Chromium (desktop + laptop) and
+Firefox, a dependency audit, the production build, and the newest `main` pipeline read from the GitHub API.
 
-**Whole-app review, 2026-11-11** (working tree on `main`, not committed): the review ran probes against the code and
-found five bugs the audit had missed, one of them a data-loss bug (BUG-154: a project file with one page that cannot
-be read replaced the user's board with a wrong one). BUG-154 to BUG-158 and BUG-152 are fixed with unit and Playwright
-tests. Seven more (BUG-159 to BUG-165) are `open`: they were found by reading the code and need an owner decision or
-a larger change. The numbers in the scorecard are from this review.
+Earlier reviews, short: 2026-11-09 found the first pipeline red (missing `VITE_SITE_URL`, coverage gate BUG-153),
+both fixed. 2026-11-11 (whole-app + storage review) fixed BUG-152 to 158, 162, 173, moved all saving behind
+`@/lib/storage`, and logged BUG-159 to 165 and 174 as open.
 
-**Storage review, 2026-11-11** (branch `feat/storage-opendb-indexeddb`): all saving now goes through one storage layer
-(`@/lib/storage`, guard test) on opendb-store 3; boards saved by the old IndexedDB code move over once. Storage
-failures are no longer silent: a failed autosave is shown (BUG-162) and a board that cannot be read is never written
-over (BUG-173). Still open: the browser is never asked to keep the data (BUG-174, owner decision).
+## Verdict: **the live site is fine to keep; the local work can be deployed once it goes through CI**
 
-## Verdict: **ready for production once the pipeline is green; it has not been green yet**
+- **Live site** (`main`, merge of PR #8, 2026-11-11): every CI job passed (quality, E2E on Chromium + Firefox,
+  build, Docker image smoke test) and the GitHub Pages deploy succeeded. Safe to keep live, with the known limits
+  below.
+- **Local working tree**: every gate passes here, but none of it has been through CI. Deploy = branch → PR → CI
+  green → merge (the merge deploys). No app-level blocker was found.
 
-The first run on `main` (merge of PR #2) failed and did not deploy, for two reasons that are not app bugs:
-
-1. **`VITE_SITE_URL` was not set as a repository variable**, so `build`, `e2e` and `docker` stopped at the build. Owner
-   action: step 1 of the checklist below.
-2. **The coverage gate failed** (BUG-153). Fixed on this branch.
-
-Every bug found by the audit is fixed and covered by a test, except BUG-136 (deferred on purpose: a dev-tooling
-advisory whose only fix is a days-old major release; it never reaches users), the minor BUG-149 and 150, and the
-seven found on 2026-11-11 (BUG-159 to 165; the two that matter most are BUG-159, a photo that fails to load is
-dropped without a message, and BUG-162, a failed autosave is not shown to the user).
-Two things only CI can confirm, because both jobs stopped at the build: the **first Firefox run** and the **first
-Docker image build**. Neither could run in the agent's environment.
-
-## Scorecard
+## Scorecard (2026-11-13)
 
 | Area | Status | Evidence |
 |---|---|---|
-| Core editing flows | ✅ | 111 Playwright tests on Chromium, all green on 2026-11-11 (storage review); 1011 unit tests (152 files) |
-| Data safety | ⚠️ | Whole project autosaves to IndexedDB through one storage layer; failed saves and unreadable saves are shown and never overwrite the board (BUG-162, 173). Open: no persistent-storage request, so the browser may clear saved boards (BUG-174). Also: (pages, page sizes, animation, photos), flushed when the tab is hidden; undo per page (incl. page size, file open, template apply); destructive actions undoable or confirmed; a page, project or undo step that cannot be loaded changes nothing and says so, and an autosave that cannot be opened is kept as a backup (BUG-154). Open: BUG-159, BUG-162, BUG-163 |
-| Architecture | ✅ | One owner per store key (guard test); one canvas-geometry owner; one serialize path and one document loader (guard tests); no module-level slice state; dead code removed |
-| Robustness | ✅ | Error boundary with autosave download / reset; failed chunk loads land there; broken files show a dialog |
-| Keyboard | ✅ | Delete and Backspace delete; ⌘B / ⌘I / ⌘U; Escape closes menus; no shortcut leaks out of panels or fires under dialogs |
-| Performance | ✅ | Lazy route chunks; `/draw` startup ≈ 285 KB gzip; paper.js on demand; design canvas renders at the shown density; `dist` 9.8 MB; at 1500 objects Layers opens without a freeze and hover no longer repaints (BUG-147, 148) |
-| Accessibility | ✅ | axe WCAG 2.1 A / AA + best-practice: zero violations on `/`, `/draw`, `/setting`, `/help` and two Help topics, light and dark |
-| Browsers / devices | ⚠️ CI | Chromium ✅; Firefox runs every spec in CI (no result yet); WebKit has no test project and was last checked by hand before the latest features; phones get an honest desktop-only notice |
-| Tests | ✅ | Coverage 58.1 % lines / 49.6 % branches, enforced as a CI ratchet. It counts only files that tests load, so panels with no unit test are not in the total |
-| Code quality | ⚠️ | Code review 2026-11-11 (docs/CODE_REVIEW.md): strict TypeScript off outside the new strict island, store typed `any`, 39 files over the size budget (now ratcheted), store imports from the UI layer. Not blocking; roadmap there. Lint 0 errors, only the 254 `any` warnings left, frozen by `--max-warnings 254`; Prettier clean; no `console.log`, `debugger`, `TODO` or XSS sinks in shipped code |
-| Security | ⚠️ | No XSS sinks (`innerHTML`, `eval`, `dangerouslySetInnerHTML`) in shipped code; values from opened files are checked (BUG-157). Open: remote image addresses in opened files (BUG-160), no security headers in the Docker image (BUG-165). `npm audit --omit=dev`: 0; no secrets in the repo; `.env` git-ignored and kept out of Docker images; site URL is configuration (`VITE_SITE_URL`), the build refuses a missing value |
-| Deploy | ⚠️ CI | GitHub Pages via `deploy-pages` on `main` only; first run failed before deploying (see Verdict); Docker image (unprivileged nginx) built and smoke-tested in CI (first build pending) |
-| Docs | ✅ | ARCHITECTURE, STATE, CANVAS, COMPONENTS, CONVENTIONS, TESTING, BUGS, ROADMAP, DECISIONS, DESIGN, README and CLAUDE.md updated for every change |
+| Core editing flows | ✅ | Full E2E: 287 tests, 283 passed; the 4 failures are Firefox-only: 2 pass on rerun (font download hiccup), 2 are the known BUG-204 / BUG-205 (test environment, not the app). Firefox passed in CI on `main`. `known-bugs.spec.ts`: no open entries |
+| Data safety | ⚠️ | One storage layer, failed / unreadable saves surfaced (BUG-162, 173 fixed). Open: **BUG-174 (High)** no persistent-storage request, browser may clear boards; BUG-159 a photo that fails to load is dropped silently; BUG-187 edits made during the startup read can overwrite the save |
+| Architecture | ✅ | Guard tests green (store keys, store API baseline, serialize path, storage boundary, file budget, Claude setup). Brush slice shrank 715 → 502 lines |
+| Robustness | ✅ | Error boundary with autosave download / reset; failed chunk loads land there; broken files show a dialog; Macro playback stops on a page switch |
+| Performance | ✅ | Lazy routes; `/draw` preloads ≈ 316 KB gzip (+ Editor chunk ≈ 87 KB), up ≈ 30 KB since 2026-11-11 (new tools); paper.js (156 KB) loads on demand |
+| Accessibility | ✅ | axe WCAG 2.1 A / AA specs green on Chromium (incl. the new panels' routes) |
+| Browsers / devices | ⚠️ | Chromium ✅ local + CI; Firefox ✅ CI, locally only BUG-204 / 205; WebKit / Safari not tested; phones get a desktop-only notice |
+| Tests | ✅ | 1486 unit tests (188 files) pass; coverage 63.3 % lines / 61.9 % statements / 62.8 % functions / 54.3 % branches vs ratchet 54 / 52 / 54 / 45 (up from 58.1 % lines) |
+| Code quality | ⚠️ | Lint 0 errors, 249 `any` warnings = the cap; Prettier + type-check clean; metrics flag 45 of 62 hotspot files (size / `any`); strict TS only in the strict island (docs/CODE_REVIEW.md) |
+| Security | ⚠️ | `npm audit --omit=dev`: 0 vulnerabilities; no XSS sinks; opened-file values checked. Open: no CSP / security headers (BUG-165), remote image addresses in opened files (BUG-160, accepted Q13) |
+| Operations | ⚠️ | Pipeline + Pages deploy green on `main`; rollback = revert the merge (Pages redeploys). No remote error reporting (console only); 178 local files not in CI |
+| Docs | ✅ | STATE, COMPONENTS, DECISIONS, BUGS (+ BUGS_ARCHIVE), AGENT_WORKFLOW, CLAUDE.md updated for every change in this session |
 
-## Before the first deploy (checklist)
+## Before the next deploy (checklist)
 
-1. GitHub repository variables (Settings > Secrets and variables > Actions > **Variables**): `VITE_SITE_URL` (required; every build fails without it) and `VITE_GA_ID` (optional).
-2. Settings > Pages > Source = **GitHub Actions**, custom domain set there.
-3. Push `fix/coverage-gate`, open a PR to `main`, wait for **CI passed** (quality, E2E on Chromium + Firefox, build,
-   Docker). If Firefox or Docker fail, those are the only untested paths: fix, re-run.
-4. Merge: the deploy job publishes to Pages.
+1. Commit the local work on a branch (not on `main`), in logical commits.
+2. Open a PR to `main`; wait for **CI passed** (quality, E2E Chromium + Firefox, build, Docker).
+3. Merge: the deploy job publishes to GitHub Pages. Rollback: revert the merge commit.
+4. After the deploy, open `/draw` once and check the Brush, Fractals, Cellular Automata, Macro and Templates tabs.
+
+Should fix soon (not blocking): **BUG-174** (ask the browser to keep saved boards: one call to opendb-store's
+`requestPersistence()`, needs the owner's OK for the browser prompt), **BUG-187** (startup save race), **BUG-159**
+(say when a photo could not be loaded). Then BUG-165 (security headers / CSP) and remote error reporting.
 
 ## Known limits (accepted, documented)
 
 - **Share** is removed until there is a backend (decision Q6); Save Board (`.fateboard`) hands a board over.
 - **Phones**: the editor is desktop-first; phones see a notice and may continue.
-- **TypeScript `any`**: 254 remain (decision Q10); the lint ratchet stops new ones.
+- **TypeScript `any`**: 249 remain (decision Q10); the lint ratchet stops new ones.
 - **BUG-136**: dev-only `minimatch` advisory, deferred until ESLint adopts the fixed major version.
 - **Remote error reporting**: none; the error boundary logs to the console only.
 - **Opened files are trusted for image addresses** (BUG-160, decision Q13) and have no size limit (BUG-161).
@@ -72,6 +61,9 @@ Docker image build**. Neither could run in the agent's environment.
   are covered by E2E.
 
 ## How to re-check
+
+Ask Claude "can we deploy?" or run `/fate-readiness`: it runs everything below, reads the newest CI run and
+answers in the same Deploy YES / NO format. By hand:
 
 ```
 npm run check          # lint (ratchet) + type-check (incl. e2e) + format:check

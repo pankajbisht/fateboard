@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import clsx from 'clsx';
 
 export type SliderProps = {
@@ -44,8 +45,22 @@ function Slider({
 }: SliderProps) {
     const span = max - min || 1;
     const pct = Math.min(100, Math.max(0, ((value - min) / span) * 100));
-    const commit = (e: { currentTarget: HTMLInputElement }) =>
-        onCommit?.(Number(e.currentTarget.value));
+    // Firefox sends one more `input` with the same value AFTER pointerup; it would reopen what the commit
+    // just closed (the landing time-lapse stayed half-blended, BUG-204). That one echo is ignored.
+    const committed = useRef<number | null>(null);
+    const commit = (e: { currentTarget: HTMLInputElement }) => {
+        const v = Number(e.currentTarget.value);
+        committed.current = v;
+        onCommit?.(v);
+    };
+    const change = (v: number) => {
+        const echo = committed.current === v;
+        committed.current = null;
+        if (!echo) onChange(v);
+    };
+    const restart = () => {
+        committed.current = null;
+    };
 
     return (
         <div
@@ -68,7 +83,9 @@ function Slider({
                 step={step}
                 value={value}
                 disabled={disabled}
-                onChange={(e) => onChange(Number(e.target.value))}
+                onChange={(e) => change(Number(e.target.value))}
+                onPointerDown={restart}
+                onKeyDown={restart}
                 onPointerUp={commit}
                 onKeyUp={commit}
                 className={clsx(

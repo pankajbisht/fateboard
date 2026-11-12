@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Launch Mind Map</title>
+  <g id="step-1">
+    <rect width="480" height="360" fill="#fffdf7"/>
+    <path d="M196 164 Q160 140 136 108" stroke="#e11d48" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M284 164 Q320 140 344 108" stroke="#0284c7" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M196 196 Q160 220 136 252" stroke="#7c3aed" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <path d="M284 196 Q320 220 344 252" stroke="#059669" stroke-width="5" fill="none" stroke-linecap="round"/>
+    <rect x="172" y="152" width="136" height="56" rx="28" fill="#1e293b"/>
+    <text x="240" y="178" font-family="Inter, Helvetica, Arial, sans-serif" font-size="14" font-weight="800" fill="#ffffff" text-anchor="middle">Product launch</text>
+    <text x="240" y="195" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" fill="#94a3b8" text-anchor="middle">14 March · v3.0</text>
+    <circle cx="300" cy="156" r="10" fill="#f59e0b"/>
+    <text x="300" y="160" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="800" fill="#ffffff" text-anchor="middle">!</text>
+  </g>
+  <g id="step-2">
+    <rect x="62" y="76" width="100" height="32" rx="16" fill="#ffe4e6" stroke="#e11d48" stroke-width="2.5"/>
+    <text x="112" y="96" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="800" fill="#881337" text-anchor="middle">Marketing</text>
+    <rect x="318" y="76" width="100" height="32" rx="16" fill="#e0f2fe" stroke="#0284c7" stroke-width="2.5"/>
+    <text x="368" y="96" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="800" fill="#0c4a6e" text-anchor="middle">Engineering</text>
+    <rect x="62" y="252" width="100" height="32" rx="16" fill="#ede9fe" stroke="#7c3aed" stroke-width="2.5"/>
+    <text x="112" y="272" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="800" fill="#3b0764" text-anchor="middle">Design</text>
+    <rect x="318" y="252" width="100" height="32" rx="16" fill="#d1fae5" stroke="#059669" stroke-width="2.5"/>
+    <text x="368" y="272" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="800" fill="#064e3b" text-anchor="middle">Support</text>
+  </g>
+  <g id="step-3">
+    <path d="M90 76 Q90 44 100 44" stroke="#e11d48" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M14 44 L100 44" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="16" y="38" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Teaser video</text>
+    <path d="M140 76 Q150 44 164 44" stroke="#e11d48" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M164 44 L222 44" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="166" y="38" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Press kit</text>
+    <path d="M74 108 Q84 146 94 146" stroke="#e11d48" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M10 146 L94 146" stroke="#e11d48" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="12" y="140" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Launch email</text>
+    <path d="M396 76 Q392 44 382 44" stroke="#0284c7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M382 44 L462 44" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="384" y="38" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Beta build</text>
+    <path d="M340 76 Q330 44 314 44" stroke="#0284c7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M254 44 L314 44" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="256" y="38" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Load test</text>
+    <path d="M406 108 Q396 146 386 146" stroke="#0284c7" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M386 146 L466 146" stroke="#0284c7" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="388" y="140" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Analytics</text>
+  </g>
+  <g id="step-4">
+    <path d="M74 252 Q84 216 94 216" stroke="#7c3aed" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M10 216 L94 216" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="12" y="210" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Brand kit</text>
+    <path d="M90 284 Q90 324 100 324" stroke="#7c3aed" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M10 324 L100 324" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="12" y="318" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Landing page</text>
+    <path d="M140 284 Q150 324 164 324" stroke="#7c3aed" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M164 324 L226 324" stroke="#7c3aed" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="166" y="318" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">App icons</text>
+    <path d="M406 252 Q396 216 386 216" stroke="#059669" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M386 216 L466 216" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="388" y="210" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">FAQ</text>
+    <path d="M396 284 Q392 324 382 324" stroke="#059669" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M382 324 L466 324" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="384" y="318" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Help videos</text>
+    <path d="M340 284 Q330 324 314 324" stroke="#059669" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M248 324 L314 324" stroke="#059669" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="250" y="318" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#1e293b">Status page</text>
+  </g>
+</svg>

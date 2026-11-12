@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import * as fabric from 'fabric';
 import { useStore } from '@store';
 import { createFakeCanvas } from '@/test/fakeCanvas';
@@ -148,5 +148,72 @@ describe('footer', () => {
         expect(src).not.toMatch(/ShadowDropdown|GradientToolIcon|geditor/);
         // opacity moved to the Fill & Shadow tab; the footer "− 100% +" looked like a second zoom
         expect(src).not.toMatch(/OpacityControl/);
+    });
+    it('Color harmony: all five schemes with their hints; a swatch fills the selection', () => {
+        render(<FillShadowPanel />);
+        select();
+        const group = screen.getByRole('group', { name: 'Color harmony' });
+        for (const text of [
+            'Complementary',
+            'High contrast',
+            'Analogous',
+            'Calm, harmonious',
+            'Triadic',
+            'Colorful but balanced',
+            'Split-complementary',
+            'Contrast, less harsh',
+            'Monochromatic',
+            'Always safe',
+        ]) {
+            expect(within(group).getByText(text)).toBeTruthy();
+        }
+        fireEvent.click(within(group).getByRole('button', { name: 'Complementary color #00ffff' }));
+        expect(readFill(rect).color).toBe('#00ffff');
+        // still the harmonies of red, the picked one marked
+        const picked = within(group).getByRole('button', { name: 'Complementary color #00ffff' });
+        expect(picked.getAttribute('aria-pressed')).toBe('true');
+        expect(within(group).getByRole('button', { name: 'Triadic color #00ff00' })).toBeTruthy();
+    });
+
+    it('Color harmony: Gradient turns a scheme into the fill gradient', () => {
+        render(<FillShadowPanel />);
+        select();
+        fireEvent.click(screen.getByRole('button', { name: 'Gradient from Triadic' }));
+        const fill = readFill(rect);
+        expect(fill.kind).toBe('linear');
+        expect(fill.gradient!.stops.map((s) => [s.offset, s.color])).toEqual([
+            [0, '#ff0000'],
+            [0.5, '#00ff00'],
+            [1, '#0000ff'],
+        ]);
+        // the rows keep their base (red), so another scheme is one click away
+        expect(screen.getByRole('button', { name: 'Complementary color #00ffff' })).toBeTruthy();
+    });
+
+    it('Color harmony: copy a scheme as hex values', async () => {
+        const writeText = vi.fn(() => Promise.resolve());
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+        render(<FillShadowPanel />);
+        select();
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Copy Triadic colors' }));
+        });
+        expect(writeText).toHaveBeenLastCalledWith('#FF0000, #00FF00, #0000FF');
+    });
+
+    it('Color harmony: no fill or a gray says what to do', () => {
+        render(<FillShadowPanel />);
+        select();
+        fireEvent.click(screen.getByRole('radio', { name: 'None' }));
+        expect(screen.getByText(/give it a fill color/i)).toBeTruthy();
+        act(() => {
+            rect.set('fill', '#808080');
+            canvas.fire('object:modified', { target: rect });
+        });
+        cleanup();
+        render(<FillShadowPanel />);
+        select();
+        expect(screen.getByText(/grays have no hue/i)).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Gradient from Monochromatic' })).toBeTruthy();
     });
 });

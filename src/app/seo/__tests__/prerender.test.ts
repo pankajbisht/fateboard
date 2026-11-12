@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { renderNotFoundHtml, renderRouteHtml, renderSitemap, routeFile } from '../prerender';
 import { SEO_ROUTES, canonicalUrl, seoForPath } from '../routes';
+import { GALLERY_ITEMS } from '@/components/pages/web/gallery/galleryData';
 
 const SITE_URL = 'https://fateboard.test';
 
@@ -24,7 +25,24 @@ describe('routes', () => {
 
     it('every SEO route is a real router path', () => {
         const router = readFileSync(`${process.cwd()}/src/app/rootRouter.tsx`, 'utf8');
-        for (const r of SEO_ROUTES) expect(router).toContain(`path="${r.path}"`);
+        // `/gallery/:id` matches `/gallery/manga-ronin`
+        const paths = [...router.matchAll(/path="(\/[^"]*)"/g)].map(
+            (m) => new RegExp(`^${m[1]!.replace(/:[a-z]+/gi, '[^/]+')}$`),
+        );
+        for (const r of SEO_ROUTES)
+            expect(
+                paths.some((p) => p.test(r.path)),
+                r.path,
+            ).toBe(true);
+    });
+
+    it('every gallery piece has an indexable tutorial page', () => {
+        for (const item of GALLERY_ITEMS) {
+            const r = route(`/gallery/${item.id}`);
+            expect(r?.index, item.id).toBe(true);
+            expect(r.heading).toBe(`How to make ${item.title}`);
+            expect(routeFile(r)).toBe(`gallery/${item.id}.html`);
+        }
     });
 
     it('descriptions are 30-160 chars and titles are unique', () => {
@@ -118,6 +136,11 @@ describe('renderSitemap', () => {
             'application/xml',
         );
         const locs = [...xml.getElementsByTagName('loc')].map((l) => l.textContent);
-        expect(locs).toEqual([`${SITE_URL}/`, `${SITE_URL}/draw`, `${SITE_URL}/help`]);
+        expect(locs).toEqual([
+            `${SITE_URL}/`,
+            `${SITE_URL}/draw`,
+            `${SITE_URL}/help`,
+            ...GALLERY_ITEMS.map((item) => `${SITE_URL}/gallery/${item.id}`),
+        ]);
     });
 });

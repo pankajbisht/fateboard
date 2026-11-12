@@ -29,13 +29,57 @@ test.describe('colour palette (right dock)', () => {
         page,
     }) => {
         await editor.addShape('Rectangle');
-        await page.getByRole('button', { name: 'Enter a hex color' }).click();
+        await page.getByRole('button', { name: 'Custom color' }).click();
         const hex = page.getByRole('textbox', { name: 'Hex' });
-        await expect(hex).toBeFocused();
         await hex.fill('0a60d6');
         await hex.press('Enter');
         await expect.poll(async () => (await editor.objects())[0].fill).toBe('#0a60d6');
         await page.keyboard.press('Escape');
         await expect(page.getByRole('button', { name: 'Use recent color #0a60d6' })).toBeVisible();
+    });
+    test('custom picker: CMYK fields and a harmony swatch paint the selection', async ({
+        editor,
+        page,
+    }) => {
+        await editor.addShape('Rectangle');
+        await page.getByRole('button', { name: 'Custom color' }).click();
+        const dialog = page.getByRole('dialog', { name: 'Custom color' });
+        const hex = dialog.getByRole('textbox', { name: 'Hex' });
+        await hex.fill('ff0000');
+        await hex.press('Enter');
+
+        await dialog.getByRole('radio', { name: 'CMYK' }).click();
+        await expect(
+            dialog.getByRole('button', { name: 'Copy cmyk(0%, 100%, 100%, 0%)' }),
+        ).toBeVisible();
+        const black = dialog.getByRole('spinbutton', { name: 'Black' });
+        await black.fill('50');
+        await black.press('Enter');
+        await expect.poll(async () => (await editor.objects())[0].fill).toBe('#800000');
+
+        await dialog.getByRole('button', { name: 'Complementary color #008080' }).click();
+        await expect.poll(async () => (await editor.objects())[0].fill).toBe('#008080');
+    });
+    test('Fill & Shadow color harmony: a swatch fills, Gradient makes a gradient', async ({
+        editor,
+        page,
+    }) => {
+        await editor.addShape('Rectangle');
+        await page.getByRole('button', { name: 'Custom color' }).click();
+        const hex = page.getByRole('dialog', { name: 'Custom color' }).getByRole('textbox', {
+            name: 'Hex',
+        });
+        await hex.fill('ff0000');
+        await hex.press('Enter');
+        await page.keyboard.press('Escape');
+
+        await editor.openDockTab('Fill & Shadow');
+        const harmony = page.getByRole('group', { name: 'Color harmony' });
+        await harmony.getByRole('button', { name: 'Triadic color #00ff00' }).click();
+        await expect.poll(async () => (await editor.objects())[0].fill).toBe('#00ff00');
+
+        await harmony.getByRole('button', { name: 'Gradient from Complementary' }).click();
+        // the bridge reports gradients as 'gradient'; the stops are checked in FillShadowPanel.test
+        await expect.poll(async () => (await editor.objects())[0].fill).toBe('gradient');
     });
 });

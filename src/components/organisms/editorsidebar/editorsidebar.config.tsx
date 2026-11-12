@@ -1,7 +1,6 @@
 import { DrawPanel } from '../DrawPanel';
-import TemplateGallery from '../effects/ui/TemplateGallery';
+import { BrushPickerPanel } from '../brush/BrushPickerPanel';
 import { TextPanel } from '../TextPanel';
-import FontTemplatePanel from '../fonts';
 import LayersPanel from '../layer/LayersPanel';
 import PagePanel from '../page/PagePanel';
 import { ShapePanel } from '../ShapePanel';
@@ -51,6 +50,15 @@ const editorsidebarconfig = [
         kind: 'action',
     },
     {
+        id: 'brush',
+        shortcut: 'B',
+        label: 'Brush',
+        icon: 'paintbrush',
+        kind: 'panel',
+        activateTool: 'draw',
+        panel: <BrushPickerPanel />,
+    },
+    {
         id: 'draw',
         label: 'Draw',
         icon: 'pencil',
@@ -74,26 +82,11 @@ const editorsidebarconfig = [
         panel: <TextPanel />,
     },
     {
-        id: 'templates',
-        label: 'Templates',
-        icon: 'table-cells-large',
-        kind: 'panel',
-        fullSize: true,
-        panel: <TemplateGallery />,
-    },
-    {
-        id: 'fonttemplates',
-        label: 'Font Templates',
-        icon: 'text-height',
-        kind: 'panel',
-        fullSize: true,
-        panel: <FontTemplatePanel />,
-    },
-    {
         id: 'Pages',
         label: 'Pages',
         icon: 'file-lines',
         kind: 'panel',
+        fullSize: true,
         panel: <PagePanel />,
     },
     {

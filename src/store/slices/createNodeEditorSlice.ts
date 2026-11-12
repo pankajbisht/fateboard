@@ -28,6 +28,7 @@
  */
 import { BRAND } from '@/lib/theme';
 import * as fabric from 'fabric';
+import { screenScale } from '@/lib/canvas/screenScale';
 import { fitTextShape } from './createShapeSlice';
 import { canvasKeysBlocked } from '@/lib/keyboard/modalOpen';
 
@@ -138,17 +139,8 @@ const INTERACTION_PROPS = [
     'objectCaching',
 ] as const;
 
-/**
- * Screen px per scene px: viewport zoom × the CSS scale of the canvas element (the design board
- * shows the page scaled to fit, so 1 scene px can be 0.5 screen px).
- */
-export function screenScale(canvas: fabric.Canvas): number {
-    const zoom = canvas.getZoom() || 1;
-    const rect = (canvas as any).upperCanvasEl?.getBoundingClientRect?.();
-    const width = canvas.getWidth();
-    const css = rect?.width && width ? rect.width / width : 1;
-    return zoom * (css > 0 && Number.isFinite(css) ? css : 1);
-}
+// moved to lib (pure helper); re-exported for existing importers
+export { screenScale };
 
 /** Objects created by the editor (so app-level listeners can ignore them). */
 const editorObjects = new WeakSet<object>();

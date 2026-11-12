@@ -21,6 +21,10 @@ describe('settings defaults', () => {
             defaultCanvasPresetId: DEFAULT_CANVAS_PRESET.id,
             canvasOrientation: 'landscape',
             customCanvasSize: { width: 1920, height: 1080 },
+            grid: {
+                design: { style: 'lines', size: 20 },
+                whiteboard: { style: 'dots', size: 20 },
+            },
         });
     });
 });
@@ -60,6 +64,18 @@ describe('sanitizeSettings', () => {
             defaultCanvasPresetId: DEFAULT_CANVAS_PRESET.id,
             canvasOrientation: 'landscape',
             customCanvasSize: { width: 1920, height: 1080 },
+            grid: DEFAULT_SETTINGS.grid,
+        });
+    });
+
+    it('keeps the grid style and size per mode; bad values fall back to the defaults', () => {
+        expect(
+            sanitizeSettings({
+                grid: { design: { style: 'isometric', size: 32 }, whiteboard: { style: 'x' } },
+            }).grid,
+        ).toEqual({
+            design: { style: 'isometric', size: 32 },
+            whiteboard: { style: 'dots', size: 20 },
         });
     });
 
@@ -168,6 +184,14 @@ describe('createSettingSlice', () => {
         expect(h.calls.length).toBe(before);
     });
 
+    it('setGridPrefs saves the style and size of one mode only', () => {
+        const h = setup();
+        h.get().setGridPrefs('design', { style: 'crosses' });
+        h.get().setGridPrefs('design', { size: 999 });
+        expect(h.get().settings.grid.design).toEqual({ style: 'crosses', size: 200 });
+        expect(h.get().settings.grid.whiteboard).toEqual(DEFAULT_SETTINGS.grid.whiteboard);
+    });
+
     it('setDefaultCanvasPreset accepts canvas presets only', () => {
         const h = setup();
         h.get().setDefaultCanvasPreset('youtube-shorts');
@@ -185,6 +209,7 @@ describe('createSettingSlice', () => {
         h.get().setFreehand(true);
         h.get().setDefaultCanvasPreset('youtube-shorts');
         h.get().setCanvasOrientation('portrait');
+        h.get().setGridPrefs('whiteboard', { style: 'isometric', size: 40 });
 
         h.get().resetSettings();
 

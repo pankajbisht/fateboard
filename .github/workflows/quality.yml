@@ -17,6 +17,18 @@ jobs:
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   persist-credentials: false
+                  # the PR merge commit + its first parent (the base branch tip) for the guardrails check
+                  fetch-depth: 2
+
+            # Guardrails (docs/AGENT_WORKFLOW.md): a PR may not loosen a ratchet (lint limit, coverage thresholds,
+            # size ceilings) or remove a public store key. The owner approves one by adding the PR label
+            # `ratchet-change` or `api-change`, then re-runs this job.
+            - name: Guardrails (ratchets, store API)
+              if: ${{ github.event_name == 'pull_request' }}
+              env:
+                  ALLOW_RATCHET_CHANGE: ${{ contains(github.event.pull_request.labels.*.name, 'ratchet-change') && '1' || '0' }}
+                  ALLOW_API_CHANGE: ${{ contains(github.event.pull_request.labels.*.name, 'api-change') && '1' || '0' }}
+              run: node scripts/guardrails/check-ratchets.mjs HEAD^1
 
             - name: Setup Node and dependencies
               uses: ./.github/actions/setup-node-deps

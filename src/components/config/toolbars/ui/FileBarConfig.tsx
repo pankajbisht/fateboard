@@ -6,6 +6,7 @@ import { newBoard, openBoardFile, saveBoardFile } from '../fileActions';
 export const FileBarConfig = [
     {
         id: 'newfile',
+        macro: false, // not recordable in a Macro
         label: 'Create New Board',
         title: 'Create New Board',
         description: 'New File',
@@ -19,6 +20,7 @@ export const FileBarConfig = [
     },
     {
         id: 'open',
+        macro: false, // not recordable in a Macro
         label: 'Open Board',
         title: 'Open Board',
         description: 'Open Board',
@@ -32,6 +34,7 @@ export const FileBarConfig = [
     },
     {
         id: 'save',
+        macro: false, // not recordable in a Macro
         label: 'Save Board',
         title: 'Save Board',
         description: 'Save Board',

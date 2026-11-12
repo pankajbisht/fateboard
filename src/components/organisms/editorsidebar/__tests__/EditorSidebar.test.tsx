@@ -39,4 +39,35 @@ describe('EditorSidebar tool state', () => {
         fireEvent.click(node);
         expect(onToolChange).toHaveBeenCalledWith('node');
     });
+
+    it('Brush and Draw share the Draw tool: only the one picked lights up', () => {
+        const drawItems: SidebarItem[] = [
+            ...items,
+            {
+                id: 'brush',
+                label: 'Brush',
+                icon: 'paintbrush',
+                kind: 'panel',
+                activateTool: 'draw',
+                panel: <p>b</p>,
+            },
+            {
+                id: 'draw',
+                label: 'Draw',
+                icon: 'pencil',
+                kind: 'panel',
+                activateTool: 'draw',
+                panel: <p>d</p>,
+            },
+        ];
+        const { rerender } = render(<EditorSidebar items={drawItems} activeTool="select" />);
+        fireEvent.click(screen.getByRole('button', { name: 'Brush' }));
+        rerender(<EditorSidebar items={drawItems} activeTool="draw" />);
+        expect(pressed('Brush')).toBe('true');
+        expect(pressed('Draw')).toBe('false');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Shapes' })); // another panel: Draw tool still on
+        expect(pressed('Brush')).toBe('true');
+        expect(pressed('Draw')).toBe('true');
+    });
 });

@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Sky Ace</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4cc9f0"/>
+      <stop offset="1" stop-color="#4361ee"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fde4cf"/>
+      <stop offset="1" stop-color="#f6c9a8"/>
+    </linearGradient>
+    <linearGradient id="iris" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7a3b00"/>
+      <stop offset="0.6" stop-color="#e07a00"/>
+      <stop offset="1" stop-color="#ffc145"/>
+    </linearGradient>
+    <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a0f0ff"/>
+      <stop offset="1" stop-color="#2a6f97"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a9d8f"/>
+      <stop offset="1" stop-color="#1d5c63"/>
+    </linearGradient>
+  </defs>
+  <g id="step-1">
+    <rect width="480" height="360" fill="url(#sky)"/>
+    <polygon points="240,170 0,0 60,0" fill="#ffffff" opacity="0.14"/>
+    <polygon points="240,170 140,0 190,0" fill="#ffffff" opacity="0.1"/>
+    <polygon points="240,170 300,0 350,0" fill="#ffffff" opacity="0.14"/>
+    <polygon points="240,170 430,0 480,0" fill="#ffffff" opacity="0.1"/>
+    <polygon points="240,170 480,90 480,140" fill="#ffffff" opacity="0.14"/>
+    <polygon points="240,170 0,110 0,160" fill="#ffffff" opacity="0.12"/>
+    <path d="M300 74 L470 30" stroke="#ffffff" stroke-width="4" opacity="0.7" stroke-linecap="round"/>
+    <path d="M300 84 L470 40" stroke="#ffffff" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+    <path d="M286 80 L306 70 L322 74 L306 78 L314 90 L304 88 L298 80 Z" fill="#ffffff"/>
+  </g>
+  <g id="step-2">
+    <path d="M0 300 Q40 270 90 288 Q120 260 170 280 Q210 262 250 290 L250 360 L0 360 Z" fill="#ffffff" opacity="0.9"/>
+    <path d="M300 310 Q340 280 390 298 Q430 274 480 290 L480 360 L300 360 Z" fill="#ffffff" opacity="0.85"/>
+    <path d="M290 250 Q350 230 380 260 Q420 296 470 270 Q440 312 384 296 Q350 284 316 300 Z" fill="#ef233c" stroke="#7d0f1d" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M330 262 Q370 268 400 286" stroke="#ff6b7a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <g id="step-3">
+    <path d="M172 158 Q164 104 194 80 Q240 50 288 80 Q318 104 310 158 L314 214 L290 206 L290 150 L192 150 L192 206 L168 214 Z" fill="#1d5c63"/>
+    <path d="M222 200 L222 236 L258 236 L258 200 Z" fill="#e8b48f"/>
+    <path d="M110 360 Q118 270 190 246 L290 246 Q362 270 370 360 Z" fill="#6f4e37" stroke="#2b1b10" stroke-width="3"/>
+    <path d="M232 256 L232 360" stroke="#2b1b10" stroke-width="3"/>
+    <rect x="226" y="270" width="12" height="16" rx="2" fill="#c9a227"/>
+    <path d="M164 254 Q180 230 208 236 Q226 222 240 236 Q256 222 272 236 Q300 230 316 254 Q300 268 280 260 Q262 274 240 262 Q218 274 200 260 Q180 268 164 254 Z" fill="#f1e3d3" stroke="#2b1b10" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M232 244 Q250 252 268 246 Q300 236 320 250" stroke="#ef233c" stroke-width="12" fill="none" stroke-linecap="round"/>
+    <rect x="146" y="300" width="56" height="36" rx="4" fill="#4b3424" stroke="#2b1b10" stroke-width="3"/>
+    <circle cx="174" cy="318" r="12" fill="#ef233c" stroke="#f1e3d3" stroke-width="3"/>
+    <path d="M174 310 L176 316 L182 316 L177 320 L179 326 L174 322 L169 326 L171 320 L166 316 L172 316 Z" fill="#f1e3d3"/>
+  </g>
+  <g id="step-4">
+    <path d="M196 134 Q196 192 240 214 Q284 192 284 134 Q284 96 240 94 Q196 96 196 134 Z" fill="url(#skin)" stroke="#1b1b2f" stroke-width="3"/>
+    <path d="M188 142 Q186 92 240 82 Q296 90 294 138 L282 116 L274 136 L262 104 L248 128 L232 98 L220 128 L208 106 L200 134 Z" fill="url(#hair)"/>
+    <path d="M190 142 L184 196 L198 188 L198 140 Z" fill="url(#hair)"/>
+    <path d="M290 140 L298 196 L284 188 L284 140 Z" fill="url(#hair)"/>
+    <path d="M214 92 Q240 82 270 92" stroke="#7fd1c4" stroke-width="3" fill="none" opacity="0.8" stroke-linecap="round"/>
+  </g>
+  <g id="step-5">
+    <path d="M182 108 Q240 84 298 108" stroke="#33302e" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <circle cx="218" cy="98" r="17" fill="url(#lens)" stroke="#c9a227" stroke-width="5"/>
+    <circle cx="262" cy="98" r="17" fill="url(#lens)" stroke="#c9a227" stroke-width="5"/>
+    <path d="M208 92 Q212 86 220 86" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M252 92 Q256 86 264 86" stroke="#ffffff" stroke-width="3" fill="none" stroke-linecap="round"/>
+  </g>
+  <g id="step-6">
+    <path d="M206 140 L230 136" stroke="#1d5c63" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M252 138 Q264 130 276 136" stroke="#1d5c63" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+    <path d="M204 154 Q204 140 218 140 Q232 140 232 154 Q232 170 218 170 Q204 170 204 154 Z" fill="#ffffff"/>
+    <ellipse cx="219" cy="155" rx="9" ry="12" fill="url(#iris)"/>
+    <ellipse cx="219" cy="156" rx="4" ry="6" fill="#1b1b2f"/>
+    <circle cx="223" cy="150" r="3" fill="#ffffff"/>
+    <circle cx="215" cy="161" r="1.6" fill="#ffffff"/>
+    <path d="M200 150 Q208 136 228 140 L236 146" stroke="#1b1b2f" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M200 150 L196 146" stroke="#1b1b2f" stroke-width="3" stroke-linecap="round"/>
+    <path d="M248 156 Q262 146 278 156" stroke="#1b1b2f" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M276 154 L282 150" stroke="#1b1b2f" stroke-width="3" stroke-linecap="round"/>
+    <path d="M208 176 L212 170 M214 177 L218 171 M220 178 L224 172" stroke="#ef476f" stroke-width="2" stroke-linecap="round"/>
+    <path d="M258 176 L262 170 M264 177 L268 171 M270 178 L274 172" stroke="#ef476f" stroke-width="2" stroke-linecap="round"/>
+    <rect x="236" y="166" width="14" height="7" rx="2" fill="#f5e1c0" stroke="#c9a68a" stroke-width="1.2" transform="rotate(-20 243 169)"/>
+    <path d="M226 188 Q242 186 256 182 Q252 200 240 200 Q230 200 226 188 Z" fill="#8d0801" stroke="#1b1b2f" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M228 189 Q242 188 254 184 L253 188 Q242 192 229 192 Z" fill="#ffffff"/>
+  </g>
+  <g id="step-7">
+    <polygon points="22,302 150,282 140,334 12,346" fill="#ef233c"/>
+    <text x="82" y="330" font-family="Impact, 'Arial Black', sans-serif" font-size="36" font-style="italic" font-weight="900" fill="#ffffff" text-anchor="middle" transform="rotate(-6 82 320)">ACE!</text>
+  </g>
+</svg>

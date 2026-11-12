@@ -23,6 +23,11 @@ function setup(color = '#ff0000', props: Partial<Parameters<typeof ColorPickerPo
 }
 
 describe('ColorPickerPopover', () => {
+    it('renders on <body>, above the editor header and footer bars', () => {
+        const { dialog } = setup();
+        expect(dialog.parentElement).toBe(document.body);
+    });
+
     it('shows the color as hex and R / G / B', () => {
         const { hex } = setup('#2b7fff');
         expect(hex.value).toBe('2b7fff');
@@ -142,5 +147,168 @@ describe('ColorPickerPopover', () => {
         fireEvent.pointerDown(document.body);
         expect(onClose).toHaveBeenLastCalledWith(false);
         window.removeEventListener('keydown', outer);
+    });
+    it('format switch: HSL / HSB / CMYK fields show and edit the color; HEX hides the channels', () => {
+        const { hex, onChange } = setup('#ffffff');
+        fireEvent.click(screen.getByRole('radio', { name: 'CMYK' }));
+        const k = screen.getByRole('spinbutton', { name: 'Black' }) as HTMLInputElement;
+        expect(k.value).toBe('0');
+        expect(screen.getByRole('spinbutton', { name: 'Cyan' })).toBeTruthy();
+        fireEvent.focus(k);
+        fireEvent.change(k, { target: { value: '50' } });
+        fireEvent.keyDown(k, { key: 'Enter' });
+        expect(onChange).toHaveBeenLastCalledWith('#808080');
+        expect(hex.value).toBe('808080');
+
+        fireEvent.click(screen.getByRole('radio', { name: 'HSL' }));
+        const l = screen.getByRole('spinbutton', { name: 'Lightness' }) as HTMLInputElement;
+        expect(l.value).toBe('50');
+        fireEvent.click(screen.getByRole('radio', { name: 'HSB' }));
+        expect(
+            (screen.getByRole('spinbutton', { name: 'Brightness' }) as HTMLInputElement).value,
+        ).toBe('50');
+
+        fireEvent.click(screen.getByRole('radio', { name: 'HEX' }));
+        expect(screen.queryByRole('spinbutton')).toBeNull();
+        expect(screen.getByRole('textbox', { name: 'Hex' })).toBeTruthy();
+    });
+
+    it('HSB / HSL hue edits on a gray keep the hue (no jump back to red)', () => {
+        setup('#808080');
+        fireEvent.click(screen.getByRole('radio', { name: 'HSB' }));
+        const h = screen.getByRole('spinbutton', { name: 'Hue' }) as HTMLInputElement;
+        fireEvent.focus(h);
+        fireEvent.change(h, { target: { value: '200' } });
+        fireEvent.keyDown(h, { key: 'Enter' });
+        expect((screen.getByRole('spinbutton', { name: 'Hue' }) as HTMLInputElement).value).toBe(
+            '200',
+        );
+        expect(screen.getByRole('slider', { name: 'Hue' }).getAttribute('aria-valuenow')).toBe(
+            '200',
+        );
+    });
+
+    it('copy button copies the color in the chosen format', async () => {
+        const writeText = vi.fn(() => Promise.resolve());
+        Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+        setup('#2b7fff');
+        fireEvent.click(screen.getByRole('button', { name: 'Copy rgb(43, 127, 255)' }));
+        expect(writeText).toHaveBeenLastCalledWith('rgb(43, 127, 255)');
+        fireEvent.click(screen.getByRole('radio', { name: 'CMYK' }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: 'Copy cmyk(83%, 50%, 0%, 0%)' }));
+        });
+        expect(writeText).toHaveBeenLastCalledWith('cmyk(83%, 50%, 0%, 0%)');
+        expect(screen.getByText('Copied')).toBeTruthy();
+    });
+
+    it('harmonies: all five schemes; a click applies the color and keeps the base', () => {
+        const onChange = vi.fn();
+        const props = { anchor: null, onChange, onClose: () => {} };
+        const { rerender } = render(<ColorPickerPopover {...props} color="#ff0000" />);
+        const group = screen.getByRole('group', { name: 'Color harmonies' });
+        for (const name of [
+            'Complementary',
+            'Analogous',
+            'Triadic',
+            'Split-complementary',
+            'Monochromatic',
+        ]) {
+            expect(group.textContent).toContain(name);
+        }
+        fireEvent.click(screen.getByRole('button', { name: 'Complementary color #00ffff' }));
+        expect(onChange).toHaveBeenLastCalledWith('#00ffff');
+        rerender(<ColorPickerPopover {...props} color="#00ffff" />);
+        // still the harmonies of red: the picked one is marked, the base is one click away
+        const picked = screen.getByRole('button', { name: 'Complementary color #00ffff' });
+        expect(picked.getAttribute('aria-pressed')).toBe('true');
+        fireEvent.click(screen.getByRole('button', { name: 'Triadic color #00ff00' }));
+        expect(onChange).toHaveBeenLastCalledWith('#00ff00');
+        // a change from the picker itself makes it the new base
+        const hex = screen.getByRole('textbox', { name: 'Hex' });
+        fireEvent.focus(hex);
+        fireEvent.change(hex, { target: { value: '0000ff' } });
+        fireEvent.keyDown(hex, { key: 'Enter' });
+        expect(screen.getByRole('button', { name: 'Complementary color #ffff00' })).toBeTruthy();
+    });
+
+    it('harmonies say when the color is a gray (no hue to turn)', () => {
+        setup('#808080');
+        expect(screen.getByText(/grays have no hue/i)).toBeTruthy();
+    });
+    it('HSB fields and the copy text describe the same (applied) color', () => {
+        setup('#1a1a1a');
+        fireEvent.click(screen.getByRole('radio', { name: 'HSB' }));
+        const field = (name: string) =>
+            screen.getByRole('spinbutton', { name }) as HTMLInputElement;
+        for (const [name, v] of [
+            ['Hue', '200'],
+            ['Saturation', '10'], // dark + low saturation: the hex rounds it to 12 %
+        ]) {
+            fireEvent.focus(field(name));
+            fireEvent.change(field(name), { target: { value: v } });
+            fireEvent.keyDown(field(name), { key: 'Enter' });
+        }
+        const shown = `hsb(${field('Hue').value}, ${field('Saturation').value}%, ${field('Brightness').value}%)`;
+        expect(screen.getByRole('button', { name: /^Copy hsb/ }).getAttribute('aria-label')).toBe(
+            `Copy ${shown}`,
+        );
+    });
+
+    it('a gray copies with the hue the picker kept', () => {
+        setup('#808080');
+        fireEvent.click(screen.getByRole('radio', { name: 'HSL' }));
+        const h = screen.getByRole('spinbutton', { name: 'Hue' }) as HTMLInputElement;
+        fireEvent.focus(h);
+        fireEvent.change(h, { target: { value: '200' } });
+        fireEvent.keyDown(h, { key: 'Enter' });
+        expect(screen.getByRole('button', { name: 'Copy hsl(200, 0%, 50%)' })).toBeTruthy();
+    });
+
+    it('harmonies follow the picker again when it returns to an earlier harmony pick', () => {
+        setup('#ff0000');
+        fireEvent.click(screen.getByRole('button', { name: 'Complementary color #00ffff' }));
+        const hex = screen.getByRole('textbox', { name: 'Hex' });
+        for (const v of ['123456', '00ffff']) {
+            fireEvent.focus(hex);
+            fireEvent.change(hex, { target: { value: v } });
+            fireEvent.keyDown(hex, { key: 'Enter' });
+        }
+        // base is cyan now: its complement is red
+        expect(screen.getByRole('button', { name: 'Complementary color #ff0000' })).toBeTruthy();
+    });
+
+    it('re-places itself when its height changes (stays inside the window)', () => {
+        const observed: Element[] = [];
+        let fire = () => {};
+        const RO = window.ResizeObserver;
+        window.ResizeObserver = class {
+            constructor(cb: () => void) {
+                fire = cb;
+            }
+            observe(el: Element) {
+                observed.push(el);
+            }
+            unobserve() {}
+            disconnect() {}
+        } as unknown as typeof ResizeObserver;
+        const anchor = document.createElement('button');
+        document.body.appendChild(anchor);
+        anchor.getBoundingClientRect = () => ({ top: 500, left: 900 }) as DOMRect;
+        render(
+            <ColorPickerPopover
+                anchor={anchor}
+                color="#000000"
+                onChange={() => {}}
+                onClose={() => {}}
+            />,
+        );
+        const dialog = screen.getByRole('dialog', { name: 'Custom color' });
+        expect(observed).toContain(dialog);
+        Object.defineProperty(dialog, 'offsetHeight', { value: 600, configurable: true });
+        act(() => fire());
+        expect(dialog.style.top).toBe(`${window.innerHeight - 600 - 8}px`);
+        window.ResizeObserver = RO;
+        anchor.remove();
     });
 });

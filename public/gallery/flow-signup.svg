@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Sign-up Flow</title>
+  <g id="step-1">
+    <rect width="480" height="360" fill="#f8fafc"/>
+    <text x="24" y="34" font-family="Inter, Helvetica, Arial, sans-serif" font-size="16" font-weight="800" fill="#0f172a">User sign-up</text>
+    <text x="24" y="52" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" fill="#64748b">v2 · with email verification</text>
+    <rect x="392" y="20" width="64" height="20" rx="10" fill="#e0e7ff"/>
+    <text x="424" y="34" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#4338ca" text-anchor="middle">DRAFT</text>
+  </g>
+  <g id="step-2">
+    <rect x="26" y="92" width="76" height="36" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="64" y="114" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#14532d" text-anchor="middle">Start</text>
+    <rect x="122" y="86" width="108" height="48" rx="8" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"/>
+    <text x="176" y="107" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1e1b4b" text-anchor="middle">Enter email</text>
+    <text x="176" y="122" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1e1b4b" text-anchor="middle">&amp; password</text>
+    <polygon points="292,76 336,110 292,144 248,110" fill="#fef3c7" stroke="#d97706" stroke-width="2" stroke-linejoin="round"/>
+    <text x="292" y="114" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#78350f" text-anchor="middle">Valid?</text>
+    <rect x="352" y="86" width="104" height="48" rx="8" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"/>
+    <text x="404" y="107" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1e1b4b" text-anchor="middle">Send verify</text>
+    <text x="404" y="122" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1e1b4b" text-anchor="middle">email</text>
+  </g>
+  <g id="step-3">
+    <rect x="122" y="180" width="108" height="40" rx="8" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+    <text x="176" y="204" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#7f1d1d" text-anchor="middle">Show inline error</text>
+    <polygon points="404,246 452,280 404,314 356,280" fill="#fef3c7" stroke="#d97706" stroke-width="2" stroke-linejoin="round"/>
+    <text x="404" y="277" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#78350f" text-anchor="middle">Link</text>
+    <text x="404" y="291" font-family="Inter, Helvetica, Arial, sans-serif" font-size="11" font-weight="700" fill="#78350f" text-anchor="middle">clicked?</text>
+    <rect x="228" y="256" width="104" height="48" rx="8" fill="#eef2ff" stroke="#4f46e5" stroke-width="2"/>
+    <text x="280" y="277" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1e1b4b" text-anchor="middle">Create</text>
+    <text x="280" y="292" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="600" fill="#1e1b4b" text-anchor="middle">account</text>
+    <rect x="90" y="262" width="100" height="36" rx="18" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+    <text x="140" y="284" font-family="Inter, Helvetica, Arial, sans-serif" font-size="12" font-weight="700" fill="#14532d" text-anchor="middle">Dashboard</text>
+  </g>
+  <g id="step-4">
+    <path d="M102 110 L114 110" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="122,110 114,105 114,115" fill="#64748b"/>
+    <path d="M230 110 L240 110" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="248,110 240,105 240,115" fill="#64748b"/>
+    <path d="M336 110 L344 110" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="352,110 344,105 344,115" fill="#64748b"/>
+    <text x="344" y="98" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#16a34a" text-anchor="middle">Yes</text>
+    <path d="M292 144 L292 200 L238 200" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="230,200 238,195 238,205" fill="#64748b"/>
+    <text x="300" y="176" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#dc2626">No</text>
+    <path d="M176 180 L176 142" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="176,134 171,142 181,142" fill="#64748b"/>
+    <text x="182" y="162" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" fill="#64748b">retry</text>
+    <path d="M404 134 L404 238" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="404,246 399,238 409,238" fill="#64748b"/>
+    <text x="398" y="190" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-style="italic" fill="#64748b" text-anchor="end">within 24 h</text>
+    <path d="M356 280 L340 280" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="332,280 340,275 340,285" fill="#64748b"/>
+    <text x="344" y="270" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#16a34a" text-anchor="middle">Yes</text>
+    <path d="M228 280 L198 280" stroke="#64748b" stroke-width="2" fill="none"/>
+    <polygon points="190,280 198,275 198,285" fill="#64748b"/>
+    <path d="M452 280 L468 280 L468 110 L464 110" stroke="#d97706" stroke-width="2" fill="none" stroke-dasharray="5 4"/>
+    <polygon points="456,110 464,105 464,115" fill="#d97706"/>
+    <text x="463" y="236" font-family="Inter, Helvetica, Arial, sans-serif" font-size="10" font-weight="700" fill="#d97706" text-anchor="end">No: resend</text>
+  </g>
+  <g id="step-5">
+    <rect x="22" y="312" width="132" height="38" fill="#fde68a" transform="rotate(-3 88 331)"/>
+    <text x="30" y="328" font-family="'Comic Sans MS', 'Marker Felt', cursive" font-size="11" fill="#713f12" transform="rotate(-3 88 331)">Lock after 5 failed</text>
+    <text x="30" y="342" font-family="'Comic Sans MS', 'Marker Felt', cursive" font-size="11" fill="#713f12" transform="rotate(-3 88 331)">tries (15 min)</text>
+  </g>
+</svg>

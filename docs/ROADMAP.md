@@ -42,12 +42,16 @@ Goal: make every later change safe to ship.
 Priority: high (core editing). Remaining work: connectors and text shapes survive undo/pages/reload; custom shapes
 move into the project/storage module; Text panel actually edits text (BUG-041); origin selector works (BUG-042);
 shape stroke vs text stroke separated (BUG-020).
+**Done 2026-11-12:** 3D category (cube, box, cylinder, cone, sphere, pyramid, prism, hexagonal prism, torus) as plain
+catalog paths (silhouette + visible edges in one path), so no new object type.
 **Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). **Depends on:** M0, M1.1.
 
 ### F2. Snap & grid (exists: `createNotebookSlice` grid + object snapping + guides; settings has separate `snapToGrid`/`gridSize`; whiteboard has a CSS dot grid)
 
 Priority: high (cheap once geometry is fixed). Work: one source of truth for grid size/snap (settings ↔ notebook),
 one grid renderer per mode, snap respects page bounds in design mode, keyboard toggles documented, grid never exported.
+**Done 2026-11-12:** grid styles (graph, squares, dashed, dots, crosses, isometric, ruled) and size, saved per mode in
+Settings (the single source), chosen from the top-bar Grid options popover; snap follows the shown lattice (per axis).
 **Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). **Depends on:** M0.4, M2.1.
 
 ### F3. Templates (exists: gallery, favourites, save-as-template, apply onto artboard)

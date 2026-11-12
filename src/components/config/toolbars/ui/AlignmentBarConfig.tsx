@@ -1,5 +1,6 @@
 import { Icon } from '@/components/atoms/Icon';
 import { useStore } from '@/store';
+import { arrangeWhen } from './arrangeWhen';
 
 export const AlignmentBarConfig = [
     {
@@ -8,7 +9,8 @@ export const AlignmentBarConfig = [
         name: 'Align Left',
         description: 'Align Left',
         icon: <Icon name="align-objects-left" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'align' as const,
+        when: arrangeWhen('align'),
         onClick: () => useStore.getState().alignObjects('align-left'),
         handler: ({ get }) => {
             get().alignObjects('align-left');
@@ -20,7 +22,8 @@ export const AlignmentBarConfig = [
         name: 'Align Center',
         description: 'Align Center',
         icon: <Icon name="align-objects-center" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'align' as const,
+        when: arrangeWhen('align'),
         onClick: () => useStore.getState().alignObjects('align-hcenter'),
         handler: ({ get }) => {
             get().alignObjects('align-hcenter');
@@ -32,7 +35,8 @@ export const AlignmentBarConfig = [
         name: 'Align Right',
         description: 'Align Right',
         icon: <Icon name="align-objects-right" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'align' as const,
+        when: arrangeWhen('align'),
         onClick: () => useStore.getState().alignObjects('align-right'),
         handler: ({ get }) => {
             get().alignObjects('align-right');
@@ -44,7 +48,8 @@ export const AlignmentBarConfig = [
         name: 'Align Top',
         description: 'Align Top',
         icon: <Icon name="align-objects-top" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'align' as const,
+        when: arrangeWhen('align'),
         onClick: () => useStore.getState().alignObjects('align-top'),
         handler: ({ get }) => {
             get().alignObjects('align-top');
@@ -56,7 +61,8 @@ export const AlignmentBarConfig = [
         name: 'Align Middle',
         description: 'Align Middle',
         icon: <Icon name="align-objects-middle" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'align' as const,
+        when: arrangeWhen('align'),
         onClick: () => useStore.getState().alignObjects('align-vcenter'),
         handler: ({ get }) => {
             get().alignObjects('align-vcenter');
@@ -68,7 +74,8 @@ export const AlignmentBarConfig = [
         name: 'Align Bottom',
         description: 'Align Bottom',
         icon: <Icon name="align-objects-bottom" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'align' as const,
+        when: arrangeWhen('align'),
         onClick: () => useStore.getState().alignObjects('align-bottom'),
         handler: ({ get }) => {
             get().alignObjects('align-bottom');
@@ -80,7 +87,8 @@ export const AlignmentBarConfig = [
         name: 'Distribute Horizontally',
         description: 'Distribute Horizontally',
         icon: <Icon name="distribute-horizontal" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'distribute' as const,
+        when: arrangeWhen('distribute'),
         onClick: () => useStore.getState().alignObjects('distribute-h'),
         handler: ({ get }) => {
             get().alignObjects('distribute-h');
@@ -92,7 +100,8 @@ export const AlignmentBarConfig = [
         name: 'Distribute Vertically',
         description: 'Distribute Vertically',
         icon: <Icon name="distribute-vertical" />,
-        when: () => useStore.getState().hasSelection,
+        rule: 'distribute' as const,
+        when: arrangeWhen('distribute'),
         onClick: () => useStore.getState().alignObjects('distribute-v'),
         handler: ({ get }) => {
             get().alignObjects('distribute-v');

@@ -198,12 +198,22 @@ app (slices, panels)
 - **Routes are lazy chunks** (`app/rootRouter.tsx`, `React.lazy` + one `Suspense` with a blank background fallback): the
   landing page never downloads the editor (`Editor` chunk ≈ 77 KB gzip) and vice versa. A failed chunk load after a
   deploy hits the `ErrorBoundary` (Reload). Guard: `src/__tests__/codeSplitting.test.ts`.
+  The landing page's static imports must not reach the command registry or the Help shortcut list (it reuses
+  the Help picture renderer, so key caps live in the light `helpsection/keyCaps.ts`). Guard: `src/__tests__/landingBundle.test.ts`.
 - **Vendor chunks** (`vite.config.ts` `build.rolldownOptions.output.codeSplitting.groups`): `fabric`, `paper`, `react`,
   `icons`, cached separately across deploys. Startup = entry + react + fabric + icons ≈ 278 KB gzip (was one 490 KB chunk).
 - **paper.js loads on demand** (`lib/booleanOps.computeBoolean`), ≈ 120 KB gzip
   kept out of startup. The store still imports Fabric, so every route loads it (the shell needs the store).
 - **Template images**: canvas / preview images ≤ 2048 px (≤ 0.7 MB), gallery cards use 640 px files in
   `public/template/thumb/`; `dist` 39 MB → 9.5 MB. Guard: `src/__tests__/templateAssets.test.ts`.
+- **Landing gallery artwork**: 18 static SVGs in `public/gallery/` (≈ 115 KB in all, each < 40 KB), loaded lazily by
+  `<img>`, so the landing bundle only gains the small gallery components. Each file uses only SVG Fabric imports (no filter,
+  mask, pattern, image or `<use>`; no external refs), so `mod+O` brings it in as a group of editable objects, and is split
+  into `<g id="step-N">` build steps that the tutorial page replays. Guards: `pages/web/gallery/__tests__/galleryData.test.ts`,
+  `galleryTutorials.test.ts`.
+- **Gallery tutorial pages** (`/gallery/<id>`): one lazy `GalleryTutorialPage` chunk (≈ 15 KB gzip) for all 18; each piece is
+  an `SEO_ROUTES` entry generated from `GALLERY_ITEMS` (`routes.ts` imports the pure-data `galleryData.ts`), so the build
+  writes `gallery/<id>.html` next to `gallery/<id>.svg` and lists it in the sitemap.
 
 ## SEO
 

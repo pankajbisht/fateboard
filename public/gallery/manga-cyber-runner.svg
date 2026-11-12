@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 360" width="480" height="360">
+  <title>Neon Runner</title>
+  <defs>
+    <linearGradient id="city" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0f0c29"/>
+      <stop offset="0.6" stop-color="#302b63"/>
+      <stop offset="1" stop-color="#4a1d5e"/>
+    </linearGradient>
+    <radialGradient id="aura" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ff2e88" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#ff2e88" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="visor" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#00f5d4"/>
+      <stop offset="0.5" stop-color="#4cc9f0"/>
+      <stop offset="1" stop-color="#f72585"/>
+    </linearGradient>
+    <linearGradient id="hair" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f1f4ff"/>
+      <stop offset="1" stop-color="#a5b4fc"/>
+    </linearGradient>
+    <linearGradient id="skin" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6dccb"/>
+      <stop offset="1" stop-color="#d9b2a6"/>
+    </linearGradient>
+  </defs>
+  <g id="step-1">
+    <rect width="480" height="360" fill="url(#city)"/>
+    <rect x="0" y="80" width="64" height="280" fill="#1a1440"/>
+    <rect x="68" y="130" width="50" height="230" fill="#221a52"/>
+    <rect x="360" y="60" width="56" height="300" fill="#1a1440"/>
+    <rect x="420" y="120" width="60" height="240" fill="#221a52"/>
+    <rect x="10" y="96" width="8" height="4" fill="#4cc9f0"/>
+    <rect x="26" y="96" width="8" height="4" fill="#4cc9f0" opacity="0.5"/>
+    <rect x="10" y="112" width="8" height="4" fill="#f72585"/>
+    <rect x="42" y="128" width="8" height="4" fill="#4cc9f0"/>
+    <rect x="26" y="144" width="8" height="4" fill="#f72585" opacity="0.6"/>
+    <rect x="78" y="146" width="8" height="4" fill="#4cc9f0" opacity="0.6"/>
+    <rect x="94" y="162" width="8" height="4" fill="#f72585"/>
+    <rect x="370" y="80" width="8" height="4" fill="#4cc9f0"/>
+    <rect x="386" y="96" width="8" height="4" fill="#f72585" opacity="0.6"/>
+    <rect x="398" y="112" width="8" height="4" fill="#4cc9f0" opacity="0.5"/>
+    <rect x="432" y="140" width="8" height="4" fill="#4cc9f0"/>
+    <rect x="448" y="156" width="8" height="4" fill="#f72585"/>
+    <rect x="464" y="140" width="8" height="4" fill="#4cc9f0" opacity="0.5"/>
+  </g>
+  <g id="step-2">
+    <rect x="24" y="180" width="30" height="96" rx="4" fill="#0f0c29" stroke="#f72585" stroke-width="3"/>
+    <text x="39" y="204" font-family="'Hiragino Sans', 'Yu Gothic', sans-serif" font-size="18" font-weight="700" fill="#ff7ab6" text-anchor="middle">ネ</text>
+    <text x="39" y="228" font-family="'Hiragino Sans', 'Yu Gothic', sans-serif" font-size="18" font-weight="700" fill="#ff7ab6" text-anchor="middle">オ</text>
+    <text x="39" y="252" font-family="'Hiragino Sans', 'Yu Gothic', sans-serif" font-size="18" font-weight="700" fill="#ff7ab6" text-anchor="middle">ン</text>
+    <rect x="380" y="200" width="78" height="26" rx="4" fill="#0f0c29" stroke="#00f5d4" stroke-width="3"/>
+    <text x="419" y="219" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#7df9ff" text-anchor="middle">24 / 7</text>
+  </g>
+  <g id="step-3">
+    <circle cx="240" cy="150" r="150" fill="url(#aura)"/>
+    <path d="M60 20 L44 64 M130 10 L114 54 M200 30 L184 74 M330 16 L314 60 M420 30 L404 74 M470 90 L454 134 M100 210 L84 254 M440 250 L424 294 M20 300 L4 344 M370 300 L354 344" stroke="#9aa5ff" stroke-width="1.5" opacity="0.35"/>
+  </g>
+  <g id="step-4">
+    <path d="M222 200 L222 240 L258 240 L258 200 Z" fill="#c99d90"/>
+    <path d="M110 360 Q118 270 196 244 L284 244 Q362 270 370 360 Z" fill="#14121f" stroke="#000000" stroke-width="3"/>
+    <path d="M196 244 L206 214 L240 236 L274 214 L284 244 L240 268 Z" fill="#1f1c30" stroke="#000000" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M206 214 L240 236 L274 214" stroke="#00f5d4" stroke-width="2.5" fill="none"/>
+    <path d="M240 268 L240 360" stroke="#3a3654" stroke-width="3"/>
+    <path d="M150 300 L196 260 M330 300 L284 260" stroke="#f72585" stroke-width="3" opacity="0.9"/>
+    <path d="M138 340 L176 306 M342 340 L304 306" stroke="#00f5d4" stroke-width="2" opacity="0.8"/>
+    <rect x="290" y="300" width="40" height="14" rx="3" fill="#00f5d4" opacity="0.25" stroke="#00f5d4" stroke-width="1.5"/>
+  </g>
+  <g id="step-5">
+    <path d="M194 132 Q194 190 240 216 Q286 190 286 132 Q286 94 240 92 Q194 94 194 132 Z" fill="url(#skin)" stroke="#0f0c29" stroke-width="3"/>
+    <path d="M180 150 L160 120 L184 118 L162 84 L196 92 L190 52 L222 78 L238 34 L254 76 L286 46 L284 90 L318 82 L298 116 L322 122 L300 150 L292 124 L282 140 L272 110 L262 132 L248 104 L238 128 L226 104 L214 134 L204 112 L194 140 Z" fill="url(#hair)" stroke="#6b72c9" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M212 84 L226 100 M250 70 L254 92 M270 82 L268 100" stroke="#ffffff" stroke-width="2.5" opacity="0.8" stroke-linecap="round"/>
+  </g>
+  <g id="step-6">
+    <path d="M184 140 L298 130 L294 166 L188 170 Z" fill="#0f0c29"/>
+    <path d="M188 144 L294 135 L291 162 L192 166 Z" fill="url(#visor)" opacity="0.92"/>
+    <path d="M196 150 L284 143" stroke="#ffffff" stroke-width="2" opacity="0.7" stroke-linecap="round"/>
+    <path d="M206 158 L222 157 M258 155 L274 154" stroke="#0f0c29" stroke-width="3" opacity="0.55" stroke-linecap="round"/>
+    <path d="M184 140 L298 130 L294 166 L188 170 Z" fill="none" stroke="#7df9ff" stroke-width="1.5" opacity="0.8"/>
+    <rect x="176" y="146" width="12" height="22" rx="3" fill="#2a2640" stroke="#7df9ff" stroke-width="1.5"/>
+    <circle cx="182" cy="157" r="2.5" fill="#f72585"/>
+  </g>
+  <g id="step-7">
+    <path d="M240 172 L237 184 L243 184" stroke="#a37c72" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M228 198 Q240 202 254 194" stroke="#5a2f2f" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <rect x="256" y="184" width="16" height="7" rx="2" fill="#f5e1c0" stroke="#c9a68a" stroke-width="1.2" transform="rotate(16 264 187)"/>
+    <path d="M202 186 L208 190 M276 186 L270 190" stroke="#c48b80" stroke-width="1.5" opacity="0.8"/>
+  </g>
+</svg>

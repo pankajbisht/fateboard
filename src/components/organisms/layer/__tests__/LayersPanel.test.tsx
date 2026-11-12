@@ -8,6 +8,8 @@ import LayersPanel from '../LayersPanel';
 import { LAYERCONTROL_ACTIONS } from '@/components/config/toolbars/ui/LayerControlBarConfig';
 import { LockBarConfig } from '@/components/config/toolbars/ui/LockBarConfig';
 import { GroupBarConfig } from '@/components/config/toolbars/ui/GroupBarConfig';
+import * as fabric from 'fabric';
+import { createFakeCanvas } from '@/test/fakeCanvas';
 
 const ROW = 44;
 
@@ -189,5 +191,27 @@ describe('LayersPanel with many layers', () => {
         ];
         for (const keys of real) expect(menu).toContain(keys);
         expect(screen.queryByRole('button', { name: /Ctrl\+\// })).toBeNull();
+    });
+
+    it('Group / Ungroup follow the header rules: a locked group cannot be ungrouped (BUG-192)', () => {
+        const group = Object.assign(new fabric.Group([new fabric.Rect(), new fabric.Rect()]), {
+            _locked: true,
+        });
+        const canvas = createFakeCanvas();
+        canvas.setActiveObject(group);
+        const { layers } = makeLayers(1);
+        Object.assign(layers[0], { isGroup: true, locked: true });
+        const prevCanvas = useStore.getState().canvas;
+        useStore.setState({ canvas, layers, selectedLayerIds: ['layer-0'] } as never);
+        try {
+            render(<LayersPanel />);
+            expect(screen.getByRole('button', { name: /^Ungroup/ })).toBeDisabled();
+            expect(screen.getByRole('button', { name: /^Group/ })).toBeDisabled();
+            fireEvent.contextMenu(options()[0]);
+            const item = screen.getByRole('menuitem', { name: /Ungroup/ });
+            expect(item).toBeDisabled();
+        } finally {
+            useStore.setState({ canvas: prevCanvas } as never);
+        }
     });
 });
