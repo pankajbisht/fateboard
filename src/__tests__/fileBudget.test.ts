@@ -43,7 +43,7 @@ const LEGACY_CEILINGS: Record<string, number> = {
     '/src/store/slices/createAnimationSlice.ts': 861,
     '/src/lib/utils/shapeConnectors.ts': 851,
     '/src/components/organisms/effects/ui/TemplateGallery.tsx': 818,
-    '/src/components/organisms/layer/LayersPanel.tsx': 816, // +2: BUG-192 (2026-11-12)
+    '/src/components/organisms/layer/LayersPanel.tsx': 791, // -23: key labels moved to layer/layerKeys.ts (2026-11-13)
     '/src/store/slices/createNotebookSlice.ts': 756,
     '/src/store/slices/createBrushSlice.ts': 502, // was 715: ink / calligraphy engine moved to store/brushes/, +3 for the nib brush (2026-11-13)
     '/src/store/slices/advanceOperationSlice.ts': 726,
