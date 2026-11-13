@@ -1,14 +1,14 @@
-# Reusable: publish the Pages artifact uploaded by build.yml in the same run.
-# The caller must grant `pages: write` and `id-token: write`, and must only call this
-# on a push to main (ci.yml does; never from a PR, BUG-057).
+# Reusable (called by ci.yml as "Deploy"): publish the Pages artifact uploaded by _build-web.yml
+# in the same run. The caller must grant `pages: write` and `id-token: write`, and must only call
+# this on a push to main (ci.yml does; never from a PR, BUG-057).
 name: Deploy
 
 on:
     workflow_call:
 
 jobs:
-    deploy:
-        name: Deploy to GitHub Pages
+    github-pages:
+        name: GitHub Pages
         runs-on: ubuntu-latest
         timeout-minutes: 10
         permissions:

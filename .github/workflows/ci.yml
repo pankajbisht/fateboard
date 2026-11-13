@@ -1,10 +1,14 @@
 # CI/CD for fateboard (docs/ARCHITECTURE.md "Deploy", docs/TESTING.md "CI").
-# This file only wires the pipeline; each stage is a reusable workflow:
+# This file is the only entry point; it wires reusable workflows (`_*.yml`, one per stage).
+# Check names read "<Stage> / <Job>", e.g. "Quality / Static analysis", "Test / E2E (firefox, shard 1/2)".
 #
-#   quality.yml ─┐
-#   e2e.yml ─────┤
-#   build.yml ───┼─> ci (single required check) ─> deploy.yml (push to main only)
-#   docker.yml ──┘
+#   Detect changes ─┬─> Quality / Static analysis ─┐
+#                   ├─> Quality / Unit tests ───────┤
+#                   ├─> Test / E2E (4 shards) * ────┤
+#                   ├─> Build / Web bundle ─────────┼─> CI passed (required) ─> Deploy / GitHub Pages
+#                   └─> Build / Container image * ──┘                           (push to main only)
+#
+#   * skipped on docs-only PRs (only docs/**, .claude/** or *.md changed); "CI passed" treats skipped as OK.
 #
 # Shared Node setup: .github/actions/setup-node-deps. Third-party actions are pinned to
 # full commit SHAs (tag in the trailing comment); Dependabot keeps them current.
@@ -17,52 +21,98 @@ on:
         branches: [main]
     workflow_dispatch:
 
-# Least privilege by default; only the deploy job widens it.
+# Least privilege by default; only the jobs that need more widen it.
 permissions:
     contents: read
 
 # One run per ref: a new push to a PR cancels the stale run. Runs on main are never
-# cancelled mid-way (deploy.yml has its own `pages` group as well).
+# cancelled mid-way (_deploy.yml has its own `pages` group as well).
 concurrency:
     group: ci-${{ github.workflow }}-${{ github.ref }}
     cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+    changes:
+        name: Detect changes
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            pull-requests: read # list the PR's changed files
+        outputs:
+            code: ${{ steps.classify.outputs.code }}
+        steps:
+            # code=false only for a PR whose every file is docs (docs/**, .claude/**, *.md).
+            # Push to main, manual runs and any API error run the full pipeline (fail safe).
+            - name: Classify changed files
+              id: classify
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  REPO: ${{ github.repository }}
+              run: |
+                  if [ -z "$PR_NUMBER" ]; then
+                      echo "Not a pull request: running the full pipeline."
+                      echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+                  fi
+                  if ! files=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename'); then
+                      echo "::warning::Could not list changed files; running the full pipeline."
+                      echo "code=true" >> "$GITHUB_OUTPUT"; exit 0
+                  fi
+                  printf 'Changed files:\n%s\n' "$files"
+                  if printf '%s\n' "$files" | grep -qvE '^(docs/|\.claude/)|\.md$'; then code=true; else code=false; fi
+                  echo "code=$code" >> "$GITHUB_OUTPUT"
+                  echo "Code changed: $code"
+
     quality:
-        uses: ./.github/workflows/quality.yml
+        name: Quality
+        uses: ./.github/workflows/_quality.yml
 
     e2e:
-        uses: ./.github/workflows/e2e.yml
+        name: Test
+        needs: changes
+        if: ${{ needs.changes.outputs.code == 'true' }}
+        uses: ./.github/workflows/_e2e.yml
 
-    build:
-        uses: ./.github/workflows/build.yml
+    build-web:
+        name: Build
+        uses: ./.github/workflows/_build-web.yml
 
-    docker:
-        uses: ./.github/workflows/docker.yml
+    build-image:
+        name: Build
+        needs: changes
+        if: ${{ needs.changes.outputs.code == 'true' }}
+        uses: ./.github/workflows/_build-image.yml
 
     # Single status to mark "required" in branch protection, so adding/renaming stages
-    # never needs a settings change.
+    # never needs a settings change. Keep this name: branch protection matches it exactly.
     ci:
         name: CI passed
         if: ${{ always() }}
-        needs: [quality, e2e, build, docker]
+        needs: [changes, quality, e2e, build-web, build-image]
         runs-on: ubuntu-latest
         timeout-minutes: 5
         steps:
+            # `skipped` is OK only because the skippable jobs depend on `changes`, which must succeed.
             - name: Check job results
               env:
+                  CHANGES: ${{ needs.changes.result }}
                   RESULTS: ${{ join(needs.*.result, ' ') }}
               run: |
                   echo "Job results: $RESULTS"
+                  [ "$CHANGES" = "success" ] || { echo "::error::Detect changes did not succeed ($CHANGES)"; exit 1; }
                   for r in $RESULTS; do
-                      [ "$r" = "success" ] || { echo "::error::A required job did not succeed ($r)"; exit 1; }
+                      case "$r" in
+                          success | skipped) ;;
+                          *) echo "::error::A required job did not succeed ($r)"; exit 1 ;;
+                      esac
                   done
 
     # Only a push to main (never a PR, BUG-057), only after every gate is green.
     deploy:
+        name: Deploy
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
         needs: ci
         permissions:
             pages: write
             id-token: write
-        uses: ./.github/workflows/deploy.yml
+        uses: ./.github/workflows/_deploy.yml

@@ -1,6 +1,6 @@
-# Reusable: production bundle, uploaded as the Pages artifact that deploy.yml publishes.
-# Called by ci.yml (on PRs too, so a broken build is caught before merge).
-name: Build
+# Reusable (called by ci.yml as "Build"): production bundle, uploaded as the Pages artifact that
+# _deploy.yml publishes. Runs on PRs too, so a broken build is caught before merge.
+name: Build web bundle
 
 on:
     workflow_call:
@@ -9,8 +9,8 @@ permissions:
     contents: read
 
 jobs:
-    build:
-        name: Production build
+    web-bundle:
+        name: Web bundle
         runs-on: ubuntu-latest
         timeout-minutes: 15
         steps:
@@ -22,7 +22,7 @@ jobs:
             - name: Setup Node and dependencies
               uses: ./.github/actions/setup-node-deps
 
-            # --ignore-scripts skips `prebuild` (type-check already runs in quality.yml);
+            # --ignore-scripts skips `prebuild` (type-check already runs in _quality.yml);
             # `build` itself still runs `tsc -b && vite build`.
             - name: Build
               run: npm run build --ignore-scripts

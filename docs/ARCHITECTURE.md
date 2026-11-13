@@ -15,7 +15,7 @@
 | Test | Vitest 4 + jsdom + Testing Library | |
 | Unused deps | `@reduxjs/toolkit`, `react-redux` (dead file only), `json-server` (no `db.json`) | |
 
-Node: `.nvmrc` = v26.13.0. Deploy: GitHub Pages via `.github/workflows/ci.yml` → reusable `deploy.yml` ( push to `main` only, `actions/deploy-pages` into the `github-pages` environment; the custom domain is set in repo Settings > Pages, not by a `CNAME` file).
+Node: `.nvmrc` = v26.13.0. Deploy: GitHub Pages via `.github/workflows/ci.yml` → reusable `_deploy.yml` ( push to `main` only, `actions/deploy-pages` into the `github-pages` environment; the custom domain is set in repo Settings > Pages, not by a `CNAME` file).
 
 ## Layers
 

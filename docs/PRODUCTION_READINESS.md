@@ -37,7 +37,7 @@ both fixed. 2026-11-11 (whole-app + storage review) fixed BUG-152 to 158, 162, 1
 ## Before the next deploy (checklist)
 
 1. Commit the local work on a branch (not on `main`), in logical commits.
-2. Open a PR to `main`; wait for **CI passed** (quality, E2E Chromium + Firefox, build, Docker).
+2. Open a PR to `main`; wait for **CI passed** (quality, sharded E2E Chromium + Firefox, web build, container image; E2E and image are skipped on docs-only PRs).
 3. Merge: the deploy job publishes to GitHub Pages. Rollback: revert the merge commit.
 4. After the deploy, open `/draw` once and check the Brush, Fractals, Cellular Automata, Macro and Templates tabs.
 
