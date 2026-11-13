@@ -49,7 +49,7 @@ CI reads both from repository variables of the same names (Settings > Secrets an
 | `npm run server` | `json-server` on `db.json` (no `db.json` in the repo; unused) |
 | `npm run clean` | `rimraf dist` (`rimraf` is not a declared dependency) |
 
-Docker (self-hosting; the production target is GitHub Pages): `docker build --build-arg VITE_SITE_URL=https://www.example.com -t fateboard . && docker run --rm -p 8080:8080 fateboard`. Multi-stage: Node builds, an unprivileged nginx serves the static files (`docker/nginx.conf`, same routing as Pages). CI builds and smoke-tests it (`.github/workflows/docker.yml`).
+Docker (self-hosting; the production target is GitHub Pages): `docker build --build-arg VITE_SITE_URL=https://www.example.com -t fateboard . && docker run --rm -p 8080:8080 fateboard`. Multi-stage: Node builds, an unprivileged nginx serves the static files (`docker/nginx.conf`, same routing as Pages). CI builds and smoke-tests it (`.github/workflows/_build-image.yml`, layer-cached).
 
 ## Project structure
 
@@ -61,7 +61,7 @@ src/
   components/             atoms → molecules → organisms → templates → pages
   lib/, hooks/, feature/  domain helpers (patterns, connectors, text shapes, import, shortcuts)
 docs/                     architecture and engineering docs (start with CLAUDE.md)
-.github/workflows/ci.yml  orchestrator: quality.yml + e2e.yml + build.yml (parallel) → deploy.yml (main only)
+.github/workflows/ci.yml  only entry point: reusable _quality / _e2e (4 shards) / _build-web / _build-image (parallel) → CI passed → _deploy (main only)
 .github/actions/          setup-node-deps: shared Node (.nvmrc) + npm ci step
 ```
 

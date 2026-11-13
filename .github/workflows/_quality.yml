@@ -1,4 +1,5 @@
-# Reusable: fast static gates + unit tests. Called by ci.yml.
+# Reusable (called by ci.yml as "Quality"): static gates and unit tests, as two parallel jobs
+# so a red check names the gate that failed.
 name: Quality
 
 on:
@@ -8,10 +9,10 @@ permissions:
     contents: read
 
 jobs:
-    quality:
-        name: Lint, types, unit tests
+    static-analysis:
+        name: Static analysis
         runs-on: ubuntu-latest
-        timeout-minutes: 15
+        timeout-minutes: 10
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -49,6 +50,19 @@ jobs:
 
             - name: Type check
               run: npm run type-check
+
+    unit-tests:
+        name: Unit tests (coverage)
+        runs-on: ubuntu-latest
+        timeout-minutes: 10
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Setup Node and dependencies
+              uses: ./.github/actions/setup-node-deps
 
             # Coverage thresholds in vitest.config.ts fail this step on a regression.
             - name: Unit tests with coverage

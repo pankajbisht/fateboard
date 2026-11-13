@@ -1,0 +1,82 @@
+# Reusable (called by ci.yml as "Test"): end-to-end tests (Playwright) against a production-like
+# bundle (vite build --mode e2e, see playwright.config.ts). Sharded: browser x shard run as parallel
+# jobs, each installing only its own browser. To rebalance, change `shard` and `shard-total` together.
+name: E2E
+
+on:
+    workflow_call:
+
+permissions:
+    contents: read
+
+jobs:
+    e2e:
+        name: E2E (${{ matrix.browser }}, shard ${{ matrix.shard }}/${{ matrix.shard-total }})
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        strategy:
+            # run every shard to the end: one red shard must not hide failures in the others
+            fail-fast: false
+            matrix:
+                browser: [chromium, firefox]
+                shard: [1, 2]
+                shard-total: [2]
+                include:
+                    - browser: chromium
+                      projects: --project=desktop-chromium --project=laptop-chromium
+                    - browser: firefox
+                      projects: --project=desktop-firefox
+        env:
+            CI: true
+            # the e2e build needs a site origin too (repo variable; the build fails without it)
+            VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Setup Node and dependencies
+              uses: ./.github/actions/setup-node-deps
+
+            - name: Read Playwright version
+              id: pw
+              run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+
+            # Browser binaries are keyed by the exact Playwright version and browser.
+            - name: Cache Playwright browser
+              id: pw-cache
+              uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+              with:
+                  path: ~/.cache/ms-playwright
+                  key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browser }}
+
+            - name: Install browser + system deps
+              if: steps.pw-cache.outputs.cache-hit != 'true'
+              env:
+                  BROWSER: ${{ matrix.browser }}
+              run: npx playwright install --with-deps "$BROWSER"
+
+            # Cache hit: binaries are restored, but OS libraries still need installing.
+            - name: Install system deps only
+              if: steps.pw-cache.outputs.cache-hit == 'true'
+              env:
+                  BROWSER: ${{ matrix.browser }}
+              run: npx playwright install-deps "$BROWSER"
+
+            - name: End-to-end tests
+              env:
+                  PROJECTS: ${{ matrix.projects }}
+                  SHARD: ${{ matrix.shard }}/${{ matrix.shard-total }}
+              # PROJECTS is intentionally unquoted: it holds several --project flags
+              run: npm run e2e -- $PROJECTS --shard="$SHARD"
+
+            - name: Upload Playwright report
+              if: ${{ failure() }}
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: playwright-report-${{ matrix.browser }}-${{ matrix.shard }}of${{ matrix.shard-total }}
+                  path: |
+                      playwright-report
+                      test-results
+                  retention-days: 14
