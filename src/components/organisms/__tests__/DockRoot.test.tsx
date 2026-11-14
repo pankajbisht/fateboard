@@ -77,8 +77,10 @@ describe('right dock matches the left sidebar (one side-panel system)', () => {
         expect(tab.className).not.toMatch(/\bring-1\b|shadow-sm/);
 
         const frame = screen.getByTestId('dock-panel');
-        expect(frame.style.width).toBe(`${SIDE_PANEL_WIDTH}px`);
-        expect(frame.className).not.toMatch(/shadow-xl|duration-300/);
+        // the width comes from --panel-w (sidebar.const `panelSize`, shared with the left panel)
+        expect(frame.style.getPropertyValue('--panel-w')).toBe(`${SIDE_PANEL_WIDTH}px`);
+        // wide screens: no shadow; below lg the panel overlays the canvas and gets one (BUG-215)
+        expect(frame.className).not.toMatch(/(?<!max-(?:lg|sm):)shadow-xl|duration-300/);
         expect(frame.className).toContain('duration-200');
     });
 });

@@ -139,7 +139,7 @@ export function TimelineTrack({
                             cellBg,
                             track.muted
                                 ? 'flex'
-                                : 'hidden group-focus-within:flex group-hover:flex',
+                                : 'hidden group-focus-within:flex group-hover:flex [@media(hover:none)]:flex',
                         )}
                     >
                         <IconButton

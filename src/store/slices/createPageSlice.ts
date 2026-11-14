@@ -78,6 +78,10 @@ export interface PageSlice {
     setZoom: (zoom: number, point?: { x: number; y: number }) => void;
     zoomIn: () => void;
     zoomOut: () => void;
+    /** Touch: move the view by (dx, dy) screen px. Design scrolls the board; whiteboard pans the viewport. */
+    panBy: (dx: number, dy: number) => void;
+    /** Touch pinch: multiply the zoom by `factor` keeping the point under the fingers (client px) still. */
+    pinchZoom: (factor: number, clientX: number, clientY: number) => void;
     fitToScreen: () => void;
     /** Whiteboard: zoom / pan so `rect` (scene px) fills the view. Design: no-op (CanvasBoard fits the page). */
     zoomToRect: (
@@ -100,6 +104,20 @@ type GeometryPeers = {
  */
 const isDesignBoard = (s: { boardMode?: 'design' | 'whiteboard' | null } & GeometryPeers) =>
     s.boardMode ? s.boardMode === 'design' : !s.settings?.freehand;
+
+/** The element the design board scrolls (CanvasBoard marks it `data-board-scroll`). */
+const boardScroller = (canvas: fabric.Canvas) =>
+    canvas.wrapperEl?.closest?.('[data-board-scroll]') as HTMLElement | null | undefined;
+
+/** Canvas px per CSS px of the element plus its page position (the design page is shown scaled). */
+const canvasFrame = (canvas: fabric.Canvas) => {
+    const rect = canvas.upperCanvasEl?.getBoundingClientRect?.();
+    const k = rect?.width ? canvas.getWidth() / rect.width : 1;
+    return { left: rect?.left ?? 0, top: rect?.top ?? 0, k: Number.isFinite(k) && k > 0 ? k : 1 };
+};
+
+const nextFrame = (fn: () => void) =>
+    typeof requestAnimationFrame === 'function' ? requestAnimationFrame(fn) : fn();
 
 export const createPageSlice: SliceCreator<PageSlice> = (set, get) => ({
     pageFormat: 'Freehand',
@@ -178,6 +196,42 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get) => ({
 
     zoomIn: () => get().setZoom(get().zoom * ZOOM_STEP),
     zoomOut: () => get().setZoom(get().zoom / ZOOM_STEP),
+
+    panBy: (dx, dy) => {
+        const canvas = get().canvas;
+        if (!canvas || !Number.isFinite(dx) || !Number.isFinite(dy)) return;
+        if (isDesignBoard(get() as never)) {
+            boardScroller(canvas)?.scrollBy(-dx, -dy);
+            return;
+        }
+        const { k } = canvasFrame(canvas);
+        canvas.relativePan(new fabric.Point(dx * k, dy * k));
+        canvas.requestRenderAll();
+    },
+
+    pinchZoom: (factor, clientX, clientY) => {
+        const canvas = get().canvas;
+        if (!canvas || !(factor > 0) || !Number.isFinite(factor)) return;
+        if (!isDesignBoard(get() as never)) {
+            const { left, top, k } = canvasFrame(canvas);
+            get().setZoom(canvas.getZoom() * factor, {
+                x: (clientX - left) * k,
+                y: (clientY - top) * k,
+            });
+            return;
+        }
+        // Design: CanvasBoard re-centres the scroll on every zoom change (it owns the geometry).
+        // After that render, scroll on by the focal point's offset from the centre × (k - 1).
+        const before = get().zoom;
+        get().setZoom(before * factor);
+        const k = get().zoom / before;
+        const scroller = boardScroller(canvas);
+        if (!scroller || k === 1) return;
+        const r = scroller.getBoundingClientRect();
+        const fx = clientX - (r.left + r.width / 2);
+        const fy = clientY - (r.top + r.height / 2);
+        nextFrame(() => scroller.scrollBy(fx * (k - 1), fy * (k - 1)));
+    },
     zoomToRect: (rect, padding = 40) => {
         const canvas = get().canvas;
         if (!canvas || isDesignBoard(get() as never)) return;

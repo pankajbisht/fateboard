@@ -1,6 +1,13 @@
 import React from 'react';
 import clsx from 'clsx';
-import { SIDE_PANEL_WIDTH, sidePanelFrame } from './sidebar/sidebar.const';
+import {
+    SIDE_PANEL_WIDTH,
+    dockPanelSize,
+    panelInner,
+    sidePanelFrame,
+    phoneSheet,
+    phoneSheetClosed,
+} from './sidebar/sidebar.const';
 
 /**
  * The right dock's panel frame (opens to the left of the dock rail). Collapsing is done from the
@@ -15,20 +22,27 @@ export const DockPanel = ({
     width?: number;
     children: React.ReactNode;
 }) => (
-    <div className="relative flex h-full">
+    // below lg the panel overlays the canvas, positioned against the whole dock (DockRoot `relative`)
+    <div className="flex h-full lg:relative">
         <div
             data-testid="dock-panel"
             aria-hidden={!open}
             inert={!open}
-            className={clsx(sidePanelFrame, open && 'border-l')}
-            style={{ width: open ? width : 0, minWidth: 0 }}
+            className={clsx(
+                sidePanelFrame,
+                dockPanelSize,
+                phoneSheet,
+                open ? 'border-l max-lg:shadow-xl' : phoneSheetClosed,
+            )}
+            style={
+                {
+                    '--panel-w': `${open ? width : 0}px`,
+                    '--panel-full': `${width}px`,
+                    minWidth: 0,
+                } as React.CSSProperties
+            }
         >
-            <div
-                style={{ width }} // fixed inner width -> no reflow while animating
-                className="h-full"
-            >
-                {children}
-            </div>
+            <div className={panelInner}>{children}</div>
         </div>
     </div>
 );

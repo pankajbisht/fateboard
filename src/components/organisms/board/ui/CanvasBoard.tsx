@@ -3,14 +3,14 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useStore } from '@store';
 import { useThemeVersion } from '@hooks/useThemeVersion';
 import { restyleSelectionChrome } from '@/lib/fabricChrome';
-import { useKeyboardShortcuts } from '@/hooks';
+import { useKeyboardShortcuts, useTouchGestures } from '@/hooks';
 import { useSpacePan } from '@/hooks/keyboard/useSpacePan';
 import { FloatingTextToolbar } from '@/components/organisms/FloatingTextToolbar';
 import { NodeToolbar } from '@/components/organisms/NodeToolbar';
 import { contextMenuRegistry } from '@/components/config/contextMenuRegistry';
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { DEFAULT_CANVAS_PRESET } from '../board.config';
-import Ruler, { RULER_SIZE, createPointerSource, type RulerUnit } from './Ruler';
+import Ruler, { RULER_HIDDEN, RULER_SIZE, createPointerSource, type RulerUnit } from './Ruler';
 import { isTextFloatTarget } from '@/lib/textTargets';
 import { designRenderRatio } from '@/lib/canvas/renderRatio';
 
@@ -19,11 +19,10 @@ export type CanvasMode = 'design' | 'whiteboard';
 /** The mode used when nothing says otherwise. */
 const DEFAULT_MODE: CanvasMode = 'design';
 
-const ARTBOARD_GAP = 48;
+const pad = (v: { w: number; h: number }) => (Math.min(v.w, v.h) < 480 ? 16 : 48); // page margin
 const MIN_FIT_SCALE = 0.05;
 const MAX_FIT_SCALE = 1;
 
-// floating text toolbar placement
 // const TOOLBAR_GAP = 10; // space between toolbar and text
 // const TOOLBAR_HEIGHT = 48; // used to decide above / below
 // const TOOLBAR_EDGE = 4; // keep this far from the container edge
@@ -140,6 +139,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     // breaks React's removeChild on unmount / StrictMode when the element is JSX.
     const hostRef = useRef<HTMLDivElement | null>(null);
     const scrollRef = useRef<HTMLDivElement | null>(null);
+    useTouchGestures(isWhiteboard ? hostRef : scrollRef, canvas); // pinch, 2-finger pan, long press
     const toolbarRef = useRef<HTMLDivElement | null>(null);
 
     /* ------------------------------------------------------------------ */
@@ -266,8 +266,8 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     const fitScale = useMemo(() => {
         if (isWhiteboard || !size || viewport.w <= 0 || viewport.h <= 0) return 1;
 
-        const availableWidth = Math.max(1, viewport.w - ARTBOARD_GAP * 2);
-        const availableHeight = Math.max(1, viewport.h - ARTBOARD_GAP * 2);
+        const availableWidth = Math.max(1, viewport.w - pad(viewport) * 2);
+        const availableHeight = Math.max(1, viewport.h - pad(viewport) * 2);
 
         return clamp(
             Math.min(availableWidth / size.width, availableHeight / size.height, MAX_FIT_SCALE),
@@ -389,8 +389,8 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     /* ------------------------------------------------------------------ */
     /* Stage geometry (design): where the artboard sits inside the stage  */
     /* ------------------------------------------------------------------ */
-    const stageWidth = Math.max(viewport.w, (displaySize?.width ?? 0) + ARTBOARD_GAP * 2);
-    const stageHeight = Math.max(viewport.h, (displaySize?.height ?? 0) + ARTBOARD_GAP * 2);
+    const stageWidth = Math.max(viewport.w, (displaySize?.width ?? 0) + pad(viewport) * 2);
+    const stageHeight = Math.max(viewport.h, (displaySize?.height ?? 0) + pad(viewport) * 2);
     const artboardLeft = (stageWidth - (displaySize?.width ?? 0)) / 2;
     const artboardTop = (stageHeight - (displaySize?.height ?? 0)) / 2;
 
@@ -563,7 +563,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     return (
         <div className="flex h-full w-full flex-col">
             {/* top ruler row: corner box + horizontal ruler (always in design; whiteboard has none) */}
-            <div className="flex shrink-0" style={{ height: RULER_SIZE }}>
+            <div className={`flex shrink-0 ${RULER_HIDDEN}`} style={{ height: RULER_SIZE }}>
                 <div
                     className="shrink-0 border-b border-r"
                     style={{
@@ -598,7 +598,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
                 <div
                     ref={scrollRef}
                     data-board-scroll // the Hand tool scrolls this in design (createCanvasSlice pan)
-                    className="relative min-w-0 flex-1 overflow-auto"
+                    className="relative min-w-0 flex-1 touch-pan-x touch-pan-y overflow-auto"
                     style={{ backgroundColor: THEME.workspace }}
                     onMouseMove={onMouseMove}
                     onMouseLeave={onMouseLeave}

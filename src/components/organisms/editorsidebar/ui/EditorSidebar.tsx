@@ -95,7 +95,7 @@ export function EditorSidebar({
         <aside
             aria-label="Editor sidebar"
             className={[
-                'relative z-20 flex h-full min-h-0 min-w-0 shrink-0 bg-surface',
+                'relative z-20 flex h-full min-h-0 min-w-0 shrink-0 bg-surface max-sm:h-auto max-sm:w-full',
                 className,
             ].join(' ')}
         >

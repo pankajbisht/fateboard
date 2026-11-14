@@ -6,6 +6,8 @@ import { Tooltip } from './Tooltip';
 export const FullScreen = () => {
     const toggleFullscreen = useStore((state) => state.toggleFullscreen);
     const isFullScreen = useStore((state) => state.isFullScreen);
+    // iPhone Safari has no Fullscreen API for pages: the button would light up and do nothing
+    if (typeof document === 'undefined' || !document.documentElement.requestFullscreen) return null;
 
     return (
         <Tooltip position="bottom" content="Fullscreen">

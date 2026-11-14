@@ -3,12 +3,12 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useStore } from '@store';
 import { useBoardMode } from '@hooks/useBoardMode';
+import { usePreventPageZoom } from '@hooks/useTouchGestures';
 import { Header } from '@/components/organisms/header/index.ts';
 import EditorTemplate from '@/components/templates/Editor.template.tsx';
 import { DockRoot } from '@/components/organisms/DockRoot.tsx';
 import { Footer } from '@/components/organisms/footer/index.ts';
 import { ContextMenu } from '@/components/organisms/ContextMenu.tsx';
-import { SmallScreenNotice } from '@/components/organisms/SmallScreenNotice';
 import editorsidebarconfig from '@/components/organisms/editorsidebar/editorsidebar.config.tsx';
 // ONE board for both modes (replaces CanvasBoardFreeHand + the old CanvasBoard)
 import { CanvasBoard } from '@/components/organisms/board/index.ts';
@@ -27,6 +27,7 @@ export type EditorPageProps = {
 
 export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
     const canvas = useStore((state) => state.canvas);
+    usePreventPageZoom(); // a pinch zooms the board (useTouchGestures), never the page
     const activeTool = useStore((state) => state.activeTool);
     const setActiveTool = useStore((state) => state.setActiveTool);
     const addText = useStore((state) => state.addText);
@@ -106,8 +107,6 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
 
     return (
         <>
-            {/* phones: the editor is desktop-only and says so (owner decision 2026-11-07) */}
-            <SmallScreenNotice />
             <EditorTemplate
                 header={<Header />}
                 leftSidebar={

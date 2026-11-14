@@ -2,6 +2,8 @@ import { BRAND } from '@/lib/theme';
 import { useEffect, useRef, useSyncExternalStore } from 'react';
 import { cssToken, useThemeVersion } from '@hooks/useThemeVersion';
 export const RULER_SIZE = 20;
+/** Rulers give their room to the page on phones (narrow, or short in landscape). */
+export const RULER_HIDDEN = 'max-sm:hidden [@media(max-height:500px)]:hidden';
 
 import { PX_PER_UNIT as UNIT_PX, type Unit } from '@/lib/units';
 
@@ -222,7 +224,7 @@ export function Ruler({
     }, [orientation, length, origin, scale, extent, unit, themeVersion]);
 
     return (
-        <div className="relative shrink-0">
+        <div className={`relative shrink-0 ${orientation === 'vertical' ? RULER_HIDDEN : ''}`}>
             <canvas ref={ref} className="block" aria-hidden="true" />
             <RulerMarker orientation={orientation} length={length} pointer={pointer} />
         </div>

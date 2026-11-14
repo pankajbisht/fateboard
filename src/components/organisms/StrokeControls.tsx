@@ -37,8 +37,9 @@ export function StrokeControls() {
                 aria-label="Selection paint"
                 aria-disabled={!activeObject || undefined}
                 className={clsx(
-                    // wraps to a second line instead of being cut off (narrow window / large icons)
-                    'flex min-w-0 flex-row flex-wrap items-center gap-x-5 gap-y-1 bg-surface',
+                    // wraps to a second line instead of being cut off (narrow window / large icons); phones:
+                    // one row that scrolls sideways in the footer (BUG-215)
+                    'flex min-w-0 flex-row flex-wrap items-center gap-x-5 gap-y-1 bg-surface max-md:flex-nowrap [@media(max-height:500px)]:flex-nowrap',
                     !activeObject && 'pointer-events-none opacity-50 dark:opacity-65',
                 )}
             >

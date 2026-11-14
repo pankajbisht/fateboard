@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
     createPageSlice,
     isFreehand,
@@ -149,5 +149,82 @@ describe('design board zoom (CanvasBoard owns geometry, ADR Q2)', () => {
         h.get().setBoardMode('whiteboard');
         h.get().setZoom(2);
         expect(calls).toContain('zoomToPoint');
+    });
+});
+
+describe('touch navigation (pinch / two-finger pan): through setZoom, the one zoom path', () => {
+    const rect = (left: number, top: number, width: number, height: number) =>
+        ({ left, top, width, height, right: left + width, bottom: top + height }) as DOMRect;
+
+    const touchSetup = (mode: 'design' | 'whiteboard') => {
+        const canvas = createFakeCanvas() as unknown as Record<string, unknown> & {
+            getWidth: () => number;
+        };
+        const scroller = { getBoundingClientRect: () => rect(0, 0, 400, 300), scrollBy: vi.fn() };
+        const pans: number[][] = [];
+        const zooms: { point: { x: number; y: number }; zoom: number }[] = [];
+        // the element is shown at half its backstore size: 1 CSS px = 2 canvas px
+        canvas.upperCanvasEl = {
+            getBoundingClientRect: () => rect(10, 20, canvas.getWidth() / 2, 100),
+        };
+        canvas.wrapperEl = { closest: () => scroller };
+        canvas.relativePan = (p: { x: number; y: number }) => pans.push([p.x, p.y]);
+        canvas.zoomToPoint = (point: { x: number; y: number }, zoom: number) =>
+            zooms.push({ point: { x: point.x, y: point.y }, zoom });
+        const h = createHarness([createPageSlice as never], { canvas });
+        h.get().setBoardMode(mode);
+        return { h, scroller, pans, zooms };
+    };
+
+    beforeEach(() => {
+        vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+            cb(0);
+            return 1;
+        });
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('whiteboard: panBy moves the viewport in canvas px', () => {
+        const { h, pans } = touchSetup('whiteboard');
+        h.get().panBy(30, -10);
+        expect(pans).toEqual([[60, -20]]);
+    });
+
+    it('whiteboard: pinchZoom zooms at the fingers (client px -> canvas px)', () => {
+        const { h, zooms } = touchSetup('whiteboard');
+        h.get().pinchZoom(2, 60, 70);
+        expect(zooms).toEqual([{ point: { x: 100, y: 100 }, zoom: 2 }]);
+        expect(h.get().zoom).toBe(2);
+    });
+
+    it('design: panBy scrolls the board (the viewport stays identity, BUG-007)', () => {
+        const { h, scroller, pans } = touchSetup('design');
+        h.get().panBy(30, -10);
+        expect(scroller.scrollBy).toHaveBeenCalledWith(-30, 10);
+        expect(pans).toEqual([]);
+    });
+
+    it('design: pinchZoom changes the zoom state and keeps the point under the fingers', () => {
+        const { h, scroller, zooms } = touchSetup('design');
+        h.get().pinchZoom(2, 300, 150); // 100 px right of the board centre
+        expect(h.get().zoom).toBe(2);
+        expect(zooms).toEqual([]);
+        // the board re-centres on zoom; the focal point is then 100 px × (2 - 1) further away
+        expect(scroller.scrollBy).toHaveBeenCalledWith(100, 0);
+    });
+
+    it('design: no scroll correction once the zoom is clamped', () => {
+        const { h, scroller } = touchSetup('design');
+        h.get().setZoom(MAX_ZOOM);
+        h.get().pinchZoom(2, 300, 150);
+        expect(h.get().zoom).toBe(MAX_ZOOM);
+        expect(scroller.scrollBy).not.toHaveBeenCalled();
+    });
+
+    it('ignores bad input', () => {
+        const { h, zooms } = touchSetup('whiteboard');
+        h.get().pinchZoom(Number.NaN, 0, 0);
+        h.get().pinchZoom(0, 0, 0);
+        expect(zooms).toEqual([]);
     });
 });

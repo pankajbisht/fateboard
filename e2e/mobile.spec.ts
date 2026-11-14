@@ -1,16 +1,13 @@
 import { test, expect } from '@playwright/test';
 
-// Phones (owner decision 2026-11-07): the editor is desktop-only and says so; the landing page works.
+// Phones: the full editor runs on every screen (owner decision 2026-11-14, BUG-215; the 2026-11-07
+// "desktop-only" notice is gone). Layout checks per screen size: e2e/responsive.spec.ts.
 test.use({ viewport: { width: 390, height: 844 } }); // isMobile is Chromium-only; the width is what matters
 
-test('the editor explains it is desktop-only; Continue anyway opens it', async ({ page }) => {
+test('the editor opens on a phone with no "larger screen" notice', async ({ page }) => {
     await page.goto('/draw');
-    const notice = page.getByRole('dialog', { name: /larger screen/i });
-    await expect(notice).toBeVisible();
-    await notice.getByRole('button', { name: 'Continue anyway' }).click();
-    await expect(notice).toBeHidden();
-    await page.reload();
-    await expect(page.getByRole('dialog', { name: /larger screen/i })).toHaveCount(0); // this session
+    await expect(page.locator('canvas.upper-canvas')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
 test('the landing page has no notice and no horizontal scroll on a phone', async ({ page }) => {

@@ -150,6 +150,25 @@ it never runs twice). Whiteboard: scroll pans, Shift + wheel pans sideways, Ctrl
 as Ctrl + wheel) zooms at the pointer. Design: Ctrl / ⌘ + wheel zooms the page instead of the browser; a plain wheel is
 left to the browser. Line-based deltas (Firefox) count 16 px a line; pinch deltas (< 50) zoom at a stronger rate.
 
+**Touch (2026-11-14, BUG-211):** `lib/canvas/touchGestures.ts` (no store / Fabric import), wired by
+`hooks/useTouchGestures.ts` from CanvasBoard on the board root (design: the scroll container; whiteboard: the host), in
+the capture phase so it sees every touch before Fabric. Fabric 7 follows one finger: a second finger re-runs its
+mouse-down (the brush restarts), touch never fires click / `dblclick`, and there is no pinch. Rules:
+one finger on the canvas is held until it moves past 8 px, lifts (a tap) or holds still (120 ms with a drawing tool,
+`PINCH_WINDOW_MS`; 500 ms with Select, which opens the context menu); then it goes to Fabric
+(`canvas._onTouchStart` + the missed moves through `_onMouseMove`). A second finger inside that window is a gesture and
+Fabric never sees the first: pinch → Page `pinchZoom(factor, clientX, clientY)` (→ `setZoom`, the one zoom path;
+design re-scrolls so the point under the fingers stays put), two-finger move → Page `panBy(dx, dy)` (design scrolls the
+board, whiteboard `relativePan`). Once Fabric owns a finger, extra fingers are swallowed; when that finger lifts (or is cancelled) while others stay down, its
+interaction is ended at once with `canvas._onTouchEnd` and a no-finger-down touchend (Fabric waits for every finger and has no
+`touchcancel` listener, BUG-213). Long press with Select =
+a synthetic `contextmenu` on the canvas (same handler as right-click); two taps (< 300 ms, < 24 px) = a synthetic
+`dblclick`. Hand tool: one finger pans. A pen (`pointerType` / iOS `touchType: 'stylus'`) goes to Fabric at once, also over a resting palm (the palm was never
+forwarded); with the Hand tool it pans;
+fingers are ignored while it is down, and after a pen was used one finger pans with the drawing tools. One finger on the
+grey design board is native scroll (`touch-pan-x touch-pan-y`). `usePreventPageZoom` (Editor page) stops iOS
+`gesture*` events and overscroll; the editor root is `touch-pan-x touch-pan-y` so a pinch never zooms the page.
+
 **Size of new objects (2026-11-11):** `lib/canvas/creationScale.ts`. Base sizes (shape catalog, Text panel presets,
 text-in-shape 18 px, stroke 2 px, pictures 400 px on the longer side) are a whiteboard at 100 %. Design: × the page's
 shorter side / 600 (1920 × 1080 → 1.8, like Canva sizing by page); whiteboard: × 1 / viewport zoom (same on-screen

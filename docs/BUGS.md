@@ -26,7 +26,7 @@ browser.
 
 
 **Archive (2026-11-13):** fixed bugs moved to [BUGS_ARCHIVE.md](BUGS_ARCHIVE.md) to keep this file short to read. This
-file lists only bugs that are not fixed. Highest ID so far: **BUG-210**; new bugs take the next one. Look up any
+file lists only bugs that are not fixed. Highest ID so far: **BUG-219**; new bugs take the next one. Look up any
 ID with `grep -n "BUG-0xx" docs/BUGS*.md`. When you fix a bug, move its row to the archive with its new status.
 
 ## Summary
@@ -61,6 +61,8 @@ ID with `grep -n "BUG-0xx" docs/BUGS*.md`. When you fix a bug, move its row to t
 | BUG-207 | Minor | Pen arrowheads | open | Found by the fate-reviewer (2026-11-13): arrowheads are sub-paths of the same `fabric.Path`, so a dashed / dotted Pen path draws a dashed / dotted head. Options: heads as a separate solid object (needs a grouping decision), or block arrows with dashes. Connectors share the approach |
 | BUG-208 | Minor | Right dock icons | open | Found while moving Templates to the dock (2026-11-13): `tiling` and `along-path` both use `screwdriver-wrench`, which renders as the same gear icon as Settings, so two dock buttons look identical (names are in the tooltips only). Fix: a distinct icon per tab, e.g. grid for Tiling and route for Along Path. |
 | BUG-210 | Minor | SEO | open | Found by `fate-seo` `seo-audit.mjs` (2026-11-14): the landing "Start Drawing" calls (hero and header) are `<button onClick={navigate}>`, so crawlers see no link from `/` to `/draw`; and two tutorial titles are over 60 chars (`/gallery/flow-cicd` 62, `/gallery/flow-swimlane` 64: "Flow diagrams Tutorial" is long). Fix: `<Link to={PATHS.draw}>` styled as the button; shorten the flow category label in titles (e.g. "Flowchart") |
+| BUG-217 | Minor | phones / safe areas + keyboard | open | Found with BUG-215 (2026-11-14), not verified on a device: `index.html` has no `viewport-fit=cover` (iOS letterboxes the notch, so nothing is hidden, but the bars stay white) and no `interactive-widget` (on Android the on-screen keyboard overlays the page while editing text, so a text box low on the page can sit under it). Decide on a real phone: `interactive-widget=resizes-content` makes the board re-fit while typing. UNKNOWN - verify on a device (docs/TESTING.md "Device checklist") |
+| BUG-218 | Minor | layout / short screens | open | Found with BUG-215 (2026-11-14): on short screens (phone landscape, 390 px tall) the left tool rail scrolls (all tools reachable, E2E-checked) but nothing shows that more tools are below. The right dock has a "More tabs" menu instead. Suggested: the same overflow menu for the left rail, or a fade at the rail's bottom edge |
 
 ## Details
 

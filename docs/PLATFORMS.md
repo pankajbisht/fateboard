@@ -220,7 +220,9 @@ active, its own build pipeline). WXT runs on Vite like this repo.
    byte-for-byte equivalent in features; `bundle-report.mjs` startup unchanged.
 4. ~~**BUG-209**~~ done 2026-11-14: store and Fabric only on editor routes (`SiteLayout` / lazy `RootLayout`).
 5. **Self-host fonts** (no Google Fonts request): required offline and in apps, also faster on the web.
-6. **Touch and pen audit**: two-finger pan, pinch zoom through the Page slice (`setZoom`, never a new zoom path,
+6. **Touch and pen audit** (owner pulled it forward 2026-11-14; done: gestures BUG-211 / 212 / 213, hover-only UI
+   BUG-214, every-screen layout BUG-215, menu a11y BUG-216; touch + layout specs also pass in Playwright WebKit;
+   open: the device checklist in docs/TESTING.md on a real iPad / Android, BUG-217, BUG-218): two-finger pan, pinch zoom through the Page slice (`setZoom`, never a new zoom path,
    BUG-007), pen-only drawing with touch rejection while a pen is active, long-press context menu, no
    hover-only UI. Replace `SmallScreenNotice` with a tablet layout (compact rail, panels as sheets).
 7. ~~**CSP check**~~ done 2026-11-14 (BUG-165): the built JS has no `eval` / `new Function`, and the full E2E suite

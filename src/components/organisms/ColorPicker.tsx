@@ -1,3 +1,4 @@
+import { placeBeside, sizeOf } from '@/lib/placeBeside';
 import { Icon } from '@/components/atoms/Icon';
 import {
     useEffect,
@@ -108,7 +109,7 @@ export function PaletteTools() {
         open === which ? 'ring-2 ring-primary-500 ring-offset-1 ring-offset-surface' : '';
 
     return (
-        <div className="relative flex flex-col items-center gap-[3px] border-b border-line pb-[3px]">
+        <div className="relative flex flex-col items-center gap-[3px] border-b border-line pb-[3px] max-sm:flex-row max-sm:border-b-0 max-sm:border-r max-sm:pb-0 max-sm:pr-[3px]">
             <Tooltip content="All colors" position="left">
                 <button
                     ref={gridButton}
@@ -180,24 +181,19 @@ function PaletteGrid({
     const handleColorChange = useStore((s) => s.handleColorChange);
     const state = useSwatchState();
     const ref = useRef<HTMLDivElement | null>(null);
-    const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+    const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
     const rows: { id: string; label: string; swatches: PaletteSwatch[] }[] = [
         { id: 'basic', label: 'Basic', swatches: PALETTE_BASICS },
         ...PALETTE_FAMILIES.map((f) => ({ id: f.id, label: f.label, swatches: f.shades })),
     ];
 
-    // place left of the dock, top aligned with the button, kept inside the window.
+    // beside the button (left of the dock; right / above it on a phone bar), inside the window.
     // Until placed it renders with opacity 0 (not visibility:hidden, which cannot take focus).
     useLayoutEffect(() => {
         const el = ref.current;
         if (!el || !anchor) return;
-        const a = anchor.getBoundingClientRect();
-        const h = el.offsetHeight;
-        setPos({
-            top: Math.max(8, Math.min(a.top, window.innerHeight - h - 8)),
-            right: window.innerWidth - a.left + 6,
-        });
+        setPos(placeBeside(anchor.getBoundingClientRect(), sizeOf(el)));
     }, [anchor]);
 
     // focus the current color (or the first swatch) when opened
@@ -263,7 +259,7 @@ function PaletteGrid({
             aria-label="All colors"
             onKeyDown={onKeyDown}
             className="fixed z-[9999] rounded-lg border border-line bg-surface p-3 shadow-lg"
-            style={pos ?? { top: 8, right: 8, opacity: 0 }}
+            style={pos ?? { top: 8, left: 8, opacity: 0 }}
         >
             <div className="mb-2 flex items-center justify-between gap-4">
                 <span className="text-xs font-semibold text-title">All colors</span>
@@ -334,7 +330,7 @@ export function RecentColors() {
 
     return (
         <div
-            className="mt-[3px] flex flex-col items-center gap-[3px] border-t border-line pt-[3px]"
+            className="mt-[3px] flex flex-col items-center gap-[3px] border-t border-line pt-[3px] max-sm:ml-[3px] max-sm:mt-0 max-sm:flex-row max-sm:border-l max-sm:border-t-0 max-sm:pl-[3px] max-sm:pt-0"
             aria-label="Recent colors"
         >
             {recentColors.map((c) => (
@@ -375,8 +371,13 @@ export const ColorPicker = () => {
         const a = el.getBoundingClientRect();
         const v = scroller.getBoundingClientRect();
         const RING = 4;
-        if (a.top - RING >= v.top && a.bottom + RING <= v.bottom) return;
-        el.scrollIntoView?.({ block: 'center' });
+        const inside =
+            a.top - RING >= v.top &&
+            a.bottom + RING <= v.bottom &&
+            a.left - RING >= v.left &&
+            a.right + RING <= v.right; // a row on an upright phone
+        if (inside) return;
+        el.scrollIntoView?.({ block: 'center', inline: 'center' });
     }, [current]);
 
     return (
@@ -385,7 +386,7 @@ export const ColorPicker = () => {
             data-testid="color-palette"
             role="group"
             aria-label="Color palette"
-            className="flex flex-col items-center gap-[3px] bg-surface"
+            className="flex flex-col items-center gap-[3px] bg-surface max-sm:flex-row"
         >
             {PALETTE_BASICS.map((sw) => (
                 <Swatch
@@ -401,7 +402,7 @@ export const ColorPicker = () => {
                     key={f.id}
                     role="group"
                     aria-label={f.label}
-                    className="mt-[3px] flex flex-col items-center gap-[3px] border-t border-line pt-[6px]"
+                    className="mt-[3px] flex flex-col items-center gap-[3px] border-t border-line pt-[6px] max-sm:ml-[3px] max-sm:mt-0 max-sm:flex-row max-sm:border-l max-sm:border-t-0 max-sm:pl-[6px] max-sm:pt-0"
                 >
                     {[...f.shades].reverse().map((sw) => (
                         <Swatch

@@ -51,7 +51,8 @@ export const DockRoot = () => {
     const activeTab = tabs.find((t) => t.id === active);
 
     return (
-        <aside className="flex h-full">
+        // upright phones: tabs and colors are horizontal bars under the board (BUG-219)
+        <aside className="relative flex h-full max-sm:h-auto max-sm:w-full max-sm:flex-col">
             <DockPanel open={open} width={width}>
                 {activeTab && (
                     <PanelLayout
@@ -78,17 +79,20 @@ export const DockRoot = () => {
                 onTogglePanel={() => setOpen((o) => !o)}
             />
 
-            <div
-                data-testid="dock-tools"
-                className="flex min-h-0 flex-col items-center gap-[3px] overflow-y-auto border-l border-line bg-surface px-[3px] py-[3px] [scrollbar-width:none]"
-            >
-                <PaletteTools />
+            {/* two columns; one row on an upright phone (`contents` keeps the desktop layout as is) */}
+            <div className="contents max-sm:flex max-sm:min-w-0 max-sm:border-t max-sm:border-line">
+                <div
+                    data-testid="dock-tools"
+                    className="flex min-h-0 flex-col items-center gap-[3px] overflow-y-auto border-l border-line bg-surface px-[3px] py-[3px] [scrollbar-width:none] max-sm:max-w-[40%] max-sm:shrink-0 max-sm:flex-row max-sm:overflow-x-auto max-sm:overflow-y-hidden max-sm:border-l-0 max-sm:border-r"
+                >
+                    <PaletteTools />
 
-                <RecentColors />
-            </div>
+                    <RecentColors />
+                </div>
 
-            <div className="min-h-0 shrink-0 overflow-y-auto overflow-x-hidden bg-surface p-[3px] [scrollbar-width:thin]">
-                <ColorPicker />
+                <div className="min-h-0 shrink-0 overflow-y-auto overflow-x-hidden bg-surface p-[3px] [scrollbar-width:thin] max-sm:min-w-0 max-sm:flex-1 max-sm:shrink max-sm:overflow-x-auto max-sm:overflow-y-hidden">
+                    <ColorPicker />
+                </div>
             </div>
         </aside>
     );
