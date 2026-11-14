@@ -20,14 +20,18 @@ Node: `.nvmrc` = v26.13.0. Deploy: GitHub Pages via `.github/workflows/ci.yml` �
 ## Layers
 
 ```
-src/main.tsx → App.tsx → app/rootRouter.tsx (BrowserRouter + RouteSeo)
-  └─ templates/RootLayout   (hydrates settings from `settingsStorage`, then renders <Outlet/> inside ErrorBoundary; DialogHost + ToastHost)
-       ├─ /                 pages/web/WhiteboardMarketingSite   (marketing; has its own MiniWhiteboard)
-       ├─ /draw             pages/Editor/Editor.tsx             ← the editor
-       ├─ /setting          pages/Setting/EditorSettingPage     (Preferences)
-       ├─ /command-palette  pages/Command/CommandPalette
-       └─ /help             pages/HelpPage/HelpPage
-     * → pages/NotFound/NotFoundPage
+src/main.tsx (preloadRoute) → App.tsx → app/rootRouter.tsx (BrowserRouter + RouteSeo; renders app/routes/appRoutes.tsx)
+  ├─ templates/SiteLayout   (ErrorBoundary only; no store, no Fabric: BUG-209)
+  │    ├─ /                 pages/web/WhiteboardMarketingSite   (marketing; has its own MiniWhiteboard)
+  │    ├─ /gallery          pages/Gallery/GalleryPage           (all gallery pieces; was a landing section)
+  │    └─ /gallery/:id      pages/GalleryTutorial/GalleryTutorialPage
+  ├─ ErrorBoundary → templates/RootLayout (LAZY chunk: store + Fabric; applies Fabric selection chrome; hydrates
+  │    settings from `settingsStorage`, then renders <Outlet/> inside ErrorBoundary; DialogHost + ToastHost)
+  │    ├─ /draw             pages/Editor/Editor.tsx             ← the editor
+  │    ├─ /setting          pages/Setting/EditorSettingPage     (Preferences)
+  │    ├─ /command-palette  pages/Command/CommandPalette
+  │    └─ /help             pages/HelpPage/HelpPage
+  └─ * → pages/NotFound/NotFoundPage
 ```
 
 Editor composition (`Editor.template.tsx` grid):
@@ -195,19 +199,28 @@ app (slices, panels)
 
 ## Bundles and assets
 
-- **Routes are lazy chunks** (`app/rootRouter.tsx`, `React.lazy` + one `Suspense` with a blank background fallback): the
+- **Routes are lazy chunks** (registry `app/routes/appRoutes.tsx` = `APP_ROUTES`: `{ path, Page: lazy(…), load, layout: 'site' | 'root' | 'none' }`,
+  paths from `app/routes/paths.ts` (`PATHS`); `app/rootRouter.tsx` maps it inside one `Suspense` with a blank background
+  fallback; `layout: 'root'` routes nest under `RootLayout`, the `*` catch-all stays last and outside it). Add a page = one
+  `APP_ROUTES` entry (+ a `PATHS` key; guard `app/routes/__tests__/appRoutes.test.ts`). The
   landing page never downloads the editor (`Editor` chunk ≈ 77 KB gzip) and vice versa. A failed chunk load after a
   deploy hits the `ErrorBoundary` (Reload). Guard: `src/__tests__/codeSplitting.test.ts`.
   The landing page's static imports must not reach the command registry or the Help shortcut list (it reuses
   the Help picture renderer, so key caps live in the light `helpsection/keyCaps.ts`). Guard: `src/__tests__/landingBundle.test.ts`.
 - **Vendor chunks** (`vite.config.ts` `build.rolldownOptions.output.codeSplitting.groups`): `fabric`, `paper`, `react`,
-  `icons`, cached separately across deploys. Startup = entry + react + fabric + icons ≈ 278 KB gzip (was one 490 KB chunk).
+  `icons`, cached separately across deploys. Startup (every route) = entry + react + icons ≈ 126 KB gzip
+  (2026-11-14, BUG-209; was 308 KB with store + fabric). Store + Fabric (≈ 184 KB) come with the lazy `RootLayout`
+  chunk on editor routes only; `preloadRoute()` in main.tsx fetches layout and page in parallel on a direct visit.
+  Guards: `landingBundle.test.ts` (entry and site pages never reach `@/store` or `fabric`), `e2e/loading.spec.ts`.
+  Measure with `node .claude/skills/fate-perf/scripts/bundle-report.mjs`.
 - **paper.js loads on demand** (`lib/booleanOps.computeBoolean`), ≈ 120 KB gzip
-  kept out of startup. The store still imports Fabric, so every route loads it (the shell needs the store).
+  kept out of startup.
 - **Template images**: canvas / preview images ≤ 2048 px (≤ 0.7 MB), gallery cards use 640 px files in
   `public/template/thumb/`; `dist` 39 MB → 9.5 MB. Guard: `src/__tests__/templateAssets.test.ts`.
-- **Landing gallery artwork**: 18 static SVGs in `public/gallery/` (≈ 115 KB in all, each < 40 KB), loaded lazily by
-  `<img>`, so the landing bundle only gains the small gallery components. Each file uses only SVG Fabric imports (no filter,
+- **Gallery artwork**: 18 static SVGs in `public/gallery/` (≈ 115 KB in all, each < 40 KB), loaded lazily by
+  `<img>` on the `/gallery` page (its own lazy `GalleryPage` chunk ≈ 1.5 KB gzip). Moved off the landing page 2026-11-14
+  (it made `/` slow); the landing keeps a text-only `GalleryTeaser` and loads no artwork (`landingBundle.test.ts` keeps
+  `GallerySection` out of its static imports; `e2e/gallery.spec.ts` asserts no `/gallery/*.svg` request on `/`). Each file uses only SVG Fabric imports (no filter,
   mask, pattern, image or `<use>`; no external refs), so `mod+O` brings it in as a group of editable objects, and is split
   into `<g id="step-N">` build steps that the tutorial page replays. Guards: `pages/web/gallery/__tests__/galleryData.test.ts`,
   `galleryTutorials.test.ts`.
@@ -222,7 +235,7 @@ Static GitHub Pages (ADR-11), no server and no rewrites, so every public route g
 | What | Where | Rule |
 |---|---|---|
 | Route list + metadata | `src/app/seo/routes.ts` (`SEO_ROUTES`) | One source for the build and the app. `/` must match `index.html`. `index: false` = `noindex`, no canonical, not in the sitemap |
-| Per-route pages | `vite.config.ts` plugin → `src/app/seo/prerender.ts` | Built `index.html` → `draw.html`, `help.html`, `setting.html`, `command-palette.html` with own title, description, robots, canonical, OG/Twitter and fallback `h1` / `data-seo="intro"`. GitHub Pages serves `/help` from `help.html` (HTTP 200, no slash redirect). Throws on a missing tag |
+| Per-route pages | `vite.config.ts` plugin → `src/app/seo/prerender.ts` | Built `index.html` → `draw.html`, `help.html`, `setting.html`, `command-palette.html`, `gallery.html`, `gallery/<id>.html` with own title, description, robots, canonical, OG/Twitter and fallback `h1` / `data-seo="intro"`. GitHub Pages serves `/help` from `help.html` (HTTP 200, no slash redirect). Throws on a missing tag |
 | Unknown URLs | generated `404.html` | App shell, `noindex`, no canonical. GitHub Pages returns it with HTTP 404; the app renders Not Found (Share / `/share/:id` removed, Q6) |
 | Site URL | `VITE_SITE_URL` (`.env` / CI repo variable), validated by `src/app/seo/siteUrl.ts` | One origin for canonical, OG / JSON-LD (`%VITE_SITE_URL%` in `index.html`), per-route pages, sitemap and robots. `vite.config.ts` refuses to build without a valid value; never hard-code the domain (`siteUrl.test.ts` scans for it) |
 | Sitemap / robots | generated `sitemap.xml` + `robots.txt` | Indexable routes only; robots points to the sitemap. Do not add a static `public/404.html`, `public/sitemap.xml` or `public/robots.txt` |
@@ -234,7 +247,9 @@ Static GitHub Pages (ADR-11), no server and no rewrites, so every public route g
 | Fonts | one Google Fonts `css2` request + `preconnect` | Only used faces download |
 | Analytics | `src/lib/utils/analytics.ts`, called from `main.tsx` | gtag only when `MODE === 'production'` and `VITE_GA_ID` is set (CI: repo variable). No `%VITE_*%` placeholders in `index.html` |
 
-Add a public route: add the `<Route>` in `rootRouter.tsx` **and** an entry in `SEO_ROUTES` (`prerender.test.ts` checks every entry is a router path).
+| Content-Security-Policy | build plugin `contentSecurityPolicy` (`vite.config.ts`) → `src/app/seo/csp.ts` | `<meta http-equiv>` right after `<meta charset>` in the built index.html, so every prerendered page and 404.html carry it (BUG-165). `script-src 'self'` + sha256 of each inline script (computed at build; never `unsafe-inline` / `unsafe-eval`); gtag hosts only when production + `VITE_GA_ID`; `style-src` keeps `'unsafe-inline'` (React / Fabric style attributes); images and media `'self' data: blob:`; `connect-src 'self'` + Google Fonts CSS. Not in dev (HMR uses inline scripts). Header-only parts (`frame-ancestors`, `nosniff`, `Referrer-Policy`) are in `docker/nginx.conf`; GitHub Pages cannot send them. A new external origin (CDN, API, analytics) must be added in `csp.ts` or the browser blocks it; every E2E test fails on a CSP violation |
+
+Add a public route: add the entry in `APP_ROUTES` (`app/routes/appRoutes.tsx`) **and** an entry in `SEO_ROUTES` (`prerender.test.ts` checks every entry matches an `APP_ROUTES` path).
 Tests: `src/__tests__/seo.test.ts`, `src/app/seo/__tests__/*`, `lib/utils/__tests__/analytics.test.ts`, `e2e/seo.spec.ts`.
 
 ## Undo / redo

@@ -5,6 +5,7 @@ import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { createHash } from 'crypto';
 import { SEO_ROUTES } from './src/app/seo/routes';
 import {
     renderNotFoundHtml,
@@ -14,6 +15,7 @@ import {
     routeFile,
 } from './src/app/seo/prerender';
 import { SITE_URL_ENV, normalizeSiteUrl } from './src/app/seo/siteUrl';
+import { injectCsp } from './src/app/seo/csp';
 
 // ESM-compatible dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -45,6 +47,23 @@ function prerenderRoutes(siteUrl: string | null): Plugin {
     };
 }
 
+/**
+ * Content-Security-Policy <meta> in the built index.html (and so in every prerendered page), BUG-165.
+ * Build only: the dev server injects inline HMR scripts. See src/app/seo/csp.ts.
+ */
+function contentSecurityPolicy(analytics: boolean): Plugin {
+    const hash = (script: string) =>
+        `'sha256-${createHash('sha256').update(script, 'utf8').digest('base64')}'`;
+    return {
+        name: 'fateboard-csp',
+        apply: 'build',
+        transformIndexHtml: {
+            order: 'post',
+            handler: (html) => injectCsp(html, { analytics, hash }),
+        },
+    };
+}
+
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => {
     // The public site URL is configuration (.env / CI variable), never code. See .env.example.
@@ -61,7 +80,13 @@ export default defineConfig(({ command, mode }) => {
 
     return {
         base: '/',
-        plugins: [react(), tailwindcss(), prerenderRoutes(siteUrl)],
+        plugins: [
+            react(),
+            tailwindcss(),
+            // gtag hosts only in the bundle that can load gtag (main.tsx: production + VITE_GA_ID)
+            contentSecurityPolicy(mode === 'production' && !!env.VITE_GA_ID),
+            prerenderRoutes(siteUrl),
+        ],
 
         build: {
             rolldownOptions: {

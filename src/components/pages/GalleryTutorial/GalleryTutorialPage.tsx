@@ -8,10 +8,11 @@ import clsx from 'clsx';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
-import Brand from '@/components/atoms/Brand';
+import { PATHS } from '@/app/routes/paths';
 import { Icon } from '@/components/atoms/Icon';
 import { FOCUS_RING } from '@/components/atoms/control.styles';
 
+import { GalleryHeader } from '../web/gallery/GalleryHeader';
 import { CATEGORY_LABEL, findGalleryItem, type GalleryItem } from '../web/gallery/galleryData';
 import { GALLERY_TUTORIALS } from '../web/gallery/galleryTutorials';
 import { extractPalette } from './artwork';
@@ -19,37 +20,6 @@ import { MakeItYours, MorePieces, Palette, Tricks } from './TutorialExtras';
 import { TutorialStage } from './TutorialStage';
 import { TutorialSteps } from './TutorialSteps';
 import { useArtwork } from './useArtwork';
-
-const NAV_LINK = clsx(
-    'whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium text-ink-muted transition hover:text-ink',
-    FOCUS_RING,
-);
-
-function Header() {
-    return (
-        <header className="sticky top-0 z-30 border-b border-line bg-surface/90 backdrop-blur-xl">
-            <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
-                <Link to="/" aria-label="Fateboard home" className={clsx('rounded-md', FOCUS_RING)}>
-                    <Brand src="/fate.svg" alt="" className="h-8" />
-                </Link>
-                <nav className="flex items-center gap-1">
-                    <Link to="/#gallery" className={NAV_LINK}>
-                        All pieces
-                    </Link>
-                    <Link
-                        to="/draw"
-                        className={clsx(
-                            'ml-1 whitespace-nowrap rounded-xl bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-primary-700',
-                            FOCUS_RING,
-                        )}
-                    >
-                        Start Drawing
-                    </Link>
-                </nav>
-            </div>
-        </header>
-    );
-}
 
 function Tutorial({ item }: { item: GalleryItem }) {
     const tutorial = GALLERY_TUTORIALS[item.id]!;
@@ -61,7 +31,7 @@ function Tutorial({ item }: { item: GalleryItem }) {
         <>
             <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-8 sm:pt-14">
                 <nav aria-label="Breadcrumb" className="text-sm text-ink-muted">
-                    <Link to="/#gallery" className="hover:text-ink">
+                    <Link to={PATHS.gallery} className="hover:text-ink">
                         Gallery
                     </Link>
                     <span aria-hidden> / </span>
@@ -121,7 +91,7 @@ export default function GalleryTutorialPage() {
 
     return (
         <div className="theme-light min-h-screen bg-surface-muted text-ink antialiased">
-            <Header />
+            <GalleryHeader back={{ to: PATHS.gallery, label: 'All pieces' }} />
             <main>
                 {item && GALLERY_TUTORIALS[item.id] ? (
                     <Tutorial key={item.id} item={item} />
@@ -132,7 +102,7 @@ export default function GalleryTutorialPage() {
                         </h1>
                         <p className="mt-3 text-ink-muted">It may have been renamed or removed.</p>
                         <Link
-                            to="/#gallery"
+                            to={PATHS.gallery}
                             className={clsx(
                                 'mt-6 inline-flex items-center gap-2 font-semibold text-primary-ink hover:underline',
                                 FOCUS_RING,

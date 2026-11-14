@@ -25,12 +25,12 @@ both fixed. 2026-11-11 (whole-app + storage review) fixed BUG-152 to 158, 162, 1
 | Data safety | ⚠️ | One storage layer, failed / unreadable saves surfaced (BUG-162, 173 fixed). Open: **BUG-174 (High)** no persistent-storage request, browser may clear boards; BUG-159 a photo that fails to load is dropped silently; BUG-187 edits made during the startup read can overwrite the save |
 | Architecture | ✅ | Guard tests green (store keys, store API baseline, serialize path, storage boundary, file budget, Claude setup). Brush slice shrank 715 → 502 lines |
 | Robustness | ✅ | Error boundary with autosave download / reset; failed chunk loads land there; broken files show a dialog; Macro playback stops on a page switch |
-| Performance | ✅ | Lazy routes; `/draw` preloads ≈ 316 KB gzip (+ Editor chunk ≈ 87 KB), up ≈ 30 KB since 2026-11-11 (new tools); paper.js (156 KB) loads on demand |
+| Performance | ✅ | Lazy routes and layouts: startup 126 KB gzip on every route (was 308 KB, BUG-209); landing ≈ 141 KB in all; `/draw` ≈ 405 KB (store + Fabric + Editor, fetched in parallel); paper.js (153 KB) loads on demand |
 | Accessibility | ✅ | axe WCAG 2.1 A / AA specs green on Chromium (incl. the new panels' routes) |
 | Browsers / devices | ⚠️ | Chromium ✅ local + CI; Firefox ✅ CI, locally only BUG-204 / 205; WebKit / Safari not tested; phones get a desktop-only notice |
 | Tests | ✅ | 1486 unit tests (188 files) pass; coverage 63.3 % lines / 61.9 % statements / 62.8 % functions / 54.3 % branches vs ratchet 54 / 52 / 54 / 45 (up from 58.1 % lines) |
 | Code quality | ⚠️ | Lint 0 errors, 249 `any` warnings = the cap; Prettier + type-check clean; metrics flag 45 of 62 hotspot files (size / `any`); strict TS only in the strict island (docs/CODE_REVIEW.md) |
-| Security | ⚠️ | `npm audit --omit=dev`: 0 vulnerabilities; no XSS sinks; opened-file values checked. Open: no CSP / security headers (BUG-165), remote image addresses in opened files (BUG-160, accepted Q13) |
+| Security | ⚠️ | `npm audit --omit=dev`: 0 vulnerabilities; no XSS sinks; opened-file values checked. "CSP meta on every page + nginx security headers (BUG-165, 2026-11-14). Open: remote image addresses in opened files (BUG-160, accepted Q13) |
 | Operations | ⚠️ | Pipeline + Pages deploy green on `main`; rollback = revert the merge (Pages redeploys). No remote error reporting (console only); 178 local files not in CI |
 | Docs | ✅ | STATE, COMPONENTS, DECISIONS, BUGS (+ BUGS_ARCHIVE), AGENT_WORKFLOW, CLAUDE.md updated for every change in this session |
 

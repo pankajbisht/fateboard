@@ -1,4 +1,4 @@
-/** Landing gallery and the per-piece tutorial pages (`/gallery/<id>`). */
+/** The gallery page (`/gallery`, linked from the landing) and the per-piece tutorials (`/gallery/<id>`). */
 import { expect, test, type Page } from '@playwright/test';
 
 const section = (page: Page) => page.getByRole('region', { name: 'Made with Fateboard.' });
@@ -12,11 +12,20 @@ test.beforeEach(async ({ page }) => {
     });
 });
 
-test('the header link reaches the gallery and every artwork loads', async ({ page }) => {
+test('the landing loads no gallery artwork; its header link opens /gallery', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
+    const artwork: string[] = [];
+    page.on('request', (r) => {
+        if (/\/gallery\/[^/]+\.svg$/.test(r.url())) artwork.push(r.url());
+    });
     await page.goto('/');
-    await page.getByRole('navigation').getByRole('button', { name: 'Gallery' }).click();
-    await expect(section(page)).toBeInViewport();
+    await page.waitForLoadState('networkidle');
+    expect(artwork).toEqual([]);
+
+    await page.getByRole('navigation').getByRole('link', { name: 'Gallery' }).click();
+    await expect(page).toHaveURL(/\/gallery$/);
+    await expect(page).toHaveTitle(/Gallery/);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Made with Fateboard.');
     await expect(cards(page)).toHaveCount(18);
 
     for (const img of await section(page).getByRole('img').all()) {
@@ -27,9 +36,15 @@ test('the header link reaches the gallery and every artwork loads', async ({ pag
     }
 });
 
-test('a card opens its tutorial; the stage builds the piece step by step', async ({ page }) => {
+test('the landing teaser opens the gallery page', async ({ page }) => {
     await page.goto('/');
-    await section(page).scrollIntoViewIfNeeded();
+    await page.getByRole('link', { name: 'Browse the gallery' }).click();
+    await expect(page).toHaveURL(/\/gallery$/);
+    await expect(cards(page)).toHaveCount(18);
+});
+
+test('a card opens its tutorial; the stage builds the piece step by step', async ({ page }) => {
+    await page.goto('/gallery');
     await section(page)
         .getByRole('button', { name: /^Manga \d/ })
         .click();
@@ -52,8 +67,14 @@ test('a card opens its tutorial; the stage builds the piece step by step', async
     await expect(board(page).locator('#step-8')).toHaveCSS('opacity', '0.12');
 
     await page.getByRole('link', { name: 'All pieces' }).click();
-    await expect(page).toHaveURL(/\/#gallery$/);
-    await expect(section(page)).toBeInViewport();
+    await expect(page).toHaveURL(/\/gallery$/);
+    await expect(cards(page)).toHaveCount(18);
+});
+
+test('the gallery page is a real page: a direct visit is HTTP 200', async ({ page }) => {
+    const response = await page.goto('/gallery');
+    expect(response?.status()).toBe(200);
+    await expect(cards(page)).toHaveCount(18);
 });
 
 test('a tutorial page is a real page: direct visit, download, next piece', async ({ page }) => {

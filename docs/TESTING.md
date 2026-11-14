@@ -6,7 +6,7 @@
 
 - **What runs:** a production-like bundle (`npm run build:e2e` = `vite build --mode e2e --outDir dist-e2e`) served by
   `vite preview` on port 4173. The only difference from production is the read-only `window.__fateboard` hook
-  (`src/test/e2eHook.ts`, loaded from `main.tsx` only when `import.meta.env.MODE === 'e2e'`; the production bundle has no
+  (`src/test/e2eHook.ts`, loaded from `templates/RootLayout.tsx` (editor routes; BUG-209 keeps site pages store-free) only when `import.meta.env.MODE === 'e2e'`; the production bundle has no
   reference to it, verified). Owner decision Q9.
 - **How tests work:** they click the real UI (roles / labels); the hook only READS canvas content (`objects()`,
   `selection()`, `state(key)`, `ready()`), because Fabric draws pixels, not DOM.
@@ -43,7 +43,7 @@
 | `settings.spec.ts` | theme / icon size apply and persist; only working preferences; Large icons size swatches; a new visitor on a dark device gets Light, Fate Blue, Small, px; Reset asks, can be cancelled, restores every default and keeps it after a reload; Settings > Canvas size resizes the open page when the editor loads (one undo step, not again on reload) and New board starts at it; Orientation portrait gives a portrait first board; no Canvas Size panel in the left rail; Custom size typed in mm resizes the open page as typed (794 × 1123 px) |
 | `seo.spec.ts` | hash links redirect, per-route head, build files; SEO fallback hidden while the app loads, visible without JS (BUG-144) |
 | `persistence.spec.ts` | autosave survives reload; all pages + the open page survive reload (BUG-004); an imported photo survives reload (BUG-121) |
-| `gallery.spec.ts` | landing gallery: header link scrolls to it, all 18 artworks load (natural width > 0); Manga filter, a card opens `/gallery/manga-ronin` (title, h1), step groups hidden until their step and shown after (CSS opacity), Ghost shows later steps at 0.12, All pieces returns to `/#gallery` in view; a direct visit is HTTP 200, download link, next-piece link. `a11y.spec.ts` also covers `/gallery/manga-ronin` |
+| `gallery.spec.ts` | `/` requests no gallery artwork; landing header link Gallery and the teaser (Browse the gallery) open `/gallery` (title, h1, 18 cards, every artwork loads); Manga filter, a card opens `/gallery/manga-ronin` (title, h1), step groups hidden until their step and shown after (CSS opacity), Ghost shows later steps at 0.12, All pieces returns to `/gallery`; direct visits to `/gallery` and a tutorial are HTTP 200, download link, next-piece link. `a11y.spec.ts` also covers `/gallery` and `/gallery/manga-ronin` |
 | `mobile.spec.ts` | 390 × 844: the editor shows the desktop-only notice, Continue anyway is remembered for the session; the landing page has no notice and no horizontal scroll |
 | `a11y.spec.ts` | axe (WCAG 2.1 A / AA + best-practice) on `/`, `/draw`, `/setting`, `/help`, light + dark, reduced motion: zero violations |
 | `units.spec.ts` | Settings > Units (mm) shows in the footer page size and the top-bar W field (BUG-082) |

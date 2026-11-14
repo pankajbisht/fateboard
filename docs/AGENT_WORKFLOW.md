@@ -1,7 +1,8 @@
 # Agent workflow
 
 How AI agents (Claude Code) work on this repo. The rules are in `CLAUDE.md`; this file says **who does what** and
-**which procedure** to follow. Everything here lives in the repo (`.claude/`), so every session and every
+**which procedure** to follow. For a hands-on "how do I use it" guide with example prompts, see
+[AGENT_GUIDE.md](AGENT_GUIDE.md). Everything here lives in the repo (`.claude/`), so every session and every
 contributor gets the same behaviour.
 
 ## Roles
@@ -27,6 +28,9 @@ contributor gets the same behaviour.
 | `fate-architect` | agent | no | Plans for refactors over ~800 lines or changes that cross layers |
 | `fate-verifier` | agent | no | Full quality gate with failure root causes, before "done" or a PR |
 | `fate-new-slice` | skill | yes (main session) | Adding store state / actions: keys, test first, registration order, STATE.md |
+| `fate-seo` | skill | yes (main session) | Any route / public page / `index.html` / `public/` / SEO change: source checks, `scripts/seo-audit.mjs` on the build (titles, canonical, robots, OG, one `h1`, sitemap), SEO + axe E2E |
+| `fate-perf` | skill | yes (main session) | New route, dependency, heavy import or images: where to split (lazy route, `await import()`, vendor group), `scripts/bundle-report.mjs` startup + per-chunk gzip with `--save` / `--compare` |
+| `fate-ship` | skill | git only (main session) | Branch → add all → Conventional Commit → push, after the gates; `scripts/validate.mjs` checks the branch name, the message and the staged files (docs/CONVENTIONS.md "Git: branches and commits") |
 | `fate-debugger` | agent | no | Root cause of a reported bug: reproduce, trace to the line, propose the failing test + minimal fix |
 | `scripts/metrics.mjs` | tool | no | Same size/responsibility numbers for every review |
 
@@ -74,6 +78,7 @@ the full doc and names the guard test that enforces the rule:
 | `fabric-canvas.md` | slices, `lib/canvas`, `lib/serialization.ts`, `lib/utils`, import, animation, the board |
 | `react-components.md` | `src/components/**`, `src/hooks/**` |
 | `testing.md` | tests, `e2e/`, `src/test/` |
+| `seo-performance.md` | `src/app/**`, `src/components/pages/**`, `src/main.tsx`, `index.html`, `public/**`, `vite.config.ts` (points to `fate-seo` + `fate-perf`) |
 
 Personal, uncommitted instructions go in `CLAUDE.local.md` (gitignored).
 
@@ -88,7 +93,11 @@ Personal, uncommitted instructions go in `CLAUDE.local.md` (gitignored).
   characterization tests → extract in small steps → `fate-verifier` → lower the file's ceiling in
   `fileBudget.test.ts` → update the roadmap row.
 - **Review someone's branch or PR:** `/fate-review <branch|PR|path>` (or the `fate-reviewer` agent).
+- **New page or route:** `/fate-task` → `APP_ROUTES` + `SEO_ROUTES` → `/fate-perf` (bundle before / after) →
+  `/fate-seo` (audit the build) → report both summary lines.
 - **Before a release:** `/fate-readiness`.
+- **Commit and push finished work:** `/fate-ship` (or `/fate-ship fix BUG-204`) → branch, one confirmation,
+  gates, commit, push, PR link.
 
 ## Token budget (2026-11-13)
 

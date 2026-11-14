@@ -11,6 +11,7 @@ import {
     GALLERY_ITEMS,
     galleryPath,
 } from '../../components/pages/web/gallery/galleryData';
+import { PATHS } from '../routes/paths';
 
 export interface SeoRoute {
     /** Router path, no trailing slash (`/` for the landing page). */
@@ -67,6 +68,15 @@ export const SEO_ROUTES: readonly SeoRoute[] = [
         index: false,
         heading: 'Fateboard commands',
         intro: 'Search and run every Fateboard editor command.',
+    },
+    {
+        path: PATHS.gallery,
+        title: 'Gallery: Cartoons, Manga, Scenery & Diagrams | Fateboard',
+        description:
+            'Cartoons, manga, scenery, flow diagrams and designs made with Fateboard. Open any piece to watch it built step by step.',
+        index: true,
+        heading: 'Made with Fateboard',
+        intro: 'Characters, worlds and diagrams built from shapes, pen paths, gradients and text. Open any piece to learn how it is made.',
     },
     // one tutorial page per gallery piece
     ...GALLERY_ITEMS.map((item): SeoRoute => ({

@@ -143,6 +143,14 @@ export const test = base.extend<{ editor: Editor; consoleErrors: string[] }>({
                 if (!IGNORED_CONSOLE.some((re) => re.test(text))) errors.push(text);
             });
             page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
+            // BUG-165: a CSP block is a bug even when the browser only logs a warning for it
+            await page.addInitScript(() => {
+                document.addEventListener('securitypolicyviolation', (e) => {
+                    console.error(
+                        `CSP violation: ${e.violatedDirective} blocked ${e.blockedURI || '(inline)'}`,
+                    );
+                });
+            });
             await use(errors);
             // every test fails on an unexpected console error or uncaught exception
             expect(errors, 'console errors during the test').toEqual([]);

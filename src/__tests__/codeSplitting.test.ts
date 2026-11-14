@@ -5,14 +5,16 @@
  */
 import { describe, expect, it } from 'vitest';
 
-const ROUTER = import.meta.glob<string>('/src/app/rootRouter.tsx', {
+const FILES = import.meta.glob<string>(['/src/app/rootRouter.tsx', '/src/app/routes/*.tsx'], {
     query: '?raw',
     import: 'default',
     eager: true,
-})['/src/app/rootRouter.tsx'];
+});
+/** The router and its route registry (`src/app/routes/appRoutes.tsx`). */
+const ROUTER = Object.values(FILES).join('\n');
 
 describe('code splitting', () => {
-    it('the router imports no page statically', () => {
+    it('the router and route registry import no page statically', () => {
         const staticPageImports = ROUTER.split('\n').filter((line) =>
             /^import\s.+from\s+['"]@\/components\/pages\//.test(line),
         );
@@ -27,6 +29,8 @@ describe('code splitting', () => {
             'HelpPage/HelpPage',
             'NotFound/NotFoundPage',
             'Command/CommandPalette',
+            'GalleryTutorial/GalleryTutorialPage',
+            'Gallery/GalleryPage',
         ]) {
             expect(ROUTER, page).toMatch(new RegExp(`import\\('@/components/pages/${page}'\\)`));
         }

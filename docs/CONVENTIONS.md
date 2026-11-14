@@ -141,3 +141,35 @@ A tool is a value of `activeTool` (Canvas slice) that changes pointer behaviour.
    `ExtraBar` (Ctrl+' / Ctrl+;), `createNodeEditorSlice`.
 5. Tests: a unit test for `setActiveTool('<tool>')` flags and an E2E for the pointer flow.
 6. Update CANVAS.md (events) and COMPONENTS.md.
+
+## Git: branches and commits
+
+Applied by skill `fate-ship` and checked by `.claude/skills/fate-ship/scripts/validate.mjs`
+(`src/__tests__/gitConventions.test.ts`). Not yet enforced by a git hook for humans (no commitlint): UNKNOWN -
+verify whether the owner wants a `commit-msg` hook.
+
+- **Work on a branch, never on `main`.** Changes reach `main` through a pull request and the `CI passed` check.
+- **Branch**: `<type>/<ticket>-<short-description>`, lowercase kebab-case, ≤ 60 chars, ticket optional:
+  `fix/bug-204-slider-late-input`, `feat/gallery-tutorial-pages`, `refactor/r-03-split-layers-panel`,
+  `release/1.4.0`. Types = the commit types below + `hotfix`, `release`. Branches pushed before this rule
+  (`feature/newAgentSystem`) keep their names.
+- **Commit message**: [Conventional Commits 1.0](https://www.conventionalcommits.org/en/v1.0.0/):
+
+  ```
+  fix(slider): ignore late input after release in Firefox
+
+  Firefox fires one more `input` event after `pointerup`, which moved the
+  value back to where the drag started. Ignore input once the drag ended.
+
+  Refs: BUG-204
+  ```
+
+  - Header `<type>(<scope>)!: <subject>` ≤ 72 chars. Types: `feat`, `fix`, `perf`, `refactor`, `test`,
+    `docs`, `build`, `ci`, `chore`, `style`, `revert`. Scope = area in lowercase kebab-case (`store`, `canvas`,
+    `seo`, `e2e`, `claude`, …), optional.
+  - Subject in the imperative mood ("add", not "added" / "adds"), lowercase first letter, no final period.
+  - Blank line, then a body that says **why** (lines ≤ 100). Footers: `Refs: BUG-xxx, R-xx`;
+    `BREAKING CHANGE: …` (with `!`) only for an owner-approved public API change.
+  - No `wip`, `fixup!` or `squash!` commits on a pushed branch.
+- **Never**: `--no-verify`, force push (`--force-with-lease` only with the owner's OK), committing `.env*`
+  (except `.env.example`), keys, build output or `CLAUDE.local.md`.

@@ -2,6 +2,7 @@
 /** Per-route static pages, 404 shell and sitemap built from the real index.html (BUG-133). */
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { APP_ROUTES } from '@/app/routes/appRoutes';
 import { renderNotFoundHtml, renderRouteHtml, renderSitemap, routeFile } from '../prerender';
 import { SEO_ROUTES, canonicalUrl, seoForPath } from '../routes';
 import { GALLERY_ITEMS } from '@/components/pages/web/gallery/galleryData';
@@ -24,16 +25,21 @@ describe('routes', () => {
     });
 
     it('every SEO route is a real router path', () => {
-        const router = readFileSync(`${process.cwd()}/src/app/rootRouter.tsx`, 'utf8');
         // `/gallery/:id` matches `/gallery/manga-ronin`
-        const paths = [...router.matchAll(/path="(\/[^"]*)"/g)].map(
-            (m) => new RegExp(`^${m[1]!.replace(/:[a-z]+/gi, '[^/]+')}$`),
+        const paths = APP_ROUTES.filter((r) => r.path !== '*').map(
+            (r) => new RegExp(`^${r.path.replace(/:[a-z]+/gi, '[^/]+')}$`),
         );
         for (const r of SEO_ROUTES)
             expect(
                 paths.some((p) => p.test(r.path)),
                 r.path,
             ).toBe(true);
+    });
+
+    it('the gallery index is an indexable page of its own', () => {
+        const r = route('/gallery');
+        expect(r?.index).toBe(true);
+        expect(routeFile(r)).toBe('gallery.html');
     });
 
     it('every gallery piece has an indexable tutorial page', () => {
@@ -140,6 +146,7 @@ describe('renderSitemap', () => {
             `${SITE_URL}/`,
             `${SITE_URL}/draw`,
             `${SITE_URL}/help`,
+            `${SITE_URL}/gallery`,
             ...GALLERY_ITEMS.map((item) => `${SITE_URL}/gallery/${item.id}`),
         ]);
     });

@@ -1,37 +1,27 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import RootLayout from '@/components/templates/RootLayout.tsx';
+import SiteLayout from '@/components/templates/SiteLayout';
+import { ErrorBoundary } from '@/components/organisms/ErrorBoundary';
 import { RouteSeo } from '@/app/seo/RouteSeo';
+import { APP_ROUTES, loadRootLayout, type AppRoute } from '@/app/routes/appRoutes';
+
+// lazy: it imports the store (and so Fabric); only editor routes need it (BUG-209)
+const RootLayout = lazy(loadRootLayout);
 
 /*
- * Every page is its own chunk (performance, production readiness P1): the landing page does not
- * download the editor and the editor does not download the marketing site. A failed chunk load
- * (e.g. after a deploy) is caught by the ErrorBoundary in RootLayout, which offers Reload.
- * `src/__tests__/codeSplitting.test.ts` fails on a static page import here.
+ * Renders the route registry (`routes/appRoutes.tsx`); add pages there, not here. A failed chunk
+ * load (e.g. after a deploy) is caught by an ErrorBoundary (in SiteLayout, around RootLayout, and in
+ * RootLayout), which offers Reload.
  */
-const WhiteboardMarketingSite = lazy(
-    () => import('@/components/pages/web/WhiteboardMarketingSite'),
-);
-const EditorPage = lazy(() => import('@/components/pages/Editor/Editor'));
-const EditorSettingPage = lazy(() => import('@/components/pages/Setting/EditorSettingPage'));
-const HelpPage = lazy(() => import('@/components/pages/HelpPage/HelpPage'));
-const GalleryTutorialPage = lazy(
-    () => import('@/components/pages/GalleryTutorial/GalleryTutorialPage'),
-);
-const NotFound = lazy(() => import('@/components/pages/NotFound/NotFoundPage'));
-const CommandPalettePage = lazy(() =>
-    Promise.all([
-        import('@/components/pages/Command/CommandPalette'),
-        import('@/components/config/commandConfig'),
-    ]).then(([page, config]) => ({
-        default: () => <page.default commands={config.commandRegistry} />,
-    })),
-);
 
 /** Shown for the moment a page chunk loads: the plain app background, no text to flash. */
 function PageLoading() {
     return <div className="min-h-screen bg-surface" aria-busy="true" />;
 }
+
+const renderRoute = ({ path, Page }: AppRoute) => (
+    <Route key={path} path={path} element={<Page />} />
+);
 
 export function RootRouter() {
     return (
@@ -39,16 +29,20 @@ export function RootRouter() {
             <RouteSeo />
             <Suspense fallback={<PageLoading />}>
                 <Routes>
-                    <Route element={<RootLayout />}>
-                        <Route path="/" element={<WhiteboardMarketingSite />} />
-                        <Route path="/draw" element={<EditorPage />} />
-                        <Route path="/setting" element={<EditorSettingPage />} />
-                        <Route path="/command-palette" element={<CommandPalettePage />} />
-                        <Route path="/help" element={<HelpPage />} />
-                        <Route path="/gallery/:id" element={<GalleryTutorialPage />} />
+                    <Route element={<SiteLayout />}>
+                        {APP_ROUTES.filter((r) => r.layout === 'site').map(renderRoute)}
                     </Route>
-
-                    <Route path="*" element={<NotFound />} />
+                    {/* the boundary catches a failed RootLayout chunk; RootLayout has its own inside */}
+                    <Route
+                        element={
+                            <ErrorBoundary>
+                                <RootLayout />
+                            </ErrorBoundary>
+                        }
+                    >
+                        {APP_ROUTES.filter((r) => r.layout === 'root').map(renderRoute)}
+                    </Route>
+                    {APP_ROUTES.filter((r) => r.layout === 'none').map(renderRoute)}
                 </Routes>
             </Suspense>
         </BrowserRouter>

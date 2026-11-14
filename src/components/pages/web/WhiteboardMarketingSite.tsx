@@ -1,27 +1,24 @@
 import Brand from '../../atoms/Brand';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { PATHS } from '@/app/routes/paths';
 import { BuildStage } from './BuildStage';
 import MiniWhiteboard from './MiniWhiteboard';
-import { GallerySection } from './gallery/GallerySection';
+import { GalleryTeaser } from './gallery/GalleryTeaser';
 
-/** Header links: section id, label. */
+/** Header links that scroll to a section: section id, label. The Gallery is its own route. */
 const NAV_LINKS = [
     ['features', 'Features'],
     ['interactive', 'Demo'],
     ['process', 'Action'],
-    ['gallery', 'Gallery'],
 ] as const;
+const NAV_ITEM =
+    'hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block';
 
-/* =========================================================
-   MAIN PAGE
-========================================================= */
+/* ===================== MAIN PAGE ===================== */
 
 export default function WhiteboardMarketingSite() {
     const navigate = useNavigate();
-
-    const handleStartDrawing = () => {
-        navigate('/draw');
-    };
+    const handleStartDrawing = () => void navigate(PATHS.draw);
 
     const scrollToSection = (id: string) => {
         const element = document.getElementById(id);
@@ -193,11 +190,14 @@ export default function WhiteboardMarketingSite() {
                                 key={id}
                                 type="button"
                                 onClick={() => scrollToSection(id)}
-                                className="hidden rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 sm:block"
+                                className={NAV_ITEM}
                             >
                                 {label}
                             </button>
                         ))}
+                        <Link to={PATHS.gallery} className={NAV_ITEM}>
+                            Gallery
+                        </Link>
 
                         <button
                             type="button"
@@ -461,7 +461,7 @@ export default function WhiteboardMarketingSite() {
                     </div>
                 </section>
 
-                <GallerySection />
+                <GalleryTeaser />
 
                 {/* =====================================================
                 COMING SOON

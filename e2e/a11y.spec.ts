@@ -12,6 +12,7 @@ const ROUTES = [
     '/help',
     '/help?topic=shortcuts',
     '/help?topic=node',
+    '/gallery',
     '/gallery/manga-ronin',
 ];
 

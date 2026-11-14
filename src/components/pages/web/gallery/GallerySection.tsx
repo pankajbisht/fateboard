@@ -1,10 +1,10 @@
 /**
- * Landing page "Gallery": what people can make with Fateboard (cartoons, manga, scenery, flow
+ * The `/gallery` page content (`pages/Gallery/GalleryPage`): what people can make with Fateboard (cartoons, manga, scenery, flow
  * diagrams, design). Category filter pills and a card grid of lazy-loaded SVGs (`public/gallery/`);
  * each card opens the piece's step-by-step tutorial (`/gallery/<id>`). Light-only like the landing.
  */
 import clsx from 'clsx';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { FOCUS_RING } from '@/components/atoms/control.styles';
@@ -37,30 +37,19 @@ export function GallerySection() {
         [filter],
     );
 
-    // "All pieces" on a tutorial page links to /#gallery: the router does not scroll to hashes
-    useEffect(() => {
-        if (window.location.hash === '#gallery') {
-            document.getElementById('gallery')?.scrollIntoView?.({ block: 'start' });
-        }
-    }, []);
-
     return (
-        <section
-            id="gallery"
-            aria-labelledby="gallery-title"
-            className="scroll-mt-24 bg-white py-24 sm:py-28"
-        >
+        <section aria-labelledby="gallery-title" className="bg-white py-16 sm:py-20">
             <div className="theme-light mx-auto max-w-7xl px-5 sm:px-8">
                 <div className="mx-auto max-w-2xl text-center">
                     <p className="text-sm font-bold uppercase tracking-[0.2em] text-primary-ink">
                         Gallery
                     </p>
-                    <h2
+                    <h1
                         id="gallery-title"
                         className="mt-4 text-3xl font-bold tracking-tight text-ink sm:text-5xl"
                     >
                         Made with Fateboard.
-                    </h2>
+                    </h1>
                     <p className="mt-5 leading-7 text-ink-muted">
                         Characters, worlds and diagrams built from shapes, pen paths, gradients and
                         text. Open any piece to watch it being built step by step, and learn the
@@ -124,7 +113,7 @@ export function GallerySection() {
                                 <p className="text-xs font-bold uppercase tracking-wider text-primary-ink">
                                     {CATEGORY_LABEL[item.category]}
                                 </p>
-                                <h3 className="mt-1.5 text-lg font-bold text-ink">{item.title}</h3>
+                                <h2 className="mt-1.5 text-lg font-bold text-ink">{item.title}</h2>
                                 <p className="mt-1 text-sm leading-6 text-ink-muted">
                                     {item.description}
                                 </p>
