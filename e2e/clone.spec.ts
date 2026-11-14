@@ -101,8 +101,8 @@ test.describe('duplicate and linked clones', () => {
         await dragObject(editor, 1, 220);
 
         await clickObject(editor, 1, 'right');
-        await expect(page.getByRole('button', { name: /Select linked copies/ })).toBeVisible();
-        await page.getByRole('button', { name: /Unlink clone/ }).click();
+        await expect(page.getByRole('menuitem', { name: /Select linked copies/ })).toBeVisible();
+        await page.getByRole('menuitem', { name: /Unlink clone/ }).click();
         await expect
             .poll(async () => (await read(editor)).every((o) => o.link === null))
             .toBe(true);

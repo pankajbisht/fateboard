@@ -13,6 +13,8 @@ const zoomOut = vi.fn();
 const actualSize = vi.fn();
 
 beforeEach(() => {
+    // jsdom has no Fullscreen API; browsers that have it show the button (iPhone Safari: hidden)
+    document.documentElement.requestFullscreen = vi.fn() as never;
     [setZoom, fitToScreen, zoomIn, zoomOut, actualSize].forEach((f) => f.mockReset());
     act(() =>
         useStore.setState({
@@ -119,5 +121,15 @@ describe('Footer spacing', () => {
         const footer = container.firstElementChild as HTMLElement; // the template owns the <footer> landmark
         expect(footer.className).toMatch(/\bpx-4\b/);
         expect(footer.className).not.toMatch(/\b(pl|pr)-\d/); // one value for both sides
+    });
+});
+
+describe('fullscreen button', () => {
+    it('is hidden where the browser has no Fullscreen API (iPhone Safari)', () => {
+        const el = document.documentElement as unknown as { requestFullscreen?: unknown };
+        delete el.requestFullscreen;
+        render(<Footer />);
+        expect(screen.queryByRole('button', { name: 'Toggle fullscreen' })).toBeNull();
+        expect(screen.getByRole('button', { name: 'Fit to screen' })).toBeTruthy();
     });
 });

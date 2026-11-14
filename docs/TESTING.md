@@ -6,7 +6,7 @@
 
 - **What runs:** a production-like bundle (`npm run build:e2e` = `vite build --mode e2e --outDir dist-e2e`) served by
   `vite preview` on port 4173. The only difference from production is the read-only `window.__fateboard` hook
-  (`src/test/e2eHook.ts`, loaded from `main.tsx` only when `import.meta.env.MODE === 'e2e'`; the production bundle has no
+  (`src/test/e2eHook.ts`, loaded from `templates/RootLayout.tsx` (editor routes; BUG-209 keeps site pages store-free) only when `import.meta.env.MODE === 'e2e'`; the production bundle has no
   reference to it, verified). Owner decision Q9.
 - **How tests work:** they click the real UI (roles / labels); the hook only READS canvas content (`objects()`,
   `selection()`, `state(key)`, `ready()`), because Fabric draws pixels, not DOM.
@@ -43,8 +43,10 @@
 | `settings.spec.ts` | theme / icon size apply and persist; only working preferences; Large icons size swatches; a new visitor on a dark device gets Light, Fate Blue, Small, px; Reset asks, can be cancelled, restores every default and keeps it after a reload; Settings > Canvas size resizes the open page when the editor loads (one undo step, not again on reload) and New board starts at it; Orientation portrait gives a portrait first board; no Canvas Size panel in the left rail; Custom size typed in mm resizes the open page as typed (794 × 1123 px) |
 | `seo.spec.ts` | hash links redirect, per-route head, build files; SEO fallback hidden while the app loads, visible without JS (BUG-144) |
 | `persistence.spec.ts` | autosave survives reload; all pages + the open page survive reload (BUG-004); an imported photo survives reload (BUG-121) |
-| `gallery.spec.ts` | landing gallery: header link scrolls to it, all 18 artworks load (natural width > 0); Manga filter, a card opens `/gallery/manga-ronin` (title, h1), step groups hidden until their step and shown after (CSS opacity), Ghost shows later steps at 0.12, All pieces returns to `/#gallery` in view; a direct visit is HTTP 200, download link, next-piece link. `a11y.spec.ts` also covers `/gallery/manga-ronin` |
-| `mobile.spec.ts` | 390 × 844: the editor shows the desktop-only notice, Continue anyway is remembered for the session; the landing page has no notice and no horizontal scroll |
+| `gallery.spec.ts` | `/` requests no gallery artwork; landing header link Gallery and the teaser (Browse the gallery) open `/gallery` (title, h1, 18 cards, every artwork loads); Manga filter, a card opens `/gallery/manga-ronin` (title, h1), step groups hidden until their step and shown after (CSS opacity), Ghost shows later steps at 0.12, All pieces returns to `/gallery`; direct visits to `/gallery` and a tutorial are HTTP 200, download link, next-piece link. `a11y.spec.ts` also covers `/gallery` and `/gallery/manga-ronin` |
+| `mobile.spec.ts` | 390 × 844: the editor opens with no "larger screen" notice (BUG-215); the landing page has no notice and no horizontal scroll |
+| `responsive.spec.ts` | 6 screens (390 × 844 phone … 1920 × 1080): no horizontal scroll, the page gets ≥ 40 % of the width (≥ 85 % on an upright phone, BUG-219), every visible button is on screen (or in a strip that scrolls to it) and not covered; the Shapes panel and the Export dock panel fit on screen (BUG-215) |
+| `touch.spec.ts` | touch events built in the page (Chromium / Firefox `Touch`; WebKit cannot construct one, so a plain event with the same lists): one finger draws, pinch zooms and draws nothing, long press = context menu, double tap = node editing, whiteboard two-finger pan + pinch, Hand tool one-finger scroll (BUG-211) |
 | `a11y.spec.ts` | axe (WCAG 2.1 A / AA + best-practice) on `/`, `/draw`, `/setting`, `/help`, light + dark, reduced motion: zero violations |
 | `units.spec.ts` | Settings > Units (mm) shows in the footer page size and the top-bar W field (BUG-082) |
 | `whiteboard.spec.ts` | whiteboard starts with its dot grid on, one grid renderer (BUG-107); the wheel moves the board, Ctrl + wheel zooms, a shape added while zoomed out keeps its on-screen size (BUG-169, BUG-171) |
@@ -57,6 +59,24 @@
 | `data-safety.spec.ts` | New board: the first change can be undone (BUG-156); a project file with a page that cannot be read shows a dialog and leaves the board and the autosave alone (BUG-154); undo history holds one copy of a photo and undo brings it back whole (BUG-155) |
 | `drawing-tools.spec.ts` | Pen (P): clicks + a drag make a closed path, selected, one undo step; Enter finishes an open path, Backspace removes the last point; Pencil (Shift + P) draws a path and leaves the Draw brush as it was; Laser (K) shows red pixels on the top canvas that fade to none, adds nothing, Undo stays disabled |
 | `known-bugs.spec.ts` | expected failures for open bugs (none open today) |
+
+## Device checklist (touch; run on a real iPad and an Android tablet / phone before a release)
+
+Playwright cannot reproduce real iOS Safari (its WebKit is desktop WebKit; synthetic touches skip the browser's own
+gestures), so these stay `UNKNOWN - verify` until someone runs them on hardware. Open `/draw` on the deployed site:
+
+1. Pinch on the page and on the grey board: the board zooms, the browser page never does; two fingers pan.
+2. Draw with one finger (Brush / Pencil): the stroke starts at once when you move; a held finger leaves a dot after ~0.1 s.
+3. Start a stroke, add a second finger: the stroke goes on (no restart, no jump); put two fingers down together: no dot.
+4. Apple Pencil / S Pen: draws instantly with the palm resting on the screen; lift the pen with the palm still down,
+   then draw again: both strokes appear. After using the pen, one finger pans with the Brush.
+5. Long press a shape (Select): it is selected and the menu opens; the menu fits on screen; tap an item.
+6. Double tap a shape: node editing; double tap a text box: it edits and the keyboard opens (BUG-217: is the text visible above the keyboard?).
+7. Hand tool: one finger scrolls the page / pans the whiteboard.
+8. Portrait and landscape, phone and tablet: nothing cut off; open a left panel and a dock panel; both fit and close
+   with ✕; the footer and the X / Y row scroll sideways; the left rail scrolls on a short screen (BUG-218).
+9. Swipe from the screen edge (iOS back gesture) in the middle of a stroke: the stroke ends cleanly (BUG-213).
+10. Android: pulling down on the toolbar does not reload the page.
 
 ## Guardrails
 

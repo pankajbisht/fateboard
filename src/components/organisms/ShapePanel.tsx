@@ -125,7 +125,7 @@ function ShapeTile({
                     title="Delete this shape"
                     aria-label={`Delete ${shape.label}`}
                     onClick={() => onRemove(shape.type)}
-                    className="absolute -left-1 -top-1 hidden h-4 w-4 cursor-pointer items-center justify-center rounded-full bg-danger text-[10px] leading-none text-white shadow-sm group-hover:flex"
+                    className="absolute -left-1 -top-1 hidden h-4 w-4 cursor-pointer items-center justify-center rounded-full bg-danger text-[10px] leading-none text-white shadow-sm group-hover:flex [@media(hover:none)]:flex"
                 >
                     ×
                 </button>

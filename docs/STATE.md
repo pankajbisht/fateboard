@@ -75,7 +75,7 @@ animation, autosave deleted, new history with a base snapshot: BUG-156), `export
 `handleObjectChange`, `handleDBLClick`.
 
 **Depends on:** Shape (`installShapeBehavior`, `editShapeText`, `closeShapeTextEditor`), UndoRedo (`saveState`,
-`pause/resumeHistory`, `initHistory`, `registerHistoryEvents`), Page (`setPageFormat`), Pages (`initPages`,
+`pause/resumeHistory`, `initHistory`, `registerHistoryEvents`), Page (`setPageFormat`, `setZoom`, `panBy`), Pages (`initPages`,
 `captureProject`, `importProject`, `isPageSwitching`, `pages`, `currentPageId`), Animation (`registerAnimationEvents`,
 `loadAnimationData`), Dialog (`confirmDialog`, optional), Setting (`settings`, `getDefaultCanvasPreset`), Brush
 (`setBrush`, `color`, `width`), ShapeStyle (`fill`, `clearGradientSession`, `fillMode`), Transform
@@ -168,7 +168,8 @@ object), BUG-194 (ungroup splits text shapes).
 **State:** `pageFormat` (`'Freehand'` default; type `PageFormat` only allows `'Freehand'`), `orientation`,
 `customSize`, `pageBackground`, `zoom`, `scale`, `pageWidth`, `pageHeight`.
 **Actions:** `setPageFormat`, `setOrientation`, `setCustomPageSize`, `setPageBackground`, `setZoom(z, point?)`,
-`zoomIn`, `zoomOut`, `fitToScreen`, `zoomToRect(rect, padding?)` (whiteboard), `applyPageSize` (design: state only, zoom 1
+`zoomIn`, `zoomOut`, `fitToScreen`, `zoomToRect(rect, padding?)` (whiteboard), `panBy(dx, dy)` and
+`pinchZoom(factor, clientX, clientY)` (touch, screen px; design scrolls the `[data-board-scroll]` element, zoom goes through `setZoom`; `panBy` is the one pan path: the Canvas slice's Hand tool and wheel pan call it too), `applyPageSize` (design: state only, zoom 1
 + `pageWidth/Height` from `selectedPreset`; whiteboard: viewport back to 1:1). Exports: `resolvePageSize`, `isFreehand`, `MIN/MAX_ZOOM`,
 `MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`.
 **Depends on:** Canvas (`canvas`, `cw`, `ch`, `selectedPreset`), Setting (`settings.freehand` before the board reports

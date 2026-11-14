@@ -34,9 +34,12 @@ don't fix them silently.
 with summary-only output (CLAUDE.md "Token budget"). For a change over several areas or a risky one, also hand it
 to the `fate-verifier` and `fate-reviewer` agents **with the list of files you changed** (they must not review the
 whole working tree); fix CONFIRMED P0–P2 findings. A small, well-tested change does not need them.
+- Touched a route, a public page, `index.html`, `public/` or the SEO code → skill `fate-seo` (always; report its
+  summary line). Added a route, a dependency, a heavy import or images → skill `fate-perf` (measure before and
+  after, report the deltas).
 
 ## 6. Document and report
 - `docs/` updated; the bug's row → `fixed (<date>): <how> (<tests>)` and moved to `docs/BUGS_ARCHIVE.md`; a new
   bug takes the next ID after "Highest ID" in BUGS.md (update it); decisions logged.
 - Final report: what changed and why, files changed, commands run with results, what was not verified, open
-  follow-ups. Commit only when the user asks (branch first if on `main`).
+  follow-ups. Commit only when the user asks, with skill `fate-ship` (branch, Conventional Commit, push).

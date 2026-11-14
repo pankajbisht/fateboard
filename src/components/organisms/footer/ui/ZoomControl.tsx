@@ -43,7 +43,7 @@ export function ZoomControl() {
                 title="Zoom out"
                 onClick={zoomOut}
             />
-            <div data-footer-stack className="flex w-36 flex-col gap-0.5">
+            <div data-footer-stack className="flex w-36 flex-col gap-0.5 max-sm:hidden">
                 <Slider
                     aria-label="Zoom"
                     aria-valuetext={`${percent}%`}

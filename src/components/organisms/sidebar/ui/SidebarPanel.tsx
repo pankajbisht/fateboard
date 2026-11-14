@@ -1,5 +1,11 @@
 import { PanelLayout } from '@/components/templates/PanelLayout';
-import { sidePanelFrame } from '../sidebar.const';
+import {
+    leftPanelSize,
+    panelInner,
+    phoneSheet,
+    phoneSheetClosed,
+    sidePanelFrame,
+} from '../sidebar.const';
 import type { SidebarPanelItem } from '../../editorsidebar/editorsidebar.type';
 
 interface SidebarPanelProps {
@@ -17,14 +23,17 @@ export function SidebarPanel({ item, expanded, width, onClose }: SidebarPanelPro
             aria-label={item ? `${item.label} panel` : 'Editor panel'}
             aria-hidden={!visible}
             inert={!visible}
-            style={{
-                width: visible ? width : 0,
-                minWidth: 0,
-            }}
-            className={`${sidePanelFrame} border-r`}
+            style={
+                {
+                    '--panel-w': `${visible ? width : 0}px`,
+                    '--panel-full': `${width}px`,
+                    minWidth: 0,
+                } as React.CSSProperties
+            }
+            className={`${sidePanelFrame} ${leftPanelSize} border-r ${phoneSheet} ${visible ? 'max-lg:shadow-xl' : phoneSheetClosed}`}
         >
             {visible && item && (
-                <div className="flex h-full min-h-0 flex-col" style={{ width }}>
+                <div className={`flex min-h-0 flex-col ${panelInner}`}>
                     <PanelLayout
                         key={item.id}
                         title={item.label}

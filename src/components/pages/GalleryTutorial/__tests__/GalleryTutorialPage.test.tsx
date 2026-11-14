@@ -115,7 +115,7 @@ describe('GalleryTutorialPage', () => {
         expect(screen.getByRole('heading', { name: /not in the gallery/ })).toBeInTheDocument();
         expect(screen.getByRole('link', { name: /Back to the gallery/ })).toHaveAttribute(
             'href',
-            '/#gallery',
+            '/gallery',
         );
     });
 });

@@ -418,7 +418,7 @@ const LayerRow = memo(function LayerRow(p: RowProps) {
                     className={
                         layer.locked
                             ? undefined
-                            : 'opacity-0 focus-visible:opacity-100 group-hover:opacity-100'
+                            : 'opacity-0 focus-visible:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100'
                     }
                 />
             )}

@@ -11,6 +11,8 @@ import {
     inactiveButton,
     railButtonBase,
     sideRail,
+    phoneActiveBar,
+    phoneRailBar,
 } from '../../sidebar/sidebar.const';
 
 export type TabConfig = {
@@ -62,7 +64,7 @@ function MoreMenu({
                 <Icon name="ellipsis" className="text-[13px]" />
             </summary>
 
-            <div className="absolute bottom-0 right-full z-50 mr-2 w-48 overflow-hidden rounded-xl border border-line bg-surface p-1 shadow-xl">
+            <div className="absolute bottom-0 right-full z-50 mr-2 w-48 overflow-hidden rounded-xl border border-line bg-surface p-1 shadow-xl max-sm:bottom-full max-sm:right-0 max-sm:mb-2 max-sm:mr-0">
                 {tabs.map((tab) => (
                     <div
                         key={tab.id}
@@ -90,7 +92,7 @@ function MoreMenu({
                                     e.stopPropagation();
                                     onRemove(tab.id);
                                 }}
-                                className="ml-2 flex h-5 w-5 items-center justify-center rounded text-ink-subtle opacity-0 hover:bg-surface-strong hover:text-ink group-hover/item:opacity-100"
+                                className="ml-2 flex h-5 w-5 items-center justify-center rounded text-ink-subtle opacity-0 hover:bg-surface-strong hover:text-ink group-hover/item:opacity-100 [@media(hover:none)]:opacity-100"
                                 aria-label={`Close ${tab.label}`}
                             >
                                 <Icon name="xmark" className="text-[10px]" />
@@ -120,22 +122,29 @@ export function TabsRail({
     onTogglePanel?: () => void;
 }) {
     const itemPx = useRailButtonPx();
-    const [areaHeight, setAreaHeight] = useState(0);
+    const [areaLength, setAreaLength] = useState(0);
     const areaRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         const el = areaRef.current;
         if (!el) return;
-        const ro = new ResizeObserver(() => setAreaHeight(el.clientHeight));
+        // tabs run down the rail, or across it as a bar on an upright phone (BUG-219)
+        const measure = () =>
+            setAreaLength(
+                getComputedStyle(el).flexDirection.startsWith('row')
+                    ? el.clientWidth
+                    : el.clientHeight,
+            );
+        const ro = new ResizeObserver(measure);
         ro.observe(el);
-        setAreaHeight(el.clientHeight);
+        measure();
         return () => ro.disconnect();
     }, []);
 
     const { visible, hidden } = useMemo(() => {
-        const fitsAll = Math.floor((areaHeight + GAP) / (itemPx + GAP));
+        const fitsAll = Math.floor((areaLength + GAP) / (itemPx + GAP));
 
-        if (areaHeight === 0 || tabs.length <= fitsAll) {
+        if (areaLength === 0 || tabs.length <= fitsAll) {
             return { visible: tabs, hidden: [] as TabConfig[] };
         }
 
@@ -153,7 +162,7 @@ export function TabsRail({
         }
 
         return { visible: v, hidden: h };
-    }, [tabs, activeTab, areaHeight, itemPx]);
+    }, [tabs, activeTab, areaLength, itemPx]);
 
     return (
         // a toolbar of panel toggles (it also holds close / more / collapse buttons, which a
@@ -163,11 +172,11 @@ export function TabsRail({
             aria-label="Dock panels"
             aria-orientation="vertical"
             style={{ width: railWidthCss() }}
-            className={`${sideRail} border-l`}
+            className={`${sideRail} border-l ${phoneRailBar}`}
         >
             <div
                 ref={areaRef}
-                className="flex min-h-0 w-full flex-1 flex-col items-center"
+                className="flex min-h-0 w-full flex-1 flex-col items-center max-sm:min-w-0 max-sm:flex-row"
                 style={{ gap: GAP }}
             >
                 {visible.map((tab) => {
@@ -195,7 +204,7 @@ export function TabsRail({
                                     {isActive && (
                                         <span
                                             aria-hidden="true"
-                                            className="absolute right-0 top-2 h-6 w-[3px] rounded-l bg-primary-600"
+                                            className={`absolute right-0 top-2 h-6 w-[3px] rounded-l bg-primary-600 ${phoneActiveBar}`}
                                         />
                                     )}
                                     <Icon name={tab.icon} />
@@ -208,7 +217,7 @@ export function TabsRail({
                                         e.stopPropagation();
                                         onRemove(tab.id);
                                     }}
-                                    className="absolute left-0 top-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-line-strong text-[7px] text-ink opacity-0 transition-opacity hover:bg-danger hover:text-white group-hover:opacity-100"
+                                    className="absolute left-0 top-0 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-line-strong text-[7px] text-ink opacity-0 transition-opacity hover:bg-danger hover:text-white group-hover:opacity-100 [@media(hover:none)]:opacity-100"
                                     aria-label={`Close ${tab.label}`}
                                 >
                                     <Icon name="xmark" />

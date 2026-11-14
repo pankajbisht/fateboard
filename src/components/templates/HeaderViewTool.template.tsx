@@ -5,7 +5,10 @@ const HeaderViewTool = ({ brand, toolbar, transform }) => {
                 {brand}
                 {toolbar}
             </div>
-            <div className="flex flex-row items-center">{transform}</div>
+            {/* small screens: the selection / tool options row scrolls sideways instead of running off */}
+            <div className="flex min-w-0 flex-row items-center overflow-x-auto [scrollbar-width:none]">
+                {transform}
+            </div>
         </section>
     );
 };

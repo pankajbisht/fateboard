@@ -260,20 +260,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             if (!canvas || !event) return;
 
-            const mx = Number(event.movementX) || 0;
-            const my = Number(event.movementY) || 0;
-
-            // Design: the viewport stays identity (CanvasBoard owns it, BUG-007); pan = scroll the board.
-            if (get().boardMode === 'design') {
-                const scroller = canvas.wrapperEl?.closest?.('[data-board-scroll]') as
-                    HTMLElement | null | undefined;
-                scroller?.scrollBy(-mx, -my);
-                return;
-            }
-
-            const k = getCssToCanvasScale(canvas);
-            canvas.relativePan(new fabric.Point(mx * k, my * k));
-            canvas.requestRenderAll();
+            // Page `panBy`: design scrolls the board (the viewport stays identity, BUG-007),
+            // whiteboard pans the viewport. Touch pans there too (lib/canvas/touchGestures).
+            get().panBy(Number(event.movementX) || 0, Number(event.movementY) || 0);
         },
 
         up: () => {
@@ -536,8 +525,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             } else {
                 // a mouse has one wheel: Shift turns it into a sideways scroll
                 const [panX, panY] = e.shiftKey && !dx ? [dy, 0] : [dx, dy];
-                canvas.relativePan(new fabric.Point(-panX * k, -panY * k));
-                canvas.requestRenderAll();
+                get().panBy(-panX, -panY);
             }
             return true;
         },

@@ -69,6 +69,9 @@ report anything.
 - Patterns already in use (prefer them over new ones): slice creator + closure state; command objects for
   shortcuts (`shortcut`, `keys`, `enabled`); contract + adapter for storage (`lib/storage`); guard tests for
   architecture rules.
+- Routes and public pages: page `lazy()` in `APP_ROUTES` + `SEO_ROUTES` entry, one `h1`, page-to-page links are
+  `<Link to={PATHS.x}>`, heavy modules behind `await import()`. Missing `fate-seo` / `fate-perf` summary lines in
+  the change's report is a finding (checklists in those skills).
 
 **P3: tests and docs (Definition of done)**
 - A test that fails without the change (unit/RTL; Playwright for user flows). Refactors: characterization

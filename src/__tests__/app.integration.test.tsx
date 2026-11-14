@@ -55,6 +55,8 @@ vi.mock('fabric', () => {
 
     return {
         Canvas,
+        // RootLayout applies the selection chrome to Fabric's defaults when it loads (BUG-209)
+        InteractiveFabricObject: { ownDefaults: {} },
         PencilBrush,
         CircleBrush,
         SprayBrush,

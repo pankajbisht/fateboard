@@ -22,5 +22,5 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
     },
-    "include": ["vite.config.ts", "src/app/seo/routes.ts", "src/app/seo/prerender.ts"]
+    "include": ["vite.config.ts", "src/app/seo/routes.ts", "src/app/seo/prerender.ts", "src/app/seo/csp.ts"]
 }

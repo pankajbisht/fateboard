@@ -1,3 +1,4 @@
+import { placeBeside, sizeOf } from '@/lib/placeBeside';
 import {
     useEffect,
     useLayoutEffect,
@@ -46,7 +47,7 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
 
     const ref = useRef<HTMLDivElement | null>(null);
     const lastSent = useRef(start);
-    const [pos, setPos] = useState<{ top: number; right: number } | null>(null);
+    const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
     const emit = (next: HSV) => {
         setHsv(next);
@@ -73,19 +74,13 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
         });
     }, [color]);
 
-    // place left of the anchor, kept inside the window, again when its height changes (harmony
-    // rows). Until placed: opacity 0 (not visibility:hidden, which cannot take focus).
+    // beside the anchor (left of the dock; above it on a phone bar), again when its height changes
+    // (harmony rows). Until placed: opacity 0 (not visibility:hidden, which cannot take focus).
     useLayoutEffect(() => {
         const el = ref.current;
         if (!el) return;
-        if (!anchor) return setPos({ top: 8, right: 8 });
-        const place = () => {
-            const a = anchor.getBoundingClientRect();
-            setPos({
-                top: clamp(a.top, 8, Math.max(8, window.innerHeight - el.offsetHeight - 8)),
-                right: window.innerWidth - a.left + 6,
-            });
-        };
+        if (!anchor) return setPos({ top: 8, left: 8 });
+        const place = () => setPos(placeBeside(anchor.getBoundingClientRect(), sizeOf(el)));
         place();
         const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place);
         ro?.observe(el);
@@ -210,7 +205,7 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
                 }
             }}
             className="fixed z-[9999] max-h-[calc(100vh-16px)] w-72 overflow-y-auto rounded-lg border border-line bg-surface p-3 shadow-lg"
-            style={pos ?? { top: 8, right: 8, opacity: 0 }}
+            style={pos ?? { top: 8, left: 8, opacity: 0 }}
         >
             <div className="mb-2 flex items-center justify-between">
                 <span className="text-xs font-semibold text-title">Custom color</span>

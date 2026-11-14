@@ -121,7 +121,7 @@ export function PageCard({
                     'absolute right-1.5 top-1.5 flex rounded-md border border-line bg-surface-raised p-0.5 shadow-sm transition-opacity',
                     active
                         ? 'opacity-100'
-                        : 'pointer-events-none opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100',
+                        : 'pointer-events-none opacity-0 group-focus-within:pointer-events-auto group-focus-within:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100 [@media(hover:none)]:pointer-events-auto [@media(hover:none)]:opacity-100',
                 )}
             >
                 <IconButton

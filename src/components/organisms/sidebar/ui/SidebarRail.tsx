@@ -4,6 +4,8 @@ import {
     buttonBase,
     inactiveButton,
     railButtonBase,
+    phoneActiveBar,
+    phoneRailBar,
     railWidthCss,
     sideRail,
 } from '../sidebar.const';
@@ -35,7 +37,8 @@ export function SidebarRail({
         <nav
             aria-label="Editor tools and panels"
             style={{ width: railWidthCss(width) }}
-            className={`${sideRail} overflow-y-auto border-r`}
+            // upright phones: a bar under the board that scrolls sideways
+            className={`${sideRail} overflow-y-auto border-r ${phoneRailBar} max-sm:overflow-x-auto max-sm:overflow-y-hidden`}
         >
             {items.map((item) => {
                 const active = isPressed ? isPressed(item) : activeId === item.id;
@@ -56,7 +59,7 @@ export function SidebarRail({
                         {active && (
                             <span
                                 aria-hidden="true"
-                                className="absolute left-0 top-2 h-6 w-[3px] rounded-r bg-primary-600"
+                                className={`absolute left-0 top-2 h-6 w-[3px] rounded-r bg-primary-600 ${phoneActiveBar}`}
                             />
                         )}
 
