@@ -81,7 +81,7 @@ const editorsidebarconfig = [
         id: 'brush',
         shortcut: 'B',
         label: 'Brush',
-        icon: 'paintbrush',
+        icon: 'brush-tool',
         kind: 'panel',
         activateTool: 'draw',
         panel: <BrushPickerPanel />,

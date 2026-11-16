@@ -110,7 +110,7 @@ export function BooleanOperations() {
             role="menu"
             disabled={count < 2}
             className="w-64 gap-0.5 p-1"
-            trigger={<Icon name="boolean-union" />}
+            trigger={<Icon name="boolean" />}
         >
             {(close) =>
                 OPERATIONS.map(({ value, label, icon, description }) => (

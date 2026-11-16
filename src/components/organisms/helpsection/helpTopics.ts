@@ -460,7 +460,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         id: 'brush',
         group: 'Tools',
         title: 'Brush',
-        icon: 'paintbrush',
+        icon: 'brush-tool',
         summary:
             'Over 80 brushes in categories (sketching, inking, manga, painting, watercolor, airbrush, texture, spray, fire, smoke, sparkle, nature, calligraphy), each with its own settings.',
         keywords:

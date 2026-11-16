@@ -43,7 +43,7 @@ export const ToolBarConfig = [
     tool('tool-pen', 'pen', 'Pen', 'P', 'pen-tool'),
     tool('tool-pencil', 'pencil', 'Pencil', shortcut('⇧P', 'Shift+P'), 'pencil-line'),
     tool('tool-laser', 'laser', 'Laser pointer', 'K', 'laser-pointer'),
-    tool('tool-brush', 'draw', 'Brush', 'B', 'paintbrush'), // paints with the current brush
+    tool('tool-brush', 'draw', 'Brush', 'B', 'brush-tool'), // paints with the current brush
     tool('tool-spray', 'spray', 'Spray', shortcut('⇧B', 'Shift+B'), 'spray-can'),
     tool('tool-bucket', 'bucket', 'Paint bucket', 'G', 'paint-bucket'), // Photoshop / Krita
     tool('tool-lasso', 'lasso', 'Lasso', 'L', 'lasso'), // Photoshop

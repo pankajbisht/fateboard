@@ -8,6 +8,7 @@ import { createLucideIcon, type IconNode } from 'lucide-react';
  * Use one when no Lucide icon says what the control does (2026-11-16 icon audit, docs/COMPONENTS.md).
  */
 const icon = (name: string, node: IconNode) => createLucideIcon(name, node);
+type IconPart = IconNode[number];
 
 /** Node tool (A): a curve with square anchors and the hollow "direct selection" arrow. */
 export const NodeToolIcon = icon('NodeTool', [
@@ -136,4 +137,216 @@ export const SprayPatternIcon = icon('SprayPattern', [
     ['circle', { cx: '17', cy: '18', r: '0.5', key: 'd6' }],
     ['circle', { cx: '20.5', cy: '8.5', r: '0.5', key: 'd7' }],
     ['circle', { cx: '20.5', cy: '15.5', r: '0.5', key: 'd8' }],
+]);
+
+/* ---------------- 2026-11-16 (2): header / footer icons the owner asked to redraw ---------------- */
+
+/** Group: two shapes inside one dashed frame. */
+export const GroupObjectsIcon = icon('GroupObjects', [
+    [
+        'rect',
+        {
+            x: '2',
+            y: '2',
+            width: '20',
+            height: '20',
+            rx: '3',
+            strokeDasharray: '3 2.5',
+            key: 'frame',
+        },
+    ],
+    ['rect', { x: '6', y: '6', width: '6.5', height: '6.5', rx: '1', key: 'a' }],
+    ['circle', { cx: '15.25', cy: '15.25', r: '3.25', key: 'b' }],
+]);
+
+/** Ungroup: each shape in its own dashed frame. */
+export const UngroupObjectsIcon = icon('UngroupObjects', [
+    [
+        'rect',
+        { x: '2', y: '2', width: '10', height: '10', rx: '2', strokeDasharray: '2.5 2', key: 'f1' },
+    ],
+    ['rect', { x: '4.75', y: '4.75', width: '4.5', height: '4.5', rx: '0.75', key: 'a' }],
+    [
+        'rect',
+        {
+            x: '12',
+            y: '12',
+            width: '10',
+            height: '10',
+            rx: '2',
+            strokeDasharray: '2.5 2',
+            key: 'f2',
+        },
+    ],
+    ['circle', { cx: '17', cy: '17', r: '2.4', key: 'b' }],
+]);
+
+/* Boolean operations: two overlapping circles, the result shaded (Venn diagrams). Circles r 6 at x 9 / 15; they
+   cross at (12, 6.8) and (12, 17.2). */
+const LEFT = 'M9 6a6 6 0 1 0 0 12a6 6 0 1 0 0-12';
+const RIGHT = 'M15 6a6 6 0 1 0 0 12a6 6 0 1 0 0-12';
+const UNION = 'M12 6.8A6 6 0 1 0 12 17.2A6 6 0 1 0 12 6.8Z';
+const LENS = 'M12 6.8A6 6 0 0 1 12 17.2A6 6 0 0 1 12 6.8Z';
+const LEFT_ONLY = 'M12 6.8A6 6 0 1 0 12 17.2A6 6 0 0 1 12 6.8Z';
+const SHADE = { fill: 'currentColor', fillOpacity: '0.3', stroke: 'none' };
+
+/** Boolean operations menu: two circles with their overlap shaded. */
+export const BooleanIcon = icon('Boolean', [
+    ['path', { d: LENS, ...SHADE, key: 'shade' }],
+    ['path', { d: LEFT, key: 'l' }],
+    ['path', { d: RIGHT, key: 'r' }],
+]);
+export const BooleanUnionIcon = icon('BooleanUnion', [
+    ['path', { d: UNION, ...SHADE, key: 'shade' }],
+    ['path', { d: UNION, key: 'outline' }],
+]);
+export const BooleanSubtractIcon = icon('BooleanSubtract', [
+    ['path', { d: LEFT_ONLY, ...SHADE, key: 'shade' }],
+    ['path', { d: LEFT_ONLY, key: 'outline' }],
+    ['path', { d: RIGHT, strokeDasharray: '2 2.2', key: 'cut' }],
+]);
+export const BooleanIntersectIcon = icon('BooleanIntersect', [
+    ['path', { d: LENS, ...SHADE, key: 'shade' }],
+    ['path', { d: LENS, key: 'outline' }],
+    ['path', { d: LEFT, strokeDasharray: '2 2.2', key: 'l' }],
+    ['path', { d: RIGHT, strokeDasharray: '2 2.2', key: 'r' }],
+]);
+export const BooleanExcludeIcon = icon('BooleanExclude', [
+    ['path', { d: `${UNION} ${LENS}`, ...SHADE, fillRule: 'evenodd', key: 'shade' }],
+    ['path', { d: LEFT, key: 'l' }],
+    ['path', { d: RIGHT, key: 'r' }],
+]);
+export const BooleanDivideIcon = icon('BooleanDivide', [
+    ['path', { d: LEFT, key: 'l' }],
+    ['path', { d: RIGHT, key: 'r' }],
+    ['path', { d: 'M3 3l2.5 2.5M21 21l-2.5-2.5', key: 'split' }],
+]);
+
+/** Grid options (header): a page with a dotted guide grid. */
+export const CanvasGridIcon = icon('CanvasGrid', [
+    ['rect', { x: '3', y: '3', width: '18', height: '18', rx: '2', key: 'page' }],
+    [
+        'path',
+        {
+            d: 'M9 3v18M15 3v18M3 9h18M3 15h18',
+            strokeDasharray: '1.5 2',
+            strokeWidth: '1.5',
+            key: 'grid',
+        },
+    ],
+]);
+
+/* Arrange: three layers (bars); the selected one is filled, the arrow says where it goes. */
+const BAR = (y: number, on: boolean, key: string): IconPart => [
+    'rect',
+    {
+        x: '3',
+        y: String(y),
+        width: '11',
+        height: '4',
+        rx: '1',
+        ...(on ? { fill: 'currentColor' } : {}),
+        key,
+    },
+];
+
+export const BringToFrontIcon = icon('BringToFront', [
+    BAR(4, true, 'top'),
+    BAR(10, false, 'mid'),
+    BAR(16, false, 'bottom'),
+    ['path', { d: 'M15.5 3h5M18 20V6M15 9l3-3 3 3', key: 'arrow' }],
+]);
+export const BringForwardIcon = icon('BringForward', [
+    BAR(4, false, 'top'),
+    BAR(10, true, 'mid'),
+    BAR(16, false, 'bottom'),
+    ['path', { d: 'M18 17V8M15 11l3-3 3 3', key: 'arrow' }],
+]);
+export const SendBackwardIcon = icon('SendBackward', [
+    BAR(4, false, 'top'),
+    BAR(10, true, 'mid'),
+    BAR(16, false, 'bottom'),
+    ['path', { d: 'M18 7v9M15 13l3 3 3-3', key: 'arrow' }],
+]);
+export const SendToBackIcon = icon('SendToBack', [
+    BAR(4, false, 'top'),
+    BAR(10, false, 'mid'),
+    BAR(16, true, 'bottom'),
+    ['path', { d: 'M15.5 21h5M18 4v14M15 15l3 3 3-3', key: 'arrow' }],
+]);
+
+/** Brush tool: a round artist's brush (handle, ferrule, bristles) and a stroke of paint. */
+export const BrushToolIcon = icon('BrushTool', [
+    [
+        'rect',
+        {
+            x: '10.5',
+            y: '1.5',
+            width: '3',
+            height: '10',
+            rx: '1.5',
+            transform: 'rotate(45 12 12)',
+            key: 'handle',
+        },
+    ],
+    ['path', { d: 'M9.5 11.5h5v3h-5z', transform: 'rotate(45 12 12)', key: 'ferrule' }],
+    [
+        'path',
+        {
+            d: 'M9.5 14.5c0 3 1 5.5 2.5 7.5 1.5-2 2.5-4.5 2.5-7.5',
+            transform: 'rotate(45 12 12)',
+            key: 'tip',
+        },
+    ],
+    ['path', { d: 'M4 22c3 0 6-1.5 9.5-1.5', key: 'paint' }],
+]);
+
+/* Footer fill / stroke toggles: the swatch shows the state; hover shows what a click does. */
+const SWATCH = { x: '4', y: '4', width: '16', height: '16', rx: '3' };
+const SLASH: IconPart = ['path', { d: 'M3 21 21 3', className: 'text-danger', key: 'slash' }];
+const PLUS_BADGE: IconPart = ['path', { d: 'M18 14v6M15 17h6', strokeWidth: '2.5', key: 'plus' }];
+
+export const FillOnIcon = icon('FillOn', [
+    ['rect', { ...SWATCH, fill: 'currentColor', key: 'swatch' }],
+]);
+export const FillNoneIcon = icon('FillNone', [
+    ['rect', { ...SWATCH, strokeDasharray: '3 2.5', key: 'swatch' }],
+    SLASH,
+]);
+export const FillRemoveIcon = icon('FillRemove', [
+    ['rect', { ...SWATCH, fill: 'currentColor', fillOpacity: '0.35', key: 'swatch' }],
+    SLASH,
+]);
+export const FillAddIcon = icon('FillAdd', [
+    [
+        'rect',
+        {
+            x: '3',
+            y: '3',
+            width: '13',
+            height: '13',
+            rx: '2.5',
+            fill: 'currentColor',
+            key: 'swatch',
+        },
+    ],
+    PLUS_BADGE,
+]);
+export const StrokeOnIcon = icon('StrokeOn', [
+    ['rect', { ...SWATCH, strokeWidth: '3.5', key: 'swatch' }],
+]);
+export const StrokeNoneIcon = icon('StrokeNone', [
+    ['rect', { ...SWATCH, strokeDasharray: '3 2.5', key: 'swatch' }],
+    SLASH,
+]);
+export const StrokeRemoveIcon = icon('StrokeRemove', [
+    ['rect', { ...SWATCH, strokeWidth: '3.5', strokeOpacity: '0.35', key: 'swatch' }],
+    SLASH,
+]);
+export const StrokeAddIcon = icon('StrokeAdd', [
+    [
+        'rect',
+        { x: '3', y: '3', width: '13', height: '13', rx: '2.5', strokeWidth: '3', key: 'swatch' },
+    ],
+    PLUS_BADGE,
 ]);
