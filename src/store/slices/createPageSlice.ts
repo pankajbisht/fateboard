@@ -1,5 +1,6 @@
 import * as fabric from 'fabric';
 import type { SliceCreator } from '../types';
+import { canvasClientRect } from '@/lib/canvas/deepZoom';
 import { PAGE_SIZES } from '@lib/const/editor';
 import type { Orientation, PageFormat } from '@lib/types/page';
 
@@ -10,8 +11,10 @@ import type { Orientation, PageFormat } from '@lib/types/page';
 
 export type CustomPageSize = { w: number; h: number };
 
-export const MIN_ZOOM = 0.1;
-export const MAX_ZOOM = 4;
+/** 2 % … 6400 % (BUG-221: was 10 % … 400 %, too little for small objects). Design deep zoom draws only
+ * the visible part of the page (lib/canvas/deepZoom), so every level stays sharp. */
+export const MIN_ZOOM = 0.02;
+export const MAX_ZOOM = 64;
 export const ZOOM_STEP = 1.25;
 export const MIN_PAGE_PX = 50;
 export const MAX_PAGE_PX = 10000;
@@ -111,7 +114,7 @@ const boardScroller = (canvas: fabric.Canvas) =>
 
 /** Canvas px per CSS px of the element plus its page position (the design page is shown scaled). */
 const canvasFrame = (canvas: fabric.Canvas) => {
-    const rect = canvas.upperCanvasEl?.getBoundingClientRect?.();
+    const rect = canvasClientRect(canvas); // the page on screen, also in deep zoom (BUG-221)
     const k = rect?.width ? canvas.getWidth() / rect.width : 1;
     return { left: rect?.left ?? 0, top: rect?.top ?? 0, k: Number.isFinite(k) && k > 0 ? k : 1 };
 };

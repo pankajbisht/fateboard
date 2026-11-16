@@ -1,7 +1,8 @@
 // store/slices/filterSlice.ts
 // import { StateCreator } from 'zustand';
 import * as fabric from 'fabric';
-import type { StateCreator } from 'zustand';
+import type { SliceCreator } from '../types';
+import { clampLayerBlur } from '@/lib/canvas/layerBlur';
 
 export type FilterState = {
     brightness: number; // -1 → 1
@@ -22,6 +23,12 @@ export type FilterState = {
 export type FilterActions = {
     setFilter: <K extends keyof FilterState>(key: K, value: FilterState[K]) => void;
     resetFilters: () => void;
+    /**
+     * Layer blur of the selection (any object, not only images): a Gaussian blur of the object itself,
+     * radius in scene px (0 = off, max `LAYER_BLUR_MAX`). Drawn by `lib/canvas/layerBlur`. One undo step
+     * unless `history: false` (slider drag preview; commit on release).
+     */
+    setLayerBlur: (radius: number, opts?: { history?: boolean }) => void;
 };
 
 export type FilterSlice = FilterState & FilterActions;
@@ -63,10 +70,26 @@ export function applyFabricFilters(
     canvas.requestRenderAll();
 }
 
-export const createFilterSlice: StateCreator<FilterSlice, [], [], FilterSlice> = (set) => ({
+type BlurTarget = fabric.FabricObject & { layerBlur?: number };
+
+export const createFilterSlice: SliceCreator<FilterSlice> = (set, get) => ({
     ...defaultFilters,
 
     setFilter: (key, value) => set(() => ({ [key]: value })),
 
     resetFilters: () => set(() => ({ ...defaultFilters })),
+
+    setLayerBlur: (radius, opts = {}) => {
+        const canvas = get().canvas as fabric.Canvas | null;
+        if (!canvas) return;
+        const objects = canvas.getActiveObjects() as BlurTarget[];
+        if (!objects.length) return;
+        const value = clampLayerBlur(radius);
+        objects.forEach((o) => {
+            o.set({ layerBlur: value, dirty: true } as Partial<BlurTarget>);
+            o.group?.set('dirty', true); // a cached parent group redraws its children
+        });
+        canvas.requestRenderAll();
+        if (opts.history !== false) get().saveState?.();
+    },
 });

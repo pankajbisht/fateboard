@@ -24,6 +24,7 @@ import { PaintTargetSwatch } from '../molecules/PaintTargetSwatch';
 import { EmptyState } from '../molecules/EmptyState';
 import { FillHarmony } from './FillHarmony';
 import { ShadowControls } from './ShadowControls';
+import { LayerEffectsSection } from './LayerEffectsSection';
 
 const FILL_TYPES: { value: FillKind; label: string }[] = [
     { value: 'none', label: 'None' },
@@ -328,7 +329,7 @@ function GradientControls({
 
 /**
  * Right dock "Fill & Shadow": fill type (none / solid / linear / radial) with a full gradient
- * editor, color harmonies of the fill, and the drop shadow. Reads the selection live from the canvas; writes only through
+ * editor, color harmonies of the fill, opacity, layer blur and the drop shadow. Reads the selection live from the canvas; writes only through
  * store actions (undoable; slider drags preview without undo steps and commit on release).
  */
 export function FillShadowPanel() {
@@ -337,9 +338,6 @@ export function FillShadowPanel() {
     const applyGradientFill = useStore((s) => s.applyGradientFill);
     const setShadow = useStore((s) => s.setShadow);
     const setGradientEditing = useStore((s) => s.setGradientEditing);
-    const previewOpacity = useStore((s) => s.previewOpacity);
-    const endOpacityPreview = useStore((s) => s.endOpacityPreview);
-    const setOpacity = useStore((s) => s.setOpacity);
 
     if (!style) {
         return (
@@ -420,26 +418,7 @@ export function FillShadowPanel() {
                 </PanelSection>
             )}
 
-            <PanelSection title="Opacity">
-                <SliderField
-                    label="Opacity"
-                    min={5}
-                    max={100}
-                    step={1}
-                    unit="%"
-                    value={Math.round(style.opacity * 100)}
-                    defaultValue={100}
-                    onChange={(v) => {
-                        previewOpacity(v); // live, no undo step
-                        refresh();
-                    }}
-                    onCommit={(v) => {
-                        endOpacityPreview();
-                        setOpacity(v / 100); // one undo step
-                        refresh();
-                    }}
-                />
-            </PanelSection>
+            <LayerEffectsSection style={style} refresh={refresh} />
 
             <PanelSection title="Shadow">
                 <ShadowControls

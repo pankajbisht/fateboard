@@ -13,7 +13,7 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 | Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build`. Needs `VITE_SITE_URL` in `.env` (see `.env.example`); fails without it |
 | Build (no type-check) | `npm run build:no-check` | `vite build` only; CI uses `npm run build` |
 | Preview | `npm run preview` | serves `dist/` on 0.0.0.0 |
-| Lint | `npm run lint` | ESLint flat config; `--max-warnings 249` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
+| Lint | `npm run lint` | ESLint flat config; `--max-warnings 246` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
 | Format | `npm run format` / `npm run format:check` | Prettier, `src/**` |
 | Typecheck | `npm run type-check` | app + strict island (`tsconfig.strict.json`) + node + e2e configs, must be 0 errors |
 | All checks | `npm run check` | lint + type-check + format:check |
@@ -108,6 +108,7 @@ tests): selectors, panels, tokens, icons, keys, units, Fabric origins / serializ
 - [Agent guide](docs/AGENT_GUIDE.md): how to use every skill, agent, hook and built-in command, with example prompts
 - [Platforms](docs/PLATFORMS.md): plan for PWA, browser extension (WXT), desktop + mobile (Tauri 2), platform adapters, Claude / MCP; phases + working rules (section 12), owner questions Q14–Q18
 - [Backend](docs/BACKEND.md): local-first backend plan (Supabase + Hono API: accounts, sync, sharing, AI proxy, remote MCP), data model, API, rules (section 12)
+- [Limitations](docs/LIMITATIONS.md): browser version vs a native C++ editor (canvas size, zoom, memory, colour, input, files), with this app's real limits
 - [Design](docs/DESIGN.md): brand tokens (colors from the logo), text styles, radius, contrast rules, dark mode, panel rules
 
 ## How we work

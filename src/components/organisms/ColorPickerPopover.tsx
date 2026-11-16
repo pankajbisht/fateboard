@@ -1,12 +1,5 @@
 import { placeBeside, sizeOf } from '@/lib/placeBeside';
-import {
-    useEffect,
-    useLayoutEffect,
-    useRef,
-    useState,
-    type KeyboardEvent as ReactKeyboardEvent,
-    type PointerEvent as ReactPointerEvent,
-} from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from '@store';
 import { hexToRgb, hsvToRgb, normalizeHex, rgbToHex, rgbToHsv, type HSV } from '@/lib/colorMath';
@@ -15,6 +8,9 @@ import { IconButton } from '../atoms/IconButton';
 import { Swatch } from '../atoms/Swatch';
 import { ColorFormatFields } from '../molecules/ColorFormatFields';
 import { ColorHarmonies } from '../molecules/ColorHarmonies';
+import { SegmentedControl } from '../molecules/SegmentedControl';
+import { HsvSquare } from '../molecules/color/HsvSquare';
+import { HsvWheel } from '../molecules/color/HsvWheel';
 
 type Props = {
     /** Element the popover opens next to (left of it); null = top right corner. */
@@ -30,7 +26,6 @@ type Props = {
 const FALLBACK = '#000000';
 const toHsv = (hex: string): HSV => rgbToHsv(hexToRgb(hex) ?? { r: 0, g: 0, b: 0 });
 const hsvHex = (hsv: HSV) => rgbToHex(hsvToRgb(hsv));
-const clamp = (n: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, n));
 
 /**
  * In-app color picker (replaces the browser's own dialog, which looked different on every OS):
@@ -43,6 +38,7 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
     const start = normalizeHex(color) ?? FALLBACK;
     const [original] = useState(start);
     const [hsv, setHsv] = useState<HSV>(() => toHsv(start));
+    const [view, setView] = useState<'square' | 'wheel'>('square');
     const hex = hsvHex(hsv);
 
     const ref = useRef<HTMLDivElement | null>(null);
@@ -113,67 +109,6 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
         return () => document.removeEventListener('keydown', onKey);
     }, [onClose]);
 
-    // drag on the square / hue bar: pointer capture, one update per animation frame
-    const frame = useRef<number | null>(null);
-    const dragTo = (e: ReactPointerEvent<HTMLDivElement>, apply: (x: number, y: number) => HSV) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        const x = clamp((e.clientX - r.left) / (r.width || 1), 0, 1);
-        const y = clamp((e.clientY - r.top) / (r.height || 1), 0, 1);
-        const next = apply(x, y);
-        setHsv(next);
-        if (frame.current !== null) cancelAnimationFrame(frame.current);
-        frame.current = requestAnimationFrame(() => {
-            frame.current = null;
-            emit(next);
-        });
-    };
-    useEffect(
-        () => () => {
-            if (frame.current !== null) cancelAnimationFrame(frame.current);
-        },
-        [],
-    );
-    const dragHandlers = (apply: (x: number, y: number) => HSV) => ({
-        onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => {
-            if (e.button !== 0) return;
-            e.currentTarget.setPointerCapture?.(e.pointerId);
-            e.currentTarget.focus();
-            dragTo(e, apply);
-        },
-        onPointerMove: (e: ReactPointerEvent<HTMLDivElement>) => {
-            if (e.currentTarget.hasPointerCapture?.(e.pointerId)) dragTo(e, apply);
-        },
-    });
-
-    const onSvKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-        const d = e.shiftKey ? 10 : 1;
-        const move: Record<string, [number, number]> = {
-            ArrowLeft: [-d, 0],
-            ArrowRight: [d, 0],
-            ArrowUp: [0, d],
-            ArrowDown: [0, -d],
-        };
-        if (!move[e.key]) return;
-        e.preventDefault();
-        const [ds, dv] = move[e.key];
-        emit({ ...hsv, s: clamp(hsv.s + ds, 0, 100), v: clamp(hsv.v + dv, 0, 100) });
-    };
-
-    const onHueKey = (e: ReactKeyboardEvent<HTMLDivElement>) => {
-        const d = e.shiftKey ? 10 : 1;
-        const to: Record<string, number> = {
-            ArrowLeft: hsv.h - d,
-            ArrowDown: hsv.h - d,
-            ArrowRight: hsv.h + d,
-            ArrowUp: hsv.h + d,
-            Home: 0,
-            End: 360,
-        };
-        if (!(e.key in to)) return;
-        e.preventDefault();
-        emit({ ...hsv, h: clamp(to[e.key], 0, 360) });
-    };
-
     const hasEyeDropper = typeof window !== 'undefined' && 'EyeDropper' in window;
     const eyedrop = async () => {
         try {
@@ -188,8 +123,6 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
             /* cancelled */
         }
     };
-
-    const pureHue = rgbToHex(hsvToRgb({ h: hsv.h, s: 100, v: 100 }));
 
     // portalled: inside the dock, the editor header / footer bars would cover it
     return createPortal(
@@ -217,63 +150,44 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
                 />
             </div>
 
-            {/* saturation (x) / brightness (y) */}
-            <div
-                role="slider"
-                tabIndex={0}
-                aria-label="Saturation and brightness"
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={Math.round(hsv.s)}
-                aria-valuetext={`Saturation ${Math.round(hsv.s)}%, brightness ${Math.round(hsv.v)}%`}
-                onKeyDown={onSvKey}
-                {...dragHandlers((x, y) => ({ ...hsv, s: x * 100, v: (1 - y) * 100 }))}
-                className="relative h-36 cursor-crosshair touch-none select-none rounded-md outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                style={{
-                    background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent), ${pureHue}`,
-                }}
-            >
-                <span
-                    aria-hidden
-                    className="pointer-events-none absolute size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.45),0_1px_3px_rgba(0,0,0,0.4)]"
-                    style={{ left: `${hsv.s}%`, top: `${100 - hsv.v}%`, backgroundColor: hex }}
+            <SegmentedControl<'square' | 'wheel'>
+                aria-label="Color picker view"
+                size="sm"
+                className="mb-2"
+                value={view}
+                onChange={setView}
+                options={[
+                    { value: 'square', label: 'Square', icon: 'table-cells-large' },
+                    { value: 'wheel', label: 'Wheel', icon: 'color-wheel' },
+                ]}
+            />
+            {view === 'wheel' ? (
+                <HsvWheel
+                    hsv={hsv}
+                    hex={hex}
+                    onPreview={setHsv}
+                    onCommit={emit}
+                    onPickHex={emitHex}
                 />
-            </div>
-
-            <div className="mt-3 flex items-center gap-2">
-                {hasEyeDropper && (
-                    <IconButton
-                        size="sm"
-                        icon={<Icon name="eye-dropper" />}
-                        aria-label="Pick a color from the screen"
-                        title="Pick from screen"
-                        onClick={eyedrop}
-                    />
-                )}
-                {/* hue */}
-                <div
-                    role="slider"
-                    tabIndex={0}
-                    aria-label="Hue"
-                    aria-valuemin={0}
-                    aria-valuemax={360}
-                    aria-valuenow={Math.round(hsv.h)}
-                    aria-valuetext={`${Math.round(hsv.h)}°`}
-                    onKeyDown={onHueKey}
-                    {...dragHandlers((x) => ({ ...hsv, h: x * 360 }))}
-                    className="relative h-3 flex-1 cursor-pointer touch-none select-none rounded-full outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                    style={{
-                        background:
-                            'linear-gradient(to right, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00)',
-                    }}
-                >
-                    <span
-                        aria-hidden
-                        className="pointer-events-none absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-[0_0_0_1px_rgba(0,0,0,0.45),0_1px_3px_rgba(0,0,0,0.4)]"
-                        style={{ left: `${(hsv.h / 360) * 100}%`, backgroundColor: pureHue }}
-                    />
-                </div>
-            </div>
+            ) : (
+                <HsvSquare
+                    hsv={hsv}
+                    hex={hex}
+                    onPreview={setHsv}
+                    onCommit={emit}
+                    leading={
+                        hasEyeDropper && (
+                            <IconButton
+                                size="sm"
+                                icon={<Icon name="eye-dropper" />}
+                                aria-label="Pick a color from the screen"
+                                title="Pick from screen"
+                                onClick={eyedrop}
+                            />
+                        )
+                    }
+                />
+            )}
 
             {/* original | new */}
             <div className="mt-3 flex h-7 overflow-hidden rounded-md border border-line-strong">

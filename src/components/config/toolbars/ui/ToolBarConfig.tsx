@@ -4,12 +4,24 @@ import { shortcut } from '@/lib/utils/isMac';
 
 /**
  * Canvas tools as keyboard commands (same letters as Figma / Illustrator): V = Select, H = Hand,
- * A = Node tool, P = Pen, Shift + P = Pencil (Figma), K = Laser pointer (Excalidraw). Single letters never fire while typing (the shortcut hook skips inputs and the
+ * A = Node tool, P = Pen, Shift + P = Pencil (Figma), K = Laser pointer (Excalidraw), B = Brush, Shift + B = Spray,
+ * G = Paint bucket, L = Lasso (Photoshop), D = Drafter. Single letters never fire while typing (the shortcut hook skips inputs and the
  * text editor's hidden textarea). The left rail shows the same letters in its tooltips.
  */
 const tool = (
     id: string,
-    tool: 'select' | 'pan' | 'node' | 'pen' | 'pencil' | 'laser' | 'draw',
+    tool:
+        | 'select'
+        | 'pan'
+        | 'node'
+        | 'pen'
+        | 'pencil'
+        | 'laser'
+        | 'draw'
+        | 'spray'
+        | 'bucket'
+        | 'lasso'
+        | 'drafter',
     label: string,
     key: string,
     icon: Parameters<typeof Icon>[0]['name'],
@@ -27,9 +39,13 @@ const tool = (
 export const ToolBarConfig = [
     tool('tool-select', 'select', 'Select', 'V', 'arrow-pointer'),
     tool('tool-hand', 'pan', 'Hand', 'H', 'hand'),
-    tool('tool-node', 'node', 'Node', 'A', 'share-nodes'),
+    tool('tool-node', 'node', 'Node', 'A', 'node-tool'),
     tool('tool-pen', 'pen', 'Pen', 'P', 'pen-tool'),
     tool('tool-pencil', 'pencil', 'Pencil', shortcut('⇧P', 'Shift+P'), 'pencil-line'),
     tool('tool-laser', 'laser', 'Laser pointer', 'K', 'laser-pointer'),
     tool('tool-brush', 'draw', 'Brush', 'B', 'paintbrush'), // paints with the current brush
+    tool('tool-spray', 'spray', 'Spray', shortcut('⇧B', 'Shift+B'), 'spray-can'),
+    tool('tool-bucket', 'bucket', 'Paint bucket', 'G', 'paint-bucket'), // Photoshop / Krita
+    tool('tool-lasso', 'lasso', 'Lasso', 'L', 'lasso'), // Photoshop
+    tool('tool-drafter', 'drafter', 'Drafter', 'D', 'drafter'),
 ];

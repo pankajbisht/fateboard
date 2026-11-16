@@ -1,5 +1,7 @@
 import * as fabric from 'fabric';
 import { BRUSH_PRESETS } from './brushPresets';
+import { CLASSIC_CATEGORY, STAMP_BRUSHES, type BrushCategory } from './brushLibrary';
+import type { StampParams } from '@/lib/brushes/stamp/stampParams';
 
 export type BrushType =
     | 'pencil'
@@ -18,6 +20,9 @@ export type BrushType =
     | 'circle'
     | 'eraser';
 
+/** Any brush: a classic `BrushType` or a stamp brush id from the library (`brushLibrary.ts`). */
+export type BrushId = BrushType | (string & {});
+
 /** How a brush actually draws. Several brush types share one engine. */
 export type BrushEngine =
     | 'pencil' // single smooth stroked Path
@@ -29,13 +34,18 @@ export type BrushEngine =
     | 'pattern'
     | 'spray'
     | 'circle'
+    | 'stamp' // dab engine: tips, dynamics, textures (lib/brushes/stamp)
     | 'eraser';
 
 export type LineCap = 'round' | 'butt' | 'square';
 export type LineJoin = 'round' | 'bevel' | 'miter';
 export type LineStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot';
-/** x = mirror left<->right, y = mirror top<->bottom, both = 4-way */
-export type Symmetry = 'none' | 'x' | 'y' | 'both';
+/**
+ * Drawing symmetry (lib/canvas/symmetry.ts): x = mirror left <-> right, y = top <-> bottom, both = 4-way,
+ * angle = mirror across an axis at `symmetryAngle`, radial = `symmetryCount` turns, point = a half turn,
+ * kaleido = turns + mirrors.
+ */
+export type Symmetry = 'none' | 'x' | 'y' | 'both' | 'angle' | 'radial' | 'point' | 'kaleido';
 export type EraserMode = 'pixel' | 'stroke';
 export type BlendMode = 'source-over' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
 
@@ -50,12 +60,21 @@ export interface BrushPreset {
     blend?: BlendMode;
     texture?: 'chalk' | 'crayon';
     spray?: 'spray' | 'airbrush' | 'splatter';
+    /** Brush panel category (library brushes; classic ones use CLASSIC_CATEGORY). */
+    category?: BrushCategory;
+    /** Stamp engine settings over its defaults. */
+    stamp?: Partial<StampParams>;
 }
 
 export { BRUSH_ORDER, BRUSH_PRESETS } from './brushPresets';
 
 export const getPreset = (b: string): BrushPreset =>
-    BRUSH_PRESETS[b as BrushType] ?? BRUSH_PRESETS.pencil;
+    BRUSH_PRESETS[b as BrushType] ?? STAMP_BRUSHES[b] ?? BRUSH_PRESETS.pencil;
+/** A classic brush or a library brush id. */
+export const isBrushId = (b: unknown): b is BrushId =>
+    typeof b === 'string' && (Object.hasOwn(BRUSH_PRESETS, b) || Object.hasOwn(STAMP_BRUSHES, b));
+export const brushCategory = (b: string): BrushCategory =>
+    CLASSIC_CATEGORY[b as BrushType] ?? getPreset(b).category ?? 'basic';
 export const getEngine = (b: string): BrushEngine => getPreset(b).engine;
 
 /** Brushes that make one stroked Path -> support caps, joins, dashes, fill, straight lines. */
@@ -228,7 +247,7 @@ export function makeTexture(kind: 'chalk' | 'crayon', color: string, size = 96):
 }
 
 export const DEFAULT_BRUSH_STATE = {
-    brush: 'pencil' as BrushType,
+    brush: 'pencil' as BrushId,
     width: 4,
     color: '#000000',
     /** BUG-002: was `opacity` (shared with the selection and the filter slice) */
@@ -256,6 +275,10 @@ export const DEFAULT_BRUSH_STATE = {
     straightLine: false,
     symmetry: 'none' as Symmetry,
     symmetryCenter: null as { x: number; y: number } | null,
+    /** Mirror axis angle for symmetry 'angle' (degrees, 90 = vertical axis). */
+    symmetryAngle: 90,
+    /** Copies around the centre for 'radial' / 'kaleido' (2 … 24). */
+    symmetryCount: 6,
     eraserMode: 'pixel' as EraserMode,
     recentColors: [] as string[],
     cursor: 'crosshair',

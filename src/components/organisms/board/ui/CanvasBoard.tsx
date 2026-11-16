@@ -12,7 +12,8 @@ import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { DEFAULT_CANVAS_PRESET } from '../board.config';
 import Ruler, { RULER_HIDDEN, RULER_SIZE, createPointerSource, type RulerUnit } from './Ruler';
 import { isTextFloatTarget } from '@/lib/textTargets';
-import { designRenderRatio } from '@/lib/canvas/renderRatio';
+import { useDesignCanvasSize } from '@/hooks/board/useDesignCanvasSize';
+import { canvasClientRect } from '@/lib/canvas/deepZoom';
 
 export type CanvasMode = 'design' | 'whiteboard';
 
@@ -326,39 +327,6 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     }, [displaySize?.width, displaySize?.height, isWhiteboard]); // eslint-disable-line react-hooks/exhaustive-deps
 
     /* ------------------------------------------------------------------ */
-    /* DESIGN: canvas is exactly the preset's W x H, shown scaled to fit  */
-    /* ------------------------------------------------------------------ */
-    // layout effect: the page frame and the canvas resize in the same paint. With useEffect the
-    // frame grew first and, for one frame, a click on the page edge hit the frame, not the canvas (BUG-146)
-    useLayoutEffect(() => {
-        if (isWhiteboard || !canvas || !size || !displaySize) return;
-
-        // render at the density the page is shown at (BUG-108): Fabric reads this ratio everywhere
-        // (render, brush, hit-testing); export uses its own multiplier, so files are unaffected
-        const ratio = designRenderRatio({
-            dpr: window.devicePixelRatio || 1,
-            displayScale: displaySize.width / size.width,
-            width: size.width,
-            height: size.height,
-        });
-        (canvas as { getRetinaScaling: () => number }).getRetinaScaling = () =>
-            canvas.enableRetinaScaling ? ratio : 1;
-
-        // 1) real document pixels (this is what gets exported / saved)
-        canvas.setDimensions({ width: size.width, height: size.height }, { backstoreOnly: true });
-        // 2) on-screen size only; Fabric corrects pointer coordinates for the CSS scale
-        canvas.setDimensions(
-            { width: displaySize.width, height: displaySize.height },
-            { cssOnly: true },
-        );
-        // design zoom is the CSS size; the viewport stays identity (rulers / export assume it)
-        canvas.setViewportTransform([1, 0, 0, 1, 0, 0]);
-
-        canvas.calcOffset?.();
-        canvas.requestRenderAll();
-    }, [canvas, isWhiteboard, size?.width, size?.height, displaySize?.width, displaySize?.height]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    /* ------------------------------------------------------------------ */
     /* DESIGN: scroll + viewport measuring                                */
     /* ------------------------------------------------------------------ */
     useEffect(() => {
@@ -393,6 +361,17 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     const stageHeight = Math.max(viewport.h, (displaySize?.height ?? 0) + pad(viewport) * 2);
     const artboardLeft = (stageWidth - (displaySize?.width ?? 0)) / 2;
     const artboardTop = (stageHeight - (displaySize?.height ?? 0)) / 2;
+
+    /* DESIGN: canvas = the page (W x H), shown scaled; deep zoom draws only the visible part (BUG-221) */
+    useDesignCanvasSize(canvas, {
+        isWhiteboard,
+        size,
+        display: displaySize,
+        scroll: scrollPos,
+        scroller: scrollRef.current,
+        view: viewport,
+        art: { x: artboardLeft, y: artboardTop },
+    });
 
     // screen px per document px, exactly as drawn (display size is rounded)
     const rulerScale = size && displaySize ? displaySize.width / size.width : fitScale;
@@ -460,7 +439,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
                 y: vt[1]! * p.x + vt[3]! * p.y + vt[5]!,
             }));
 
-            const upperRect = upper.getBoundingClientRect();
+            const upperRect = canvasClientRect(canvas) ?? upper.getBoundingClientRect(); // the page, also in deep zoom
             const hostRect = host.getBoundingClientRect();
             const k = canvas.getWidth() > 0 ? upperRect.width / canvas.getWidth() : 1;
             const dx = upperRect.left - hostRect.left;
@@ -629,6 +608,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
                             >
                                 <div
                                     ref={hostRef}
+                                    className="relative"
                                     style={{ width: displaySize.width, height: displaySize.height }}
                                 />
                             </div>

@@ -99,7 +99,6 @@ import {
     WandSparkles,
     PenTool,
     PencilLine,
-    Flashlight,
     X,
     ZoomIn,
     ZoomOut,
@@ -137,7 +136,43 @@ import {
     StepBack,
     StepForward,
     Undo2,
+    Focus,
+    PaintBucket,
+    SprayCan,
+    LassoSelect,
+    Flame,
+    Cloud,
+    Sparkles,
+    Leaf,
+    Droplets,
+    Wind,
+    Zap,
+    Feather,
+    Brush,
+    PenLine,
+    LayoutTemplate,
+    FlipHorizontal2,
+    Blend,
+    Stamp,
+    Sun,
 } from 'lucide-react';
+import {
+    AlongPathIcon,
+    BrushSettingsIcon,
+    ColorWheelIcon,
+    DrafterIcon,
+    GPenIcon,
+    KaleidoscopeIcon,
+    LaserPointerIcon,
+    NodeToolIcon,
+    PathCloseIcon,
+    PathOpenIcon,
+    SprayPatternIcon,
+    SymmetryIcon,
+    SymmetryPointIcon,
+    SymmetryRadialIcon,
+    TilingIcon,
+} from './customIcons';
 
 /**
  * The app's icon set (Lucide). Keys are kebab-case names (most match the old Font Awesome names, so
@@ -202,6 +237,7 @@ export const ICONS = {
     expand: Maximize,
     'zoom-fit': ScanSearch, // zoom to fit (distinct from fullscreen's expand)
     eye: Eye,
+    focus: Focus, // distraction-free mode
     'magnifying-glass': Search,
     'magnifying-glass-minus': ZoomOut,
     'magnifying-glass-plus': ZoomIn,
@@ -218,7 +254,7 @@ export const ICONS = {
     pencil: Pencil,
     'pen-tool': PenTool,
     'pencil-line': PencilLine,
-    'laser-pointer': Flashlight,
+    'laser-pointer': LaserPointerIcon, // was Flashlight (2026-11-16 icon audit)
     rotate: RotateCw,
     'rotate-left': RotateCcw,
     'screwdriver-wrench': Settings,
@@ -287,8 +323,8 @@ export const ICONS = {
     'node-smooth': CircleDot,
     'segment-line': Slash,
     'segment-curve': Spline,
-    'path-close': Link2,
-    'path-open': Unlink,
+    'path-close': PathCloseIcon, // was a chain link (2026-11-16 icon audit)
+    'path-open': PathOpenIcon,
     link: Link2,
     unlink: Unlink,
     // explicit shapes: in this Lucide version FlipHorizontal2 / FlipVertical2 are aliased the
@@ -313,6 +349,37 @@ export const ICONS = {
     'case-title': CaseSensitive,
     highlighter: Highlighter,
     outline: Baseline,
+    // 2026-11-16 icon audit: tools and panels that had a borrowed icon, and the new drawing tools
+    'node-tool': NodeToolIcon, // Node tool (was 'share-nodes', a share icon)
+    tiling: TilingIcon, // Tiling tab (was the Settings gear, BUG-208)
+    'along-path': AlongPathIcon, // Along Path tab (was the Settings gear, BUG-208)
+    templates: LayoutTemplate, // Templates tab (was a plain grid, same as the grid toggle)
+    'brush-settings': BrushSettingsIcon, // Draw panel (was a pencil, same as the Pencil tool)
+    'paint-bucket': PaintBucket,
+    'spray-can': SprayCan,
+    'spray-pattern': SprayPatternIcon,
+    lasso: LassoSelect,
+    drafter: DrafterIcon,
+    symmetry: SymmetryIcon,
+    'symmetry-radial': SymmetryRadialIcon,
+    'symmetry-point': SymmetryPointIcon,
+    kaleidoscope: KaleidoscopeIcon,
+    reflect: FlipHorizontal2,
+    'color-wheel': ColorWheelIcon,
+    'g-pen': GPenIcon,
+    'pen-line': PenLine,
+    brush: Brush,
+    flame: Flame,
+    cloud: Cloud,
+    sparkles: Sparkles,
+    leaf: Leaf,
+    droplets: Droplets,
+    wind: Wind,
+    zap: Zap,
+    feather: Feather,
+    blend: Blend,
+    stamp: Stamp,
+    sun: Sun,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

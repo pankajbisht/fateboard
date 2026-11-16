@@ -2,7 +2,6 @@ import clsx from 'clsx';
 import { useStore } from '../../store';
 import { STilte, Tile } from '../molecules/Tile';
 import { TransformInput } from '../molecules/TransformInput';
-import { BooleanOperationsDropdown } from './BooleanOperationsDropdown';
 import { PaintToggle } from './PaintToggle';
 // import { CanvasWorkspace } from './CanvasWorkspace';
 
@@ -82,10 +81,6 @@ export function StrokeControls() {
                         setStrokeStyle={setStrokeStyle}
                         disabled={!hasActiveShape}
                     />
-                </div>
-
-                <div className="flex">
-                    <BooleanOperationsDropdown />
                 </div>
             </div>
         </div>

@@ -12,6 +12,8 @@ export type SelectionStyle = {
     canFill: boolean;
     /** Object opacity 0..1 (the selection itself, not the painted child). */
     opacity: number;
+    /** Layer blur radius in scene px (0 = off), `lib/canvas/layerBlur`. */
+    layerBlur: number;
 };
 
 const EVENTS = [
@@ -44,6 +46,7 @@ function read(
         shadow: readShadow(first),
         canFill: (painted.type || '').toLowerCase() !== 'image',
         opacity: first.opacity ?? 1,
+        layerBlur: Number((first as { layerBlur?: number }).layerBlur) || 0,
     } satisfies SelectionStyle;
 }
 

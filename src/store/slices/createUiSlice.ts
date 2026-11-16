@@ -5,8 +5,11 @@ type ToolBarPosition = 'left';
 export interface UiSlice {
     toolbarPosition: ToolBarPosition;
     isFullScreen: boolean;
+    /** Distraction-free mode: the editor shows only the canvas (header, rails, footer hidden). */
+    distractionFree: boolean;
     setToolbarPosition: (pos: ToolBarPosition) => void;
     toggleFullscreen: () => void;
+    toggleDistractionFree: () => void;
     zoomFit: () => void;
     actualSize: () => void;
 }
@@ -14,6 +17,7 @@ export interface UiSlice {
 export const createUISlice: SliceCreator<UiSlice> = (set, get, _store) => ({
     toolbarPosition: 'left',
     isFullScreen: false,
+    distractionFree: false,
 
     setToolbarPosition: (pos) => set({ toolbarPosition: pos }),
 
@@ -28,6 +32,9 @@ export const createUISlice: SliceCreator<UiSlice> = (set, get, _store) => ({
             set({ isFullScreen: false });
         }
     },
+
+    // UI state only: the editor's chrome stays mounted while hidden (its shortcuts keep working)
+    toggleDistractionFree: () => set({ distractionFree: !get().distractionFree }),
 
     // Whiteboard fit / 100% go through the page slice's one zoom path (BUG-025); the design
     // board fits / zooms through the same actions (state only, CanvasBoard draws).

@@ -55,4 +55,17 @@ export const ZoomBarConfig = [
             actualSize();
         },
     },
+    {
+        // like Figma's ⌘\ (hide UI): only the canvas on screen; same keys bring it back
+        id: 'distraction-free',
+        label: 'Distraction-free mode',
+        title: 'Distraction-free mode',
+        description: 'Show only the canvas (press again to bring the panels back)',
+        shortcut: shortcut('⌘+Backslash', 'Ctrl+Backslash'),
+        icon: <Icon name="focus" />,
+        onClick: () => useStore.getState().toggleDistractionFree(),
+        handler: ({ get }) => {
+            get().toggleDistractionFree();
+        },
+    },
 ];

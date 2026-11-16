@@ -52,6 +52,15 @@ vi.mock('fabric', () => {
     const PatternBrush = function () {};
     const Pattern = function () {};
     const EraserBrush = function () {};
+    // the stamp brush engine and the layer blur extend / patch these when their modules load
+    class FabricObject {
+        static cacheProperties: string[] = [];
+        render() {}
+        _createBaseSVGMarkup() {
+            return '';
+        }
+    }
+    class BaseBrush {}
 
     return {
         Canvas,
@@ -63,6 +72,9 @@ vi.mock('fabric', () => {
         PatternBrush,
         Pattern,
         EraserBrush,
+        FabricObject,
+        BaseBrush,
+        classRegistry: { setClass() {} },
         fabric: { Canvas },
     };
 });

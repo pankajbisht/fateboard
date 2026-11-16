@@ -84,10 +84,17 @@ rect and pan. **Depends on:** M0.5, M2.1.
 Work: one export pipeline that uses page geometry; PDF *(proposed; no PDF library installed today)*;
 decide Share (Q6). **Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). 
 
-### F7. Brush quality (exists: 14 brushes, eraser, symmetry)
+### F7. Brush quality (exists: 81 brushes in 14 categories, eraser, symmetry, paint tools)
 
 Single writer for `freeDrawingBrush`; brush state separated from text/style state.
-**Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). 
+**Done 2026-11-16:** stamp brush engine (`lib/brushes/stamp`) with 66 library brushes (sketching, inking, manga,
+painting, watercolor, airbrush, texture, spray, fire, smoke, sparkle, nature, calligraphy) and per-brush settings;
+Spray (Shift + B), Paint bucket (G), Lasso (L), Drafter (D); symmetry modes (any axis, radial, point, kaleidoscope) and
+Reflect selection; layer blur (BUG-220); colour wheel; zoom to 6400 % with sharp deep zoom (BUG-221); icon audit
+(BUG-208). Limits vs native editors: docs/LIMITATIONS.md.
+**Next:** paint mixing / smudge (needs a raster layer type), tilt and barrel rotation for brushes, saving brush
+settings (BUG-222), per-action undo for tools (BUG-223).
+**Blocking bugs:** none open. 
 
 ### F8. Performance & a11y hardening *(proposed)*
 

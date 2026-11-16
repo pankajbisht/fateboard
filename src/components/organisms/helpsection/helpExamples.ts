@@ -72,6 +72,24 @@ const SELECT = { stroke: 'primary', w: 1, dash: '4 3', fill: '#0a60d614' };
 
 const range = (count: number) => Array.from({ length: count }, (_, i) => i);
 
+/** Path data turned by `deg` degrees about (cx, cy) (coordinates are x y pairs). */
+const turnD = (d: string, deg: number, cx: number, cy: number) => {
+    const t = (deg * Math.PI) / 180;
+    let x: number | null = null;
+    return d.replace(/-?\d+(\.\d+)?/g, (n) => {
+        if (x === null) {
+            x = Number(n);
+            return '';
+        }
+        const y = Number(n);
+        const px = cx + (x - cx) * Math.cos(t) - (y - cy) * Math.sin(t);
+        const py = cy + (x - cx) * Math.sin(t) + (y - cy) * Math.cos(t);
+        x = null;
+        return `${px.toFixed(1)} ${py.toFixed(1)}`;
+    });
+};
+const PETAL = 'M160 95 C150 75 155 55 160 40 C165 55 170 75 160 95Z';
+
 const starD = (cx: number, cy: number, outer: number, inner = outer * 0.45): string =>
     range(10)
         .map((i) => {
@@ -882,6 +900,154 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
                 ...during(3, 4, rect(172, 54, 64, 90, SELECT)),
             ],
             uses: ['pages'],
+        },
+    ],
+
+    bucket: [
+        {
+            id: 'coloring-page',
+            title: 'Color in a line drawing',
+            brief: 'Ink a simple drawing, then fill each area with one click, like a coloring book.',
+            icon: 'paint-bucket',
+            steps: [
+                s(
+                    'Draw the outlines with a pen brush; small gaps are fine',
+                    'Brush › G-pen',
+                    [160, 90],
+                ),
+                s(
+                    'Press `G`, pick a color in the top bar and click inside an area',
+                    'Paint bucket (`G`)',
+                    [120, 100],
+                ),
+                s('Raise Gap if a fill does not stay inside its lines', 'Paint bucket › Gap'),
+                s('Pick the next color and click the next area', 'Fill color', [200, 80]),
+            ],
+            result: 'A colored drawing whose fills sit under the lines, each one its own shape.',
+            scene: [
+                ...at(1, path('M90 140 L160 40 L230 140 Z', { fill: '#ffd166' })),
+                ...at(3, circle(160, 108, 18, { fill: '#ff8fab' })),
+                ...at(2, ...badge(250, 36, 'Gap 4')),
+                ...at(
+                    0,
+                    path('M90 140 L160 40 L230 140 Z', { stroke: 'ink', w: 3, draw: true }),
+                    circle(160, 108, 18, { stroke: 'ink', w: 3 }),
+                ),
+            ],
+            uses: ['brush', 'color'],
+        },
+    ],
+
+    spray: [
+        {
+            id: 'graffiti-tag',
+            title: 'A graffiti-style tag',
+            brief: 'Spray a soft glow behind bold letters, holding still to build up the paint.',
+            icon: 'spray-can',
+            steps: [
+                s('Press `Shift+B` and set Size to 80 and Softness high', 'Spray (`Shift+B`)'),
+                s(
+                    'Hold still behind where the word goes to build a cloud of color',
+                    'Hold to build up',
+                    [160, 95],
+                ),
+                s('Lower Size and spray an outline around the letters', 'Spray › Size', [160, 95]),
+            ],
+            result: 'Letters on a soft sprayed glow with real spray-can edges.',
+            scene: [
+                ...at(1, circle(160, 95, 60, { fill: '#a855f7', op: 0.35 })),
+                ...at(
+                    0,
+                    text(160, 104, 'FATE', {
+                        size: 34,
+                        weight: 900,
+                        anchor: 'middle',
+                        fill: ON_LIGHT,
+                    }),
+                ),
+                ...at(2, circle(160, 95, 64, { stroke: '#a855f7', w: 2, op: 0.6 })),
+            ],
+            uses: ['brush'],
+        },
+    ],
+
+    lasso: [
+        {
+            id: 'lasso-cluster',
+            title: 'Pick one cluster of sticky notes',
+            brief: 'Grab the notes in one corner of a busy board without catching the rest.',
+            icon: 'lasso',
+            steps: [
+                s('Press `L` and draw a loop around the notes you want', 'Lasso (`L`)', [90, 80]),
+                s('Hold `Shift` and loop another note to add it', '`Shift` + loop', [210, 120]),
+                s('Drag the selection to its new place', 'Select (`V`) is back', [160, 100]),
+            ],
+            result: 'Exactly the notes you circled, moved together.',
+            scene: [
+                ...at(
+                    0,
+                    ...sticky(40, 40, 'A'),
+                    ...sticky(90, 60, 'B'),
+                    ...sticky(200, 100, 'C'),
+                    ...sticky(240, 30, 'D', '#b5e48c'),
+                ),
+                ...during(
+                    0,
+                    2,
+                    path('M28 36 C40 10 160 20 150 70 C140 120 30 120 28 36Z', {
+                        stroke: 'primary',
+                        w: 1.5,
+                        dash: '5 4',
+                        draw: true,
+                    }),
+                ),
+                ...during(
+                    1,
+                    2,
+                    path('M190 96 C200 80 250 90 250 120 C250 150 190 150 190 96Z', {
+                        stroke: 'primary',
+                        w: 1.5,
+                        dash: '5 4',
+                        draw: true,
+                    }),
+                ),
+            ],
+            uses: ['select'],
+        },
+    ],
+
+    drafter: [
+        {
+            id: 'bracket-drawing',
+            title: 'Draw a bracket with dimensions',
+            brief: 'Square lines at exact angles, then measure them like a technical drawing.',
+            icon: 'drafter',
+            steps: [
+                s('Press `D`, set Angle step to 90° and Pen width to 0.5 mm', 'Drafter (`D`)'),
+                s(
+                    'Drag the base, then start the upright on its end (it snaps there)',
+                    'Drag',
+                    [120, 130],
+                ),
+                s('Set the step to 45° and draw the brace', 'Angle step 45°', [150, 100]),
+                s(
+                    'Pick Dimension and drag along the base to label its length',
+                    'Drafter › Dimension',
+                    [140, 150],
+                ),
+            ],
+            result: 'A clean bracket with a measured dimension, in your document unit.',
+            scene: [
+                ...at(0, ...badge(250, 30, '90° · 0.5 mm')),
+                ...at(1, path('M70 130 H230 M70 130 V40', { stroke: 'ink', w: 2.5, draw: true })),
+                ...at(2, path('M70 80 L120 130', { stroke: 'ink', w: 2, draw: true })),
+                ...at(
+                    3,
+                    path('M70 150 H230 M70 144 V156 M230 144 V156', { stroke: 'ink', w: 1 }),
+                    text(150, 146, '42.3 mm', { size: 9, anchor: 'middle' }),
+                ),
+            ],
+            uses: ['settings'],
         },
     ],
 
@@ -1895,10 +2061,10 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
                 s('Press `mod+O` and bring the photo onto the page', '`mod+O`'),
                 s('Add a Circle on top of the face', 'Shapes › Circle', [160, 80]),
                 s(
-                    'Select both and open the shape operations menu in the footer',
-                    'Footer › Shape ops',
+                    'Select both and open the shape operations menu in the top bar',
+                    'Top bar › Shape operations',
                 ),
-                s('Choose Mask: the circle clips the photo', 'Shape ops › Mask'),
+                s('Choose Mask: the circle clips the photo', 'Shape operations › Mask'),
             ],
             result: 'A round avatar, ready for a team page or a slide.',
             scene: [
@@ -1924,10 +2090,10 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
                     'Shapes',
                     [160, 75],
                 ),
-                s('Select all four and choose Union: one cloud shape', 'Shape ops › Union'),
+                s('Select all four and choose Union: one cloud shape', 'Shape operations › Union'),
                 s(
                     'Add a small circle over one edge and choose Subtract for a bite. Backwards? Change the stacking order and try again',
-                    'Shape ops › Subtract',
+                    'Shape operations › Subtract',
                     [222, 92],
                 ),
                 s('Give the cloud a Linear gradient', 'Fill & Shadow › Linear'),
@@ -2110,7 +2276,7 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
             id: 'gift-wrap',
             title: 'Gift wrap pattern',
             brief: 'A seamless star pattern for a printable gift bag.',
-            icon: 'screwdriver-wrench',
+            icon: 'tiling',
             steps: [
                 s('Add a Star and give it a gold fill', 'Shapes › Star', [80, 90]),
                 s(
@@ -2256,6 +2422,51 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
                 ...at(1, circle(160, 90, 14, { fill: '#ffd166', stroke: '#c9184a', w: 1 })),
             ],
             uses: ['shapes'],
+        },
+    ],
+
+    symmetry: [
+        {
+            id: 'mandala',
+            title: 'A mandala in minutes',
+            brief: 'Draw one petal; kaleidoscope symmetry draws the rest as you go.',
+            icon: 'kaleidoscope',
+            steps: [
+                s(
+                    'Open the Symmetry tab, pick Kaleidoscope and set 8 copies',
+                    'Symmetry › Kaleidoscope',
+                ),
+                s(
+                    'Press `B`, pick a brush and draw one petal from the centre out',
+                    'Brush (`B`)',
+                    [160, 70],
+                ),
+                s('Every stroke is copied around the dashed axes', 'Drag on the board', [160, 95]),
+            ],
+            result: 'A balanced, eight-fold pattern from a few strokes.',
+            scene: [
+                ...at(0, circle(160, 95, 4, { fill: 'primary' })),
+                ...at(
+                    1,
+                    path('M160 95 C150 75 155 55 160 40 C165 55 170 75 160 95Z', {
+                        fill: '#ff8fab',
+                        stroke: 'ink',
+                        w: 1.5,
+                        draw: true,
+                    }),
+                ),
+                ...at(
+                    2,
+                    ...range(7).map((i) =>
+                        path(turnD(PETAL, (i + 1) * 45, 160, 95), {
+                            fill: '#ff8fab',
+                            stroke: 'ink',
+                            w: 1.5,
+                        }),
+                    ),
+                ),
+            ],
+            uses: ['brush', 'rotate'],
         },
     ],
 

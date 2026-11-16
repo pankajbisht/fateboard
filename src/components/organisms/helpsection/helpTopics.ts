@@ -195,7 +195,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         id: 'node',
         group: 'Tools',
         title: 'Node Tool',
-        icon: 'share-nodes',
+        icon: 'node-tool',
         summary: 'Reshape shapes and drawn paths by moving their nodes and curve handles.',
         keywords: 'bezier curve anchor point path vector edit reshape pen',
         demo: 'node',
@@ -351,20 +351,140 @@ export const HELP_TOPICS: HelpTopic[] = [
         related: ['hand', 'select'],
     },
     {
+        id: 'bucket',
+        group: 'Tools',
+        title: 'Paint bucket',
+        icon: 'paint-bucket',
+        summary: 'Fill a closed shape, or any area your lines enclose, with one click.',
+        keywords: 'paint bucket fill flood fill color area region gap tolerance coloring book',
+        sections: [
+            {
+                title: 'Fill',
+                items: [
+                    'Press `G` or pick Paint bucket in the left rail, choose a color in its top bar and click',
+                    'Auto: a closed shape under the click takes the color; an area enclosed by strokes, lines or shapes gets a new fill shape',
+                    'Area always fills the enclosed area; Shape only recolors shapes',
+                    'The fill goes under the lines around it, so they stay on top (On top puts it above everything)',
+                ],
+            },
+            {
+                title: 'Gaps and edges',
+                items: [
+                    'Gap closes small openings in your line art so the fill does not leak out',
+                    'Tolerance sets how different a color may be and still count as the same area',
+                    'Expand pushes the fill a little under the lines, so no thin white rim shows',
+                    'On the whiteboard an area open to the edge of the view is not filled: close it, or raise Gap',
+                ],
+            },
+        ],
+        related: ['lasso', 'color', 'draw'],
+    },
+    {
+        id: 'spray',
+        group: 'Tools',
+        title: 'Spray',
+        icon: 'spray-can',
+        summary: 'A spray can: paint builds up while you hold still.',
+        keywords: 'spray can airbrush graffiti paint mist particles flow nozzle',
+        sections: [
+            {
+                title: 'Spray',
+                items: [
+                    'Press `Shift+B` or pick Spray in the left rail and drag on the board',
+                    'Hold the pointer still to build up paint, like a real can',
+                    'Size is the nozzle; Flow how much paint per second; Particle the size of each drop',
+                    'Softness makes the spray denser in the middle and fainter at the edge',
+                    'More spray brushes (fine mist, coarse spray, glitter, dust) are in Brush > Spray',
+                ],
+            },
+        ],
+        related: ['brush', 'draw'],
+    },
+    {
+        id: 'lasso',
+        group: 'Tools',
+        title: 'Lasso',
+        icon: 'lasso',
+        summary: 'Select objects by drawing a loop around them, or fill the loop.',
+        keywords: 'lasso freehand selection loop select fill marquee',
+        sections: [
+            {
+                title: 'Select',
+                items: [
+                    'Press `L` or pick Lasso in the left rail and draw a loop',
+                    'Touching picks everything the loop touches; Inside only picks objects fully inside',
+                    'Hold `Shift` to add to the selection and `Alt` to remove from it',
+                    'After the loop the Select tool is back, so you can move the selection right away',
+                ],
+            },
+            {
+                title: 'Fill',
+                text: 'With Fill, the loop becomes a filled shape in the drawing color.',
+            },
+        ],
+        related: ['select', 'bucket'],
+    },
+    {
+        id: 'drafter',
+        group: 'Tools',
+        title: 'Drafter',
+        icon: 'drafter',
+        summary:
+            'A drafting machine: precise lines at set angles, with length and angle as you draw.',
+        keywords:
+            'drafter drafting machine technical drawing protractor angle ruler line parallel perpendicular dimension construction mechanical cad iso pen',
+        sections: [
+            {
+                title: 'Draw lines',
+                items: [
+                    'Press `D` or pick Drafter in the left rail and drag from a point',
+                    'The line snaps to the protractor steps (1° to 90°); hold `Alt` for any angle',
+                    'Head turns the drafting head: steps count from that angle',
+                    'The head shows the length in your units (Settings > Units) and the angle like a protractor',
+                    'Starts snap to the ends of lines nearby; Pen width uses ISO technical pen sizes',
+                ],
+            },
+            {
+                title: 'Modes',
+                items: [
+                    'Parallel and Perpendicular follow the selected line (or the last one you drew)',
+                    'Dimension draws a measured dimension line with arrows and the length',
+                    'Construction line draws a light dashed guide line',
+                    'Press `Escape` to go back to Select',
+                ],
+            },
+        ],
+        related: ['pen', 'settings'],
+    },
+    {
         id: 'brush',
         group: 'Tools',
         title: 'Brush',
         icon: 'paintbrush',
-        summary: 'Every brush as a picture: pick one and paint. Includes the Calligraphy pen.',
+        summary:
+            'Over 80 brushes in categories (sketching, inking, manga, painting, watercolor, airbrush, texture, spray, fire, smoke, sparkle, nature, calligraphy), each with its own settings.',
         keywords:
-            'brush paintbrush picker calligraphy pen nib thinning fixation angle caps inkscape paint',
+            'brush paintbrush picker calligraphy pen nib thinning fixation angle caps inkscape paint manga g-pen maru screentone hatching fire ember smoke steam fog sparkle glitter leaves grass watercolor airbrush charcoal pencil texture category settings pressure taper',
         open: { panel: 'brush', label: 'Open Brush' },
         sections: [
             {
                 title: 'Pick and paint',
                 items: [
-                    'Press `B` or pick Brush in the left rail: each tile shows a sample stroke',
-                    'Click a tile and drag on the board. Size, color and effects are in the Draw panel',
+                    'Press `B` or pick Brush in the left rail: each tile shows a sample stroke drawn by the brush itself',
+                    'Pick a category (Fire & light, Smoke & air, Manga & comics, ...) or type in Search brushes',
+                    'Click a tile and drag on the board. A stylus changes size and opacity with pressure',
+                ],
+            },
+            {
+                title: 'Brush settings',
+                text: 'Library brushes show their settings under the tiles. Changes stay with that brush and apply to your next stroke; Reset goes back to the original.',
+                items: [
+                    'Tip: shape, hardness, roundness, angle, follow the stroke, wet edges',
+                    'Stroke: spacing, flow, scatter and how many dabs each step',
+                    'Dynamics: size and opacity jitter, pressure, speed, tapers, grow and rise (smoke)',
+                    'Color: fire, gradient or rainbow color, second color, hue and lightness jitter',
+                    'Texture & glow: paper grain, manga screentone, glow and how dabs blend',
+                    'Strokes stay sharp when you zoom: each one is redrawn from the points you drew',
                 ],
             },
             {
@@ -384,7 +504,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         id: 'draw',
         group: 'Tools',
         title: 'Draw',
-        icon: 'pencil',
+        icon: 'brush-settings',
         summary: 'Freehand brushes, from a clean pen to chalk, neon and spray.',
         keywords: 'pencil brush pen marker sketch freehand eraser highlighter mirror symmetry',
         open: { panel: 'draw', label: 'Open Draw' },
@@ -527,6 +647,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 items: [
                     'All colors opens the full grid',
                     'Custom color opens the picker: drag in the square, type a hex value, or use its eyedropper to pick a color from anywhere on the screen (in browsers that support it)',
+                    'Wheel switches the picker to a color wheel: turn the hue on the ring, set saturation and brightness in the square inside, and pick a harmony (Complement, Analogous, Triad, Split) to see its colors on the ring; click one to use it',
                     'Recent colors keeps what you just used',
                 ],
             },
@@ -620,7 +741,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         id: 'templates',
         group: 'Organize',
         title: 'Templates',
-        icon: 'table-cells-large',
+        icon: 'templates',
         summary: 'Start from a finished design and make it yours.',
         keywords: 'gallery starter layout design ready made',
         open: { tab: 'templates', label: 'Open Templates' },
@@ -798,8 +919,15 @@ export const HELP_TOPICS: HelpTopic[] = [
                 ],
             },
             {
+                title: 'Opacity and layer blur',
+                items: [
+                    'Opacity makes the whole object see-through',
+                    'Layer blur blurs the object itself (shapes, text, strokes, groups); it shows in PNG, JPG, video and SVG exports',
+                ],
+            },
+            {
                 title: 'Shadow',
-                text: 'Set the color, opacity, blur and offset of a shadow behind a shape or text.',
+                text: 'Set the color, opacity, blur and offset of a shadow behind a shape or text. Shadow blur only softens the shadow; use Layer blur to blur the object.',
             },
         ],
         related: ['color', 'filters'],
@@ -808,7 +936,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         id: 'tiling',
         group: 'Effects',
         title: 'Tiling Tools',
-        icon: 'screwdriver-wrench',
+        icon: 'tiling',
         summary: 'Repeat grids, seamless patterns and color rules.',
         keywords: 'repeat grid pattern tile seamless brick checkerboard recolour palette',
         open: { tab: 'tiling', label: 'Open Tiling Tools' },
@@ -870,13 +998,44 @@ export const HELP_TOPICS: HelpTopic[] = [
                 ],
             },
         ],
-        related: ['tiling', 'along-path'],
+        related: ['tiling', 'along-path', 'symmetry'],
+    },
+    {
+        id: 'symmetry',
+        group: 'Effects',
+        title: 'Symmetry',
+        icon: 'kaleidoscope',
+        summary: 'Mirror and rotate what you draw, or make the other half of a shape.',
+        keywords:
+            'symmetry mirror reflect reflection rotational radial point kaleidoscope mandala flip axis copies',
+        open: { tab: 'symmetry', label: 'Open Symmetry' },
+        sections: [
+            {
+                title: 'Drawing symmetry',
+                items: [
+                    'Left-right, Top-bottom and 4-way mirror every stroke you draw',
+                    'Any axis mirrors across a line at the angle you set',
+                    'Radial repeats each stroke around the centre (2 to 24 copies); Point turns it half a turn',
+                    'Kaleidoscope combines turns and mirrors, for mandalas',
+                    'The axes show while a brush is active; Center on the view moves the centre',
+                ],
+            },
+            {
+                title: 'Reflect selection',
+                items: [
+                    'Select objects, pick a reflection type and press Reflect selection',
+                    'Copies are made around the selection centre or the page centre, and selected with the originals',
+                    'One undo step removes all the copies',
+                ],
+            },
+        ],
+        related: ['rotate', 'draw', 'brush'],
     },
     {
         id: 'along-path',
         group: 'Effects',
         title: 'Along Path',
-        icon: 'bezier-curve',
+        icon: 'along-path',
         summary: 'Place copies along any path, for borders, footsteps and tapered trails.',
         keywords: 'repeat follow path border footsteps taper scatter stroke',
         open: { tab: 'along-path', label: 'Open Along Path' },

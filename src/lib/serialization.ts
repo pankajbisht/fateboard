@@ -34,6 +34,7 @@ export const CUSTOM_PROPS = [
     'filterState', // image filters panel
     'animId', // animation tracks
     'isFreehand', // brush strokes
+    'layerBlur', // layer blur radius (lib/canvas/layerBlur)
     'backgroundColor',
 ] as const;
 

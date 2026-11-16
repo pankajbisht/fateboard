@@ -1,8 +1,8 @@
 # State (zustand store)
 
 One store: `useStore` in `src/store/index.ts`, created with `create(devtools(combinedSlice))`. Devtools are enabled
-only when `NODE_ENV === 'development'`. `combinedSlice(set, get, store)` **object-spreads 24 slice creators**
-(24 distinct, because `createPageSlice` appears twice). **If two slices define the same key, the one spread later
+only when `NODE_ENV === 'development'`. `combinedSlice(set, get, store)` **object-spreads 26 slice creators**
+(each once; Paint tools added 2026-11-16). **If two slices define the same key, the one spread later
 silently wins.** 14 keys collide today (`undo`, `redo`, `clipboard` fixed 2026-11-07, Q1). That is the root cause of several bugs (see [Key collisions](#key-collisions)).
 
 Typing: slices mostly use `SliceCreator<T> = StateCreator<any, [], [], T>` (`src/store/types.ts`) or untyped
@@ -14,8 +14,8 @@ Spread order (it matters):
 ```
 1 Canvas  2 Brush  3 UI  4 Layers  5 Page  6 Pages  7 Background  8 Command  9 ShapeStyle  10 UndoRedo
 11 Transform  12 Shape  13 Text  14 BackgroundColor  15 ContextMenu  16 Setting  17 advanceOperation
-19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  26 DrawingTools  27 Generator  28 Macro
-25 Animation
+19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  26 DrawingTools  29 PaintTools  27 Generator
+28 Macro  25 Animation
 (each spread once; 18 geometryEngine removed, the second Page spread removed: BUG-002 / BUG-030)
 ```
 
@@ -88,13 +88,17 @@ The draw tool asks the brush slice to rebuild the brush (`initBrush`); it never 
 
 ## 2. Brush: `createBrushSlice.ts` (+ `store/brushConfig.ts`)
 
-**Purpose:** freehand drawing brushes. 14 brush types (`pencil, marker, ink, calligraphy, highlighter, neon, chalk,
-crayon, pattern, spray, airbrush, splatter, circle, eraser`) on several engines, a whole-stroke eraser, symmetry,
-straight-line mode, and stroke styling applied in `before:path:created`.
+**Purpose:** freehand drawing brushes. 15 classic brush types (`pencil, marker, ink, calligraphy, nib, highlighter, neon,
+chalk, crayon, pattern, spray, airbrush, splatter, circle, eraser`) on several engines, plus 66 stamp-engine brushes from
+the library (2026-11-16, `store/brushLibrary.ts`, below), a whole-stroke eraser, symmetry, straight-line mode, and
+stroke styling applied in `before:path:created`. `brush` is a `BrushId`: a classic `BrushType` or a library id
+(`isBrushId`).
 
 **State (spread from `DEFAULT_BRUSH_STATE`):** `brush, width, color, brushOpacity, smoothing, lineCap, lineJoin, lineStyle,
 blend, taper, nibAngle, shadowBlur, shadowOffsetX/Y, brushShadowColor, shadowOpacity, shadowMatchColor, fillEnabled,
-fillColor, fillOpacity, straightLine, symmetry, symmetryCenter, eraserMode, recentColors, cursor`.
+fillColor, fillOpacity, straightLine, symmetry, symmetryCenter, symmetryAngle, symmetryCount, eraserMode, recentColors,
+cursor`. `symmetry` is `none | x | y | both | angle | radial | point | kaleido` (2026-11-16; matrices in
+`lib/canvas/symmetry.ts`, copies made by `store/brushes/symmetryCopies.ts` after `path:created`).
 
 **Actions:** `initBrush`, `refreshBrushCursor`, `setBrush`, `updateBrush(patch)`, `setBrushWidth`, `setBrushColor`,
 `setSymmetry`, `recenterSymmetry`, `commitRecentColor`, `resetBrush`.
@@ -116,6 +120,15 @@ panel's settings are never read or changed for it.
 `store/brushes/variableWidthBrush.ts` (moved unchanged); the Calligraphy pen (brush `nib`, engine `nib`,
 `store/brushes/nibBrush.ts`) extends it with Inkscape's thinning / angle / fixation / caps (`lib/brushes/nibOutline.ts`)
 from `nibStyle` (DrawingTools). Presets and order are data in `store/brushPresets.ts`, re-exported by `brushConfig.ts`.
+
+**Stamp engine (2026-11-16):** engine `stamp` (`lib/brushes/stamp/`): `stampParams.ts` (settings + ranges + `resolveStamp`),
+`dabs.ts` (seeded `DabWalker`: spacing, pressure, speed, tapers, scatter, spray emission over time, fire / gradient /
+rainbow colour), `tips.ts` (procedural tips, cached per size bucket and tint), `renderDabs.ts` (dabs + grain /
+screentone), `StampBrush.ts` (live: offscreen layer shown on `contextTop`), `StampStroke.ts` (the saved object: points,
+settings, colour, size, seed; redrawn at any zoom). `store/brushes/stampBrush.ts` builds it from the library brush +
+the user's override (`stampOverrides`, Paint tools slice) + size / colour / opacity / smoothing. The Spray tool
+(`activeTool === 'spray'`) draws through `drawingState` → `sprayState` (`store/sprayStyle.ts`, `sprayStyle` in Paint
+tools), like the Pencil.
 
 ## 3. UI: `createUiSlice.ts`
 
@@ -171,7 +184,7 @@ object), BUG-194 (ungroup splits text shapes).
 `zoomIn`, `zoomOut`, `fitToScreen`, `zoomToRect(rect, padding?)` (whiteboard), `panBy(dx, dy)` and
 `pinchZoom(factor, clientX, clientY)` (touch, screen px; design scrolls the `[data-board-scroll]` element, zoom goes through `setZoom`; `panBy` is the one pan path: the Canvas slice's Hand tool and wheel pan call it too), `applyPageSize` (design: state only, zoom 1
 + `pageWidth/Height` from `selectedPreset`; whiteboard: viewport back to 1:1). Exports: `resolvePageSize`, `isFreehand`, `MIN/MAX_ZOOM`,
-`MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`.
+`MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`. Zoom range 2 % … 6400 % (BUG-221, was 10 … 400 %).
 **Depends on:** Canvas (`canvas`, `cw`, `ch`, `selectedPreset`), Setting (`settings.freehand` before the board reports
 `boardMode`), Background (`drawBackground`, whiteboard only).
 **Risks:** `pageFormat` / `orientation` /
@@ -396,7 +409,10 @@ Keys pause while a modal is open (`canvasKeysBlocked`, BUG-062). Commit fires `o
 ## 20. Filter: `createFilterSlice.ts` (+ `organisms/filter/ui/filterEngine.ts`, `useImageFilters.ts`)
 
 **State:** `brightness, contrast, saturation, blur, noise, pixelate, hue, gamma, grayscale, sepia, invert, filterOpacity`
-(shared). **Actions:** `setFilter(key, value)`, `resetFilters`. **Risks:** BUG-019. No mounted UI uses this slice:
+(shared). **Actions:** `setFilter(key, value)`, `resetFilters`, `setLayerBlur(radius, { history? })` (2026-11-16,
+BUG-220: blurs the selected objects themselves, any type; `layerBlur` is a serialized object prop drawn by
+`lib/canvas/layerBlur.ts`; one undo step unless `history: false`). **Depends on:** Canvas (`canvas`), UndoRedo
+(`saveState`). **Risks:** BUG-019. No mounted UI uses this slice:
 the Filter tab (`Filters.tsx` → `useImageFilters`) keeps its own state; only the dead `Brightness.tsx` reads it.
 
 ## 22. Template: `templateSlice.ts` (+ `organisms/effects/designTemplateData.ts`, `sizePresets.ts`)
@@ -484,6 +500,23 @@ no helper objects, nothing in history, autosave or exports.
 **Depends on:** Canvas (`canvas`, `activeTool`, `setActiveTool`, `setToolbar`), Page (`boardMode`, `pageWidth`,
 `pageHeight` for `creationScale`), NodeEditor (`screenScale`), Brush (`updateBrush`, from `setPencilStyle`). The
 Brush slice reads `pencilStyle` (via `drawingState`) and `screenScale` (auto-close tolerance).
+
+## 29. PaintTools: `createPaintToolsSlice.ts` (+ `paintTools/`, `store/sprayStyle.ts`, `lib/canvas/{floodFill,traceContours,lasso,drafter,symmetry}.ts`)
+
+**Purpose (2026-11-16):** Paint bucket (G), Spray (Shift + B), Lasso (L), Drafter (D), "Reflect selection" and the
+per-brush stamp settings. The tools listen on the canvas only while active (store subscription, like the Pen); the
+symmetry guide (axes while Draw / Spray is active) is a helper object (`excludeFromExport`, `excludeFromLayers`,
+`excludeFromSnap`, `_isHelper`).
+**State:** `bucketStyle` (mode auto / region / shape, tolerance, gap, expand, placement), `lassoStyle` (action select /
+fill, match touch / contain), `drafterStyle` (mode line / parallel / perpendicular / dimension / construction, angle
+step, head angle, ISO pen width), `sprayStyle` (size, flow, particle, softness, opacity), `stampOverrides`
+(per library brush id, valid partial settings only).
+**Actions:** `setBucketStyle`, `setLassoStyle`, `setDrafterStyle`, `setSprayStyle`, `setStampOverride(id, patch)`,
+`resetStampOverride(id)`, `bucketFillAt(point)` → `'shape' | 'region' | 'open' | 'none'`, `lassoSelect(loop, mode)`,
+`lassoFill(loop)`, `drafterLine(a, b)`, `reflectSelection({ mode, angle, count, around })` → copies added.
+**Depends on:** Canvas (`canvas`, `activeTool`, `setActiveTool`), Brush (`color`, `brush`, `updateBrush`, `symmetry*`),
+Setting (`unit`), Page (`boardMode`, `zoom`), Pages (`currentPageId`, `isPageSwitching`), UndoRedo (`saveState`), Dialog
+(`showToast`). Not persisted (session settings).
 
 ## 27. Generator: `createGeneratorSlice.ts` (+ `lib/generators/fractals.ts`, `lib/generators/automata.ts`)
 

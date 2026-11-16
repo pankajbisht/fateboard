@@ -1,6 +1,7 @@
 import * as fabric from 'fabric';
 
 import { fateboardCanvasConfig } from '@/components/config/fateboard.config';
+import { canvasPxPerCss } from '@/lib/canvas/deepZoom';
 import { MultiStopGradientTool } from '@/lib/utils/GradientTool';
 // import { enterTextEdit } from '@/lib/utils/enterTextEdit';
 import { DEFAULT_CANVAS_PRESET } from '@/components/organisms/board/board.config';
@@ -31,7 +32,18 @@ const PINCH_ZOOM_RATE = 0.01;
 const PINCH_DELTA_MAX = 50;
 
 /** Pen (P), Pencil (Shift + P) and Laser (K) work with `createDrawingToolsSlice` / the brush slice. */
-type CanvasTool = 'select' | 'pan' | 'draw' | 'node' | 'pen' | 'pencil' | 'laser';
+type CanvasTool =
+    | 'select'
+    | 'pan'
+    | 'draw'
+    | 'node'
+    | 'pen'
+    | 'pencil'
+    | 'laser'
+    | 'spray'
+    | 'bucket'
+    | 'lasso'
+    | 'drafter';
 
 type CanvasObject = any;
 type CanvasInstance = fabric.Canvas;
@@ -229,11 +241,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
      * On-screen pixels -> canvas pixels. In design mode the canvas is shown scaled down
      * (CSS size < document size), so a 1px mouse move is more than 1 document pixel.
      */
-    const getCssToCanvasScale = (canvas: CanvasInstance): number => {
-        const rect = canvas.upperCanvasEl?.getBoundingClientRect();
-        if (!rect || !rect.width) return 1;
-        return canvas.getWidth() / rect.width || 1;
-    };
+    const getCssToCanvasScale = (canvas: CanvasInstance): number => canvasPxPerCss(canvas as never); // the page's scale, also in deep zoom (BUG-221)
 
     const panHandlers = {
         down: (opt: CanvasEvent) => {
@@ -404,7 +412,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             set({
                 activeTool: tool,
-                isDrawingMode: tool === 'draw' || tool === 'pencil',
+                isDrawingMode: tool === 'draw' || tool === 'pencil' || tool === 'spray',
                 isPanning: false,
             });
 
@@ -429,18 +437,11 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                     break;
                 }
 
-                case 'draw': {
-                    canvas.isDrawingMode = true;
-                    // the brush slice is the only writer of freeDrawingBrush (BUG-021): rebuild it
-                    // from the brush settings instead of overwriting colour / width here
-                    get().initBrush?.();
-
-                    canvas.selection = false;
-                    break;
-                }
-
-                case 'pencil': {
-                    // freehand like Draw, with the pencil's own style (brush slice, BUG-021)
+                case 'draw':
+                case 'pencil':
+                case 'spray': {
+                    // the brush slice is the only writer of freeDrawingBrush (BUG-021): it rebuilds it from
+                    // the Draw settings, or the Pencil's / Spray's own style while those are active
                     canvas.isDrawingMode = true;
                     get().initBrush?.();
                     canvas.selection = false;
@@ -448,7 +449,10 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 }
 
                 case 'pen':
-                case 'laser': {
+                case 'laser':
+                case 'bucket':
+                case 'lasso':
+                case 'drafter': {
                     // the drawing-tools slice takes the clicks; nothing on the board is picked
                     canvas.discardActiveObject();
                     canvas.selection = false;

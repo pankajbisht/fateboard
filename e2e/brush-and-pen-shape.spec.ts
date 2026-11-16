@@ -33,6 +33,7 @@ test('Brush: the picker paints with the Calligraphy pen; its options show in the
     page,
 }) => {
     await rail(editor).getByRole('button', { name: 'Brush', exact: true }).click();
+    await page.getByRole('button', { name: 'Calligraphy' }).click(); // brushes are grouped by category
     await page.getByRole('radio', { name: 'Calligraphy pen' }).click();
     await expect.poll(() => editor.state<string>('activeTool')).toBe('draw');
     await expect.poll(() => editor.state<string>('brush')).toBe('nib');

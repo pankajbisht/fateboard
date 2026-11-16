@@ -89,9 +89,21 @@ back):
 
 Custom props in use: `id`, `name` (layers), `_locked` (lock), `customId`, `customType` (`'shape'`,
 `'connector-handle'`…), `shapeId`, `isTextShape`, `textInset` (text-in-shape), `connectorData` (connectors), `animId`
-(animation), `isFreehand` (brush), `excludeFromExport`/`excludeFromLayers`/`excludeFromSnap`/`isHelper`/`_isHelper`
+(animation), `isFreehand` (brush), `layerBlur` (layer blur radius, BUG-220), `excludeFromExport`/`excludeFromLayers`/`excludeFromSnap`/`isHelper`/`_isHelper`
 (helpers), `linkId` (linked clones, saved), `__thumbRev`, `__text`, `__box`, `__group` (runtime-only refs). The old
 `__master` / `__instances` clone refs are gone (2026-11-07): links are the saved `linkId`.
+
+**Classes of our own (2026-11-16):** `StampStroke` (`lib/brushes/stamp/StampStroke.ts`, registered with Fabric's
+`classRegistry`) serializes its own data (`stampPoints`, `stampParams`, `stampColor`, `stampSize`, `stampSeed`,
+`brushId`) in its `toObject`, like a Path's `path`: it is the object's geometry, not a feature prop, so it also
+survives `clone()` (copy / paste, symmetry copies). Its SVG export is an embedded PNG at 2 ×.
+
+**Fabric patches (installed once from `RootLayout`, before any canvas draws):** `installLayerBlur()` wraps
+`FabricObject.prototype.render` in `ctx.filter = blur(px)` (radius × the context's device scale × the object's scale;
+a JS box blur where `ctx.filter` is missing) and `_createBaseSVGMarkup` in an `feGaussianBlur` filter;
+`installCrispCache()` (`lib/canvas/crispCache.ts`) makes `shouldCache()` false for an object whose cache would pass
+Fabric's `maxCacheSideLimit` / `perfLimitSizeTotal` (it would be stretched, so it draws as vectors instead), unless it
+`needsItsOwnCache()`.
 
 Runtime-only refs (`__*`, including `__animRest`) are never serialized and must be rebuilt after every load (`rehydrateTextShape` does this for text shapes; linked clones have no
 rebuild).
@@ -139,6 +151,17 @@ One geometry owner per board (decision Q2, BUG-007 fixed 2026-11-07); `src/store
 | **Design** (fixed page) | `CanvasBoard` only: backstore = page px (`selectedPreset`), CSS size = fit × zoom | always identity | Page `setZoom` changes `zoom` state only; CanvasBoard redraws (footer, toolbar, Ctrl / ⌘ + wheel or pinch, UI `actualSize`) | the wheel scrolls the board natively (`[data-board-scroll]`); Hand tool drags it |
 | **Whiteboard** (infinite) | `CanvasBoard` only: canvas = host size | Page slice only: `setZoom(z, point)` (`zoomToPoint`), `zoomToRect(rect)`, `applyPageSize` (reset 1:1) | same actions; `zoom` always equals the viewport zoom (BUG-025); Ctrl / ⌘ + wheel or pinch zooms at the pointer | wheel / trackpad `relativePan` (Shift + wheel sideways), Hand tool drag |
 
+**Deep zoom (BUG-221, Q2 amended 2026-11-16):** zoom is 2 % … 6400 % on both boards. Design: the canvas stays the page
+(logical W × H, identity viewport), but once the full-page buffer at screen density would pass `MAX_BACKSTORE_PX`,
+`useDesignCanvasSize` (hooks/board) switches to a **window**: the buffer covers only the visible part of the page (+ 96
+CSS px margin) at full density (`lib/canvas/deepZoom.ts` `applyWindow`), the Fabric wrapper sits at the window's
+offset inside the artboard, both contexts draw under a translated base transform, and `_getPointerImpl` adds the
+window origin back to pointer events. Scrolling re-places the window (one redraw per scroll frame, only in deep zoom).
+Export, thumbnails and `toCanvasElement` are unaffected (they render their own canvas). Code that maps the canvas to
+the screen asks `canvasClientRect(canvas)` (the whole page on screen) or `canvasPxPerCss(canvas)`, never the element's
+box; painters that reset the transform use `baseTransform(canvas)`. Fabric's own resets: `drawControls` is patched to keep the window offset; while windowed, `getRetinaScaling()` returns 1 when Fabric turns retina off for an export (`toCanvasElement`), so shadows are not drawn at screen density in files; the IText cursor in clip-path groups is not patched yet (BUG-227). Objects too big for Fabric's cache at the current
+zoom draw directly (`crispCache`), on both boards.
+
 The page size has **one source**, `selectedPreset` (Canvas slice). `setSelectedPreset` is a document change: one undo
 step (snapshots carry the page size under `fateboardPage`), autosaved, and stored per page (`Page.preset`, BUG-109).
 `applyPageSize` never writes the canvas in design; it resets `zoom` and mirrors `pageWidth` / `pageHeight`.
@@ -180,6 +203,12 @@ Coordinates: in design mode the CSS size is smaller than the backstore. Pointer 
 refreshed on pointerdown/scroll/resize because cached offsets go stale.
 
 ## Performance notes
+
+- Deep zoom (2026-11-16): past the buffer limit the design board redraws on every scroll frame (the window moves); below
+  it scrolling stays free (the browser moves a full-page buffer). Objects that skip the cache at high zoom redraw their
+  vectors each frame. Stamp strokes cache their dabs per object and render into Fabric's object cache (or an offscreen
+  layer clipped to the target canvas); thousands of dabs per stroke are fine, but very long FX strokes with glow cost
+  more (`UNKNOWN - verify` at 1,500 stamp strokes).
 
 - Measured 2026-11-09 (1500 mixed objects, M1 Pro GPU): `renderAll` 12 ms; history snapshot + autosave 15-25 ms per
   change; undo 250 ms. Serialization is not the bottleneck; a repaint or per-object DOM is. With the Pages panel open, a

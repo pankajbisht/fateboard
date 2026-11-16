@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useStore } from '@store';
-import type { IconName } from '../atoms/Icon';
-import { Select } from '../atoms/Select';
+import { Icon, type IconName } from '../atoms/Icon';
+import { ToolbarPopover } from '../molecules/ToolbarPopover';
 
 const TEXT = ['text', 'i-text', 'itext', 'textbox'];
 
@@ -92,9 +92,9 @@ const OPERATIONS: {
 type Actions = Record<string, (() => unknown) | undefined>;
 
 /**
- * Footer shape operations: one compact dropdown (action menu). Disabled until 2 shapes are
- * selected; it never keeps a value, so the same operation can be run again. Stacking order
- * decides the result (see lib/booleanOps).
+ * Shape operations (Union, Subtract, …): a menu button in the top toolbar next to Group, like the
+ * grid options. Disabled until 2 shapes are selected; an action menu never keeps a value, so the
+ * same operation can be run again. Stacking order decides the result (see lib/booleanOps).
  */
 export function BooleanOperations() {
     const count = useSelectedShapeCount();
@@ -105,24 +105,35 @@ export function BooleanOperations() {
     };
 
     return (
-        <Select<string>
-            aria-label="Shape operations"
-            size="sm"
-            block={false}
-            className="w-32"
-            placeholder="Shape ops"
-            value={null}
+        <ToolbarPopover
+            label="Shape operations"
+            role="menu"
             disabled={count < 2}
-            options={OPERATIONS.map(({ value, label, icon, description }) => ({
-                value,
-                label,
-                icon,
-                description,
-            }))}
-            onChange={run}
-        />
+            className="w-64 gap-0.5 p-1"
+            trigger={<Icon name="boolean-union" />}
+        >
+            {(close) =>
+                OPERATIONS.map(({ value, label, icon, description }) => (
+                    <button
+                        key={value}
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                            close();
+                            run(value);
+                        }}
+                        className="flex items-start gap-2.5 rounded-md px-2 py-1.5 text-left outline-none hover:bg-surface-muted focus-visible:bg-surface-muted pointer-coarse:py-2.5"
+                    >
+                        <Icon name={icon} className="mt-0.5 shrink-0 text-ink-muted" />
+                        <span className="flex min-w-0 flex-col">
+                            <span data-label className="text-xs font-medium text-ink">
+                                {label}
+                            </span>
+                            <span className="text-caption text-ink-muted">{description}</span>
+                        </span>
+                    </button>
+                ))
+            }
+        </ToolbarPopover>
     );
 }
-
-/** @deprecated old name, kept for imports */
-export const BooleanOperationsDropdown = BooleanOperations;

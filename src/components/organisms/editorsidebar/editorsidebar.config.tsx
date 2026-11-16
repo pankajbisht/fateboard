@@ -25,7 +25,7 @@ const editorsidebarconfig = [
         id: 'node',
         shortcut: 'A',
         label: 'Node Tool',
-        icon: 'share-nodes',
+        icon: 'node-tool',
         kind: 'action',
     },
     {
@@ -50,6 +50,34 @@ const editorsidebarconfig = [
         kind: 'action',
     },
     {
+        id: 'lasso',
+        shortcut: 'L',
+        label: 'Lasso',
+        icon: 'lasso',
+        kind: 'action',
+    },
+    {
+        id: 'bucket',
+        shortcut: 'G',
+        label: 'Paint bucket',
+        icon: 'paint-bucket',
+        kind: 'action',
+    },
+    {
+        id: 'spray',
+        shortcut: shortcut('⇧B', 'Shift+B'),
+        label: 'Spray',
+        icon: 'spray-can',
+        kind: 'action',
+    },
+    {
+        id: 'drafter',
+        shortcut: 'D',
+        label: 'Drafter',
+        icon: 'drafter',
+        kind: 'action',
+    },
+    {
         id: 'brush',
         shortcut: 'B',
         label: 'Brush',
@@ -61,7 +89,7 @@ const editorsidebarconfig = [
     {
         id: 'draw',
         label: 'Draw',
-        icon: 'pencil',
+        icon: 'brush-settings',
         kind: 'panel',
         activateTool: 'draw',
         panel: <DrawPanel />,

@@ -7,20 +7,27 @@ import { FOCUS_RING } from '../atoms/control.styles';
 /**
  * A toolbar button that opens a small panel of options under it (portalled to <body>: toolbars
  * clip their overflow). Closes on a click outside and on Escape, which gives focus back to the
- * button; opening moves focus to the first checked option. Same behaviour as the grid menu.
+ * button; opening moves focus to the first checked option (or the first menu item). Same
+ * behaviour as the grid menu.
  */
 export function ToolbarPopover({
     label,
     trigger,
     children,
     className,
+    disabled = false,
+    role = 'dialog',
 }: {
     /** Accessible name of the button and the panel; also its tooltip. */
     label: string;
     /** Visible button content (a preview, text...). A chevron is added. */
     trigger: ReactNode;
-    children: ReactNode;
+    /** Content, or a function of `close` for panels that close themselves (an action menu). */
+    children: ReactNode | ((close: () => void) => ReactNode);
     className?: string;
+    disabled?: boolean;
+    /** `menu` for a list of actions (`menuitem` buttons), `dialog` for a panel of options. */
+    role?: 'dialog' | 'menu';
 }) {
     const [open, setOpen] = useState(false);
     const [pos, setPos] = useState({ top: 0, left: 0 });
@@ -40,7 +47,11 @@ export function ToolbarPopover({
 
     useEffect(() => {
         if (!open) return;
-        panelRef.current?.querySelector<HTMLElement>('[aria-checked="true"]')?.focus();
+        const panel = panelRef.current;
+        (
+            panel?.querySelector<HTMLElement>('[aria-checked="true"]') ??
+            panel?.querySelector<HTMLElement>('[role="menuitem"]:not(:disabled)')
+        )?.focus();
         const onDown = (e: PointerEvent) => {
             const t = e.target as Node;
             if (!buttonRef.current?.contains(t) && !panelRef.current?.contains(t)) setOpen(false);
@@ -67,10 +78,11 @@ export function ToolbarPopover({
                 aria-label={label}
                 title={label}
                 aria-expanded={open}
-                aria-haspopup="dialog"
+                aria-haspopup={role}
+                disabled={disabled}
                 onClick={() => setOpen((v) => !v)}
                 className={clsx(
-                    'flex h-[var(--ui-btn)] items-center gap-1.5 rounded-md border border-line-strong bg-surface px-2 text-xs text-ink hover:bg-surface-muted',
+                    'flex h-[var(--ui-btn)] items-center gap-1.5 rounded-md border border-line-strong bg-surface px-2 text-xs text-ink hover:bg-surface-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-surface',
                     open && 'bg-surface-strong',
                     FOCUS_RING,
                 )}
@@ -82,7 +94,7 @@ export function ToolbarPopover({
                 createPortal(
                     <div
                         ref={panelRef}
-                        role="dialog"
+                        role={role}
                         aria-label={label}
                         style={pos}
                         className={clsx(
@@ -90,7 +102,12 @@ export function ToolbarPopover({
                             className,
                         )}
                     >
-                        {children}
+                        {typeof children === 'function'
+                            ? children(() => {
+                                  setOpen(false);
+                                  buttonRef.current?.focus();
+                              })
+                            : children}
                     </div>,
                     document.body,
                 )}

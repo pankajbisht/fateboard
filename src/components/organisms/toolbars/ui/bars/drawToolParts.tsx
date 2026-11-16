@@ -1,3 +1,4 @@
+import { Slider } from '@/components/atoms/Slider';
 /** Shared pieces of the Pen / Pencil options bars (the header context row). */
 import type { ReactNode } from 'react';
 import { Icon, type IconName } from '@/components/atoms/Icon';
@@ -45,5 +46,46 @@ export function Hint({ children }: { children: ReactNode }) {
             <Icon name="circle-info" className="shrink-0 text-ink-subtle" />
             {children}
         </p>
+    );
+}
+
+/** A labelled slider with its value, for the tool option bars. */
+export function BarSlider({
+    label,
+    value,
+    min,
+    max,
+    step = 1,
+    unit = '',
+    format,
+    onChange,
+    width = 'w-20',
+}: {
+    label: string;
+    value: number;
+    min: number;
+    max: number;
+    step?: number;
+    unit?: string;
+    format?: (v: number) => string;
+    onChange: (v: number) => void;
+    width?: string;
+}) {
+    const text = format ? format(value) : `${value}${unit}`;
+    return (
+        <span className="flex items-center gap-1.5 text-ink-muted">
+            {label}
+            <Slider
+                aria-label={label}
+                aria-valuetext={text}
+                min={min}
+                max={max}
+                step={step}
+                value={value}
+                onChange={onChange}
+                className={width}
+            />
+            <span className="min-w-8 tabular-nums text-ink">{text}</span>
+        </span>
     );
 }

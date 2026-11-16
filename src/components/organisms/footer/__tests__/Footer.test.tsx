@@ -108,9 +108,9 @@ describe('whiteboard mode', () => {
 });
 
 describe('log zoom scale', () => {
-    it('maps 10%..400% to the slider and back', () => {
-        expect(sliderToZoom(0)).toBeCloseTo(0.1);
-        expect(sliderToZoom(100)).toBeCloseTo(4);
+    it('maps 2%..6400% to the slider and back (BUG-221: was 10%..400%)', () => {
+        expect(sliderToZoom(0)).toBeCloseTo(0.02);
+        expect(sliderToZoom(100)).toBeCloseTo(64);
         expect(sliderToZoom(zoomToSlider(1))).toBeCloseTo(1);
     });
 });

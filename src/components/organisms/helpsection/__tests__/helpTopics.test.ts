@@ -38,6 +38,7 @@ describe('help topics', () => {
             'fonttemplates',
             'tiling',
             'rotate',
+            'symmetry',
             'along-path',
             'filter',
             'fractals',

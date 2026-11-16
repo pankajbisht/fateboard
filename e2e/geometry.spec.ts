@@ -21,12 +21,13 @@ const geometry = (editor: Editor) =>
     });
 
 async function clickCentreOf(editor: Editor, i: number) {
-    const box = (await editor.canvas.boundingBox())!;
+    // the page's rectangle on screen: in deep zoom the canvas element is only the visible window (BUG-221)
+    const box = (await editor.page.evaluate(() => window.__fateboard!.pageRect()))!;
     const b = await editor.page.evaluate((n) => window.__fateboard!.bounds(n), i);
     const k = box.width / b.canvasWidth;
     await editor.page.mouse.click(
-        box.x + (b.left + b.width / 2) * k,
-        box.y + (b.top + b.height / 2) * k,
+        box.left + (b.left + b.width / 2) * k,
+        box.top + (b.top + b.height / 2) * k,
     );
 }
 
@@ -80,24 +81,37 @@ test.describe('retina, zoomed in (BUG-108)', () => {
     }) => {
         await editor.addShape('Rectangle');
         const zoomIn = page.getByRole('button', { name: /zoom in/i }).first();
-        for (let i = 0; i < 10; i++) await zoomIn.click(); // to the maximum zoom
-        const { backstore, page: pagePx } = await page.evaluate(() => {
+        for (let i = 0; i < 10; i++) await zoomIn.click(); // ~930 %: deep zoom (BUG-221)
+        const {
+            backstore,
+            page: pagePx,
+            ratio,
+        } = await page.evaluate(() => {
             const el = document.querySelector('canvas.lower-canvas') as HTMLCanvasElement;
             const p = window.__fateboard!.state('selectedPreset') as { width: number };
-            return { backstore: el.width, page: p.width };
+            const c = window.__fateboard!.state('canvas') as { getRetinaScaling: () => number };
+            return { backstore: el.width, page: p.width, ratio: c.getRetinaScaling() };
         });
-        // the old fixed retina backstore was exactly 2 × the page (blurry when zoomed in); now it
-        // follows the on-screen scale
-        expect(backstore).toBeGreaterThan(pagePx * 2 * 1.5);
+        // the old fixed retina backstore was exactly 2 × the page (blurry when zoomed in); now the density
+        // follows the on-screen scale, and past the buffer limit only the visible part is drawn at it
+        expect(ratio).toBeGreaterThan(2 * 1.5);
+        expect(backstore).toBeLessThan(pagePx * ratio);
 
-        // zoomed in, the canvas is bigger than the view: click empty page inside the VISIBLE part
-        const canvasBox = (await editor.canvas.boundingBox())!;
-        const view = (await page.locator('[data-board-scroll]').boundingBox())!;
-        await page.mouse.click(
-            Math.max(canvasBox.x, view.x) + 12,
-            Math.max(canvasBox.y, view.y) + 12,
-        );
+        // zoomed in, the page is bigger than the view: show its top-left corner and click empty page there
+        const scroller = page.locator('[data-board-scroll]');
+        await scroller.evaluate((el) => el.scrollTo(0, 0));
+        await page.waitForTimeout(100); // deep zoom re-places its window on the next frame
+        const corner = (await page.evaluate(() => window.__fateboard!.pageRect()))!;
+        await page.mouse.click(corner.left + 20, corner.top + 20);
         await expect.poll(async () => (await editor.selection()).length).toBe(0);
+        // then the middle of the page, where the shape is
+        await scroller.evaluate((el) =>
+            el.scrollTo(
+                (el.scrollWidth - el.clientWidth) / 2,
+                (el.scrollHeight - el.clientHeight) / 2,
+            ),
+        );
+        await page.waitForTimeout(100);
         await clickCentreOf(editor, 0);
         await expect.poll(async () => (await editor.selection()).length).toBe(1);
     });

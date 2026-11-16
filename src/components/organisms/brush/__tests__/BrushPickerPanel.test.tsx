@@ -33,9 +33,54 @@ describe('Brush (left rail)', () => {
         );
         render(<BrushPickerPanel />);
         expect(screen.getByRole('radio', { name: 'Pen' })).toBeChecked();
+        fireEvent.click(screen.getByRole('button', { name: 'All' })); // opens on the brush's category
         fireEvent.click(screen.getByRole('radio', { name: 'Calligraphy pen' }));
         expect(setBrush).toHaveBeenCalledWith({ brush: 'nib' });
         expect(setActiveTool).toHaveBeenCalledWith('draw');
+    });
+
+    it('groups the library by category (fire, smoke, manga, ...) and searches by name', () => {
+        act(() => useStore.setState({ brush: 'pencil', activeTool: 'draw' } as any));
+        render(<BrushPickerPanel />);
+        fireEvent.click(screen.getByRole('button', { name: 'Fire & light' }));
+        for (const name of ['Fire', 'Embers', 'Glow'])
+            expect(screen.getByRole('radio', { name })).toBeTruthy();
+        expect(screen.queryByRole('radio', { name: 'G-pen' })).toBeNull();
+        fireEvent.click(screen.getByRole('button', { name: 'Smoke & air' }));
+        expect(screen.getByRole('radio', { name: 'Smoke' })).toBeTruthy();
+        fireEvent.change(screen.getByRole('searchbox', { name: 'Search brushes' }), {
+            target: { value: 'pen' },
+        });
+        expect(screen.getByRole('radio', { name: 'G-pen' })).toBeTruthy();
+        expect(screen.getByRole('radio', { name: 'Maru pen' })).toBeTruthy();
+        fireEvent.change(screen.getByRole('searchbox', { name: 'Search brushes' }), {
+            target: { value: 'zzz' },
+        });
+        expect(screen.getByText('No brush found')).toBeTruthy();
+    });
+
+    it('a library brush shows its settings; a change is kept for that brush and can be reset', () => {
+        act(() =>
+            useStore.setState({
+                brush: 'fire-flame',
+                activeTool: 'draw',
+                stampOverrides: {},
+            } as any),
+        );
+        render(<BrushPickerPanel />);
+        expect(screen.getByText('Fire settings')).toBeTruthy();
+        fireEvent.change(screen.getByRole('slider', { name: 'Hardness' }), {
+            target: { value: '20' },
+        });
+        expect(useStore.getState().stampOverrides['fire-flame']).toMatchObject({ hardness: 0.2 });
+        fireEvent.click(screen.getByRole('button', { name: /Reset/ }));
+        expect(useStore.getState().stampOverrides['fire-flame']).toBeUndefined();
+    });
+
+    it('classic brushes keep their settings in the Draw panel (no engine settings here)', () => {
+        act(() => useStore.setState({ brush: 'marker', activeTool: 'draw' } as any));
+        render(<BrushPickerPanel />);
+        expect(screen.queryByText(/settings$/)).toBeNull();
     });
 
     it('the top bar shows the Calligraphy options while painting with it', () => {
