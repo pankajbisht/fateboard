@@ -40,6 +40,7 @@ export const CUSTOM_PROPS = [
     'pageSetup', // canvas-level: margins, columns, bleed, facing pages, guides (lib/document/pageSetup)
     'pageRole', // canvas-level: 'master' on a master page
     'masterId', // canvas-level: the master page drawn under this page
+    'pageNotes', // canvas-level: the page's note pins (lib/notes/pageNotes)
     'pageNumberField', // a text that shows the page number
     'toneParams', // screentone settings of a tone fill (lib/comic/screentone)
     'fillBeforeTone', // the fill a tone replaced (Remove tone puts it back)

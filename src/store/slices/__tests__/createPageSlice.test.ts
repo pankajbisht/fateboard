@@ -246,6 +246,29 @@ describe('touch navigation (pinch / two-finger pan): through setZoom, the one zo
         expect(scroller.scrollBy).toHaveBeenCalledWith(100, 0);
     });
 
+    // scene (100, 60) is at client (10 + 50, 20 + 30) = (60, 50): the canvas is shown at half size
+    it('design: centerViewOn scrolls the point to the middle of the board, same zoom', () => {
+        const { h, scroller } = touchSetup('design');
+        h.get().centerViewOn({ x: 100, y: 60 });
+        expect(scroller.scrollBy).toHaveBeenCalledWith(-140, -100); // board centre (200, 150)
+        expect(h.get().zoom).toBe(1);
+    });
+
+    it('whiteboard: centerViewOn pans the point to the middle of the canvas', () => {
+        const { h, pans } = touchSetup('whiteboard');
+        h.get().centerViewOn({ x: 100, y: 60 });
+        const w = (h.get().canvas as { getWidth: () => number }).getWidth();
+        const cx = 10 + w / 4; // the canvas element is w / 2 CSS px wide
+        expect(pans).toEqual([[(cx - 60) * 2, (70 - 50) * 2]]);
+    });
+
+    it('centerViewOn ignores a bad point', () => {
+        const { h, scroller, pans } = touchSetup('design');
+        h.get().centerViewOn({ x: Number.NaN, y: 0 });
+        expect(scroller.scrollBy).not.toHaveBeenCalled();
+        expect(pans).toEqual([]);
+    });
+
     it('design: no scroll correction once the zoom is clamped', () => {
         const { h, scroller } = touchSetup('design');
         h.get().setZoom(MAX_ZOOM);

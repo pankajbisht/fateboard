@@ -9,6 +9,7 @@ import { shortcut } from '@/lib/utils/isMac';
 
 // rare panel: its own chunk (runtime-performance P5)
 const ComicPanel = lazy(() => import('../comic/ComicPanel'));
+const NotesPanel = lazy(() => import('../notes/NotesPanel'));
 
 const editorsidebarconfig = [
     {
@@ -135,6 +136,17 @@ const editorsidebarconfig = [
         kind: 'panel',
         fullSize: true,
         panel: <LayersTab />,
+    },
+    {
+        id: 'notes',
+        label: 'Notes',
+        icon: 'note',
+        kind: 'panel',
+        panel: (
+            <Suspense fallback={null}>
+                <NotesPanel />
+            </Suspense>
+        ),
     },
     {
         id: 'comic',

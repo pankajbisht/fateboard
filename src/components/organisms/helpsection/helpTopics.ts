@@ -776,6 +776,39 @@ export const HELP_TOPICS: HelpTopic[] = [
         ],
     },
     {
+        id: 'notes',
+        group: 'Organize',
+        title: 'Notes',
+        icon: 'note',
+        summary:
+            'Pin notes to the page or to an object: to-dos, feedback and reminders, saved with the project.',
+        keywords:
+            'note notes comment comments pin feedback review todo checklist reply resolve annotate',
+        open: { panel: 'notes', label: 'Open Notes' },
+        sections: [
+            {
+                title: 'Add a note',
+                items: [
+                    'Press N (or Add note in the Notes panel), then click the board',
+                    'Click an object to attach the note to it: the pin follows the object',
+                    'Drag a free pin to move it; Esc goes back to Select',
+                    'Pins are never printed or exported',
+                ],
+            },
+            {
+                title: 'Work with notes',
+                items: [
+                    'Click a pin to open it: text, colour tag, checklist, replies',
+                    'Resolve a note when it is done; pin important ones to the top of the list',
+                    'The Notes panel searches every note and filters by status, colour and page',
+                    'Click a row to jump to its pin, also on another page',
+                    'Every change can be undone, and notes are saved with the project file',
+                ],
+            },
+        ],
+        related: ['layers', 'pages'],
+    },
+    {
         id: 'layers',
         group: 'Organize',
         title: 'Layers',

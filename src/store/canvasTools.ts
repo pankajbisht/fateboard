@@ -1,7 +1,8 @@
 /**
  * The canvas tools (`activeTool`, `setActiveTool`). Pen (P), Pencil (Shift + P) and Laser (K) work with
  * `createDrawingToolsSlice` / the brush slice; Spray, Copy spray, Paint bucket, Lasso and Drafter with
- * `createPaintToolsSlice`. The toolbar commands (ToolBarConfig) use the same names.
+ * `createPaintToolsSlice`; Note (N) with
+ * `createNotesSlice`. The toolbar commands (ToolBarConfig) use the same names.
  */
 export type CanvasTool =
     | 'select'
@@ -15,4 +16,5 @@ export type CanvasTool =
     | 'copySpray'
     | 'bucket'
     | 'lasso'
-    | 'drafter';
+    | 'drafter'
+    | 'note';

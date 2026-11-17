@@ -233,7 +233,10 @@ helpers (`excludeFromExport` / `excludeFromLayers` / `_isHelper`) draw above all
 Two host hooks (2026-11-17, Document slice): `underlay` (a master page's objects, drawn first in every render
 and in SVG, never in the stack, never hit) and `paintOverlay` (margin / column guides, only when drawing the
 editor's own canvas element, so never in exports or thumbnails). More canvas-level saved props: `pageSetup`,
-`pageRole`, `masterId` (`lib/canvas/canvasProp.ts` accessors).
+`pageRole`, `masterId` (`lib/canvas/canvasProp.ts` accessors), `pageNotes` (note pins, Notes slice, 2026-11-17: drawn
+as DOM over the board by `NotePins`, so never in exports; positions from `sceneToClient` in `lib/canvas/deepZoom.ts`,
+the same mapping the text / node floats use, recomputed once per frame after a render, and an object walk only when a
+note is linked).
 One plain layer (every old document) takes Fabric's own path. Exports, thumbnails and video frames go through
 `_renderObjects`, so they show layers too.
 

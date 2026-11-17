@@ -1733,6 +1733,56 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
             uses: ['layers', 'shapes'],
         },
     ],
+    notes: [
+        {
+            id: 'review-a-poster',
+            title: 'Review a poster with notes',
+            brief: 'Pin feedback to the title and the photo, tick it off, then resolve it.',
+            icon: 'note',
+            steps: [
+                s(
+                    'Press `N` and click the title: the note is attached to it',
+                    'Note tool (`N`)',
+                    [150, 36],
+                ),
+                s(
+                    'Type the feedback and add a checklist item',
+                    'Note › Add a checklist item',
+                    [236, 60],
+                ),
+                s('Click the empty corner to pin a free note there', 'Note tool (`N`)', [62, 140]),
+                s(
+                    'Tick the item when it is done, then Resolve the note',
+                    'Note › Resolve',
+                    [236, 92],
+                ),
+                s('Open Notes to find every open note and jump to it', 'Notes panel', [24, 90]),
+            ],
+            result: 'Feedback that sits on the page, follows its object and never prints.',
+            scene: [
+                ...at(0, rect(70, 14, 180, 152, { fill: 'page', stroke: 'line', w: 1 })),
+                ...at(0, text(96, 40, 'SUMMER FAIR', { fill: '#111111' })),
+                ...at(0, photo(96, 56, 128, 70)),
+                ...at(
+                    0,
+                    path('M150 30 h12 a8 8 0 0 1 8 8 v4 a8 8 0 0 1 -8 8 h-12 Z', {
+                        fill: '#facc15',
+                    }),
+                ),
+                ...at(
+                    1,
+                    rect(176, 46, 120, 56, { fill: 'page', stroke: 'line', w: 1, shadow: true }),
+                ),
+                ...at(1, text(184, 64, 'Bigger title', { fill: '#111111' })),
+                ...at(1, rect(184, 76, 8, 8, { stroke: 'line', w: 1 })),
+                ...at(1, text(196, 84, 'Try bold', { fill: '#111111' })),
+                ...at(2, circle(62, 134, 7, { fill: '#60a5fa' })),
+                ...at(3, path('M185 80 l3 3 l5 -6', { stroke: '#16a34a', w: 2 })),
+                ...at(4, circle(62, 134, 12, { stroke: '#60a5fa', w: 2, op: 0.6 })),
+            ],
+            uses: ['layers'],
+        },
+    ],
     layers: [
         {
             id: 'landscape-illustration',

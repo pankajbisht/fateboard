@@ -155,6 +155,13 @@ import {
     Blend,
     Stamp,
     Sun,
+    MessageSquareText,
+    Pin,
+    PinOff,
+    Reply,
+    ListChecks,
+    CircleCheck,
+    SquareCheck,
 } from 'lucide-react';
 import {
     AlongPathIcon,
@@ -427,6 +434,15 @@ export const ICONS = {
     blend: Blend,
     stamp: Stamp,
     sun: Sun,
+    // notes (2026-11-17)
+    note: MessageSquareText,
+    pin: Pin,
+    'pin-off': PinOff,
+    reply: Reply,
+    'list-checks': ListChecks,
+    'circle-check': CircleCheck,
+    'check-empty': Square,
+    'check-done': SquareCheck,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

@@ -261,6 +261,8 @@ currently resolves to the **animation** history (BUG-001). Details in [CANVAS.md
 
 - **Pages**: `pages[]` each with `canvasJSON` + meta; switching = `loadFromJSON` into the single canvas, queued with
   `runExclusive`. UI: `organisms/page/PagePanel.tsx`.
+- **Notes**: per page in the canvas JSON (`pageNotes`, canvas-level prop), so they travel with pages, undo, autosave
+  and files; pins are DOM over the board (`organisms/notes/NotePins.tsx`). Store: Notes slice (STATE.md 33).
 - **Layers**: derived list rebuilt from `canvas.getObjects()` (recursive into groups); Fabric is the source of truth.
   UI: `organisms/layer/LayersPanel.tsx`.
 - **Animation**: tracks keyed by `animId` on objects; `applyTracksAt(canvas, tracks, t)` writes props onto live

@@ -1,7 +1,7 @@
 # State (zustand store)
 
 One store: `useStore` in `src/store/index.ts`, created with `create(devtools(combinedSlice))`. Devtools are enabled
-only when `NODE_ENV === 'development'`. `combinedSlice(set, get, store)` **object-spreads 26 slice creators**
+only when `NODE_ENV === 'development'`. `combinedSlice(set, get, store)` **object-spreads 30 slice creators**
 (each once; Paint tools added 2026-11-16). **If two slices define the same key, the one spread later
 silently wins.** 14 keys collide today (`undo`, `redo`, `clipboard` fixed 2026-11-07, Q1). That is the root cause of several bugs (see [Key collisions](#key-collisions)).
 
@@ -15,7 +15,7 @@ Spread order (it matters):
 1 Canvas  2 Brush  3 UI  4 Layers  5 Page  6 Pages  7 Background  8 Command  9 ShapeStyle  10 UndoRedo
 11 Transform  12 Shape  13 Text  14 BackgroundColor  15 ContextMenu  16 Setting  17 advanceOperation
 19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  26 DrawingTools  29 PaintTools  27 Generator
-28 Macro  25 Animation
+28 Macro  30 PageLayers  31 Document  32 Comic  33 Notes  25 Animation
 (each spread once; 18 geometryEngine removed, the second Page spread removed: BUG-002 / BUG-030)
 ```
 
@@ -183,7 +183,7 @@ object), BUG-194 (ungroup splits text shapes).
 **Actions:** `setPageFormat`, `setOrientation`, `setCustomPageSize`, `setPageBackground`, `setZoom(z, point?)`,
 `zoomIn`, `zoomOut`, `fitToScreen`, `applyPageSize` (design, 2026-11-17: the opening zoom `openZoom`: portrait pages
 1.3 × the fit, never wider than the board, scrolled to the top; others 1), `fitToWidth` (design: zoom = fit width / fit page, `lib/canvas/pageFit.ts`, reads the
-`[data-board-scroll]` size and Document `pageSetup`; whiteboard: `fitToScreen`; 2026-11-17), `zoomToRect(rect, padding?)` (whiteboard), `panBy(dx, dy)` and
+`[data-board-scroll]` size and Document `pageSetup`; whiteboard: `fitToScreen`; 2026-11-17), `zoomToRect(rect, padding?)` (whiteboard), `centerViewOn({ x, y })` (scene point to the middle of the view, same zoom, through `panBy`; note pins, 2026-11-17), `panBy(dx, dy)` and
 `pinchZoom(factor, clientX, clientY)` (touch, screen px; design scrolls the `[data-board-scroll]` element, zoom goes through `setZoom`; `panBy` is the one pan path: the Canvas slice's Hand tool and wheel pan call it too), `applyPageSize` (design: state only, zoom 1
 + `pageWidth/Height` from `selectedPreset`; whiteboard: viewport back to 1:1). Exports: `resolvePageSize`, `isFreehand`, `MIN/MAX_ZOOM`,
 `MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`. Zoom range 2 % … 6400 % (BUG-221, was 10 … 400 %).
@@ -613,6 +613,38 @@ makes the folder "Comic panels" with "Panel borders" (frames), "Art" (clip to la
 `Path` in the selected frame's box, put on the Art layer, else in the page margins).
 **Depends on:** PageLayers (`docLayers`, `setActiveLayer`), Document (`currentPageNumber`, `pageSetup`), Page size,
 UndoRedo.
+
+## 33. Notes: `createNotesSlice.ts` (+ `lib/notes/{pageNotes,noteTargets}.ts`, `organisms/notes/`)
+
+**Purpose (2026-11-17):** numbered note pins on a page, at a point or linked to an object (its `shapeId`, the id
+connectors use: copies get a new one, node edits carry it), with a colour tag, open / resolved, pinned, a checklist
+and replies. Pins and the pop-over are DOM (`NotePins`), never drawn on the canvas, so never exported.
+**State:** `pageNotes` (mirror of the canvas-level prop `canvas.pageNotes`, in `CUSTOM_PROPS`; `defineCanvasProp`,
+reset on `canvas:cleared`, set back by `loadFromJSON`, checked by `normalizePageNotes`: bad fields repaired, at most
+500 notes / 5000 characters), `activeNoteId` (open pop-over), `notesVisible`, `noteFilter` { `query`, `status`
+('open' default | 'resolved' | 'all'), `colors` }, `notesScope` ('page' | 'all').
+**Actions:** `bindNotes(canvas)`, `addNote(at, target?)` (opens it; not a history step until it has content),
+`updateNote(id, patch, { record? })` (text, color, status, pinned, x / y of a dragged free pin; `record: false` =
+typing, written at once), `saveNoteEdits(id)` (records a note's unrecorded typing as one step: field left / note
+closed), `deleteNote` (flushes pending history, then the delete is one step at once + Undo toast; an empty note never
+recorded goes with no step and no toast), `discardNoteIfEmpty` (an empty note is dropped when it closes; no step if
+it was never recorded), `addNoteCheckItem` / `toggleNoteCheckItem` /
+`removeNoteCheckItem`, `addNoteReply` / `removeNoteReply`, `linkNoteToSelection`, `unlinkNote`, `selectNoteObject`
+(Select tool + selects the object, or the top-level group that holds it), `focusNote(id, pageId?)` (switch page,
+`centerViewOn` the pin, open it), `setActiveNote`, `setNotesVisible`, `setNoteFilter`, `setNotesScope`.
+**History:** undo snapshots hold `pageNotes`, so every note change calls `saveState` (an unrecorded change would be
+lost by the next undo). A closure set tracks notes not yet recorded (new, or typed): `addNote` and `deleteNote` flush
+pending history first (`saveState(true)`) so each user action is its own step; loads (undo / redo, page switch, file)
+drop empty notes, so an empty note that slipped into a snapshot never comes back as a ghost pin. `focusNote` closes
+the open note before switching pages. A deleted linked object (or a group holding it) leaves its notes where it was (`object:removed`,
+ignored while a page loads or a snapshot is restored); undoing the delete brings the link back.
+**Note tool:** `activeTool === 'note'` (key N, `ToolBarConfig`; the Canvas slice sets crosshair / no picking;
+pointer + Esc wiring in `slices/notes/noteTool.ts`): a click drops a note; on an object (topmost, helpers skipped) the note is linked. Esc → Select.
+**Binding:** the slice binds itself to every new `canvas` (store subscription) and releases the old one; the Canvas
+slice does not call it (it is at its size ceiling).
+**Depends on:** Canvas (`canvas`, `activeTool`, `setActiveTool`), Pages (`pages`, `currentPageId`, `switchPage`,
+`isPageSwitching`), UndoRedo (`saveState`, `undo`, `_isRestoring`), Page (`centerViewOn`), Dialog (`showToast`).
+Other pages' notes are read from their `canvasJSON.pageNotes` (`collectNotes`); the Pages slice is unchanged.
 
 ## 25. Animation: `createAnimationSlice.ts` (+ `src/animation/engine.ts`, `exportVideo.ts`)
 

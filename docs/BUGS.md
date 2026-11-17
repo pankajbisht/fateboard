@@ -26,7 +26,7 @@ browser.
 
 
 **Archive (2026-11-13):** fixed bugs moved to [BUGS_ARCHIVE.md](BUGS_ARCHIVE.md) to keep this file short to read. This
-file lists only bugs that are not fixed. Highest ID so far: **BUG-243**; new bugs take the next one. Look up any
+file lists only bugs that are not fixed. Highest ID so far: **BUG-245**; new bugs take the next one. Look up any
 ID with `grep -n "BUG-0xx" docs/BUGS*.md`. When you fix a bug, move its row to the archive with its new status.
 
 ## Summary
@@ -86,6 +86,8 @@ ID with `grep -n "BUG-0xx" docs/BUGS*.md`. When you fix a bug, move its row to t
 | BUG-240 | Minor | Reflect selection / page switch | open | Found by the fate-reviewer while reviewing Copy spray (2026-11-17), by reading: `reflectSelection` (`createPaintToolsSlice.ts`) awaits the clones, then checks only `canvas` and `isPageSwitching`; all pages share one canvas, so if a page switch finishes while photo clones load, the copies land on the new page. Fix: capture `currentPageId` before the await and compare after (as `sprayCopies` does). |
 | BUG-241 | Minor | touch / pen-only mode | open | Found with BUG-240 (2026-11-17), by reading: `useTouchGestures` `DRAW_TOOLS` lists draw, pencil, pen, laser (and now copySpray) but not Lasso or Drafter, which also draw on a drag without `isDrawingMode`; after a stylus was used, a resting palm reaches Fabric and starts a loop / line instead of panning. Fix: add them (test in `src/hooks/__tests__/useTouchGestures.test.tsx`). |
 | BUG-242 | Minor | pages / page setup | open | Found while adding the manga sizes (2026-11-17), by reading: Add page copies the current page's size (`preset`) but not its `pageSetup` (`canvasJSON: null`), so a new page on a manga board has no bleed and default margins until "Apply this setup to all pages". Fix idea: copy `pageSetup` (and the master page) from the reference page in `addPage`; decide with the owner (InDesign: one document setup for all pages). |
+| BUG-244 | Minor | canvas init / bind disposers | open | Found while adding the Notes slice (2026-11-17), by reading: `createCanvasSlice` `init` calls `bindPageLayers`, `bindDocument` and `bindComic` and drops the disposers they return, so nothing releases them when the canvas is disposed (design ↔ whiteboard switch). `bindDocument`'s `store.subscribe` (and any other subscription inside them) stays alive, so every switch adds one more listener that works on the current canvas: repeated work, not wrong output. UNKNOWN - verify the compositor's own hooks. Fix: keep the disposers and call them in `dispose`, or bind from a store subscription on `canvas` as the Notes slice does. Test needed: init → dispose → init, then one `pages` change runs `refreshNumbers` once |
+| BUG-245 | Minor | notes / page switch | open | Found by the fate-reviewer (2026-11-17), PLAUSIBLE, not reproduced: `focusNote` calls `centerViewOn` right after `await switchPage`; when the other page has a different size, CanvasBoard may not have re-fitted the new page yet, so the pin could be centred with the old layout. UNKNOWN - verify with two pages of different sizes (click a row in Notes > All pages). Fix if confirmed: centre after the board's next fit (e.g. two animation frames, or a board "fitted" signal). Test needed: E2E, two page sizes, the pin is in the middle of the board |
 
 ## Details
 

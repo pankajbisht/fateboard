@@ -93,6 +93,40 @@ export function canvasClientRect(
     };
 }
 
+/**
+ * A scene point (canvas coordinates, before the viewport transform) in client px: viewport zoom / pan, then
+ * the page as shown (fit scale in design, deep zoom window). Floats and note pins anchor with it.
+ */
+export function sceneToClient(
+    canvas: fabric.Canvas,
+    p: { x: number; y: number },
+): { x: number; y: number } | null {
+    const rect = canvasClientRect(canvas);
+    if (!rect) return null;
+    const vt = canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0];
+    const k = canvas.getWidth() > 0 ? rect.width / canvas.getWidth() : 1;
+    return {
+        x: rect.left + (vt[0]! * p.x + vt[2]! * p.y + vt[4]!) * k,
+        y: rect.top + (vt[1]! * p.x + vt[3]! * p.y + vt[5]!) * k,
+    };
+}
+
+/** The inverse of `sceneToClient` (dragging a note pin). Null when the canvas is not on screen. */
+export function clientToScene(
+    canvas: fabric.Canvas,
+    c: { x: number; y: number },
+): { x: number; y: number } | null {
+    const rect = canvasClientRect(canvas);
+    const k = rect && canvas.getWidth() > 0 ? rect.width / canvas.getWidth() : 0;
+    if (!rect || !(k > 0)) return null;
+    const [a, b, cc, d, e, f] = canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0];
+    const det = a! * d! - b! * cc!;
+    if (!det) return null;
+    const px = (c.x - rect.left) / k - e!;
+    const py = (c.y - rect.top) / k - f!;
+    return { x: (d! * px - cc! * py) / det, y: (a! * py - b! * px) / det };
+}
+
 /** Page px per CSS px of the page on screen (1 / fit × zoom on the design board). */
 export function canvasPxPerCss(canvas: fabric.Canvas): number {
     const rect = canvasClientRect(canvas);

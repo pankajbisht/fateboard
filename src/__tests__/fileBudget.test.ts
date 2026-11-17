@@ -37,7 +37,7 @@ const DATA_FILES = new Set([
 const LEGACY_CEILINGS: Record<string, number> = {
     '/src/store/slices/createNodeEditorSlice.ts': 1710, // -8: screenScale moved to lib/canvas
     '/src/lib/utils/GradientTool.ts': 1319,
-    '/src/store/slices/createCanvasSlice.ts': 1224, // was 1257: CanvasTool type → store/canvasTools.ts, size setting → store/pagePreset.ts (2026-11-17)
+    '/src/store/slices/createCanvasSlice.ts': 1223, // was 1257: CanvasTool type → store/canvasTools.ts, size setting → store/pagePreset.ts (2026-11-17); 1224 → 1223: empty select case folded (notes, 2026-11-17)
     '/src/components/organisms/effects/ui/ExportCanvas.tsx': 1150, // was 1183: export bounds moved to lib/export/exportBounds.ts (2026-11-17)
     '/src/store/slices/createLayersSlice.ts': 1024,
     '/src/store/slices/templateSlice.ts': 933,
@@ -50,7 +50,7 @@ const LEGACY_CEILINGS: Record<string, number> = {
     '/src/store/slices/advanceOperationSlice.ts': 726,
     '/src/animation/engine.ts': 725,
     '/src/store/slices/createShapeSlice.ts': 699,
-    '/src/components/organisms/board/ui/CanvasBoard.tsx': 634, // was 645: fit maths moved to lib/canvas/pageFit.ts (2026-11-17)
+    '/src/components/organisms/board/ui/CanvasBoard.tsx': 625, // was 645: fit maths moved to lib/canvas/pageFit.ts (2026-11-17); 634 → 625: float anchor maths → deepZoom sceneToClient (notes)
     '/src/components/pages/web/WhiteboardMarketingSite.tsx': 558, // -2: gallery nav map (2026-11-12)
     '/src/components/organisms/effects/ui/RepeatAlongPath.tsx': 572,
     '/src/components/organisms/DrawPanel.tsx': 526, // was 549: symmetry moved to SymmetryControls (2026-11-16)

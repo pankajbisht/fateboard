@@ -1,6 +1,6 @@
 import * as fabric from 'fabric';
 import type { SliceCreator } from '../types';
-import { canvasClientRect } from '@/lib/canvas/deepZoom';
+import { canvasClientRect, sceneToClient } from '@/lib/canvas/deepZoom';
 import { openZoom, pageFitScale } from '@/lib/canvas/pageFit';
 import { normalizePageSetup } from '@/lib/document/pageSetup';
 import { pageFrameExtent } from '@/lib/document/printMarks';
@@ -97,6 +97,8 @@ export interface PageSlice {
         padding?: number,
     ) => void;
     applyPageSize: (format?: PageFormat, orientation?: Orientation) => void;
+    /** Bring a scene point to the middle of the view, keeping the zoom (through `panBy`). Note pins. */
+    centerViewOn: (p: { x: number; y: number }) => void;
 }
 
 type GeometryPeers = {
@@ -272,6 +274,18 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get) => ({
         ]);
         set({ zoom }, false, 'page/zoomToRect');
         canvas.requestRenderAll();
+    },
+
+    centerViewOn: (p) => {
+        const canvas = get().canvas;
+        if (!canvas || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
+        const at = sceneToClient(canvas, p);
+        const design = isDesignBoard(get() as never);
+        const view = design
+            ? boardScroller(canvas)?.getBoundingClientRect()
+            : canvasClientRect(canvas);
+        if (!at || !view) return;
+        get().panBy(view.left + view.width / 2 - at.x, view.top + view.height / 2 - at.y);
     },
 
     fitToScreen: () => {

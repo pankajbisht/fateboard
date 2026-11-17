@@ -13,10 +13,11 @@ import { DEFAULT_CANVAS_PRESET } from '../board.config';
 import Ruler, { RULER_HIDDEN, RULER_SIZE, createPointerSource, type RulerUnit } from './Ruler';
 import { isTextFloatTarget } from '@/lib/textTargets';
 import { useDesignCanvasSize } from '@/hooks/board/useDesignCanvasSize';
-import { canvasClientRect } from '@/lib/canvas/deepZoom';
+import { sceneToClient } from '@/lib/canvas/deepZoom';
 import { fitGap, fitStage, pageFitScale } from '@/lib/canvas/pageFit';
 import { pageFrameExtent } from '@/lib/document/printMarks';
 import { PageFrame } from './PageFrame';
+import NotePins from '@/components/organisms/notes/NotePins';
 
 export type CanvasMode = 'design' | 'whiteboard';
 
@@ -424,28 +425,16 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
         const compute = () => {
             raf = 0;
 
-            const upper = canvas.upperCanvasEl as HTMLCanvasElement | undefined;
-            if (!upper) return;
-
             if (!obj.aCoords) obj.setCoords?.();
             const a = obj.aCoords;
             if (!a) return;
 
-            // scene -> canvas pixels (viewport zoom / pan) -> CSS pixels (fit scale in design)
-            const vt: number[] = canvas.viewportTransform ?? [1, 0, 0, 1, 0, 0];
-            const corners = [a.tl, a.tr, a.bl, a.br].map((p: any) => ({
-                x: vt[0]! * p.x + vt[2]! * p.y + vt[4]!,
-                y: vt[1]! * p.x + vt[3]! * p.y + vt[5]!,
-            }));
-
-            const upperRect = canvasClientRect(canvas) ?? upper.getBoundingClientRect(); // the page, also in deep zoom
+            // scene -> client px (viewport zoom / pan, fit scale in design, deep zoom) -> host px
             const hostRect = host.getBoundingClientRect();
-            const k = canvas.getWidth() > 0 ? upperRect.width / canvas.getWidth() : 1;
-            const dx = upperRect.left - hostRect.left;
-            const dy = upperRect.top - hostRect.top;
-
-            const xs = corners.map((p) => p.x * k + dx);
-            const ys = corners.map((p) => p.y * k + dy);
+            const corners = [a.tl, a.tr, a.bl, a.br].map((p: any) => sceneToClient(canvas, p));
+            if (corners.some((p) => !p)) return;
+            const xs = corners.map((p) => p!.x - hostRect.left);
+            const ys = corners.map((p) => p!.y - hostRect.top);
 
             const next: Anchor = {
                 cx: Math.round((Math.min(...xs) + Math.max(...xs)) / 2),
@@ -531,6 +520,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
                         Follows the top-bar Grid toggle (off by default). */}
                     {/* absolute + inset-0: size never depends on the Fabric wrapper */}
                     <div ref={hostRef} className="absolute inset-0 overflow-hidden" />
+                    <NotePins />
                     {renderToolbar(0, 0, anchor?.hostW ?? 0)}
                 </div>
             </div>
@@ -623,6 +613,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
                                 setup={pageSetup}
                             />
                         )}
+                        <NotePins />
                         {/* Outside the artboard (it clips with overflow-hidden), same stage coordinates */}
                         {renderToolbar(artboardLeft, artboardTop, stageWidth)}
                     </div>
