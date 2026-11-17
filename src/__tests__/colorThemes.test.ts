@@ -77,8 +77,11 @@ describe('color themes', () => {
         expect(dark).toMatch(/--color-primary-ink:\s*var\(--color-primary-300\)/);
     });
 
-    it('the board (workspace, whiteboard paper) is tinted by the theme, not flat gray', () => {
-        expect(css).toMatch(/--color-workspace:\s*color-mix\([^;]*var\(--color-primary-/);
+    it('whiteboard paper is tinted by the theme; the design pasteboard is neutral grey (InDesign / CSP)', () => {
+        // owner 2026-11-17: the area around the page is a neutral grey so page colours read true
+        const workspace = [...css.matchAll(/--color-workspace:\s*([^;]+);/g)].map((m) => m[1]);
+        expect(workspace.length).toBeGreaterThanOrEqual(2); // light + dark
+        for (const value of workspace) expect(value).not.toMatch(/primary|accent/);
         expect(css).toMatch(/--color-board:\s*color-mix\([^;]*var\(--color-primary-/);
     });
 });

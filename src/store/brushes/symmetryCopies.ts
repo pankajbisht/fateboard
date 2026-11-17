@@ -7,8 +7,8 @@
 import * as fabric from 'fabric';
 import { symmetryMatrices, type Matrix, type SymmetryMode } from '@/lib/canvas/symmetry';
 
-/** Props a copy keeps that `clone()` would drop. */
-const CLONE_PROPS = [
+/** Props a copy keeps that `clone()` would drop (also Copy spray's snapshot, paintTools/copySprayTool). */
+export const CLONE_PROPS = [
     'perPixelTargetFind',
     'targetFindTolerance',
     'isFreehand',

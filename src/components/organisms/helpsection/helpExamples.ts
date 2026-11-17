@@ -971,6 +971,61 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
         },
     ],
 
+    copySpray: [
+        {
+            id: 'copy-spray-stars',
+            title: 'A sky full of stars',
+            brief: 'Draw one star, then spray a whole night sky of copies in one drag.',
+            icon: 'copy-spray',
+            steps: [
+                s('Draw one star and keep it selected', 'Shapes › Star', [50, 50]),
+                s(
+                    'Press `Shift+S` and set Spread to 150 % and Size jitter to 60 %',
+                    'Copy spray (`Shift+S`)',
+                ),
+                s('Drag across the sky: stars land along the drag', 'Drag', [170, 70]),
+                s(
+                    'Drag again lower down for a second band (each drag is one undo step)',
+                    'Drag',
+                    [170, 150],
+                ),
+            ],
+            result: 'A starry sky as one group: move it, recolour it or ungroup single stars.',
+            scene: [
+                ...at(0, rect(0, 0, 320, 190, { fill: '#1e1b4b' }), star(50, 50, 14)),
+                ...during(1, 2, circle(50, 50, 32, { stroke: '#a5b4fc', w: 1, dash: '4 3' })),
+                ...at(
+                    2,
+                    ...[
+                        [96, 62, 7],
+                        [122, 40, 10],
+                        [150, 78, 6],
+                        [176, 52, 11],
+                        [204, 86, 8],
+                        [230, 58, 5],
+                        [256, 92, 9],
+                        [282, 66, 7],
+                        [140, 112, 5],
+                        [214, 126, 6],
+                    ].map(([x, y, r]) => star(x, y, r)),
+                ),
+                ...at(
+                    3,
+                    ...[
+                        [70, 150, 6],
+                        [104, 166, 9],
+                        [138, 144, 5],
+                        [172, 160, 8],
+                        [206, 146, 6],
+                        [240, 168, 10],
+                        [274, 150, 5],
+                    ].map(([x, y, r]) => star(x, y, r)),
+                ),
+            ],
+            uses: ['shapes', 'layers'],
+        },
+    ],
+
     lasso: [
         {
             id: 'lasso-cluster',
@@ -1630,6 +1685,54 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
         },
     ],
 
+    comic: [
+        {
+            id: 'four-panel-manga',
+            title: 'A four-panel manga page',
+            brief: 'Panels, a speech balloon, a tone and focus lines for a short gag strip.',
+            icon: 'comic-panels',
+            steps: [
+                s(
+                    'Pick the 2 × 2 layout: four panels inside the page margins',
+                    'Comic › Panel layouts',
+                    [60, 40],
+                ),
+                s(
+                    'Draw on the Art layer: the drawing stays inside the panels',
+                    'Layers › Art',
+                    [100, 60],
+                ),
+                s('Add a Speech balloon and type the line', 'Comic › Balloons', [190, 50]),
+                s('Select the last panel and add focus lines', 'Comic › Focus lines', [190, 130]),
+                s('Fill the sky shape with a dot tone', 'Comic › Apply tone', [70, 120]),
+            ],
+            result: 'A manga page whose panels, art, balloons and tones stay separate and editable.',
+            scene: [
+                ...at(0, rect(20, 14, 280, 152, { fill: 'page', stroke: 'line', w: 1 })),
+                ...at(0, rect(30, 22, 126, 64, { fill: 'page', stroke: '#111111', w: 2 })),
+                ...at(0, rect(164, 22, 126, 64, { fill: 'page', stroke: '#111111', w: 2 })),
+                ...at(0, rect(30, 94, 126, 64, { fill: 'page', stroke: '#111111', w: 2 })),
+                ...at(0, rect(164, 94, 126, 64, { fill: 'page', stroke: '#111111', w: 2 })),
+                ...at(1, circle(90, 58, 16, { fill: '#ffd6a5' })),
+                ...at(
+                    2,
+                    path(
+                        'M190 30 H270 Q280 30 280 40 V60 Q280 70 270 70 H205 L196 80 L198 70 H190 Q180 70 180 60 V40 Q180 30 190 30Z',
+                        { fill: 'page', stroke: '#111111', w: 1.5 },
+                    ),
+                ),
+                ...at(
+                    3,
+                    path(
+                        'M164 94 L227 126 L164 104Z M290 94 L227 126 L280 94Z M164 158 L227 126 L176 158Z M290 158 L227 126 L290 146Z',
+                        { fill: '#111111' },
+                    ),
+                ),
+                ...at(4, rect(34, 98, 118, 22, { fill: '#9aa5b1' })),
+            ],
+            uses: ['layers', 'shapes'],
+        },
+    ],
     layers: [
         {
             id: 'landscape-illustration',

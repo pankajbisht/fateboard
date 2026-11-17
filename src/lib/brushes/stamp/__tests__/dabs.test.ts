@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { DabWalker, dabBounds, fireColor, mixHex, strokeDabs, type StrokePoint } from '../dabs';
+import {
+    DabWalker,
+    dabBounds,
+    fireColor,
+    mixHex,
+    strokeDabs,
+    strokeLength,
+    type StrokePoint,
+} from '../dabs';
 import { DEFAULT_STAMP, resolveStamp } from '../stampParams';
 import { mulberry32 } from '../rng';
 
@@ -109,5 +117,38 @@ describe('DabWalker', () => {
         expect(b.minX).toBeLessThan(-7);
         expect(b.maxX).toBeGreaterThan(27);
         expect(dabBounds([], 0)).toBeNull();
+    });
+});
+
+describe('jag (lightning zigzag)', () => {
+    const straight = line(81, 2.5); // 200 px along y = 0
+
+    it('is off by default and clamped to 0 … 1', () => {
+        expect(DEFAULT_STAMP.jag).toBe(0);
+        expect(resolveStamp({ jag: 5 }).jag).toBe(1);
+        expect(resolveStamp({ jag: -1 }).jag).toBe(0);
+    });
+
+    it('off: dabs stay on the stroke (existing brushes draw as before)', () => {
+        const dabs = strokeDabs(straight, resolveStamp({ spacing: 0.1 }), 10, '#000000', 3);
+        expect(dabs.every((d) => d.y === 0)).toBe(true);
+    });
+
+    it('on: the trail zigzags across the stroke but stays one connected line, the same every time', () => {
+        const P = resolveStamp({ spacing: 0.1, jag: 1, pressureSize: 0 });
+        const dabs = strokeDabs(straight, P, 10, '#000000', 3);
+        const maxOff = Math.max(...dabs.map((d) => Math.abs(d.y)));
+        expect(maxOff).toBeGreaterThan(10); // swings wider than the brush
+        for (let i = 1; i < dabs.length; i++)
+            expect(Math.abs(dabs[i].y - dabs[i - 1].y)).toBeLessThan(10); // no gaps between dabs
+        expect(strokeDabs(straight, P, 10, '#000000', 3)).toEqual(dabs);
+        expect(strokeDabs(straight, P, 10, '#000000', 4)).not.toEqual(dabs);
+    });
+
+    it('live and saved walks agree with jag on', () => {
+        const P = resolveStamp({ spacing: 0.2, jag: 0.7, scatter: 0.3 });
+        const once = strokeDabs(straight, P, 8, '#00ffff', 9);
+        const walker = new DabWalker(P, 8, '#00ffff', 9, strokeLength(straight));
+        expect(straight.flatMap((p) => walker.push(p))).toEqual(once);
     });
 });

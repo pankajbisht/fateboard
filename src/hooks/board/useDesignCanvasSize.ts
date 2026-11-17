@@ -1,4 +1,5 @@
-import { useLayoutEffect } from 'react';
+import { useEffect, useLayoutEffect } from 'react';
+import { useStore } from '@store';
 import type * as fabric from 'fabric';
 import { designRenderRatio } from '@/lib/canvas/renderRatio';
 import { applyWindow, clearWindow, needsWindow, visibleWindow } from '@/lib/canvas/deepZoom';
@@ -13,7 +14,8 @@ type Size = { width: number; height: number };
  * - Past it (deep zoom, BUG-221) the buffer covers only the visible part of the page at full density
  *   (lib/canvas/deepZoom), re-placed as the board scrolls, so 6400 % stays sharp with a small buffer.
  *
- * A layout effect: the page frame and the canvas resize in the same paint (BUG-146).
+ * A layout effect: the page frame and the canvas resize in the same paint (BUG-146). Also opens the page view
+ * (`useOpenPageView` below).
  */
 export function useDesignCanvasSize(
     canvas: fabric.Canvas | null,
@@ -29,6 +31,8 @@ export function useDesignCanvasSize(
     },
 ): void {
     const { isWhiteboard, size, display } = o;
+    // a page opening (board measured, page size changed) gets its opening zoom
+    useOpenPageView(canvas, isWhiteboard, size, o.view.w > 0 && o.view.h > 0);
     const dpr = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
     const scale = size && display ? display.width / size.width : 1;
     const windowed = !!size && !isWhiteboard && needsWindow(size.width, size.height, dpr * scale);
@@ -78,4 +82,21 @@ export function useDesignCanvasSize(
         canvas.calcOffset?.();
         canvas.requestRenderAll();
     }, [canvas, isWhiteboard, size?.width, size?.height, display?.width, display?.height, follow]); // eslint-disable-line react-hooks/exhaustive-deps
+}
+
+/**
+ * Opening a page on the design board: when the board is first measured and when the page size changes, the
+ * Page slice's `applyPageSize` sets the opening zoom (portrait pages a bit taller than the board, top first;
+ * lib/canvas/pageFit `openZoom`). A window resize keeps the user's zoom.
+ */
+export function useOpenPageView(
+    canvas: fabric.Canvas | null,
+    isWhiteboard: boolean,
+    size: Size | null | undefined,
+    measured: boolean,
+): void {
+    useEffect(() => {
+        if (isWhiteboard || !canvas || !size || !measured) return;
+        useStore.getState().applyPageSize?.();
+    }, [canvas, isWhiteboard, size?.width, size?.height, measured]); // eslint-disable-line react-hooks/exhaustive-deps -- the size by value, not by object identity
 }

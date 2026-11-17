@@ -46,7 +46,7 @@ describe('Brush (left rail)', () => {
         for (const name of ['Fire', 'Embers', 'Glow'])
             expect(screen.getByRole('radio', { name })).toBeTruthy();
         expect(screen.queryByRole('radio', { name: 'G-pen' })).toBeNull();
-        fireEvent.click(screen.getByRole('button', { name: 'Smoke & air' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Smoke & fog' }));
         expect(screen.getByRole('radio', { name: 'Smoke' })).toBeTruthy();
         fireEvent.change(screen.getByRole('searchbox', { name: 'Search brushes' }), {
             target: { value: 'pen' },

@@ -1,7 +1,6 @@
 import { useStore } from '@store';
 import { GlowDivider } from '@/components/atoms/GlowDivider';
-import { SegmentedControl } from '@/components/molecules/SegmentedControl';
-import { Bar, Hint, Key } from './drawToolParts';
+import { Bar, BarSelect, Hint, Key } from './drawToolParts';
 
 /** Lasso (L) options: select or fill, touch or contain. */
 export function LassoOptions() {
@@ -10,11 +9,8 @@ export function LassoOptions() {
     return (
         <Bar label="Lasso" icon="lasso">
             <GlowDivider />
-            <SegmentedControl<'select' | 'fill'>
-                aria-label="Lasso action"
-                size="sm"
-                block={false}
-                className="[&>button]:flex-none [&>button]:px-2.5"
+            <BarSelect<'select' | 'fill'>
+                label="Lasso action"
                 value={style.action}
                 onChange={(action) => setLassoStyle({ action })}
                 options={[
@@ -23,11 +19,8 @@ export function LassoOptions() {
                 ]}
             />
             {style.action === 'select' && (
-                <SegmentedControl<'touch' | 'contain'>
-                    aria-label="Objects to pick"
-                    size="sm"
-                    block={false}
-                    className="[&>button]:flex-none [&>button]:px-2.5"
+                <BarSelect<'touch' | 'contain'>
+                    label="Objects to pick"
                     value={style.match}
                     onChange={(match) => setLassoStyle({ match })}
                     options={[

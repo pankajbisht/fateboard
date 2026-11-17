@@ -1,5 +1,6 @@
 /**
- * Paint tools: Paint bucket (G), Spray (Shift + B), Lasso (L), Drafter (D), "Reflect selection" and the Brush
+ * Paint tools: Paint bucket (G), Spray (Shift + B), Copy spray (Shift + S, ./paintTools/copySpray*), Lasso (L),
+ * Drafter (D), "Reflect selection" and the Brush
  * settings overrides of the stamp brushes. Settings live here; the tools listen on the canvas only while
  * active (attached / detached by the store subscription below, like the Pen and the Laser). The geometry is in
  * lib/canvas (floodFill, traceContours, lasso, drafter, symmetry); the canvas work in ./paintTools.
@@ -20,6 +21,7 @@ import { symmetryClones } from '../brushes/symmetryCopies';
 import { bucketFill, isHelperObject, type BucketResult } from './paintTools/bucketFill';
 import { attachLasso, lassoTargets, selectObjects } from './paintTools/lassoTool';
 import { attachDrafter, drafterObject } from './paintTools/drafterTool';
+import { createCopySpray, type CopySprayActions } from './paintTools/copySprayActions';
 import {
     DEFAULT_BUCKET_STYLE,
     DEFAULT_DRAFTER_STYLE,
@@ -42,7 +44,7 @@ export type ReflectOptions = {
     around?: 'selection' | 'page';
 };
 
-export interface PaintToolsSlice {
+export interface PaintToolsSlice extends CopySprayActions {
     bucketStyle: BucketStyle;
     setBucketStyle: (patch: Partial<BucketStyle>) => void;
     lassoStyle: LassoStyle;
@@ -95,6 +97,7 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
         return c ? screenScale(c) : 1;
     };
     const toast = (message: string) => peers().showToast?.({ message });
+    const copySpray = createCopySpray(set as never, get);
 
     /* -------------------- tool listeners (while the tool is active) -------------------- */
 
@@ -124,6 +127,7 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
                 onLine: (a, b) => get().drafterLine(a, b),
                 onEscape: () => peers().setActiveTool?.('select'),
             });
+        else if (tool === 'copySpray') detach = copySpray.attach(canvas, screen);
     };
 
     /* -------------------- symmetry guide (helper object) -------------------- */
@@ -217,6 +221,7 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
     };
 
     return {
+        ...copySpray.state,
         bucketStyle: DEFAULT_BUCKET_STYLE,
         setBucketStyle: (patch) =>
             set(

@@ -13,6 +13,8 @@ export type PageCardProps = {
     active: boolean;
     /** CSS aspect-ratio of the page ("1920 / 1080"), so the thumbnail has the page's shape. */
     aspectRatio: string;
+    /** Number chip text (page number, "L 2" / "R 3" on facing pages, "M" for a master); default index + 1. */
+    badge?: string;
     canDelete: boolean;
     /** This card is being dragged / another card is dragged over it. */
     dragging: boolean;
@@ -37,6 +39,7 @@ export function PageCard({
     index,
     active,
     aspectRatio,
+    badge,
     canDelete,
     dragging,
     dropTarget,
@@ -156,7 +159,7 @@ export function PageCard({
                         active ? 'bg-primary-600 text-white' : 'bg-surface-strong text-ink-muted',
                     )}
                 >
-                    {index + 1}
+                    {badge ?? index + 1}
                 </span>
                 {editing ? (
                     <Input

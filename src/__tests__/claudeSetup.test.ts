@@ -103,7 +103,7 @@ describe('guard hook: guardrails ask the owner', () => {
         expect(
             change(
                 'src/__tests__/fileBudget.test.ts',
-                "createCanvasSlice.ts': 1257",
+                "createCanvasSlice.ts': 1224",
                 "createCanvasSlice.ts': 1300",
             ),
         ).toBe('ask');

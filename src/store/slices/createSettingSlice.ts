@@ -3,6 +3,7 @@ import { settingsStorage } from '@/lib/storage';
 import {
     CANVAS_ORIENTATIONS,
     CANVAS_PRESETS,
+    currentPresetId,
     DEFAULT_CANVAS_PRESET,
     orientPreset,
     type CanvasOrientation,
@@ -121,7 +122,10 @@ export function sanitizeSettings(raw: unknown): Settings {
         unit: pick(r.unit, UNITS, DEFAULT_SETTINGS.unit),
         freehand: typeof r.freehand === 'boolean' ? r.freehand : DEFAULT_SETTINGS.freehand,
         defaultCanvasPresetId: pick(
-            r.defaultCanvasPresetId,
+            // an id merged into another entry (A4 Landscape → A4) keeps its format
+            typeof r.defaultCanvasPresetId === 'string'
+                ? currentPresetId(r.defaultCanvasPresetId)
+                : r.defaultCanvasPresetId,
             [...CANVAS_PRESET_IDS, CUSTOM_CANVAS_ID],
             DEFAULT_SETTINGS.defaultCanvasPresetId,
         ),

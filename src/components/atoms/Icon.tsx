@@ -13,7 +13,9 @@ import {
     AlignStartHorizontal,
     AlignStartVertical,
     AlignVerticalDistributeCenter,
+    ArrowDownToLine,
     ArrowLeftRight,
+    ArrowRightToLine,
     Bold,
     BriefcaseBusiness,
     Camera,
@@ -24,6 +26,7 @@ import {
     ChevronUp,
     ChevronsDown,
     ChevronsUp,
+    CornerLeftDown,
     Circle,
     CircleQuestionMark,
     ClipboardPaste,
@@ -39,7 +42,9 @@ import {
     File,
     FileOutput,
     FileText,
+    Folder,
     FolderOpen,
+    FolderPlus,
     Grid2x2,
     Grid3x3,
     Grip,
@@ -52,6 +57,8 @@ import {
     Info,
     Italic,
     Layers,
+    LayoutDashboard,
+    Layers2,
     LoaderCircle,
     Lock,
     LockOpen,
@@ -70,6 +77,7 @@ import {
     RotateCw,
     Ruler,
     ScanSearch,
+    UnfoldHorizontal,
     Save,
     Scissors,
     Search,
@@ -136,6 +144,7 @@ import {
     Sparkles,
     Leaf,
     Droplets,
+    Waves,
     Wind,
     Zap,
     Feather,
@@ -173,6 +182,7 @@ import {
     UngroupObjectsIcon,
     BrushSettingsIcon,
     ColorWheelIcon,
+    CopySprayIcon,
     DrafterIcon,
     GPenIcon,
     KaleidoscopeIcon,
@@ -212,7 +222,7 @@ export const ICONS = {
     'align-objects-bottom': AlignEndHorizontal,
     'distribute-horizontal': AlignHorizontalDistributeCenter,
     'distribute-vertical': AlignVerticalDistributeCenter,
-    'bring-to-front': BringToFrontIcon, // 2026-11-16 (2): layer bars + arrow, one set with the three below
+    'bring-to-front': BringToFrontIcon, // 2026-11-17: two objects + corner arrow, one set with the three below
     'bring-forward': BringForwardIcon,
     'send-backward': SendBackwardIcon,
     'send-to-back': SendToBackIcon,
@@ -220,8 +230,16 @@ export const ICONS = {
     'angle-down': ChevronDown,
     'angles-up': ChevronsUp,
     'angles-down': ChevronsDown,
+    // page layers panel (2026-11-17)
+    folder: Folder,
+    'folder-plus': FolderPlus,
+    'clip-below': CornerLeftDown,
+    'merge-down': ArrowDownToLine,
+    flatten: Layers2,
+    'move-to-layer': ArrowRightToLine,
+    'comic-panels': LayoutDashboard, // left rail Comic (2026-11-17)
     'layer-group': Layers,
-    'object-group': GroupObjectsIcon, // 2026-11-16 (2): shapes in one dashed frame
+    'object-group': GroupObjectsIcon, // 2026-11-17: shapes in selection brackets
     'object-ungroup': UngroupObjectsIcon, // each shape in its own frame
     lock: Lock,
     'lock-open': LockOpen,
@@ -251,6 +269,7 @@ export const ICONS = {
     compress: Minimize,
     expand: Maximize,
     'zoom-fit': ScanSearch, // zoom to fit (distinct from fullscreen's expand)
+    'zoom-fit-width': UnfoldHorizontal, // fit the page width (2026-11-17)
     eye: Eye,
     focus: Focus, // distraction-free mode
     'magnifying-glass': Search,
@@ -384,6 +403,7 @@ export const ICONS = {
     'paint-bucket': PaintBucket,
     'spray-can': SprayCan,
     'spray-pattern': SprayPatternIcon,
+    'copy-spray': CopySprayIcon,
     lasso: LassoSelect,
     drafter: DrafterIcon,
     symmetry: SymmetryIcon,
@@ -400,6 +420,7 @@ export const ICONS = {
     sparkles: Sparkles,
     leaf: Leaf,
     droplets: Droplets,
+    waves: Waves,
     wind: Wind,
     zap: Zap,
     feather: Feather,

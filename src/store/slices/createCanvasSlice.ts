@@ -9,7 +9,8 @@ import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
 import { projectStorage, type StoredBoard } from '@/lib/storage';
 import { emptyAnimation } from '@/animation/engine';
-import { getDefaultCanvasPreset } from './createSettingSlice';
+import { applySizeSetting, startBoardPreset } from '../pagePreset';
+import type { CanvasTool } from '../canvasTools';
 
 /**
  * Custom properties saved with every object.
@@ -30,20 +31,6 @@ const WHEEL_LINE_PX = 16;
 const WHEEL_ZOOM_RATE = 0.0015;
 const PINCH_ZOOM_RATE = 0.01;
 const PINCH_DELTA_MAX = 50;
-
-/** Pen (P), Pencil (Shift + P) and Laser (K) work with `createDrawingToolsSlice` / the brush slice. */
-type CanvasTool =
-    | 'select'
-    | 'pan'
-    | 'draw'
-    | 'node'
-    | 'pen'
-    | 'pencil'
-    | 'laser'
-    | 'spray'
-    | 'bucket'
-    | 'lasso'
-    | 'drafter';
 
 type CanvasObject = any;
 type CanvasInstance = fabric.Canvas;
@@ -218,20 +205,8 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         unloadHandler = null;
     };
 
-    /**
-     * A new board starts at Settings > Canvas size. Plain state, not `setSelectedPreset`:
-     * it is the base of the new board, not an edit (no undo step, no autosave of its own).
-     */
-    const applyDefaultPreset = () => {
-        const settings = get().settings;
-        if (!settings) return;
-        const preset = getDefaultCanvasPreset(settings);
-        set(
-            { selectedPreset: preset, pageWidth: preset.width, pageHeight: preset.height },
-            false,
-            'canvas/defaultPreset',
-        );
-    };
+    // a new board starts at Settings > Canvas size (+ a manga size's page setup), not an edit (store/pagePreset)
+    const applyDefaultPreset = () => startBoardPreset(get, set);
 
     const cleanupEditingSession = (commit = false) => {
         get().closeShapeTextEditor?.(commit);
@@ -450,6 +425,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
                 case 'pen':
                 case 'laser':
+                case 'copySpray':
                 case 'bucket':
                 case 'lasso':
                 case 'drafter': {
@@ -976,6 +952,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 get().defaultSettings();
                 get().loadLib(canvas);
                 get().registerCanvasEvents(canvas);
+                get().bindPageLayers?.(canvas); // page layers + compositor (createPageLayersSlice)
+                get().bindDocument?.(canvas); // page setup, master pages, page numbers
+                get().bindComic?.(canvas); // comic panel frames keep their areas in step
 
                 attachUnloadHandler();
 
@@ -1070,17 +1049,8 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             flushPersist();
         },
 
-        /**
-         * Settings > Canvas size / Orientation changed since the editor was last open: the open
-         * page takes that size, as one undo step (owner, 2026-11-11). A whiteboard has no page
-         * size, so the change waits for the next design board.
-         */
-        applyCanvasSizeSetting: () => {
-            const { canvas, settings } = get();
-            if (!canvas || !settings || settings.freehand) return;
-            if (!get().takePendingCanvasSize?.()) return;
-            get().setSelectedPreset(getDefaultCanvasPreset(settings));
-        },
+        /** Settings > Canvas size / Orientation changed: the open page takes it (store/pagePreset). */
+        applyCanvasSizeSetting: () => applySizeSetting(get),
 
         /**
          * Persist on content changes that selection/modify events don't cover:

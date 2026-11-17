@@ -81,6 +81,12 @@ export class DabWalker {
     private carry = 0;
     private sprayCarry = 0;
     private dir = 0;
+    /* jag: offsets at the last / next knot and their distances along the stroke (own random stream) */
+    private readonly jagRnd: () => number;
+    private jagFrom = 0;
+    private jagTo = 0;
+    private jagStart = 0;
+    private jagEnd = 0;
 
     private readonly params: StampParams;
     private readonly size: number;
@@ -99,6 +105,28 @@ export class DabWalker {
         this.color = color;
         this.totalLength = totalLength;
         this.rnd = mulberry32(seed);
+        // a separate stream, so turning jag on never changes the other random dab settings
+        this.jagRnd = mulberry32(seed ^ 0x9e3779b9);
+    }
+
+    /**
+     * Lightning zigzag: the offset across the stroke at a distance along it. Knots every 2 … 6 brush sizes get
+     * a random offset (up to 3 sizes × jag); between knots the trail runs straight, so the
+     * dabs form one connected, sharply turning line.
+     */
+    private jagAt(dist: number): number {
+        const amp = this.params.jag * this.size * 3;
+        while (dist >= this.jagEnd) {
+            this.jagStart = this.jagEnd;
+            this.jagFrom = this.jagTo;
+            this.jagEnd += Math.max(4, this.size * (2 + 4 * this.jagRnd()));
+            this.jagTo = (this.jagRnd() * 2 - 1) * amp;
+        }
+        return lerp(
+            this.jagFrom,
+            this.jagTo,
+            (dist - this.jagStart) / (this.jagEnd - this.jagStart),
+        );
     }
 
     /** Diameter (before jitter) at a distance along the stroke, for a pressure and a speed (px / ms). */
@@ -185,9 +213,10 @@ export class DabWalker {
         const rnd = this.rnd;
         const base = this.sizeAt(dist, q.p, speed);
         const pressureAlpha = 1 - P.pressureOpacity + P.pressureOpacity * clamp(q.p, 0, 1);
+        const jag = P.jag > 0 ? this.jagAt(dist) : 0;
         for (let i = 0; i < P.count; i++) {
-            let x = q.x;
-            let y = q.y;
+            let x = q.x - Math.sin(this.dir) * jag;
+            let y = q.y + Math.cos(this.dir) * jag;
             let size = base * (1 - P.sizeJitter * rnd());
             if (P.spray) {
                 // particles inside the nozzle: hard spray = even disc, soft spray = denser in the middle

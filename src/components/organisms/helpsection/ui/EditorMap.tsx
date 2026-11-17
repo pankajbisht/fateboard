@@ -39,6 +39,7 @@ const REGIONS: Region[] = [
             'lasso',
             'bucket',
             'spray',
+            'copySpray',
             'drafter',
             'brush',
             'draw',

@@ -1,8 +1,7 @@
 import { useStore } from '@store';
 import { GlowDivider } from '@/components/atoms/GlowDivider';
 import { PaintTargetSwatch } from '@/components/molecules/PaintTargetSwatch';
-import { SegmentedControl } from '@/components/molecules/SegmentedControl';
-import { Bar, BarSlider, Hint } from './drawToolParts';
+import { Bar, BarSelect, BarSlider, Hint } from './drawToolParts';
 
 /** Paint bucket (G) options: colour, what a click fills, tolerance, gap closing, expand, placement. */
 export function BucketOptions() {
@@ -19,11 +18,8 @@ export function BucketOptions() {
                 value={color}
                 onChange={(hex) => updateBrush({ color: hex })}
             />
-            <SegmentedControl<'auto' | 'region' | 'shape'>
-                aria-label="Fill"
-                size="sm"
-                block={false}
-                className="[&>button]:flex-none [&>button]:px-2.5"
+            <BarSelect<'auto' | 'region' | 'shape'>
+                label="Fill"
                 value={style.mode}
                 onChange={(mode) => setBucketStyle({ mode })}
                 options={[
@@ -56,11 +52,8 @@ export function BucketOptions() {
                 value={style.expand}
                 onChange={(expand) => setBucketStyle({ expand })}
             />
-            <SegmentedControl<'behind' | 'top'>
-                aria-label="Place fill"
-                size="sm"
-                block={false}
-                className="[&>button]:flex-none [&>button]:px-2.5"
+            <BarSelect<'behind' | 'top'>
+                label="Place fill"
                 value={style.placement}
                 onChange={(placement) => setBucketStyle({ placement })}
                 options={[

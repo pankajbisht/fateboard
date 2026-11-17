@@ -96,12 +96,9 @@
     --color-surface-muted: #f5f8fc; /* section backgrounds, hover */
     --color-surface-strong: #eaeff6; /* pressed, selected neutral, tracks */
     --color-surface-raised: #ffffff; /* popovers, menus, modals */
-    /* board: tinted by the active color theme (was a flat, dull #c3c9d2 / beige) */
-    --color-workspace: color-mix(
-        in oklab,
-        var(--color-primary-200) 32%,
-        #e3e7ee
-    ); /* around the page */
+    /* pasteboard around the design page: neutral grey like InDesign / Clip Studio (owner 2026-11-17), so page
+       colours read true; was tinted by the color theme */
+    --color-workspace: #d4d4d8;
     --color-board: color-mix(in oklab, var(--color-primary-50) 70%, #fdfdfb); /* whiteboard paper */
     --color-line: #e3e8ef;
     --color-line-strong: #cbd3df;
@@ -154,6 +151,7 @@
     --ui-rail-btn: 40px; /* rail button */
     --ui-rail-icon: 19px; /* icon inside it */
     --ui-swatch: 20px; /* right dock palette swatch + color tool box */
+    --ui-bar: calc(var(--ui-btn) + 12px); /* header property bar row (follows the icon size) */
 }
 :root[data-icon-size='sm'] {
     --ui-btn: 24px;
@@ -246,7 +244,7 @@
     --color-surface-muted: #172135;
     --color-surface-strong: #1f2b42;
     --color-surface-raised: #18233a;
-    --color-workspace: color-mix(in oklab, var(--color-primary-950) 22%, #080c16); /* subtle tint */
+    --color-workspace: #232327; /* neutral pasteboard (InDesign dark UI) */
     /* whiteboard paper stays light (ink is usually dark) but softer than white */
     --color-board: color-mix(in oklab, var(--color-primary-400) 7%, #e8eaee);
     --color-line: #2f3c58; /* dividers: >= 1.6:1 on surface */

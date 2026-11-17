@@ -1,7 +1,12 @@
-import { Slider } from '@/components/atoms/Slider';
-/** Shared pieces of the Pen / Pencil options bars (the header context row). */
+/**
+ * Shared pieces of the property bar (the header row under the command bar): every tool's bar starts with
+ * its icon + label, uses dropdowns instead of tab rows, and keeps its hint behind an ⓘ (owner 2026-11-17).
+ */
 import type { ReactNode } from 'react';
+import { Slider } from '@/components/atoms/Slider';
 import { Icon, type IconName } from '@/components/atoms/Icon';
+import { Select, type SelectOption } from '@/components/atoms/Select';
+import { Tooltip } from '@/components/molecules/Tooltip';
 
 export function Bar({
     label,
@@ -13,7 +18,8 @@ export function Bar({
     children: ReactNode;
 }) {
     return (
-        <div className="overflow-x-auto bg-surface px-2 py-1">
+        // fills the fixed-height property row (HeaderViewTool), so switching tools never moves the canvas
+        <div className="flex h-full min-w-0 flex-1 items-center overflow-x-auto bg-surface px-2">
             <div
                 role="toolbar"
                 aria-label={`${label} options`}
@@ -22,9 +28,9 @@ export function Bar({
                 onMouseDown={(e) => {
                     if (!(e.target as HTMLElement).closest('input')) e.preventDefault();
                 }}
-                className="flex min-h-[var(--ui-btn)] items-center gap-3 whitespace-nowrap text-xs text-ink"
+                className="flex flex-1 items-center gap-3 whitespace-nowrap text-xs text-ink"
             >
-                <span className="flex items-center gap-1.5 rounded-md bg-primary-100 px-2 py-1 font-semibold text-primary-ink">
+                <span className="flex shrink-0 items-center gap-1.5 rounded-md bg-primary-100 px-2 py-1 font-semibold text-primary-ink">
                     <Icon name={icon} />
                     {label}
                 </span>
@@ -40,12 +46,45 @@ export const Key = ({ children }: { children: ReactNode }) => (
     </kbd>
 );
 
+/**
+ * The tool's tips: an ⓘ at the end of the bar; hover or focus shows them (screen readers read them). The tip
+ * opens to the left: the ⓘ is the last item, and Tooltip does not keep itself inside the right edge (BUG-229).
+ */
 export function Hint({ children }: { children: ReactNode }) {
     return (
-        <p className="ml-auto flex min-w-0 items-center gap-1 pl-3 text-caption text-ink-muted">
-            <Icon name="circle-info" className="shrink-0 text-ink-subtle" />
-            {children}
-        </p>
+        <span className="ml-auto flex shrink-0 items-center pl-3 text-ink-muted">
+            <Tooltip
+                position="left"
+                content={<span className="flex items-center gap-1">{children}</span>}
+            >
+                <Icon name="circle-info" aria-label="Tips" />
+                <span className="sr-only">{children}</span>
+            </Tooltip>
+        </span>
+    );
+}
+
+/** A compact dropdown for a tool mode (instead of a row of tabs). */
+export function BarSelect<T extends string>({
+    label,
+    value,
+    options,
+    onChange,
+}: {
+    label: string;
+    value: T;
+    options: SelectOption<T>[];
+    onChange: (v: T) => void;
+}) {
+    return (
+        <Select<T>
+            aria-label={label}
+            size="sm"
+            block={false}
+            value={value}
+            options={options}
+            onChange={onChange}
+        />
     );
 }
 

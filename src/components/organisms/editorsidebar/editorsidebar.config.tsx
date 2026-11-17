@@ -1,10 +1,14 @@
+import { lazy, Suspense } from 'react';
 import { DrawPanel } from '../DrawPanel';
 import { BrushPickerPanel } from '../brush/BrushPickerPanel';
 import { TextPanel } from '../TextPanel';
-import LayersPanel from '../layer/LayersPanel';
+import LayersTab from '../layer/LayersTab';
 import PagePanel from '../page/PagePanel';
 import { ShapePanel } from '../ShapePanel';
 import { shortcut } from '@/lib/utils/isMac';
+
+// rare panel: its own chunk (runtime-performance P5)
+const ComicPanel = lazy(() => import('../comic/ComicPanel'));
 
 const editorsidebarconfig = [
     {
@@ -71,6 +75,13 @@ const editorsidebarconfig = [
         kind: 'action',
     },
     {
+        id: 'copySpray',
+        shortcut: shortcut('⇧S', 'Shift+S'),
+        label: 'Copy spray',
+        icon: 'copy-spray',
+        kind: 'action',
+    },
+    {
         id: 'drafter',
         shortcut: 'D',
         label: 'Drafter',
@@ -123,7 +134,18 @@ const editorsidebarconfig = [
         icon: 'layer-group',
         kind: 'panel',
         fullSize: true,
-        panel: <LayersPanel />,
+        panel: <LayersTab />,
+    },
+    {
+        id: 'comic',
+        label: 'Comic',
+        icon: 'comic-panels',
+        kind: 'panel',
+        panel: (
+            <Suspense fallback={null}>
+                <ComicPanel />
+            </Suspense>
+        ),
     },
     // {
     //     id: 'assets',

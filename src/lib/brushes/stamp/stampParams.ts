@@ -75,6 +75,8 @@ export interface StampParams {
     grow: number;
     /** Dabs rise by a random amount, 0 … 1 (smoke, embers, flames). */
     drift: number;
+    /** Lightning zigzag: the trail swings across the stroke with sharp turns, 0 … 1 (bolts, cracks). */
+    jag: number;
 
     /* colour */
     colorMode: ColorMode;
@@ -122,6 +124,7 @@ export const DEFAULT_STAMP: StampParams = {
     taperEnd: 0,
     grow: 0,
     drift: 0,
+    jag: 0,
     colorMode: 'solid',
     color2: '#7a0f00',
     hueJitter: 0,
@@ -155,6 +158,7 @@ export const STAMP_RANGES = {
     taperEnd: [0, 20],
     grow: [-1, 1],
     drift: [0, 1],
+    jag: [0, 1],
     hueJitter: [0, 1],
     lightJitter: [0, 1],
     grain: [0, 1],

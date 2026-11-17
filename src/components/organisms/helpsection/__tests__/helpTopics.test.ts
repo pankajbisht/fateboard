@@ -31,7 +31,7 @@ const allText = HELP_TOPICS.map(topicText).join('\n');
 
 describe('help topics', () => {
     it('reads the panel and tab lists from the editor configs', () => {
-        expect(panelIds).toEqual(['brush', 'draw', 'shapes', 'text', 'Pages', 'layers']);
+        expect(panelIds).toEqual(['brush', 'draw', 'shapes', 'text', 'Pages', 'layers', 'comic']);
         expect(tabIds).toEqual([
             'appearance',
             'templates',

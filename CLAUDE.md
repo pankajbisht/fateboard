@@ -26,7 +26,7 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 ```
 src/
   main.tsx, App.tsx, app/rootRouter.tsx   entry + routes
-  store/index.ts                          ONE zustand store = spread of 24 slice creators (order matters)
+  store/index.ts                          ONE zustand store = spread of 27 slice creators (order matters)
   store/slices/                           create<Name>Slice.ts (canvas, pages, undo, layers, animation, …)
   store/brushConfig.ts                    brush presets/engines
   animation/                              keyframe engine + video export (WebCodecs / MediaRecorder)
@@ -110,6 +110,7 @@ tests): selectors, panels, tokens, icons, keys, units, Fabric origins / serializ
 - [Backend](docs/BACKEND.md): local-first backend plan (Supabase + Hono API: accounts, sync, sharing, AI proxy, remote MCP), data model, API, rules (section 12)
 - [Limitations](docs/LIMITATIONS.md): browser version vs a native C++ editor (canvas size, zoom, memory, colour, input, files), with this app's real limits
 - [Design](docs/DESIGN.md): brand tokens (colors from the logo), text styles, radius, contrast rules, dark mode, panel rules
+- [Performance audit](docs/PERFORMANCE_AUDIT.md): runtime checklist (30 items: memory, undo, rendering, layers, storage, workers, cleanup), status per item, ranked fixes P1–P12; rule `.claude/rules/runtime-performance.md`
 
 ## How we work
 

@@ -14,15 +14,14 @@ import Ruler, { RULER_HIDDEN, RULER_SIZE, createPointerSource, type RulerUnit } 
 import { isTextFloatTarget } from '@/lib/textTargets';
 import { useDesignCanvasSize } from '@/hooks/board/useDesignCanvasSize';
 import { canvasClientRect } from '@/lib/canvas/deepZoom';
+import { fitGap, fitStage, pageFitScale } from '@/lib/canvas/pageFit';
+import { pageFrameExtent } from '@/lib/document/printMarks';
+import { PageFrame } from './PageFrame';
 
 export type CanvasMode = 'design' | 'whiteboard';
 
 /** The mode used when nothing says otherwise. */
 const DEFAULT_MODE: CanvasMode = 'design';
-
-const pad = (v: { w: number; h: number }) => (Math.min(v.w, v.h) < 480 ? 16 : 48); // page margin
-const MIN_FIT_SCALE = 0.05;
-const MAX_FIT_SCALE = 1;
 
 // const TOOLBAR_GAP = 10; // space between toolbar and text
 // const TOOLBAR_HEIGHT = 48; // used to decide above / below
@@ -50,12 +49,10 @@ const THEME = {
     chrome: 'var(--color-surface-strong)', // ruler corner / bars
     chromeBorder: 'var(--color-line-strong)',
     artboard: '#ffffff', // page surface (not themed: it is the document)
-    artboardBorder: 'rgba(15, 23, 42, 0.08)', // hairline, keeps the edge visible on light workspaces
+    artboardBorder: 'rgba(0, 0, 0, 0.6)', // page edge: a crisp dark 1 px line (InDesign, 2026-11-17)
     artboardShadow: '0 1px 3px rgba(15, 23, 42, 0.10), 0 8px 24px rgba(15, 23, 42, 0.08)',
     whiteboard: 'var(--color-board)', // whiteboard paper (token: tinted by the color theme)
 };
-
-/** Whiteboard dot grid spacing in canvas px at zoom 1. */
 
 function clamp(value: number, min: number, max: number) {
     return Math.min(max, Math.max(min, value));
@@ -263,19 +260,19 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
         [sizeW, sizeH],
     );
 
-    // The rulers are OUTSIDE the scroll area, so `viewport` is already the usable area.
-    const fitScale = useMemo(() => {
-        if (isWhiteboard || !size || viewport.w <= 0 || viewport.h <= 0) return 1;
-
-        const availableWidth = Math.max(1, viewport.w - pad(viewport) * 2);
-        const availableHeight = Math.max(1, viewport.h - pad(viewport) * 2);
-
-        return clamp(
-            Math.min(availableWidth / size.width, availableHeight / size.height, MAX_FIT_SCALE),
-            MIN_FIT_SCALE,
-            MAX_FIT_SCALE,
-        );
-    }, [isWhiteboard, size?.width, size?.height, viewport.w, viewport.h]); // eslint-disable-line react-hooks/exhaustive-deps
+    // bleed / slug frames and crop marks around the page (PageFrame): the fit and the stage leave room for them
+    const pageSetup = useStore((s) => s.pageSetup);
+    const extent = pageSetup
+        ? pageFrameExtent(pageSetup, { frames: pageSetup.guides, marks: pageSetup.cropMarks })
+        : 0;
+    // The rulers are OUTSIDE the scroll area, so `viewport` is already the usable area (lib/canvas/pageFit).
+    const fitScale = useMemo(
+        () =>
+            isWhiteboard || !size
+                ? 1
+                : pageFitScale(viewport, { w: size.width, h: size.height }, extent, 'page'),
+        [isWhiteboard, size?.width, size?.height, viewport.w, viewport.h, extent], // eslint-disable-line react-hooks/exhaustive-deps
+    );
 
     // user zoom (footer slider, toolbar +/-, Pages panel) scales the drawn page; the stage scrolls
     const zoom = isWhiteboard ? 1 : userZoom;
@@ -357,8 +354,10 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
     /* ------------------------------------------------------------------ */
     /* Stage geometry (design): where the artboard sits inside the stage  */
     /* ------------------------------------------------------------------ */
-    const stageWidth = Math.max(viewport.w, (displaySize?.width ?? 0) + pad(viewport) * 2);
-    const stageHeight = Math.max(viewport.h, (displaySize?.height ?? 0) + pad(viewport) * 2);
+    const margin =
+        fitGap(viewport) + (size && displaySize ? extent * (displaySize.width / size.width) : 0);
+    const stageWidth = fitStage(viewport.w, displaySize?.width ?? 0, margin);
+    const stageHeight = fitStage(viewport.h, displaySize?.height ?? 0, margin);
     const artboardLeft = (stageWidth - (displaySize?.width ?? 0)) / 2;
     const artboardTop = (stageHeight - (displaySize?.height ?? 0)) / 2;
 
@@ -577,7 +576,7 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
                 <div
                     ref={scrollRef}
                     data-board-scroll // the Hand tool scrolls this in design (createCanvasSlice pan)
-                    className="relative min-w-0 flex-1 touch-pan-x touch-pan-y overflow-auto"
+                    className="relative min-w-0 flex-1 touch-pan-x touch-pan-y overflow-auto [scrollbar-gutter:stable]"
                     style={{ backgroundColor: THEME.workspace }}
                     onMouseMove={onMouseMove}
                     onMouseLeave={onMouseLeave}
@@ -614,6 +613,16 @@ function CanvasSurface({ mode, pageSize }: { mode: CanvasMode; pageSize?: Canvas
                             </div>
                         )}
 
+                        {size && pageSetup && (
+                            <PageFrame
+                                left={artboardLeft}
+                                top={artboardTop}
+                                scale={rulerScale}
+                                width={size.width}
+                                height={size.height}
+                                setup={pageSetup}
+                            />
+                        )}
                         {/* Outside the artboard (it clips with overflow-hidden), same stage coordinates */}
                         {renderToolbar(artboardLeft, artboardTop, stageWidth)}
                     </div>

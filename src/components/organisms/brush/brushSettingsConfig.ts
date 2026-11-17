@@ -63,6 +63,7 @@ export const SETTING_GROUPS: { title: string; controls: SettingControl[] }[] = [
             { kind: 'slider', key: 'taperEnd', label: 'Taper end', step: 0.5 },
             { kind: 'slider', key: 'grow', label: 'Grow along stroke', pct: true },
             { kind: 'slider', key: 'drift', label: 'Rise', pct: true },
+            { kind: 'slider', key: 'jag', label: 'Zigzag (lightning)', pct: true },
         ],
     },
     {

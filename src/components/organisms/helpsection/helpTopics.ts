@@ -401,6 +401,39 @@ export const HELP_TOPICS: HelpTopic[] = [
         related: ['brush', 'draw'],
     },
     {
+        id: 'copySpray',
+        group: 'Tools',
+        title: 'Copy spray',
+        icon: 'copy-spray',
+        summary:
+            'Spray copies of the selected objects along a drag: leaves, stars, confetti, crowds.',
+        keywords:
+            'copy spray symbol sprayer scatter duplicate clone stamp repeat confetti pattern random',
+        sections: [
+            {
+                title: 'Spray copies',
+                items: [
+                    'Select one or more objects, then press `Shift+S` (or pick Copy spray in the left rail)',
+                    'Drag on the board: copies of the selection land along the drag; a click places one copy',
+                    'Each drag becomes one group named "Copy spray": one row in Layers and one undo step. Ungroup it to edit single copies',
+                    'It keeps spraying what was selected when you chose the tool. To spray something else, press `V`, select it and press `Shift+S` again',
+                    '`Esc` goes back to the Select tool',
+                ],
+            },
+            {
+                title: 'Settings',
+                items: [
+                    'Size is the copy size (100 % = the selection); Spacing the gap between copies along the drag',
+                    'Spread scatters copies around the pointer (0 % = exactly on the drag)',
+                    'Size, Rotation and Opacity jitter make every copy a little different',
+                    'Align to stroke turns the copies to follow the direction you drag',
+                    'One drag adds at most 400 objects (copies × the objects in the selection, counting those inside groups) and 30 photos',
+                ],
+            },
+        ],
+        related: ['spray', 'select', 'layers'],
+    },
+    {
         id: 'lasso',
         group: 'Tools',
         title: 'Lasso',
@@ -674,9 +707,23 @@ export const HELP_TOPICS: HelpTopic[] = [
         title: 'Pages',
         icon: 'file-lines',
         summary: 'Many pages in one project, each with its own background and history.',
-        keywords: 'slides multi page thumbnail duplicate background',
+        keywords:
+            'slides multi page thumbnail duplicate background margin bleed slug crop marks trim page edge column facing spread master page number fit width',
         open: { panel: 'Pages', label: 'Open Pages' },
         sections: [
+            {
+                title: 'Page setup (bottom of the panel)',
+                items: [
+                    'Margins, columns, bleed and slug. Show guides (on by default) draws margins magenta, columns violet, the bleed red and the slug blue; guides are never exported',
+                    'The bleed and slug frames sit outside the page edge; art that runs past the edge is not shown there on the board, but it is exported with the bleed',
+                    'Show crop marks draws the trim lines at the page corners. In Export, turn off Crop to content and turn on Crop marks to add the bleed, slug and marks to the file',
+                    'Facing pages: book spreads, inside margins at the spine, page 1 on the right',
+                    'Fit width (`mod+alt+0`, the footer button next to Fit) fills the board with the page width: handy for tall portrait pages',
+                    'This page is a master page: its content is drawn under every page that uses it',
+                    'Master page: pick the master for the open page; edit a master by opening it',
+                    'Insert page number adds a text that always shows the page number (masters are not counted)',
+                ],
+            },
             {
                 title: 'Work with pages',
                 items: [
@@ -700,19 +747,59 @@ export const HELP_TOPICS: HelpTopic[] = [
         related: ['layers', 'settings', 'basics'],
     },
     {
+        id: 'comic',
+        group: 'Tools',
+        title: 'Comic',
+        icon: 'comic-panels',
+        summary: 'Manga and comic pages: panel layouts, balloons, screentones and effect lines.',
+        keywords:
+            'manga comic panel frame koma balloon bubble tone screentone speed focus lines burst',
+        open: { panel: 'comic', label: 'Open Comic' },
+        sections: [
+            {
+                title: 'Panels',
+                items: [
+                    'A layout tile fills the page margins with panels (it replaces the panels already there)',
+                    'Draw on the Art layer: it is clipped to the panels, so nothing spills into the gutters',
+                    'Select a panel frame and split it top / bottom or left / right',
+                    'Gutter and Border set the space between panels and the frame line',
+                ],
+            },
+            {
+                title: 'Balloons, tones, effects',
+                items: [
+                    'Balloons are text shapes: double-click one to type in it',
+                    'Screentones fill the selected shapes with dots, lines, cross-hatch or noise',
+                    'Focus lines, speed lines and bursts fill the selected panel, else the page',
+                ],
+            },
+        ],
+    },
+    {
         id: 'layers',
         group: 'Organize',
         title: 'Layers',
         icon: 'layer-group',
         summary: 'See everything on the page, in stacking order, and control each piece.',
-        keywords: 'z-order stack visibility hide rename blend mode opacity tree',
+        keywords:
+            'z-order stack visibility hide rename blend mode opacity tree page layers folder clip clipping reference merge flatten',
         open: { panel: 'layers', label: 'Open Layers' },
         sections: [
             {
-                title: 'The list',
+                title: 'Page layers (top of the panel)',
+                items: [
+                    'Layers and folders hold objects; new shapes and strokes go to the highlighted layer',
+                    'Hide, lock, opacity and blend apply to the whole layer; a hidden or locked folder covers what is inside',
+                    'Clip to layer below: the layer shows only where the layer under it has paint',
+                    'Reference layer: the paint bucket fills using only reference layers',
+                    'Drag a layer onto a folder to put it inside; merge down, flatten, and move the selection to a layer from the toolbar',
+                ],
+            },
+            {
+                title: 'The object list',
                 items: [
                     'The top row is the object on top of the stack',
-                    'Find a layer searches by name',
+                    'Find an object searches by name',
                     'Click to select, `shift` + click for a range, `mod` + click to add or remove one',
                     'Drag a row to change the stacking order',
                     'Double-click a name or press `F2` to rename it',
@@ -1341,9 +1428,9 @@ export const HELP_TOPICS: HelpTopic[] = [
                 title: 'Canvas',
                 items: [
                     'Freehand switches to an endless whiteboard',
-                    'Canvas size: YouTube, Instagram, Facebook, LinkedIn, A4 or Presentation. New boards start at it, and the page you had open takes it when you go back to the editor (Undo brings the old size back)',
+                    'Canvas size: video, social media, paper (A4, A3, US Letter…), manga and comics (B4, B5, A5, US comic: they also set a 3 mm bleed and safe-area margins), webtoon, digital art or presentation. New boards start at it, and the page you had open takes it when you go back to the editor (Undo brings the old size back)',
                     'Custom size: type a width and height in your units (1 to 10,000 px), then Apply size. It is used exactly as typed',
-                    'Orientation: landscape or portrait for the canvas size',
+                    'Orientation: landscape or portrait for the canvas size (each size is listed once). Portrait pages open a little taller than the board, so scroll down for the rest; Fit to screen shows the whole page',
                     'Units sets px, mm, cm or in for rulers and size fields',
                 ],
             },

@@ -1,6 +1,7 @@
 import { type TMat2D } from 'fabric';
 import { whenImagesReady } from '@/lib/imageReady';
 import { serializeCanvas } from '@/lib/serialization';
+import { cropMarksSvg, exportSceneBounds, paintCropMarks } from '@/lib/export/exportBounds';
 import { useStore } from '@/store';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Input from '@/components/atoms/Input';
@@ -204,6 +205,7 @@ const ExportCanvas = () => {
     const [sizePreset, setSizePreset] = useState('youtube-thumbnail');
 
     const [cropToContent, setCropToContent] = useState(true);
+    const [cropMarks, setCropMarks] = useState(false); // printer's marks: page export only
 
     const [quality, setQuality] = useState(2);
     const [jpegQuality, setJpegQuality] = useState(0.92);
@@ -261,56 +263,10 @@ const ExportCanvas = () => {
      * CONTENT BOUNDS (scene coordinates)
      * ------------------------------------------------------- */
 
-    const getExportableObjects = () =>
-        canvas
-            .getObjects()
-            .filter(
-                (object) =>
-                    object.visible &&
-                    !(object as typeof object & { excludeFromCrop?: boolean }).excludeFromCrop &&
-                    !object.excludeFromExport,
-            );
-
-    /* Returns null when there is nothing to export. */
-    const getSceneBounds = () => {
-        if (!canvas) return null;
-
-        const objects = getExportableObjects();
-
-        if (!objects.length) return null;
-
-        if (!cropToContent) {
-            return {
-                left: 0,
-                top: 0,
-                width: canvas.getWidth(),
-                height: canvas.getHeight(),
-            };
-        }
-
-        let minX = Infinity;
-        let minY = Infinity;
-        let maxX = -Infinity;
-        let maxY = -Infinity;
-
-        objects.forEach((object) => {
-            const bounds = object.getBoundingRect(); // Fabric 6+: always absolute, no arguments
-
-            minX = Math.min(minX, bounds.left);
-            minY = Math.min(minY, bounds.top);
-            maxX = Math.max(maxX, bounds.left + bounds.width);
-            maxY = Math.max(maxY, bounds.top + bounds.height);
-        });
-
-        if (!Number.isFinite(minX) || !Number.isFinite(maxX)) return null;
-
-        return {
-            left: minX,
-            top: minY,
-            width: Math.max(1, maxX - minX),
-            height: Math.max(1, maxY - minY),
-        };
-    };
+    /* Returns null when there is nothing to export (lib/export/exportBounds). */
+    const marks = cropMarks && !cropToContent;
+    const getSceneBounds = () =>
+        canvas ? exportSceneBounds(canvas, { cropToContent, cropMarks: marks }) : null;
 
     /* -------------------------------------------------------
      * IMAGE LOADING
@@ -468,6 +424,7 @@ const ExportCanvas = () => {
         }
 
         ctx.drawImage(image, draw.x, draw.y, draw.w, draw.h);
+        if (marks) paintCropMarks(ctx, canvas, src, draw);
 
         return output;
     };
@@ -520,6 +477,7 @@ const ExportCanvas = () => {
 
             svg = svg.replace(svgTag[0], tag + backgroundRect);
         }
+        if (marks) svg = svg.replace(/<\/svg>\s*$/, `${cropMarksSvg(canvas)}</svg>`);
 
         return svg;
     };
@@ -626,6 +584,7 @@ const ExportCanvas = () => {
         format,
         scaling,
         cropToContent,
+        cropMarks,
         quality,
         background,
         previewZoom,
@@ -926,6 +885,14 @@ const ExportCanvas = () => {
                         hint="Remove unused canvas space"
                         checked={cropToContent}
                         onChange={setCropToContent}
+                    />
+                )}
+                {format !== 'json' && !cropToContent && (
+                    <LabeledToggle
+                        label="Crop marks"
+                        hint="Adds the bleed, slug and trim marks around the page (Pages > Page setup)"
+                        checked={cropMarks}
+                        onChange={setCropMarks}
                     />
                 )}
                 {/* FILE NAME */}

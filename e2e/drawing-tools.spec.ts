@@ -191,8 +191,13 @@ test('Pen modes: Curvature clicks make a curve; Freeform turns a drag into a pat
         [box.x + box.width * fx, box.y + box.height * fy] as const;
     await page.keyboard.press('p');
     const bar = page.getByRole('toolbar', { name: 'Pen options' });
+    // modes are a dropdown in the property bar (2026-11-17)
+    const pickMode = async (mode: RegExp) => {
+        await bar.getByRole('combobox', { name: 'Pen mode' }).click();
+        await page.getByRole('option', { name: mode }).click();
+    };
 
-    await bar.getByRole('radio', { name: 'Curvature' }).click();
+    await pickMode(/^Curvature/);
     for (const [fx, fy] of [
         [0.2, 0.5],
         [0.35, 0.3],
@@ -204,7 +209,7 @@ test('Pen modes: Curvature clicks make a curve; Freeform turns a drag into a pat
     await expect.poll(() => count(editor)).toBe(1);
 
     await page.keyboard.press('p');
-    await bar.getByRole('radio', { name: 'Freeform' }).click();
+    await pickMode(/^Freeform/);
     await page.mouse.move(...at(0.2, 0.75));
     await page.mouse.down();
     await page.mouse.move(...at(0.4, 0.7), { steps: 10 });

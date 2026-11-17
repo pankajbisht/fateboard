@@ -250,3 +250,23 @@ test('Deep zoom: 3200 % draws only the visible window, sharp, and clicks still h
         .poll(() => page.evaluate(() => !!(window.__fateboard!.state('canvas') as any).__fbWindow))
         .toBe(false);
 });
+
+test('Copy spray sprays the selection along a drag as one group; one undo removes it', async ({
+    editor,
+    page,
+}) => {
+    await editor.addShape('Rectangle');
+    expect((await editor.selection()).length).toBe(1);
+    await page.keyboard.press('Shift+S');
+    await expect.poll(() => tool(editor)).toBe('copySpray');
+    await expect(page.getByRole('toolbar', { name: 'Copy spray options' })).toBeVisible();
+    const p = await at(editor);
+    await drag(editor, p(0.1, 0.85), p(0.9, 0.85));
+    await expect.poll(() => count(editor)).toBe(2);
+    expect((await editor.objects())[1].type).toBe('group');
+    expect(await tool(editor)).toBe('copySpray'); // keeps spraying
+    await page.keyboard.press('Escape');
+    await expect.poll(() => tool(editor)).toBe('select');
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect.poll(() => count(editor)).toBe(1);
+});

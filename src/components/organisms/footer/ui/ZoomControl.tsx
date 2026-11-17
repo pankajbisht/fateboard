@@ -1,4 +1,5 @@
 import { useStore } from '@store';
+import { shortcut } from '@/lib/utils/isMac';
 import { MAX_ZOOM, MIN_ZOOM } from '@/store/slices/createPageSlice';
 import { Slider } from '@/components/atoms/Slider';
 import { useBoardMode } from '@hooks/useBoardMode';
@@ -25,6 +26,7 @@ export function ZoomControl() {
     const scale = useStore((s) => s.scale);
     const setZoom = useStore((s) => s.setZoom);
     const fitToScreen = useStore((s) => s.fitToScreen);
+    const fitToWidth = useStore((s) => s.fitToWidth);
     const zoomIn = useStore((s) => s.zoomIn);
     const zoomOut = useStore((s) => s.zoomOut);
     const actualSize = useStore((s) => s.actualSize);
@@ -83,6 +85,15 @@ export function ZoomControl() {
                 title="Fit to screen"
                 onClick={fitToScreen}
             />
+            {!whiteboard && (
+                <IconButton
+                    size="chrome"
+                    icon={<Icon name="zoom-fit-width" />}
+                    aria-label="Fit width"
+                    title={`Fit width (${shortcut('⌥⌘0', 'Ctrl+Alt+0')})`}
+                    onClick={fitToWidth}
+                />
+            )}
         </div>
     );
 }

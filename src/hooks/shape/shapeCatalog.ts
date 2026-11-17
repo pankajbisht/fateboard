@@ -8,6 +8,8 @@
  * - Custom (user-made) shapes are registered at runtime with setCustomShapes().
  */
 
+import { COMIC_BALLOONS } from './comicBalloons';
+
 export type ShapeCategory =
     | 'basic'
     | 'text'
@@ -16,6 +18,7 @@ export type ShapeCategory =
     | 'symbols'
     | 'arrows'
     | 'callouts'
+    | 'balloons'
     | 'notes'
     | 'flow'
     | '3d'
@@ -825,6 +828,8 @@ export const SHAPES: ShapeDef[] = [
         d: 'M 0 80 L 20 20 L 40 80 L 60 20 L 80 80 L 100 20',
         keywords: 'lightning wave',
     },
+    // manga balloons (comicBalloons.ts, 2026-11-17)
+    ...COMIC_BALLOONS,
 ];
 
 export const SHAPE_CATEGORIES: { id: ShapeCategory | 'all'; label: string }[] = [
@@ -836,6 +841,7 @@ export const SHAPE_CATEGORIES: { id: ShapeCategory | 'all'; label: string }[] = 
     { id: 'symbols', label: 'Symbols' },
     { id: 'arrows', label: 'Arrows' },
     { id: 'callouts', label: 'Callouts' },
+    { id: 'balloons', label: 'Manga balloons' },
     { id: 'notes', label: 'Notes' },
     { id: 'flow', label: 'Flow' },
     { id: '3d', label: '3D' },
@@ -852,6 +858,10 @@ export const SHAPE_CATEGORY_INFO: Record<ShapeCategory, { title: string; hint: s
     symbols: { title: 'Symbols', hint: 'Heart, check, cloud, sun, pin and more.' },
     arrows: { title: 'Arrows', hint: 'Line arrows and block arrows.' },
     callouts: { title: 'Callouts', hint: 'Speech and thought bubbles.' },
+    balloons: {
+        title: 'Manga balloons',
+        hint: 'Speech, thought, shout and caption balloons. Double-click to type inside.',
+    },
     notes: { title: 'Notes', hint: 'Text paper, sticky note, flag, brackets.' },
     flow: { title: 'Flowchart', hint: 'Database, document.' },
     '3d': { title: '3D Shapes', hint: 'Cube, cylinder, cone, sphere, pyramid and more.' },

@@ -11,6 +11,7 @@ import { floodFillMask } from '@/lib/canvas/floodFill';
 import { loopArea, loopsToPath, simplifyLoop, traceContours } from '@/lib/canvas/traceContours';
 import { pointInPolygon } from '@/lib/canvas/lasso';
 import { windowOf } from '@/lib/canvas/deepZoom';
+import { referenceFilter, type DocLayer } from '@/lib/canvas/docLayers';
 import type { BucketStyle } from './paintToolStyles';
 
 type Pt = { x: number; y: number };
@@ -138,12 +139,16 @@ function regionFill(
     const width = area?.w ?? canvas.getWidth();
     const height = area?.h ?? canvas.getHeight();
     const m = Math.min(MAX_RASTER / Math.max(width, height, 1), Math.max(1, screen) / zoom);
+    // reference layers (Clip Studio): with one shown, the fill reads only the line art on it
+    const layers = (canvas as fabric.Canvas & { docLayers?: DocLayer[] }).docLayers;
+    const sees = layers ? referenceFilter(layers) : null;
     const raster = canvas.toCanvasElement(m, {
         left,
         top,
         width,
         height,
-        filter: (o) => !isHelperObject(o as Obj) && o.visible !== false,
+        filter: (o) =>
+            !isHelperObject(o as Obj) && o.visible !== false && (!sees || sees(o as Obj)),
     });
     const ctx = raster.getContext('2d', {
         willReadFrequently: true,

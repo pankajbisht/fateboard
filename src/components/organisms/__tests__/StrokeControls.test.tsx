@@ -38,8 +38,8 @@ describe('footer Fill / Stroke rows', () => {
         expect(strokeLabel.parentElement).toBe(strokeToggle.closest('[data-tile-row]'));
         expect(follows(fillLabel, fillToggle)).toBe(true);
         expect(follows(fillToggle, strokeLabel)).toBe(true);
-        // compact: fits the 16 px footer row
-        expect(fillToggle.className).toMatch(/\bsize-4\b/);
+        // compact: 20 px, the size 24f5203 gave the redrawn toggle icons (BUG-228)
+        expect(fillToggle.className).toMatch(/\bsize-5\b/);
     });
 
     it('the footer toggles work on the selection', () => {

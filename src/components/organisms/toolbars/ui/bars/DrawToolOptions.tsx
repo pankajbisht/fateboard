@@ -5,13 +5,16 @@ import { PencilOptions } from './PencilOptions';
 import { NibOptions } from './NibOptions';
 import { BucketOptions } from './BucketOptions';
 import { SprayOptions } from './SprayOptions';
+import { CopySprayOptions } from './CopySprayOptions';
 import { LassoOptions } from './LassoOptions';
 import { DrafterOptions } from './DrafterOptions';
+import { BrushOptions } from './BrushOptions';
 
 /**
- * The context row under the top toolbar: the selection's X / Y / W / H normally, the active drawing
- * tool's options while Pen (P), Pencil (Shift + P), Spray (Shift + B), Paint bucket (G), Lasso (L), Drafter (D) or the Calligraphy pen brush is active (Illustrator's control bar). Colors
- * come from the dock palette (`PaintTargetSwatch`); each change applies to the next path / stroke.
+ * The property bar under the command bar (Illustrator's control bar): the active tool's options while Pen
+ * (P), Pencil (Shift + P), Spray (Shift + B), Copy spray (Shift + S), Paint bucket (G), Lasso (L), Drafter (D), a brush or the
+ * eraser is active, else the selection's X / Y / W / H. Every bar starts with its icon + label. Colors come
+ * from the dock palette (`PaintTargetSwatch`); each change applies to the next path / stroke.
  */
 export function ToolContextBar() {
     const tool = useStore((s) => s.activeTool);
@@ -20,8 +23,10 @@ export function ToolContextBar() {
     if (tool === 'pencil') return <PencilOptions />;
     if (tool === 'bucket') return <BucketOptions />;
     if (tool === 'spray') return <SprayOptions />;
+    if (tool === 'copySpray') return <CopySprayOptions />;
     if (tool === 'lasso') return <LassoOptions />;
     if (tool === 'drafter') return <DrafterOptions />;
     if (tool === 'draw' && brush === 'nib') return <NibOptions />; // Calligraphy pen
+    if (tool === 'draw') return <BrushOptions />;
     return <ShapeToolsHeader />;
 }

@@ -7,6 +7,7 @@
 import type { IconName } from '@/components/atoms/Icon';
 import type { StampParams } from '@/lib/brushes/stamp/stampParams';
 import type { BrushPreset, BrushType } from './brushConfig';
+import { FX_DEFS } from './brushLibraryFx';
 
 export const BRUSH_CATEGORIES = [
     { id: 'basic', label: 'Basic', icon: 'paintbrush' },
@@ -19,7 +20,10 @@ export const BRUSH_CATEGORIES = [
     { id: 'texture', label: 'Texture', icon: 'stamp' },
     { id: 'spray', label: 'Spray', icon: 'spray-can' },
     { id: 'fire', label: 'Fire & light', icon: 'flame' },
-    { id: 'smoke', label: 'Smoke & air', icon: 'cloud' },
+    { id: 'electric', label: 'Lightning & electric', icon: 'zap' },
+    { id: 'smoke', label: 'Smoke & fog', icon: 'cloud' },
+    { id: 'liquid', label: 'Water & liquid', icon: 'waves' },
+    { id: 'ice', label: 'Ice & frost', icon: 'snowflake' },
     { id: 'magic', label: 'Sparkle & FX', icon: 'sparkles' },
     { id: 'nature', label: 'Nature', icon: 'leaf' },
     { id: 'calligraphy', label: 'Calligraphy', icon: 'feather' },
@@ -46,7 +50,8 @@ export const CLASSIC_CATEGORY: Record<BrushType, BrushCategory> = {
     splatter: 'spray',
 };
 
-type Def = {
+/** One library brush (also used by the effect sets in `brushLibraryFx.ts`). */
+export type BrushDef = {
     label: string;
     category: BrushCategory;
     width: number;
@@ -55,6 +60,7 @@ type Def = {
     smoothing?: number;
     stamp: Partial<StampParams>;
 };
+type Def = BrushDef;
 
 const DEFS: Record<string, Def> = {
     /* ---------------- Sketching ---------------- */
@@ -935,7 +941,7 @@ const DEFS: Record<string, Def> = {
 
 /** Stamp brushes as brush presets (engine `stamp`), keyed by id. */
 export const STAMP_BRUSHES: Record<string, BrushPreset> = Object.fromEntries(
-    Object.entries(DEFS).map(([id, d]) => [
+    Object.entries({ ...DEFS, ...FX_DEFS }).map(([id, d]) => [
         id,
         {
             label: d.label,

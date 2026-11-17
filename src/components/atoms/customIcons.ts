@@ -78,6 +78,37 @@ export const DrafterIcon = icon('Drafter', [
     ['path', { d: 'm4 20 7.5-7.5', key: 'arm' }],
 ]);
 
+/** Copy spray (Shift + S): a spray can whose nozzle scatters copies of one shape (squares). */
+export const CopySprayIcon = icon('CopySpray', [
+    ['rect', { x: '3', y: '11', width: '7', height: '10', rx: '1.5', key: 'can' }],
+    ['path', { d: 'M5 11V8h3v3M8 9h2', key: 'nozzle' }],
+    ['rect', { x: '13', y: '3', width: '4', height: '4', rx: '0.5', key: 'c1' }],
+    [
+        'rect',
+        {
+            x: '18',
+            y: '9',
+            width: '3.5',
+            height: '3.5',
+            rx: '0.5',
+            transform: 'rotate(20 19.75 10.75)',
+            key: 'c2',
+        },
+    ],
+    [
+        'rect',
+        {
+            x: '13',
+            y: '14',
+            width: '4',
+            height: '4',
+            rx: '0.5',
+            transform: 'rotate(-15 15 16)',
+            key: 'c3',
+        },
+    ],
+]);
+
 /** Mirror symmetry: a dashed axis between two mirrored strokes. */
 export const SymmetryIcon = icon('Symmetry', [
     ['path', { d: 'M12 2v3M12 9.5v5M12 19v3', key: 'axis' }],
@@ -141,44 +172,28 @@ export const SprayPatternIcon = icon('SprayPattern', [
 
 /* ---------------- 2026-11-16 (2): header / footer icons the owner asked to redraw ---------------- */
 
-/** Group: two shapes inside one dashed frame. */
+/* Group / ungroup (2026-11-17 redraw): selection brackets instead of dashed frames, which blur at 16 px. */
+const BRACKET_TL: IconPart = ['path', { d: 'M3 7.5V5a2 2 0 0 1 2-2h2.5', key: 'tl' }];
+const BRACKET_TR: IconPart = ['path', { d: 'M16.5 3H19a2 2 0 0 1 2 2v2.5', key: 'tr' }];
+const BRACKET_BR: IconPart = ['path', { d: 'M21 16.5V19a2 2 0 0 1-2 2h-2.5', key: 'br' }];
+const BRACKET_BL: IconPart = ['path', { d: 'M7.5 21H5a2 2 0 0 1-2-2v-2.5', key: 'bl' }];
+
+/** Group: a rectangle and a circle inside one set of selection brackets. */
 export const GroupObjectsIcon = icon('GroupObjects', [
-    [
-        'rect',
-        {
-            x: '2',
-            y: '2',
-            width: '20',
-            height: '20',
-            rx: '3',
-            strokeDasharray: '3 2.5',
-            key: 'frame',
-        },
-    ],
-    ['rect', { x: '6', y: '6', width: '6.5', height: '6.5', rx: '1', key: 'a' }],
-    ['circle', { cx: '15.25', cy: '15.25', r: '3.25', key: 'b' }],
+    BRACKET_TL,
+    BRACKET_TR,
+    BRACKET_BR,
+    BRACKET_BL,
+    ['rect', { x: '6.5', y: '6.5', width: '6', height: '6', rx: '1', key: 'a' }],
+    ['circle', { cx: '15.5', cy: '15.5', r: '2.5', key: 'b' }],
 ]);
 
-/** Ungroup: each shape in its own dashed frame. */
+/** Ungroup: the same shapes pulled out into the corners, the brackets broken open. */
 export const UngroupObjectsIcon = icon('UngroupObjects', [
-    [
-        'rect',
-        { x: '2', y: '2', width: '10', height: '10', rx: '2', strokeDasharray: '2.5 2', key: 'f1' },
-    ],
-    ['rect', { x: '4.75', y: '4.75', width: '4.5', height: '4.5', rx: '0.75', key: 'a' }],
-    [
-        'rect',
-        {
-            x: '12',
-            y: '12',
-            width: '10',
-            height: '10',
-            rx: '2',
-            strokeDasharray: '2.5 2',
-            key: 'f2',
-        },
-    ],
-    ['circle', { cx: '17', cy: '17', r: '2.4', key: 'b' }],
+    BRACKET_TR,
+    BRACKET_BL,
+    ['rect', { x: '3', y: '3', width: '7', height: '7', rx: '1.5', key: 'a' }],
+    ['circle', { cx: '17.5', cy: '17.5', r: '3.5', key: 'b' }],
 ]);
 
 /* Boolean operations: two overlapping circles, the result shaded (Venn diagrams). Circles r 6 at x 9 / 15; they
@@ -236,43 +251,48 @@ export const CanvasGridIcon = icon('CanvasGrid', [
     ],
 ]);
 
-/* Arrange: three layers (bars); the selected one is filled, the arrow says where it goes. */
-const BAR = (y: number, on: boolean, key: string): IconPart => [
-    'rect',
+/* Arrange (2026-11-17 redraw): two overlapping objects, back 3…14 and front 10…21. The moved object is
+   solid; the arrow in the free corner says where it goes, a bar on it = all the way to the front / back.
+   The send set is the bring set turned half a turn, so the four read as one family. */
+const FRONT = { x: '10', y: '10', width: '11', height: '11', rx: '2' };
+/** What shows of the back object behind a solid front one (gaps keep the outlines apart at 16 px). */
+const BACK_EDGE: IconPart = [
+    'path',
+    { d: 'M14 7.5V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h2.5', key: 'back' },
+];
+/** The back object, solid where the front one does not cover it. */
+const BACK_SOLID: IconPart = [
+    'path',
     {
-        x: '3',
-        y: String(y),
-        width: '11',
-        height: '4',
-        rx: '1',
-        ...(on ? { fill: 'currentColor' } : {}),
-        key,
+        d: 'M5 3h7a2 2 0 0 1 2 2v2.5H7.5V14H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z',
+        fill: 'currentColor',
+        key: 'back',
     },
 ];
+const FRONT_SOLID: IconPart = ['rect', { ...FRONT, fill: 'currentColor', key: 'front' }];
+const FRONT_EDGE: IconPart = ['rect', { ...FRONT, key: 'front' }];
 
 export const BringToFrontIcon = icon('BringToFront', [
-    BAR(4, true, 'top'),
-    BAR(10, false, 'mid'),
-    BAR(16, false, 'bottom'),
-    ['path', { d: 'M15.5 3h5M18 20V6M15 9l3-3 3 3', key: 'arrow' }],
+    BACK_EDGE,
+    FRONT_SOLID,
+    ['path', { d: 'M16.5 2h5', key: 'bar' }],
+    ['path', { d: 'M19 7.5v-3M16.5 7 19 4.5 21.5 7', key: 'arrow' }],
 ]);
 export const BringForwardIcon = icon('BringForward', [
-    BAR(4, false, 'top'),
-    BAR(10, true, 'mid'),
-    BAR(16, false, 'bottom'),
-    ['path', { d: 'M18 17V8M15 11l3-3 3 3', key: 'arrow' }],
+    BACK_EDGE,
+    FRONT_SOLID,
+    ['path', { d: 'M19 7.5v-5M16.5 5 19 2.5 21.5 5', key: 'arrow' }],
 ]);
 export const SendBackwardIcon = icon('SendBackward', [
-    BAR(4, false, 'top'),
-    BAR(10, true, 'mid'),
-    BAR(16, false, 'bottom'),
-    ['path', { d: 'M18 7v9M15 13l3 3 3-3', key: 'arrow' }],
+    BACK_SOLID,
+    FRONT_EDGE,
+    ['path', { d: 'M5 16.5v5M2.5 19 5 21.5 7.5 19', key: 'arrow' }],
 ]);
 export const SendToBackIcon = icon('SendToBack', [
-    BAR(4, false, 'top'),
-    BAR(10, false, 'mid'),
-    BAR(16, true, 'bottom'),
-    ['path', { d: 'M15.5 21h5M18 4v14M15 15l3 3 3-3', key: 'arrow' }],
+    BACK_SOLID,
+    FRONT_EDGE,
+    ['path', { d: 'M2.5 22h5', key: 'bar' }],
+    ['path', { d: 'M5 16.5v3M2.5 17 5 19.5 7.5 17', key: 'arrow' }],
 ]);
 
 /** Brush tool: a round artist's brush (handle, ferrule, bristles) and a stroke of paint. */
@@ -304,7 +324,13 @@ export const BrushToolIcon = icon('BrushTool', [
 /* Footer fill / stroke toggles: the swatch shows the state; hover shows what a click does. */
 const SWATCH = { x: '4', y: '4', width: '16', height: '16', rx: '3' };
 const SLASH: IconPart = ['path', { d: 'M3 21 21 3', className: 'text-danger', key: 'slash' }];
-const PLUS_BADGE: IconPart = ['path', { d: 'M18 14v6M15 17h6', strokeWidth: '2.5', key: 'plus' }];
+/* Add / remove (2026-11-17 redraw): one smaller swatch, the badge in the free corner never overlaps it. */
+const BADGE_SWATCH = { x: '3', y: '3', width: '12', height: '12', rx: '2.5' };
+const ADD_BADGE: IconPart = ['path', { d: 'M19 15.5v7M15.5 19h7', key: 'plus' }];
+const REMOVE_BADGE: IconPart = [
+    'path',
+    { d: 'M16.5 16.5l5 5M21.5 16.5l-5 5', className: 'text-danger', key: 'x' },
+];
 
 export const FillOnIcon = icon('FillOn', [
     ['rect', { ...SWATCH, fill: 'currentColor', key: 'swatch' }],
@@ -314,23 +340,12 @@ export const FillNoneIcon = icon('FillNone', [
     SLASH,
 ]);
 export const FillRemoveIcon = icon('FillRemove', [
-    ['rect', { ...SWATCH, fill: 'currentColor', fillOpacity: '0.35', key: 'swatch' }],
-    SLASH,
+    ['rect', { ...BADGE_SWATCH, fill: 'currentColor', key: 'swatch' }],
+    REMOVE_BADGE,
 ]);
 export const FillAddIcon = icon('FillAdd', [
-    [
-        'rect',
-        {
-            x: '3',
-            y: '3',
-            width: '13',
-            height: '13',
-            rx: '2.5',
-            fill: 'currentColor',
-            key: 'swatch',
-        },
-    ],
-    PLUS_BADGE,
+    ['rect', { ...BADGE_SWATCH, fill: 'currentColor', key: 'swatch' }],
+    ADD_BADGE,
 ]);
 export const StrokeOnIcon = icon('StrokeOn', [
     ['rect', { ...SWATCH, strokeWidth: '3.5', key: 'swatch' }],
@@ -340,13 +355,10 @@ export const StrokeNoneIcon = icon('StrokeNone', [
     SLASH,
 ]);
 export const StrokeRemoveIcon = icon('StrokeRemove', [
-    ['rect', { ...SWATCH, strokeWidth: '3.5', strokeOpacity: '0.35', key: 'swatch' }],
-    SLASH,
+    ['rect', { ...BADGE_SWATCH, strokeWidth: '3', key: 'swatch' }],
+    REMOVE_BADGE,
 ]);
 export const StrokeAddIcon = icon('StrokeAdd', [
-    [
-        'rect',
-        { x: '3', y: '3', width: '13', height: '13', rx: '2.5', strokeWidth: '3', key: 'swatch' },
-    ],
-    PLUS_BADGE,
+    ['rect', { ...BADGE_SWATCH, strokeWidth: '3', key: 'swatch' }],
+    ADD_BADGE,
 ]);

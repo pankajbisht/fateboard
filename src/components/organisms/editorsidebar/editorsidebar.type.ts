@@ -11,6 +11,7 @@ export type EditorTool =
     | 'pencil'
     | 'laser'
     | 'spray'
+    | 'copySpray'
     | 'bucket'
     | 'lasso'
     | 'drafter';

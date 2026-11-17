@@ -9,6 +9,27 @@ import OriginSelector from '../molecules/OriginSelector.tsx';
 import { NumberField } from '../atoms/NumberField.tsx';
 import { useUnit } from '@hooks/useUnit';
 import { fromUnit, toUnit, unitPrecision } from '@/lib/units';
+import type { IconName } from '../atoms/Icon.tsx';
+import { Bar } from './toolbars/ui/bars/drawToolParts.tsx';
+
+/** Property bar label + icon for the selected object's type (Fabric 7 `type`, lower case). */
+const SELECTION_LABELS: Record<string, [string, IconName]> = {
+    rect: ['Rectangle', 'shapes'],
+    square: ['Rectangle', 'shapes'],
+    circle: ['Ellipse', 'circle'],
+    ellipse: ['Ellipse', 'circle'],
+    triangle: ['Triangle', 'shapes'],
+    polygon: ['Polygon', 'shapes'],
+    polyline: ['Polyline', 'bezier-curve'],
+    line: ['Line', 'bezier-curve'],
+    path: ['Path', 'bezier-curve'],
+    text: ['Text', 'font'],
+    'i-text': ['Text', 'font'],
+    textbox: ['Text', 'font'],
+    image: ['Image', 'image'],
+    group: ['Group', 'object-group'],
+    activeselection: ['Selection', 'object-group'],
+};
 
 type TransformFieldConfig = (typeof transformFieldsConfig)[number];
 
@@ -99,38 +120,38 @@ export const ShapeToolsHeader = () => {
     const setOrigin = useStore((s) => s.setOrigin);
     // booleans, re-evaluated on every store change (selection changes always write the store)
     const active = useStore((s) => !!s.canvas?.getActiveObject());
-    const isRect = useStore((s) => {
-        const type = s.canvas?.getActiveObject()?.type;
-        return type === 'square' || type === 'rect';
-    });
+    const type: string = useStore((s) => s.canvas?.getActiveObject()?.type ?? '');
+    const isRect = type === 'square' || type === 'rect';
+
+    const [label, icon] = active
+        ? (SELECTION_LABELS[type.toLowerCase()] ?? ['Object', 'arrow-pointer'])
+        : (['Selection', 'arrow-pointer'] as const);
 
     return (
-        <div
-            className={`px-2 py-1 overflow-x-auto bg-surface ${
-                !active ? 'pointer-events-none opacity-50 dark:opacity-65' : ''
-            }`}
-        >
-            <div className="flex items-center justify-between whitespace-nowrap text-sm">
-                <div className="flex items-center gap-4">
-                    <LayerControlBar />
-                    <GlowDivider />
+        <Bar label={label} icon={icon}>
+            <div
+                className={`flex items-center gap-4 ${
+                    !active ? 'pointer-events-none opacity-50 dark:opacity-65' : ''
+                }`}
+            >
+                <LayerControlBar />
+                <GlowDivider />
 
-                    {/* transform row: anchor -> X Y W H R -> flips (all act around the anchor) */}
-                    <div className="flex items-center gap-2">
-                        <div className="mr-1 flex items-center">
-                            <OriginSelector value={originId} onChange={setOrigin} />
-                        </div>
-                        {transformFieldsConfig.map((field) => (
-                            <TransformField key={field.key} field={field} />
-                        ))}
-                        <div className="ml-1 flex items-center">
-                            <FlipBar />
-                        </div>
+                {/* transform row: anchor -> X Y W H R -> flips (all act around the anchor) */}
+                <div className="flex items-center gap-2">
+                    <div className="mr-1 flex items-center">
+                        <OriginSelector value={originId} onChange={setOrigin} />
+                    </div>
+                    {transformFieldsConfig.map((field) => (
+                        <TransformField key={field.key} field={field} />
+                    ))}
+                    <div className="ml-1 flex items-center">
+                        <FlipBar />
                     </div>
                 </div>
 
                 {isRect && <RadiusFields />}
             </div>
-        </div>
+        </Bar>
     );
 };

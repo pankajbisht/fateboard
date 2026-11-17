@@ -84,17 +84,41 @@ rect and pan. **Depends on:** M0.5, M2.1.
 Work: one export pipeline that uses page geometry; PDF *(proposed; no PDF library installed today)*;
 decide Share (Q6). **Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). 
 
-### F7. Brush quality (exists: 81 brushes in 14 categories, eraser, symmetry, paint tools)
+### F7. Brush quality (exists: 102 brushes in 17 categories, eraser, symmetry, paint tools; lightning `jag` 2026-11-17)
 
 Single writer for `freeDrawingBrush`; brush state separated from text/style state.
 **Done 2026-11-16:** stamp brush engine (`lib/brushes/stamp`) with 66 library brushes (sketching, inking, manga,
 painting, watercolor, airbrush, texture, spray, fire, smoke, sparkle, nature, calligraphy) and per-brush settings;
 Spray (Shift + B), Paint bucket (G), Lasso (L), Drafter (D); symmetry modes (any axis, radial, point, kaleidoscope) and
 Reflect selection; layer blur (BUG-220); colour wheel; zoom to 6400 % with sharp deep zoom (BUG-221); icon audit
-(BUG-208). Limits vs native editors: docs/LIMITATIONS.md.
+(BUG-208). **2026-11-17:** Copy spray (Shift + S, Illustrator's Symbol Sprayer): spray copies of the selection along a
+drag, one group per drag. Limits vs native editors: docs/LIMITATIONS.md.
 **Next:** paint mixing / smudge (needs a raster layer type), tilt and barrel rotation for brushes, saving brush
-settings (BUG-222), per-action undo for tools (BUG-223).
+settings (BUG-222), per-action undo for tools (BUG-223); Copy spray: symmetry while spraying, Alt-click a new source,
+shared photos in saved files (BUG-239).
 **Blocking bugs:** none open. 
+
+### F9. Manga kit *(owner request 2026-11-17, phase 2)*
+
+**Done 2026-11-17 (first version):** 12 panel layouts, split, frames + clipped Art layer (`createComicSlice`), 6 manga
+balloons (text shapes), screentones (dots, lines, cross-hatch, noise), focus / speed lines, bursts (left rail Comic).
+**Next:** slanted and polygon panel cuts, balloon tails you can drag, vertical text, gradient tones, BUG-236.
+
+### F10. Document tools *(owner request 2026-11-17, phase 3; next session)*
+
+**Done 2026-11-17 (first version):** margins / columns / bleed / guides, facing pages, master pages, page numbers
+(`createDocumentSlice`, Pages panel > Page setup). **2026-11-17 (2):** slug, crop marks (board + export), bleed / slug
+frames around the page (`PageFrame`), thin page edge, neutral grey pasteboard, guides on by default, tighter fit
+(16 px gap) + Fit width. **(3):** one entry per page format (A4 orientation bug), manga / comic (with bleed + safe
+area), webtoon, digital art and paper sizes; portrait pages open 1.3 × taller than the board. Next: BUG-242.
+**Next:** linked (threaded) text frames, baseline grid, spreads on the board, BUG-234 / BUG-235 / BUG-237. Adds store
+state; plan first.
+
+### F11. Layer system *(owner request 2026-11-17, phase 4)*
+
+**Done 2026-11-17 (first version):** real page layers + folders holding objects, whole-layer opacity / blend, clip to
+layer below, reference layer (bucket), merge down / flatten, drag cache (`createPageLayersSlice`, `lib/canvas/layerCompositor`).
+**Next:** SVG clipping (BUG-231), per-layer thumbnails, layer masks, lock transparency, object rows filtered by layer.
 
 ### F8. Performance & a11y hardening *(proposed)*
 
