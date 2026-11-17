@@ -5,8 +5,9 @@ const HeaderViewTool = ({ brand, toolbar, transform }) => {
                 {brand}
                 {toolbar}
             </div>
-            {/* small screens: the selection / tool options row scrolls sideways instead of running off */}
-            <div className="flex min-w-0 flex-row items-center overflow-x-auto [scrollbar-width:none]">
+            {/* the property bar: one fixed height for every tool (no jump when switching); scrolls
+                sideways on small screens instead of running off */}
+            <div className="flex h-[var(--ui-bar)] min-w-0 flex-row items-stretch overflow-x-auto border-t border-line [scrollbar-width:none]">
                 {transform}
             </div>
         </section>

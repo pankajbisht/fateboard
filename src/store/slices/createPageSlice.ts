@@ -1,5 +1,9 @@
 import * as fabric from 'fabric';
 import type { SliceCreator } from '../types';
+import { canvasClientRect } from '@/lib/canvas/deepZoom';
+import { openZoom, pageFitScale } from '@/lib/canvas/pageFit';
+import { normalizePageSetup } from '@/lib/document/pageSetup';
+import { pageFrameExtent } from '@/lib/document/printMarks';
 import { PAGE_SIZES } from '@lib/const/editor';
 import type { Orientation, PageFormat } from '@lib/types/page';
 
@@ -10,8 +14,10 @@ import type { Orientation, PageFormat } from '@lib/types/page';
 
 export type CustomPageSize = { w: number; h: number };
 
-export const MIN_ZOOM = 0.1;
-export const MAX_ZOOM = 4;
+/** 2 % … 6400 % (BUG-221: was 10 % … 400 %, too little for small objects). Design deep zoom draws only
+ * the visible part of the page (lib/canvas/deepZoom), so every level stays sharp. */
+export const MIN_ZOOM = 0.02;
+export const MAX_ZOOM = 64;
 export const ZOOM_STEP = 1.25;
 export const MIN_PAGE_PX = 50;
 export const MAX_PAGE_PX = 10000;
@@ -83,6 +89,8 @@ export interface PageSlice {
     /** Touch pinch: multiply the zoom by `factor` keeping the point under the fingers (client px) still. */
     pinchZoom: (factor: number, clientX: number, clientY: number) => void;
     fitToScreen: () => void;
+    /** Design: the page width (+ bleed / slug / crop-mark frames) fills the board width. Whiteboard: fitToScreen. */
+    fitToWidth: () => void;
     /** Whiteboard: zoom / pan so `rect` (scene px) fills the view. Design: no-op (CanvasBoard fits the page). */
     zoomToRect: (
         rect: { left: number; top: number; width: number; height: number },
@@ -109,9 +117,15 @@ const isDesignBoard = (s: { boardMode?: 'design' | 'whiteboard' | null } & Geome
 const boardScroller = (canvas: fabric.Canvas) =>
     canvas.wrapperEl?.closest?.('[data-board-scroll]') as HTMLElement | null | undefined;
 
+/** Page px shown past every page edge (bleed / slug frames, crop marks): the fits leave room for it. */
+const frameExtentOf = (s: { pageSetup?: unknown }) => {
+    const setup = normalizePageSetup(s.pageSetup);
+    return pageFrameExtent(setup, { frames: setup.guides, marks: setup.cropMarks });
+};
+
 /** Canvas px per CSS px of the element plus its page position (the design page is shown scaled). */
 const canvasFrame = (canvas: fabric.Canvas) => {
-    const rect = canvas.upperCanvasEl?.getBoundingClientRect?.();
+    const rect = canvasClientRect(canvas); // the page on screen, also in deep zoom (BUG-221)
     const k = rect?.width ? canvas.getWidth() / rect.width : 1;
     return { left: rect?.left ?? 0, top: rect?.top ?? 0, k: Number.isFinite(k) && k > 0 ? k : 1 };
 };
@@ -268,6 +282,19 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get) => ({
         get().applyPageSize();
     },
 
+    // zoom = fit width / fit page: the board draws page × fit page × zoom (same formula, lib/canvas/pageFit)
+    fitToWidth: () => {
+        const s = get();
+        const el = s.canvas && boardScroller(s.canvas);
+        if (!el || !isDesignBoard(s as never) || !s.pageWidth || !s.pageHeight)
+            return get().fitToScreen();
+        const extent = frameExtentOf(s as { pageSetup?: unknown });
+        const view = { w: el.clientWidth, h: el.clientHeight };
+        const page = { w: s.pageWidth, h: s.pageHeight };
+        const fit = pageFitScale(view, page, extent, 'page');
+        get().setZoom(pageFitScale(view, page, extent, 'width') / fit);
+    },
+
     // Design: CanvasBoard owns the canvas size and viewport (Q2, BUG-007); this only resets the
     // zoom and mirrors the page size (one source: `selectedPreset`). Whiteboard: back to 1:1.
     applyPageSize: () => {
@@ -277,14 +304,24 @@ export const createPageSlice: SliceCreator<PageSlice> = (set, get) => ({
 
         if (isDesignBoard(get() as never)) {
             const preset = peers.selectedPreset;
+            // a portrait page opens a bit taller than the board, top first (owner 2026-11-17, lib/canvas/pageFit)
+            const el = boardScroller(canvas);
+            const view = el ? { w: el.clientWidth, h: el.clientHeight } : { w: 0, h: 0 };
+            const page = preset ? { w: preset.width, h: preset.height } : { w: 0, h: 0 };
+            const zoom = openZoom(view, page, frameExtentOf(get() as { pageSetup?: unknown }));
             set(
                 {
-                    zoom: 1,
+                    zoom,
                     ...(preset ? { pageWidth: preset.width, pageHeight: preset.height } : {}),
                 },
                 false,
                 'page/applySize',
             );
+            // after CanvasBoard re-sized the page and re-centred the scroll (its layout effect)
+            if (zoom > 1 && el && typeof requestAnimationFrame === 'function')
+                requestAnimationFrame(() => {
+                    el.scrollTop = 0;
+                });
             return;
         }
 

@@ -43,29 +43,26 @@ const selectTwo = () => {
     });
 };
 
-const menu = () => screen.getByRole('combobox', { name: 'Shape operations' });
+const menu = () => screen.getByRole('button', { name: 'Shape operations' });
 const pick = (name: string) => {
     fireEvent.click(menu());
-    fireEvent.click(screen.getByRole('option', { name: new RegExp(`^${name}`) }));
+    fireEvent.click(screen.getByRole('menuitem', { name: new RegExp(`^${name}`) }));
 };
 
-describe('footer shape operations (one compact dropdown)', () => {
-    it('is a single dropdown (no separate icon buttons), disabled until 2 shapes are selected', () => {
+describe('shape operations menu (top toolbar, next to Group)', () => {
+    it('is one menu button, disabled until 2 shapes are selected', () => {
         render(<BooleanOperations />);
-        expect(screen.queryAllByRole('button')).toHaveLength(0);
-        expect(
-            menu().getAttribute('aria-disabled') === 'true' ||
-                (menu() as HTMLButtonElement).disabled,
-        ).toBe(true);
+        expect(screen.getAllByRole('button')).toHaveLength(1);
+        expect((menu() as HTMLButtonElement).disabled).toBe(true);
         selectTwo();
         expect((menu() as HTMLButtonElement).disabled).toBe(false);
     });
 
-    it('lists every operation with an icon', () => {
+    it('lists every operation with an icon and a description', () => {
         render(<BooleanOperations />);
         selectTwo();
         fireEvent.click(menu());
-        const items = screen.getAllByRole('option');
+        const items = screen.getAllByRole('menuitem');
         expect(items.map((o) => o.querySelector('[data-label]')?.textContent)).toEqual([
             'Union',
             'Subtract',
@@ -75,19 +72,20 @@ describe('footer shape operations (one compact dropdown)', () => {
             'Crop',
             'Mask',
         ]);
-        items.forEach((o) => expect(o.querySelectorAll('svg').length).toBeGreaterThanOrEqual(2)); // check + op icon
+        items.forEach((o) => expect(o.querySelectorAll('svg').length).toBeGreaterThanOrEqual(1));
+        expect(items[0].textContent).toContain('Merge the shapes into one');
     });
 
-    it('any operation can be used again (an action menu never keeps a value)', () => {
+    it('runs the operation, closes, and the same operation can be run again', () => {
         render(<BooleanOperations />);
         selectTwo();
         pick('Union');
+        expect(screen.queryByRole('menuitem')).toBeNull(); // closed after the pick
         pick('Union');
         expect(unionSelected).toHaveBeenCalledTimes(2);
         pick('Divide');
         pick('Mask');
         expect(divideSelected).toHaveBeenCalledTimes(1);
         expect(clipSelectedObject).toHaveBeenCalledTimes(1);
-        expect(menu().textContent).toContain('Shape ops'); // back to the placeholder
     });
 });

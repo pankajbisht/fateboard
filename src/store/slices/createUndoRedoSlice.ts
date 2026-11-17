@@ -321,6 +321,10 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
             // every recorded change: linked clones of the selection follow first, so the edit and
             // its copies are ONE undo step
             if (!isPageSwitching) peers().syncLinkedClones?.();
+            // a recorded change is a document change: autosave it too. Object events save the objects, but many
+            // changes fire none (opacity, a layer rename, page setup…) and were lost on reload (BUG-243).
+            // `persist` is debounced and merges with the object-event saves; it holds itself during page loads.
+            peers().persist?.();
             if (immediate) return commit();
             cancelTimer();
             timer = setTimeout(commit, 150);

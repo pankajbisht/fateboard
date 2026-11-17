@@ -30,14 +30,15 @@ const DATA_FILES = new Set([
     '/src/hooks/shape/shapeCatalog.ts',
     '/src/components/organisms/fonts/fontTemplates.config.ts',
     '/src/components/atoms/Icon.tsx',
+    '/src/store/brushLibrary.ts', // the brush library: ~60 brush definitions
 ]);
 
 /** Over budget on 2026-11-11: current size = ceiling. Split them (skill `fate-refactor`), never grow them. */
 const LEGACY_CEILINGS: Record<string, number> = {
     '/src/store/slices/createNodeEditorSlice.ts': 1710, // -8: screenScale moved to lib/canvas
     '/src/lib/utils/GradientTool.ts': 1319,
-    '/src/store/slices/createCanvasSlice.ts': 1262, // +8: BUG-186 (2026-11-11)
-    '/src/components/organisms/effects/ui/ExportCanvas.tsx': 1183,
+    '/src/store/slices/createCanvasSlice.ts': 1224, // was 1257: CanvasTool type → store/canvasTools.ts, size setting → store/pagePreset.ts (2026-11-17)
+    '/src/components/organisms/effects/ui/ExportCanvas.tsx': 1150, // was 1183: export bounds moved to lib/export/exportBounds.ts (2026-11-17)
     '/src/store/slices/createLayersSlice.ts': 1024,
     '/src/store/slices/templateSlice.ts': 933,
     '/src/store/slices/createAnimationSlice.ts': 861,
@@ -45,23 +46,22 @@ const LEGACY_CEILINGS: Record<string, number> = {
     '/src/components/organisms/effects/ui/TemplateGallery.tsx': 818,
     '/src/components/organisms/layer/LayersPanel.tsx': 791, // -23: key labels moved to layer/layerKeys.ts (2026-11-13)
     '/src/store/slices/createNotebookSlice.ts': 756,
-    '/src/store/slices/createBrushSlice.ts': 502, // was 715: ink / calligraphy engine moved to store/brushes/, +3 for the nib brush (2026-11-13)
+    '/src/store/slices/createBrushSlice.ts': 458, // was 502: symmetry copies moved to store/brushes/symmetryCopies.ts, preset key table replaced by isBrushId (2026-11-16)
     '/src/store/slices/advanceOperationSlice.ts': 726,
     '/src/animation/engine.ts': 725,
     '/src/store/slices/createShapeSlice.ts': 699,
-    '/src/components/organisms/board/ui/CanvasBoard.tsx': 645,
+    '/src/components/organisms/board/ui/CanvasBoard.tsx': 634, // was 645: fit maths moved to lib/canvas/pageFit.ts (2026-11-17)
     '/src/components/pages/web/WhiteboardMarketingSite.tsx': 558, // -2: gallery nav map (2026-11-12)
     '/src/components/organisms/effects/ui/RepeatAlongPath.tsx': 572,
-    '/src/components/organisms/DrawPanel.tsx': 549,
+    '/src/components/organisms/DrawPanel.tsx': 526, // was 549: symmetry moved to SymmetryControls (2026-11-16)
     '/src/store/slices/createPagesSlice.ts': 549,
     '/src/components/organisms/ShapePanel.tsx': 534,
-    '/src/components/organisms/FillShadowPanel.tsx': 458, // -65: ShadowControls split out (2026-11-12)
+    '/src/components/organisms/FillShadowPanel.tsx': 437, // was 458: opacity moved to LayerEffectsSection (2026-11-16)
     '/src/components/organisms/effects/ui/PathEffects.tsx': 512,
     '/src/store/slices/createShapeStyleSlice.ts': 466,
     '/src/components/organisms/ColorPicker.tsx': 465,
     '/src/components/organisms/filter/ui/filterEngine.ts': 465,
     '/src/components/pages/web/MiniWhiteboard.tsx': 415,
-    '/src/components/organisms/ColorPickerPopover.tsx': 322, // -80: formats + harmonies split out (2026-11-12)
     '/src/components/organisms/TextPanel.tsx': 394,
     '/src/components/organisms/filter/ui/Filters.tsx': 389,
     '/src/components/organisms/fonts/FontTemplatePanel.tsx': 387,

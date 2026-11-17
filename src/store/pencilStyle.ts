@@ -5,6 +5,7 @@
  * the brush slice builds the brush from `drawingState(state)`.
  */
 import { creationScaleOf } from '@/lib/canvas/creationScale';
+import { sprayState } from './sprayStyle';
 
 export type PencilStyle = {
     /** Line width at 100 % (screen px on the design board, scene px on the whiteboard). */
@@ -83,6 +84,6 @@ export const pencilState = <S extends DrawingSettings>(s: S): S => {
     };
 };
 
-/** The settings the canvas draws with: the Draw panel's, or the Pencil's while it is active. */
+/** The settings the canvas draws with: the Draw panel's, or the Pencil's / Spray's while active. */
 export const drawingState = <S extends DrawingSettings>(s: S): S =>
-    s.activeTool === 'pencil' ? pencilState(s) : s;
+    s.activeTool === 'pencil' ? pencilState(s) : s.activeTool === 'spray' ? sprayState(s) : s;

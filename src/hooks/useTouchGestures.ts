@@ -4,7 +4,7 @@ import { useStore } from '@store';
 import { attachTouchGestures } from '@/lib/canvas/touchGestures';
 
 /** Tools that draw on a finger drag: after a pen was used, one finger pans with these instead. */
-const DRAW_TOOLS = new Set(['draw', 'pencil', 'pen', 'laser']);
+const DRAW_TOOLS = new Set(['draw', 'pencil', 'pen', 'laser', 'copySpray']);
 
 /** Fabric's own handlers: a synthetic event on the canvas goes through its target lookup. */
 function fireMouse(canvas: Canvas, type: 'contextmenu' | 'dblclick', x: number, y: number) {

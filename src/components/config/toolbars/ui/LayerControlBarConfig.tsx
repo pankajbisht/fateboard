@@ -14,14 +14,14 @@ export const LAYERCONTROL_ACTIONS = [
         id: 'sendbackward',
         label: 'Send backward',
         shortcut: shortcut('⌘↓', 'Ctrl+↓'),
-        icon: <Icon name="angle-down" />,
+        icon: <Icon name="send-backward" />,
         onClick: () => useStore.getState().sendBackward(),
     },
     {
         id: 'bringforward',
         label: 'Bring forward',
         shortcut: shortcut('⌘↑', 'Ctrl+↑'),
-        icon: <Icon name="angle-up" />,
+        icon: <Icon name="bring-forward" />,
         onClick: () => useStore.getState().bringForward(),
     },
     {

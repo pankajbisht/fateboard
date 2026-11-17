@@ -78,6 +78,9 @@ one writer, `serializeCanvas(canvas)` (`lib/serialization.ts`, BUG-003). It is u
 project), page capture, `exportJSON` / `saveBoard`, the mode-switch snapshot and Export → JSON; Layers copy / paste /
 duplicate clone with `CUSTOM_PROPS` too. `src/__tests__/oneSerializeList.test.ts` fails on any other canvas-level
 `toObject` / `toJSON`. Only exception: Share (`ExtraBar`, `canvas.toJSON()`, BUG-028 waits on Q6).
+`CUSTOM_PROPS` also holds one **canvas-level** prop, `docLayers` (the page's layers, 2026-11-17): Fabric's canvas
+`toObject(props)` picks listed canvas props and `loadFromJSON` sets them back (`this.set(serialized)`), so the layer
+list travels with every snapshot, page and save. Objects carry `layerId`.
 
 `serializeCanvas` writes two kinds of objects with values other than their live ones (swapped in, serialized, swapped
 back):
@@ -89,9 +92,21 @@ back):
 
 Custom props in use: `id`, `name` (layers), `_locked` (lock), `customId`, `customType` (`'shape'`,
 `'connector-handle'`…), `shapeId`, `isTextShape`, `textInset` (text-in-shape), `connectorData` (connectors), `animId`
-(animation), `isFreehand` (brush), `excludeFromExport`/`excludeFromLayers`/`excludeFromSnap`/`isHelper`/`_isHelper`
+(animation), `isFreehand` (brush), `layerBlur` (layer blur radius, BUG-220), `excludeFromExport`/`excludeFromLayers`/`excludeFromSnap`/`isHelper`/`_isHelper`
 (helpers), `linkId` (linked clones, saved), `__thumbRev`, `__text`, `__box`, `__group` (runtime-only refs). The old
 `__master` / `__instances` clone refs are gone (2026-11-07): links are the saved `linkId`.
+
+**Classes of our own (2026-11-16):** `StampStroke` (`lib/brushes/stamp/StampStroke.ts`, registered with Fabric's
+`classRegistry`) serializes its own data (`stampPoints`, `stampParams`, `stampColor`, `stampSize`, `stampSeed`,
+`brushId`) in its `toObject`, like a Path's `path`: it is the object's geometry, not a feature prop, so it also
+survives `clone()` (copy / paste, symmetry copies). Its SVG export is an embedded PNG at 2 ×.
+
+**Fabric patches (installed once from `RootLayout`, before any canvas draws):** `installLayerBlur()` wraps
+`FabricObject.prototype.render` in `ctx.filter = blur(px)` (radius × the context's device scale × the object's scale;
+a JS box blur where `ctx.filter` is missing) and `_createBaseSVGMarkup` in an `feGaussianBlur` filter;
+`installCrispCache()` (`lib/canvas/crispCache.ts`) makes `shouldCache()` false for an object whose cache would pass
+Fabric's `maxCacheSideLimit` / `perfLimitSizeTotal` (it would be stretched, so it draws as vectors instead), unless it
+`needsItsOwnCache()`.
 
 Runtime-only refs (`__*`, including `__animRest`) are never serialized and must be rebuilt after every load (`rehydrateTextShape` does this for text shapes; linked clones have no
 rebuild).
@@ -104,6 +119,9 @@ completion callback). Only the canvas, pages and undo slices call it; other code
 ## History / snapshots
 
 `createUndoRedoSlice` keeps `undoStack: string[]` (JSON). Invariant: the last item is the current state.
+**Every recorded change is autosaved (BUG-243, 2026-11-17):** `saveState()` also calls `persist()` (debounced, merges
+with the object-event saves), because many document changes fire no canvas event (style actions, layer settings, page
+setup). `initHistory` (a board's base snapshot) does not autosave; undo / redo persist after the restore.
 
 - Snapshots: `serializeCanvas(canvas, CUSTOM_PROPS)` (`lib/serialization.ts`), the same serializer as autosave, board
   save, page capture and the mode-switch snapshot. It keeps every custom prop, writes a text box being typed in with
@@ -138,6 +156,30 @@ One geometry owner per board (decision Q2, BUG-007 fixed 2026-11-07); `src/store
 |---|---|---|---|---|
 | **Design** (fixed page) | `CanvasBoard` only: backstore = page px (`selectedPreset`), CSS size = fit × zoom | always identity | Page `setZoom` changes `zoom` state only; CanvasBoard redraws (footer, toolbar, Ctrl / ⌘ + wheel or pinch, UI `actualSize`) | the wheel scrolls the board natively (`[data-board-scroll]`); Hand tool drags it |
 | **Whiteboard** (infinite) | `CanvasBoard` only: canvas = host size | Page slice only: `setZoom(z, point)` (`zoomToPoint`), `zoomToRect(rect)`, `applyPageSize` (reset 1:1) | same actions; `zoom` always equals the viewport zoom (BUG-025); Ctrl / ⌘ + wheel or pinch zooms at the pointer | wheel / trackpad `relativePan` (Shift + wheel sideways), Hand tool drag |
+
+**Fit (2026-11-17, `lib/canvas/pageFit.ts`):** CanvasBoard's fit scale = the page plus `extent` page px on every side
+(bleed + slug frames when Show guides is on, crop marks when shown: `pageFrameExtent`, `lib/document/printMarks.ts`)
+fitting the board minus a 16 px gap (8 px on phones); fit never enlarges past 100 %. Fit width (Page `fitToWidth`) uses
+the same formula by width. **Opening a page** (the board measured, a page size change, a page switch: Page
+`applyPageSize`, triggered by `useOpenPageView` in hooks/board): portrait pages open at `openZoom` = 1.3 × the fit,
+capped at Fit width, scrolled to the top, so a tall page looks long; Fit to screen (zoom 1) shows the whole page. The
+stage leaves the same room so the frames scroll into view; it is floored
+(`fitStage`: a rounded page + frames never passes the view by a fraction of a px) and the board keeps a stable
+scrollbar gutter, so a scrollbar appearing (classic scrollbars, Windows / Linux) cannot change the width the fit used
+and start a fit ↔ scrollbar loop (found by the fate-reviewer; not reproducible with overlay scrollbars). `PageFrame` (SVG in the
+stage, `pointer-events: none`) draws the frames and marks OUTSIDE the page; the canvas stays exactly the page (Q2), so
+art past the trim is not drawn there (BUG-234) but is exported with the bleed.
+
+**Deep zoom (BUG-221, Q2 amended 2026-11-16):** zoom is 2 % … 6400 % on both boards. Design: the canvas stays the page
+(logical W × H, identity viewport), but once the full-page buffer at screen density would pass `MAX_BACKSTORE_PX`,
+`useDesignCanvasSize` (hooks/board) switches to a **window**: the buffer covers only the visible part of the page (+ 96
+CSS px margin) at full density (`lib/canvas/deepZoom.ts` `applyWindow`), the Fabric wrapper sits at the window's
+offset inside the artboard, both contexts draw under a translated base transform, and `_getPointerImpl` adds the
+window origin back to pointer events. Scrolling re-places the window (one redraw per scroll frame, only in deep zoom).
+Export, thumbnails and `toCanvasElement` are unaffected (they render their own canvas). Code that maps the canvas to
+the screen asks `canvasClientRect(canvas)` (the whole page on screen) or `canvasPxPerCss(canvas)`, never the element's
+box; painters that reset the transform use `baseTransform(canvas)`. Fabric's own resets: `drawControls` is patched to keep the window offset; while windowed, `getRetinaScaling()` returns 1 when Fabric turns retina off for an export (`toCanvasElement`), so shadows are not drawn at screen density in files; the IText cursor in clip-path groups is not patched yet (BUG-227). Objects too big for Fabric's cache at the current
+zoom draw directly (`crispCache`), on both boards.
 
 The page size has **one source**, `selectedPreset` (Canvas slice). `setSelectedPreset` is a document change: one undo
 step (snapshots carry the page size under `fateboardPage`), autosaved, and stored per page (`Page.preset`, BUG-109).
@@ -179,7 +221,34 @@ Coordinates: in design mode the CSS size is smaller than the backstore. Pointer 
 `canvas.getWidth() / upperCanvasEl.getBoundingClientRect().width` (`getCssToCanvasScale`). `calcOffset()` is
 refreshed on pointerdown/scroll/resize because cached offsets go stale.
 
+## Page layers (compositor, 2026-11-17)
+
+`lib/canvas/layerCompositor.ts`, installed by `bindPageLayers`, patches four **instance** methods of the editor canvas
+(the prototype is untouched; uninstall restores them): `_renderObjects` (draw by layer: the plan from
+`lib/canvas/layerPlan.ts`; plain layers draw straight onto the canvas, a layer / folder with opacity, blend or clipped
+layers uses one pooled buffer the size of the backstore), `_checkTarget` (objects on hidden / locked layers are not
+hit), `_setSVGObjects` (hidden layers left out, opacity / blend as `<g>`; clipping not exported, BUG-231) and a
+selection guard (`selection:created/updated`). It keeps `canvas._objects` in layer order (hit testing walks it);
+helpers (`excludeFromExport` / `excludeFromLayers` / `_isHelper`) draw above all layers and stay on top of the stack.
+Two host hooks (2026-11-17, Document slice): `underlay` (a master page's objects, drawn first in every render
+and in SVG, never in the stack, never hit) and `paintOverlay` (margin / column guides, only when drawing the
+editor's own canvas element, so never in exports or thumbnails). More canvas-level saved props: `pageSetup`,
+`pageRole`, `masterId` (`lib/canvas/canvasProp.ts` accessors).
+One plain layer (every old document) takes Fabric's own path. Exports, thumbnails and video frames go through
+`_renderObjects`, so they show layers too.
+
 ## Performance notes
+
+- Page layers: while an object is dragged (`_currentTransform`), the layers below it are drawn once and copied from a
+  cached picture each frame, and the layers above too when none of them blends; only the edited layers redraw (with
+  ≥ 20 objects outside them, `CACHE_MIN_OBJECTS`). Connector layers stay live. Each isolated layer costs one
+  backstore-size buffer while drawing (pool of 6), see BUG-232 / BUG-233.
+
+- Deep zoom (2026-11-16): past the buffer limit the design board redraws on every scroll frame (the window moves); below
+  it scrolling stays free (the browser moves a full-page buffer). Objects that skip the cache at high zoom redraw their
+  vectors each frame. Stamp strokes cache their dabs per object and render into Fabric's object cache (or an offscreen
+  layer clipped to the target canvas); thousands of dabs per stroke are fine, but very long FX strokes with glow cost
+  more (`UNKNOWN - verify` at 1,500 stamp strokes).
 
 - Measured 2026-11-09 (1500 mixed objects, M1 Pro GPU): `renderAll` 12 ms; history snapshot + autosave 15-25 ms per
   change; undo 250 ms. Serialization is not the bottleneck; a repaint or per-object DOM is. With the Pages panel open, a

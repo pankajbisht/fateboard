@@ -94,7 +94,7 @@ describe('no fixed light colors in the UI', () => {
         const allow = (file: string, m: string) =>
             file.endsWith('organisms/ColorPicker.tsx') || // palette swatches are colors, not chrome
             file.endsWith('atoms/Swatch.tsx') || // edge drawn on paint colors
-            (file.endsWith('organisms/ColorPickerPopover.tsx') && /white/.test(m)) || // drag handles on the color square / hue bar
+            (file.includes('/molecules/color/') && /white/.test(m)) || // drag handles on the color square / hue bar / wheel (moved out of ColorPickerPopover 2026-11-16)
             (file.endsWith('effects/ui/TemplateGallery.tsx') && /black|white/.test(m)) || // photo overlays
             (file.endsWith('atoms/Switch.tsx') && m === 'bg-white') || // knob on a colored track
             m === 'text-white'; // on brand / danger fills

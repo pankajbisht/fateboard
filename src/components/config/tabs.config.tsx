@@ -5,6 +5,7 @@ import { RepeatAlongPath } from '../organisms/effects/ui/RepeatAlongPath';
 import { RepeatRadially } from '../organisms/effects/ui/RepeatRadially';
 import Filters from '../organisms/filter/ui/Filters';
 import { FillShadowPanel } from '../organisms/FillShadowPanel';
+import { SymmetryPanel } from '../organisms/SymmetryPanel';
 import TemplateGallery from '../organisms/effects/ui/TemplateGallery';
 import FontTemplatePanel from '../organisms/fonts';
 import { AutomataPanel } from '../organisms/generators/AutomataPanel';
@@ -22,7 +23,7 @@ export const TABS_CONFIG = [
     {
         id: 'templates',
         label: 'Templates',
-        icon: 'table-cells-large',
+        icon: 'templates',
         closable: false,
         fullSize: true,
         content: () => <TemplateGallery />,
@@ -38,7 +39,7 @@ export const TABS_CONFIG = [
     {
         id: 'tiling',
         label: 'Tiling Tools',
-        icon: 'screwdriver-wrench',
+        icon: 'tiling',
         closable: false,
         content: () => <PathEffects />,
     },
@@ -51,9 +52,16 @@ export const TABS_CONFIG = [
     },
 
     {
+        id: 'symmetry',
+        label: 'Symmetry',
+        icon: 'kaleidoscope',
+        closable: false,
+        content: () => <SymmetryPanel />,
+    },
+    {
         id: 'along-path',
         label: 'Along Path',
-        icon: 'screwdriver-wrench',
+        icon: 'along-path',
         closable: false,
         content: () => <RepeatAlongPath />,
     },

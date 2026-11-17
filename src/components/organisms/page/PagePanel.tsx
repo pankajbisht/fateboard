@@ -12,6 +12,8 @@ import { useStore } from '@store'; // your combined zustand hook
 import type { Page } from '@/store/slices/createPagesSlice';
 import { PaintTargetSwatch } from '../../molecules/PaintTargetSwatch';
 import { PageCard } from './PageCard';
+import { PageSetupSection } from './PageSetupSection';
+import { usePageBadges } from './pageBadges';
 
 const isTypingTarget = (el: EventTarget | null) => {
     const node = el as HTMLElement | null;
@@ -27,6 +29,7 @@ export default function PagePanel() {
 
     const pages = useStore((s) => s.pages);
     const currentPageId = useStore((s) => s.currentPageId);
+    const badges = usePageBadges(pages, currentPageId);
     const isPageSwitching = useStore((s) => s.isPageSwitching);
 
     const initPages = useStore((s) => s.initPages);
@@ -201,6 +204,8 @@ export default function PagePanel() {
                                 setOverIndex(null);
                         }}
                     >
+                        {/* facing pages: page 1 starts on the right, then spreads */}
+                        {badges.facing && <li aria-hidden className="col-start-1" />}
                         {pages.map((page, index) => {
                             const active = page.id === currentPageId;
                             return (
@@ -210,6 +215,7 @@ export default function PagePanel() {
                                     index={index}
                                     active={active}
                                     aspectRatio={ratioOf(page, active)}
+                                    badge={badges.labels[index]}
                                     canDelete={pages.length > 1}
                                     dragging={dragId === page.id}
                                     dropTarget={
@@ -247,7 +253,7 @@ export default function PagePanel() {
             </div>
 
             {/* The open page. Size: Settings > Canvas; zoom: footer; export: Export tab */}
-            <div className="flex shrink-0 flex-col gap-3 border-t border-line px-4 py-3">
+            <div className="flex max-h-[55%] shrink-0 flex-col gap-3 overflow-y-auto border-t border-line px-4 py-3">
                 <PanelSection title="This page">
                     <div className="flex items-center justify-between gap-2">
                         <PaintTargetSwatch
@@ -270,6 +276,7 @@ export default function PagePanel() {
                         </Button>
                     </div>
                 </PanelSection>
+                <PageSetupSection />
             </div>
         </div>
     );

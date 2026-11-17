@@ -58,7 +58,7 @@ const ExtraBar = () => {
                 id: 'grid',
                 label: gridEnabled ? 'Hide grid' : 'Show grid',
                 shortcut: shortcut("⌘'", "Ctrl+'"),
-                icon: <Icon name="table-cells-large" />,
+                icon: <Icon name="canvas-grid" />,
                 active: gridEnabled,
                 onClick: toggleGrid,
             },

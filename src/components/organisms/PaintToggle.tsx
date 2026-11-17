@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type * as fabric from 'fabric';
 import { useStore } from '@store';
 import { paintState, type PaintKind } from '@/lib/paintToggle';
+import { Icon } from '../atoms/Icon';
 import { Tooltip } from '../molecules/Tooltip';
 
 const EVENTS = [
@@ -44,9 +45,10 @@ function usePaintState(paint: PaintKind) {
 const NOUN: Record<PaintKind, string> = { fill: 'fill', stroke: 'stroke' };
 
 /**
- * Footer toggle (after the Fill / Stroke label) for the selection's fill or stroke, 16 px.
- * Fill = solid square, stroke = outlined square; a red slash means "none" (click adds the
- * default), hovering a present one previews the slash (click removes). Name + tooltip (above)
+ * Footer toggle (after the Fill / Stroke label) for the selection's fill or stroke, 20 px.
+ * Icons (`atoms/customIcons.ts`): fill = solid swatch, stroke = thick outlined swatch; a dashed swatch with a red
+ * slash means "none" (hover shows the swatch with a + : click adds the default); hovering a present one shows the
+ * red slash (click removes). Name + tooltip (above)
  * say what the click does. Disabled with nothing to paint.
  */
 export function PaintToggle({ paint }: { paint: PaintKind }) {
@@ -72,38 +74,28 @@ export function PaintToggle({ paint }: { paint: PaintKind }) {
                 disabled={!applicable}
                 onClick={() => toggle?.()}
                 className={clsx(
-                    'group relative size-4 shrink-0 overflow-hidden rounded-[3px] border border-line-strong transition-colors',
+                    'group relative grid size-5 shrink-0 place-items-center rounded-[4px] text-ink-muted transition-colors',
                     'hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400',
                     'disabled:cursor-not-allowed disabled:opacity-40',
                 )}
             >
-                {/* glyph: solid square = fill, outlined square = stroke */}
-                <span
-                    aria-hidden
-                    className={clsx(
-                        'absolute rounded-[2px] transition-colors',
-                        paint === 'fill' ? 'inset-[24%]' : 'inset-[22%] border-[1.5px]',
-                        paint === 'fill'
-                            ? none
-                                ? 'border border-dashed border-ink-subtle group-hover:border-solid group-hover:border-primary-500 group-hover:bg-primary-500'
-                                : 'bg-ink-muted group-hover:bg-ink-subtle'
-                            : none
-                              ? 'border-dashed border-ink-subtle group-hover:border-solid group-hover:border-primary-500'
-                              : 'border-ink-muted group-hover:border-ink-subtle',
-                    )}
+                {/* the state (solid fill / outlined stroke, dashed + red slash = none) … */}
+                <Icon
+                    name={`${paint}-${none ? 'none' : 'on'}`}
+                    size="1rem"
+                    className={clsx('col-start-1 row-start-1', applicable && 'group-hover:hidden')}
                 />
-                {/* red slash: always when there is none; as a preview on hover when there is */}
-                <span
-                    aria-hidden
-                    className={clsx(
-                        'pointer-events-none absolute left-1/2 top-1/2 h-[1.5px] w-[125%] -translate-x-1/2 -translate-y-1/2 -rotate-45 bg-danger transition-opacity',
-                        none
-                            ? 'opacity-100 group-hover:opacity-0'
-                            : applicable
-                              ? 'opacity-0 group-hover:opacity-100'
-                              : 'opacity-0',
-                    )}
-                />
+                {/* … and on hover, what a click does: add (+) or remove (red slash) */}
+                {applicable && (
+                    <Icon
+                        name={`${paint}-${none ? 'add' : 'remove'}`}
+                        size="1rem"
+                        className={clsx(
+                            'col-start-1 row-start-1 hidden group-hover:inline-block',
+                            none && 'text-primary-ink',
+                        )}
+                    />
+                )}
             </button>
         </Tooltip>
     );

@@ -6,6 +6,7 @@
  * while editing. The real textbox is only hidden (opacity 0) until editing ends.
  */
 import { BRAND } from '@/lib/theme';
+import { canvasPxPerCss, windowOf } from '@/lib/canvas/deepZoom';
 import * as fabric from 'fabric';
 
 export interface ShapeTextEditorOptions {
@@ -88,10 +89,7 @@ export function openShapeTextEditor(canvas: any, group: any, opts: ShapeTextEdit
     text.set('opacity', 0);
 
     /** CSS px -> canvas px ratio (the canvas can be shown scaled down in design mode) */
-    const cssToCanvas = (): number => {
-        const r = canvas.upperCanvasEl?.getBoundingClientRect();
-        return r && r.width ? canvas.getWidth() / r.width || 1 : 1;
-    };
+    const cssToCanvas = (): number => canvasPxPerCss(canvas);
 
     /** Runs on every render, so the textarea follows zoom / pan / resize AND font changes. */
     const layout = () => {
@@ -121,8 +119,10 @@ export function openShapeTextEditor(canvas: any, group: any, opts: ShapeTextEdit
         const h = ta.scrollHeight;
         ta.style.height = `${h}px`;
 
-        ta.style.left = `${center.x / k - w / 2}px`;
-        ta.style.top = `${center.y / k - h / 2}px`;
+        // the host is the canvas element; in deep zoom it covers only a window of the page (BUG-221)
+        const win = windowOf(canvas);
+        ta.style.left = `${(center.x - (win?.ox ?? 0)) / k - w / 2}px`;
+        ta.style.top = `${(center.y - (win?.oy ?? 0)) / k - h / 2}px`;
         ta.style.transform = `rotate(${group.angle || 0}deg)`;
     };
 

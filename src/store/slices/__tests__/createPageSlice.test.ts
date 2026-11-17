@@ -144,6 +144,39 @@ describe('design board zoom (CanvasBoard owns geometry, ADR Q2)', () => {
         expect(calls).toEqual([]);
     });
 
+    it('fitToWidth: the page width (+ its frames) fills the board width (InDesign Fit width)', () => {
+        const { h, calls } = designSetup();
+        const canvas = h.get().canvas as Record<string, unknown>;
+        canvas.wrapperEl = { closest: () => ({ clientWidth: 1280, clientHeight: 758 }) };
+        h.set({
+            pageWidth: 1080,
+            pageHeight: 1920,
+            pageSetup: { bleed: 12, slug: 0, guides: true },
+        });
+        h.get().fitToWidth();
+        const page = (758 - 32) / (1920 + 24); // fit page (the board's fit scale)
+        const width = (1280 - 32) / (1080 + 24);
+        expect(h.get().zoom).toBeCloseTo(width / page, 6);
+        expect(calls).toEqual([]);
+    });
+
+    it('a portrait page opens a bit taller than the board, at its top; landscape at the fit', () => {
+        const { h } = designSetup();
+        const scroller = { clientWidth: 1280, clientHeight: 758, scrollTop: 400 };
+        (h.get().canvas as Record<string, unknown>).wrapperEl = { closest: () => scroller };
+        const frames: FrameRequestCallback[] = [];
+        vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+        h.set({ selectedPreset: { width: 1080, height: 1920 }, zoom: 3 });
+        h.get().applyPageSize();
+        expect(h.get().zoom).toBe(1.3);
+        frames.forEach((cb) => cb(0)); // after the board re-centred the new size
+        expect(scroller.scrollTop).toBe(0);
+        h.set({ selectedPreset: { width: 1920, height: 1080 } });
+        h.get().applyPageSize();
+        expect(h.get().zoom).toBe(1);
+        vi.unstubAllGlobals();
+    });
+
     it('whiteboard keeps viewport zoom', () => {
         const { h, calls } = designSetup();
         h.get().setBoardMode('whiteboard');

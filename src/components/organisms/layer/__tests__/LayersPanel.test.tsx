@@ -167,7 +167,7 @@ describe('LayersPanel with many layers', () => {
         useStore.setState({ layers, selectedLayerIds: [] } as never);
 
         render(<LayersPanel />);
-        fireEvent.change(screen.getByRole('searchbox', { name: 'Find a layer' }), {
+        fireEvent.change(screen.getByRole('searchbox', { name: 'Find an object' }), {
             target: { value: 'Layer 1999' },
         });
 

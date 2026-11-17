@@ -97,13 +97,13 @@ describe('guard hook: guardrails ask the owner', () => {
         decision('Write', { file_path: path.join(ROOT, 'src/lib/x.ts'), content });
 
     it('loosening a ratchet asks; tightening it does not', () => {
-        expect(change('package.json', '--max-warnings 249', '--max-warnings 260')).toBe('ask');
-        expect(change('package.json', '--max-warnings 249', '--max-warnings 240')).toBe('allow');
+        expect(change('package.json', '--max-warnings 246', '--max-warnings 260')).toBe('ask');
+        expect(change('package.json', '--max-warnings 246', '--max-warnings 240')).toBe('allow');
         expect(change('vitest.config.ts', 'statements: 52', 'statements: 40')).toBe('ask');
         expect(
             change(
                 'src/__tests__/fileBudget.test.ts',
-                "createCanvasSlice.ts': 1262",
+                "createCanvasSlice.ts': 1224",
                 "createCanvasSlice.ts': 1300",
             ),
         ).toBe('ask');

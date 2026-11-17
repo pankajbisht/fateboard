@@ -43,6 +43,19 @@ export const ZoomBarConfig = [
         },
     },
     {
+        // InDesign "Fit Spread in Window" keys; design board only (whiteboard: Fit to Screen)
+        id: 'fit-width',
+        label: 'Fit Width',
+        title: 'Fit Width',
+        description: 'Zoom so the page width fills the board',
+        shortcut: shortcut('⌘+Alt+Digit0', 'Ctrl+Alt+Digit0'),
+        icon: <Icon name="zoom-fit-width" />,
+        onClick: () => useStore.getState().fitToWidth(),
+        handler: ({ get }) => {
+            get().fitToWidth();
+        },
+    },
+    {
         id: 'actual-size',
         label: 'Actual Size',
         title: 'Actual Size',
@@ -53,6 +66,19 @@ export const ZoomBarConfig = [
         handler: ({ get }) => {
             const { actualSize } = get();
             actualSize();
+        },
+    },
+    {
+        // like Figma's ⌘\ (hide UI): only the canvas on screen; same keys bring it back
+        id: 'distraction-free',
+        label: 'Distraction-free mode',
+        title: 'Distraction-free mode',
+        description: 'Show only the canvas (press again to bring the panels back)',
+        shortcut: shortcut('⌘+Backslash', 'Ctrl+Backslash'),
+        icon: <Icon name="focus" />,
+        onClick: () => useStore.getState().toggleDistractionFree(),
+        handler: ({ get }) => {
+            get().toggleDistractionFree();
         },
     },
 ];

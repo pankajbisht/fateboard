@@ -1,8 +1,8 @@
 # State (zustand store)
 
 One store: `useStore` in `src/store/index.ts`, created with `create(devtools(combinedSlice))`. Devtools are enabled
-only when `NODE_ENV === 'development'`. `combinedSlice(set, get, store)` **object-spreads 24 slice creators**
-(24 distinct, because `createPageSlice` appears twice). **If two slices define the same key, the one spread later
+only when `NODE_ENV === 'development'`. `combinedSlice(set, get, store)` **object-spreads 26 slice creators**
+(each once; Paint tools added 2026-11-16). **If two slices define the same key, the one spread later
 silently wins.** 14 keys collide today (`undo`, `redo`, `clipboard` fixed 2026-11-07, Q1). That is the root cause of several bugs (see [Key collisions](#key-collisions)).
 
 Typing: slices mostly use `SliceCreator<T> = StateCreator<any, [], [], T>` (`src/store/types.ts`) or untyped
@@ -14,8 +14,8 @@ Spread order (it matters):
 ```
 1 Canvas  2 Brush  3 UI  4 Layers  5 Page  6 Pages  7 Background  8 Command  9 ShapeStyle  10 UndoRedo
 11 Transform  12 Shape  13 Text  14 BackgroundColor  15 ContextMenu  16 Setting  17 advanceOperation
-19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  26 DrawingTools  27 Generator  28 Macro
-25 Animation
+19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  26 DrawingTools  29 PaintTools  27 Generator
+28 Macro  25 Animation
 (each spread once; 18 geometryEngine removed, the second Page spread removed: BUG-002 / BUG-030)
 ```
 
@@ -88,13 +88,17 @@ The draw tool asks the brush slice to rebuild the brush (`initBrush`); it never 
 
 ## 2. Brush: `createBrushSlice.ts` (+ `store/brushConfig.ts`)
 
-**Purpose:** freehand drawing brushes. 14 brush types (`pencil, marker, ink, calligraphy, highlighter, neon, chalk,
-crayon, pattern, spray, airbrush, splatter, circle, eraser`) on several engines, a whole-stroke eraser, symmetry,
-straight-line mode, and stroke styling applied in `before:path:created`.
+**Purpose:** freehand drawing brushes. 15 classic brush types (`pencil, marker, ink, calligraphy, nib, highlighter, neon,
+chalk, crayon, pattern, spray, airbrush, splatter, circle, eraser`) on several engines, plus 66 stamp-engine brushes from
+the library (2026-11-16, `store/brushLibrary.ts`, below; effect sets Lightning & electric, Water & liquid, Ice & frost and more Smoke & fog in `store/brushLibraryFx.ts`, 2026-11-17), a whole-stroke eraser, symmetry, straight-line mode, and
+stroke styling applied in `before:path:created`. `brush` is a `BrushId`: a classic `BrushType` or a library id
+(`isBrushId`).
 
 **State (spread from `DEFAULT_BRUSH_STATE`):** `brush, width, color, brushOpacity, smoothing, lineCap, lineJoin, lineStyle,
 blend, taper, nibAngle, shadowBlur, shadowOffsetX/Y, brushShadowColor, shadowOpacity, shadowMatchColor, fillEnabled,
-fillColor, fillOpacity, straightLine, symmetry, symmetryCenter, eraserMode, recentColors, cursor`.
+fillColor, fillOpacity, straightLine, symmetry, symmetryCenter, symmetryAngle, symmetryCount, eraserMode, recentColors,
+cursor`. `symmetry` is `none | x | y | both | angle | radial | point | kaleido` (2026-11-16; matrices in
+`lib/canvas/symmetry.ts`, copies made by `store/brushes/symmetryCopies.ts` after `path:created`).
 
 **Actions:** `initBrush`, `refreshBrushCursor`, `setBrush`, `updateBrush(patch)`, `setBrushWidth`, `setBrushColor`,
 `setSymmetry`, `recenterSymmetry`, `commitRecentColor`, `resetBrush`.
@@ -116,6 +120,15 @@ panel's settings are never read or changed for it.
 `store/brushes/variableWidthBrush.ts` (moved unchanged); the Calligraphy pen (brush `nib`, engine `nib`,
 `store/brushes/nibBrush.ts`) extends it with Inkscape's thinning / angle / fixation / caps (`lib/brushes/nibOutline.ts`)
 from `nibStyle` (DrawingTools). Presets and order are data in `store/brushPresets.ts`, re-exported by `brushConfig.ts`.
+
+**Stamp engine (2026-11-16):** engine `stamp` (`lib/brushes/stamp/`): `stampParams.ts` (settings + ranges + `resolveStamp`),
+`dabs.ts` (seeded `DabWalker`: spacing, pressure, speed, tapers, scatter, spray emission over time, fire / gradient /
+rainbow colour), `tips.ts` (procedural tips, cached per size bucket and tint), `renderDabs.ts` (dabs + grain /
+screentone), `StampBrush.ts` (live: offscreen layer shown on `contextTop`), `StampStroke.ts` (the saved object: points,
+settings, colour, size, seed; redrawn at any zoom). `store/brushes/stampBrush.ts` builds it from the library brush +
+the user's override (`stampOverrides`, Paint tools slice) + size / colour / opacity / smoothing. The Spray tool
+(`activeTool === 'spray'`) draws through `drawingState` → `sprayState` (`store/sprayStyle.ts`, `sprayStyle` in Paint
+tools), like the Pencil.
 
 ## 3. UI: `createUiSlice.ts`
 
@@ -168,10 +181,12 @@ object), BUG-194 (ungroup splits text shapes).
 **State:** `pageFormat` (`'Freehand'` default; type `PageFormat` only allows `'Freehand'`), `orientation`,
 `customSize`, `pageBackground`, `zoom`, `scale`, `pageWidth`, `pageHeight`.
 **Actions:** `setPageFormat`, `setOrientation`, `setCustomPageSize`, `setPageBackground`, `setZoom(z, point?)`,
-`zoomIn`, `zoomOut`, `fitToScreen`, `zoomToRect(rect, padding?)` (whiteboard), `panBy(dx, dy)` and
+`zoomIn`, `zoomOut`, `fitToScreen`, `applyPageSize` (design, 2026-11-17: the opening zoom `openZoom`: portrait pages
+1.3 × the fit, never wider than the board, scrolled to the top; others 1), `fitToWidth` (design: zoom = fit width / fit page, `lib/canvas/pageFit.ts`, reads the
+`[data-board-scroll]` size and Document `pageSetup`; whiteboard: `fitToScreen`; 2026-11-17), `zoomToRect(rect, padding?)` (whiteboard), `panBy(dx, dy)` and
 `pinchZoom(factor, clientX, clientY)` (touch, screen px; design scrolls the `[data-board-scroll]` element, zoom goes through `setZoom`; `panBy` is the one pan path: the Canvas slice's Hand tool and wheel pan call it too), `applyPageSize` (design: state only, zoom 1
 + `pageWidth/Height` from `selectedPreset`; whiteboard: viewport back to 1:1). Exports: `resolvePageSize`, `isFreehand`, `MIN/MAX_ZOOM`,
-`MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`.
+`MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`. Zoom range 2 % … 6400 % (BUG-221, was 10 … 400 %).
 **Depends on:** Canvas (`canvas`, `cw`, `ch`, `selectedPreset`), Setting (`settings.freehand` before the board reports
 `boardMode`), Background (`drawBackground`, whiteboard only).
 **Risks:** `pageFormat` / `orientation` /
@@ -250,7 +265,8 @@ the last item of `undoStack` is the current state. **Per page** (Q7): the stacks
 pages' stacks are parked in a closure map and come back when you return.
 **State:** `MAX_HISTORY` (20), `_isRestoring`, `_historyPaused` (counter), `undoStack: string[]`, `redoStack`,
 `canUndo`, `canRedo`.
-**Actions:** `saveState(immediate?)` (150 ms debounce, dedupes identical JSON), `undo` / `redo` (queued: fast presses
+**Actions:** `saveState(immediate?)` (150 ms debounce, dedupes identical JSON; also schedules the autosave, Canvas
+`persist`, BUG-243 2026-11-17: many recorded changes fire no canvas event), `undo` / `redo` (queued: fast presses
 all apply), `clearHistory`, `initHistory`, `pauseHistory`, `resumeHistory`, `registerHistoryEvents` (called by the
 Canvas slice's `registerCanvasEvents`: object added / removed / modified, text editing exited; helpers ignored),
 `unregisterHistoryEvents`.
@@ -341,7 +357,11 @@ panel. The Canvas slice gives a new board that size (the first board when nothin
 be opened, New board) as plain state: the base of the new board, not an undo step. A change in Settings resizes the
 page that was open when the editor loads again (`applyCanvasSizeSetting`, after `initPages`): one undo step,
 autosaved. Other pages, and pages sized by a template, keep their size until they are open during a change. A
-whiteboard has no page size: the change waits for the next design board.
+whiteboard has no page size: the change waits for the next design board. **2026-11-17:** the code lives in
+`store/pagePreset.ts` (`startBoardPreset`, `applySizeSetting`; the Canvas slice keeps the action names); a manga /
+comic size also gives the page its `pageSetup` (bleed 3 mm + safe-area margins; new boards silently, a Settings change
+through Document `setPageSetup`). One entry per format (A4 Portrait / Landscape merged into "A4"; Orientation picks
+the shape); saved ids are mapped (`currentPresetId`: `a4-landscape` → `a4-portrait`, `@swapped` → base).
 **Risks:** BUG-015 (consumers compare `freehand` to strings), BUG-023.
 
 ## 17. advanceOperation: `advanceOperationSlice.ts` (+ `lib/patternRules.ts`, `lib/pathRepeat.ts`)
@@ -396,7 +416,10 @@ Keys pause while a modal is open (`canvasKeysBlocked`, BUG-062). Commit fires `o
 ## 20. Filter: `createFilterSlice.ts` (+ `organisms/filter/ui/filterEngine.ts`, `useImageFilters.ts`)
 
 **State:** `brightness, contrast, saturation, blur, noise, pixelate, hue, gamma, grayscale, sepia, invert, filterOpacity`
-(shared). **Actions:** `setFilter(key, value)`, `resetFilters`. **Risks:** BUG-019. No mounted UI uses this slice:
+(shared). **Actions:** `setFilter(key, value)`, `resetFilters`, `setLayerBlur(radius, { history? })` (2026-11-16,
+BUG-220: blurs the selected objects themselves, any type; `layerBlur` is a serialized object prop drawn by
+`lib/canvas/layerBlur.ts`; one undo step unless `history: false`). **Depends on:** Canvas (`canvas`), UndoRedo
+(`saveState`). **Risks:** BUG-019. No mounted UI uses this slice:
 the Filter tab (`Filters.tsx` → `useImageFilters`) keeps its own state; only the dead `Brightness.tsx` reads it.
 
 ## 22. Template: `templateSlice.ts` (+ `organisms/effects/designTemplateData.ts`, `sizePresets.ts`)
@@ -485,6 +508,33 @@ no helper objects, nothing in history, autosave or exports.
 `pageHeight` for `creationScale`), NodeEditor (`screenScale`), Brush (`updateBrush`, from `setPencilStyle`). The
 Brush slice reads `pencilStyle` (via `drawingState`) and `screenScale` (auto-close tolerance).
 
+## 29. PaintTools: `createPaintToolsSlice.ts` (+ `paintTools/`, `store/sprayStyle.ts`, `lib/canvas/{floodFill,traceContours,lasso,drafter,symmetry,copySpray}.ts`)
+
+**Purpose (2026-11-16):** Paint bucket (G), Spray (Shift + B), Lasso (L), Drafter (D), "Reflect selection" and the
+per-brush stamp settings. The tools listen on the canvas only while active (store subscription, like the Pen); the
+symmetry guide (axes while Draw / Spray is active) is a helper object (`excludeFromExport`, `excludeFromLayers`,
+`excludeFromSnap`, `_isHelper`).
+**State:** `bucketStyle` (mode auto / region / shape, tolerance, gap, expand, placement), `lassoStyle` (action select /
+fill, match touch / contain), `drafterStyle` (mode line / parallel / perpendicular / dimension / construction, angle
+step, head angle, ISO pen width), `sprayStyle` (size, flow, particle, softness, opacity), `copySprayStyle` (scale,
+spacing, spread, size / rotation / opacity jitter, align; 2026-11-17), `stampOverrides` (per library brush id, valid
+partial settings only).
+**Actions:** `setBucketStyle`, `setLassoStyle`, `setDrafterStyle`, `setSprayStyle`, `setStampOverride(id, patch)`,
+`resetStampOverride(id)`, `bucketFillAt(point)` → `'shape' | 'region' | 'open' | 'none'`, `lassoSelect(loop, mode)`,
+`lassoFill(loop)`, `drafterLine(a, b)`, `reflectSelection({ mode, angle, count, around })` → copies added,
+`setCopySprayStyle`, `sprayCopies(dabs)` → objects added.
+**Copy spray (Shift + S, 2026-11-17, `paintTools/copySpray{Actions,Tool}.ts`):** when `activeTool` becomes
+`'copySpray'` the selection is snapshotted (clones in scene coordinates; `setActiveTool` sets the store before it
+clears the selection), so undo, page switches or editing the original do not change what is sprayed; the snapshot is
+dropped when the tool closes. A drag places dabs (`lib/canvas/copySpray.ts`, seeded) previewed on the top canvas (the
+source drawn once into a bitmap, one blit per copy); on release `sprayCopies` clones the source per dab and adds ONE
+group named "Copy spray" (a single copy of a single object is added as is) → one `object:added` = one undo step. Caps:
+400 objects (objects inside a selected group count one by one) and 30 photos per drag (`sprayDabLimit`, BUG-239);
+the page is re-checked after the clones load (`currentPageId`). No selection → toast. Symmetry does not apply.
+**Depends on:** Canvas (`canvas`, `activeTool`, `setActiveTool`), Brush (`color`, `brush`, `updateBrush`, `symmetry*`),
+Setting (`unit`), Page (`boardMode`, `zoom`), Pages (`currentPageId`, `isPageSwitching`), UndoRedo (`saveState`), Dialog
+(`showToast`). Not persisted (session settings).
+
 ## 27. Generator: `createGeneratorSlice.ts` (+ `lib/generators/fractals.ts`, `lib/generators/automata.ts`)
 
 **Purpose:** the Fractals and Cellular Automata dock tabs (added 2026-11-13). Spread before Animation.
@@ -512,6 +562,57 @@ skipped; resolves to the number of steps that ran; a second call while playing r
 stops when `canvas` or `currentPageId` changes or `isPageSwitching` is on between steps. Toolbar button clicks (`onClick`) do not go through `runCommand`, so only shortcuts and the panel's Add
 step list are recorded. Each step is its own undo step.
 **Depends on:** Command (`commands`; `runCommand` calls `recordMacroStep`).
+
+## 30. PageLayers: `createPageLayersSlice.ts` (+ `lib/canvas/{docLayers,layerPlan,layerCompositor}.ts`)
+
+**Purpose (2026-11-17):** real layers and folders that hold objects, per page (Photoshop / Clip Studio model). Not the
+Layers slice (§4): that one lists objects, one row each, and is unchanged.
+**State:** `pageLayers: DocLayer[]` (bottom-first mirror of `canvas.docLayers`), `activeLayerId` (new objects go there;
+a folder = where new layers go).
+**Actions:** `bindPageLayers(canvas)` (called once from Canvas `init`; returns the uninstaller), `setActiveLayer`,
+`addPageLayer(kind)`, `updatePageLayer(id, patch)` (name / visible / locked / opacity / blend / clip / reference /
+collapsed; `collapsed` alone is not an undo step), `removePageLayer` (deletes its objects, Undo toast),
+`movePageLayer(id, parentId, index)`, `shiftPageLayer(id, ±1)`, `moveSelectionToLayer(id)` (to the top of that layer),
+`mergeLayerDown(id)`, `flattenLayers()` (shown layers only).
+**Model:** the canvas owns the list: `canvas.docLayers` is an accessor whose setter normalizes and mirrors to the store;
+it is in `CUSTOM_PROPS`, so undo, page switches and autosave carry it (Fabric's canvas `toObject` picks canvas props;
+`loadFromJSON` sets them back). `canvas:cleared` resets to one "Layer 1" (old documents load that way). Objects carry
+`layerId` (in `CUSTOM_PROPS`): set at once on `object:added` when missing; an unknown id is re-checked a microtask
+later (during a load, objects are added before Fabric sets the saved list). Selecting objects of one layer makes it
+active. Merge / flatten bake layer opacity (multiplied) and blend (when the object has none) into the objects:
+overlaps inside a see-through layer and clipping are not kept (a vector editor cannot bake them).
+**Depends on:** Canvas (`canvas`), UndoRedo (`saveState`, `undo`), Layers (`syncLayers`), Dialog (`showToast`).
+**Used by:** `organisms/layer/PageLayersSection` (Layers tab), PaintTools bucket (`referenceFilter`, region fill).
+
+## 31. Document: `createDocumentSlice.ts` (+ `lib/document/pageSetup.ts`, `lib/canvas/canvasProp.ts`)
+
+**Purpose (2026-11-17, InDesign style):** page setup (margins inside / outside, columns, gutter, bleed, slug, facing
+pages, guides (default on), crop marks), master pages, page number fields. Bleed / slug frames and crop marks are
+drawn around the page by `organisms/board/ui/PageFrame.tsx` (geometry `lib/document/printMarks.ts`), not by this slice.
+**State:** `pageSetup`, `pageRole` ('page' | 'master'), `pageMasterId`: mirrors of the canvas-level props
+`canvas.pageSetup` / `pageRole` / `masterId` (in `CUSTOM_PROPS`; `defineCanvasProp` accessors, reset on
+`canvas:cleared`, set back by `loadFromJSON`). Other pages' values are read from their `canvasJSON`, so the Pages
+slice is unchanged.
+**Actions:** `bindDocument(canvas)`, `setPageSetup(patch, allPages?)` (all pages = writes every other page's
+`canvasJSON.pageSetup` + `persist`), `setPageRole`, `applyMasterPage(id | null)`, `insertPageNumber()`,
+`currentPageNumber()` (masters not counted), `pageUnderlay()` (the master's objects for the compositor: enlivened
+once per master JSON + number, hidden master layers left out, layer order kept), `paintPageOverlay(ctx)` (guides).
+**Depends on:** Canvas, Pages (`pages`, `currentPageId`), Page (`pageWidth`, `pageHeight`), UndoRedo (`saveState`),
+Canvas `persist`. **Used by:** PageLayers (compositor `underlay` / `paintOverlay`), Comic (content box), Pages panel.
+
+## 32. Comic: `createComicSlice.ts` (+ `lib/comic/{panelLayouts,mangaEffects,screentone}.ts`)
+
+**Purpose (2026-11-17, Clip Studio style):** panel layouts, panel split, screentones, effect lines (focus, speed,
+burst). Balloons are catalog text shapes (`hooks/shape/comicBalloons.ts`, category `balloons`).
+**State:** `comicStyle` { `gutter`, `border` }.
+**Actions:** `setComicStyle`, `bindComic(canvas)` (a frame's `object:modified` / `object:removed` moves / deletes its
+area twin; ignored while restoring or switching pages), `addPanelLayout(presetId)` (replaces the page's panels;
+makes the folder "Comic panels" with "Panel borders" (frames), "Art" (clip to layer below, made active) and
+"Panel area" (locked white twins = the clip base)), `splitComicPanel(dir)`, `applyTone(params)` / `removeTone()`
+(Fabric `Pattern` fill from a tone tile; `toneParams`, `fillBeforeTone` saved), `addMangaEffect(kind)` (a filled
+`Path` in the selected frame's box, put on the Art layer, else in the page margins).
+**Depends on:** PageLayers (`docLayers`, `setActiveLayer`), Document (`currentPageNumber`, `pageSetup`), Page size,
+UndoRedo.
 
 ## 25. Animation: `createAnimationSlice.ts` (+ `src/animation/engine.ts`, `exportVideo.ts`)
 

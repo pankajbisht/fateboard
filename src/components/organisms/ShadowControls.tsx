@@ -75,7 +75,7 @@ export function ShadowControls({
                         onChange={(v) => onChange({ ...shadow, opacity: v / 100 }, false)}
                         onCommit={(v) => onChange({ ...shadow, opacity: v / 100 })}
                     />
-                    {slider('blur', 'Blur', 0, 100)}
+                    {slider('blur', 'Shadow blur', 0, 100)}
                     {slider('offsetX', 'Offset X', -100, 100)}
                     {slider('offsetY', 'Offset Y', -100, 100)}
                 </>

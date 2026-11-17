@@ -1,5 +1,6 @@
 import * as fabric from 'fabric';
 import type { SliceCreator } from '../types';
+import { baseTransform } from '@/lib/canvas/deepZoom';
 import {
     DEFAULT_GRID_PREFS,
     clampGridSize,
@@ -358,8 +359,7 @@ export const createNotebookSlice: SliceCreator<NotebookSlice> = (set, get, store
         paint: () => void,
     ) => {
         ctx.save();
-        const retina = canvas.getRetinaScaling();
-        ctx.setTransform(retina, 0, 0, retina, 0, 0);
+        ctx.setTransform(...baseTransform(canvas)); // CSS-pixel space (+ the deep zoom window, BUG-221)
         paint();
         ctx.restore();
     };

@@ -258,6 +258,15 @@ describe('createSettingSlice', () => {
         expect(h.get().takePendingCanvasSize()).toBe(false);
     });
 
+    it('settings saved with the old "A4 Landscape" keep A4 (merged into one entry, 2026-11-17)', () => {
+        const s = sanitizeSettings({
+            defaultCanvasPresetId: 'a4-landscape',
+            canvasOrientation: 'landscape',
+        });
+        expect(s.defaultCanvasPresetId).toBe('a4-portrait');
+        expect(getDefaultCanvasPreset(s)).toMatchObject({ width: 1123, height: 794 });
+    });
+
     it('loading saved settings is not a change', () => {
         const h = setup();
         h.get().takePendingCanvasSize();

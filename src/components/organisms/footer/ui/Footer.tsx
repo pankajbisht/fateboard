@@ -1,4 +1,5 @@
 import { FullScreen } from '@components/molecules/FullScreen';
+import { DistractionFreeToggle } from '@components/molecules/DistractionFree';
 import { StrokeControls } from '@components/organisms/StrokeControls';
 import { ZoomControl } from './ZoomControl';
 
@@ -17,6 +18,7 @@ export function Footer() {
                 className="flex shrink-0 items-center gap-2 border-l border-line pl-3"
             >
                 <ZoomControl />
+                <DistractionFreeToggle />
                 <FullScreen />
             </div>
         </div>

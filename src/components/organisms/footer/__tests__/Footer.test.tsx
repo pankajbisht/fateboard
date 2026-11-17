@@ -11,17 +11,19 @@ const fitToScreen = vi.fn();
 const zoomIn = vi.fn();
 const zoomOut = vi.fn();
 const actualSize = vi.fn();
+const fitToWidth = vi.fn();
 
 beforeEach(() => {
     // jsdom has no Fullscreen API; browsers that have it show the button (iPhone Safari: hidden)
     document.documentElement.requestFullscreen = vi.fn() as never;
-    [setZoom, fitToScreen, zoomIn, zoomOut, actualSize].forEach((f) => f.mockReset());
+    [setZoom, fitToScreen, fitToWidth, zoomIn, zoomOut, actualSize].forEach((f) => f.mockReset());
     act(() =>
         useStore.setState({
             zoom: 1,
             scale: 0.5,
             setZoom,
             fitToScreen,
+            fitToWidth,
             zoomIn,
             zoomOut,
             actualSize,
@@ -74,6 +76,9 @@ describe('Footer view controls (right side)', () => {
         const fit = within(view).getByRole('button', { name: 'Fit to screen' });
         fireEvent.click(fit);
         expect(fitToScreen).toHaveBeenCalledTimes(1);
+        // Fit width (design board only, 2026-11-17): the page width fills the board
+        fireEvent.click(within(view).getByRole('button', { name: 'Fit width' }));
+        expect(fitToWidth).toHaveBeenCalledTimes(1);
         // Fit must not look like the fullscreen button next to it
         const fullscreen = screen.getByTitle(/Fullscreen/i);
         expect(fit.innerHTML).not.toBe(fullscreen.innerHTML);
@@ -108,9 +113,9 @@ describe('whiteboard mode', () => {
 });
 
 describe('log zoom scale', () => {
-    it('maps 10%..400% to the slider and back', () => {
-        expect(sliderToZoom(0)).toBeCloseTo(0.1);
-        expect(sliderToZoom(100)).toBeCloseTo(4);
+    it('maps 2%..6400% to the slider and back (BUG-221: was 10%..400%)', () => {
+        expect(sliderToZoom(0)).toBeCloseTo(0.02);
+        expect(sliderToZoom(100)).toBeCloseTo(64);
         expect(sliderToZoom(zoomToSlider(1))).toBeCloseTo(1);
     });
 });

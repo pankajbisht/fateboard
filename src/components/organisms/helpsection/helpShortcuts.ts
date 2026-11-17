@@ -87,6 +87,11 @@ const CATEGORY_BY_ID: Record<string, HelpShortcutCategory> = {
     'tool-pen': 'Tools',
     'tool-pencil': 'Tools',
     'tool-laser': 'Tools',
+    'tool-spray': 'Tools',
+    'tool-copy-spray': 'Tools',
+    'tool-bucket': 'Tools',
+    'tool-lasso': 'Tools',
+    'tool-drafter': 'Tools',
     'tool-brush': 'Tools',
     newfile: 'File',
     open: 'File',
@@ -123,7 +128,9 @@ const CATEGORY_BY_ID: Record<string, HelpShortcutCategory> = {
     'zoom-in': 'View',
     'zoom-out': 'View',
     'fit-to-screen': 'View',
+    'fit-width': 'View',
     'actual-size': 'View',
+    'distraction-free': 'View',
 };
 
 /** The browser keeps these for itself, so a web page can never see them being pressed. */

@@ -60,3 +60,19 @@ describe('shape catalog', () => {
         }
     });
 });
+
+describe('manga balloons (2026-11-17)', () => {
+    it('a Manga balloons category of text shapes: speech (both tails), box, thought, shout, caption', () => {
+        const balloons = SHAPES.filter((s) => s.category === 'balloons');
+        expect(balloons.map((b) => b.type)).toEqual([
+            'balloon-speech',
+            'balloon-speech-right',
+            'balloon-box',
+            'balloon-thought',
+            'balloon-shout',
+            'balloon-caption',
+        ]);
+        expect(balloons.every((b) => b.text && (b.textInset ?? 1) <= 0.9)).toBe(true);
+        expect(SHAPE_CATEGORIES.some((c) => c.id === 'balloons')).toBe(true);
+    });
+});

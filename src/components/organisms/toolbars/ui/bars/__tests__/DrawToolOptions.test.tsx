@@ -45,7 +45,7 @@ describe('ToolContextBar', () => {
 
     it('shows the selection transform row for other tools', () => {
         render(<ToolContextBar />);
-        expect(screen.queryByRole('toolbar', { name: /options/ })).not.toBeInTheDocument();
+        expect(screen.getByRole('toolbar', { name: 'Selection options' })).toBeInTheDocument();
         expect(screen.getByRole('spinbutton', { name: /^X/ })).toBeInTheDocument();
     });
 
@@ -75,13 +75,12 @@ describe('ToolContextBar', () => {
         useStore.setState({ activeTool: 'pen' } as never);
         const { rerender } = render(<ToolContextBar />);
         const bar = screen.getByRole('toolbar', { name: 'Pen options' });
-        const modes = within(bar).getByRole('radiogroup', { name: 'Pen mode' });
-        expect(within(modes).getByRole('radio', { name: 'Pen' })).toHaveAttribute(
-            'aria-checked',
-            'true',
-        );
+        // a dropdown, not a tab row (property bar, 2026-11-17)
+        const modes = within(bar).getByRole('combobox', { name: 'Pen mode' });
+        expect(modes).toHaveTextContent('Pen');
 
-        fireEvent.click(within(modes).getByRole('radio', { name: 'Curvature' }));
+        fireEvent.click(modes);
+        fireEvent.click(screen.getByRole('option', { name: /Curvature/ }));
         expect(setPenMode).toHaveBeenCalledWith('curvature');
 
         useStore.setState({ penMode: 'curvature' } as never);

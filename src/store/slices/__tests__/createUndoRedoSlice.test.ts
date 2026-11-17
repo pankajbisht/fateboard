@@ -31,6 +31,22 @@ describe('createUndoRedoSlice', () => {
         expect(h.get().canUndo).toBe(true);
     });
 
+    it('every recorded change also schedules the autosave (BUG-243: no object event fires for it)', () => {
+        const { h, persist } = setup();
+        h.get().initHistory();
+        expect(persist).not.toHaveBeenCalled(); // the base snapshot of a board is not an edit
+        h.get().saveState(); // e.g. opacity, a layer rename, page setup: nothing else saves them
+        expect(persist).toHaveBeenCalledTimes(1);
+        h.get().saveState(true);
+        expect(persist).toHaveBeenCalledTimes(2);
+        persist.mockClear();
+        h.set({ _isRestoring: true }); // undo / redo persists itself when it is done
+        h.get().saveState();
+        h.set({ _isRestoring: false, _historyPaused: 1 });
+        h.get().saveState();
+        expect(persist).not.toHaveBeenCalled();
+    });
+
     it('saveState() is debounced into one entry', async () => {
         const { canvas, h } = setup();
         h.get().initHistory();

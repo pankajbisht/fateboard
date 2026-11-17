@@ -34,6 +34,18 @@ export const CUSTOM_PROPS = [
     'filterState', // image filters panel
     'animId', // animation tracks
     'isFreehand', // brush strokes
+    'layerBlur', // layer blur radius (lib/canvas/layerBlur)
+    'layerId', // the page layer an object sits on (lib/canvas/docLayers)
+    'docLayers', // canvas-level: the page's layers + folders (Fabric's toObject picks canvas props too)
+    'pageSetup', // canvas-level: margins, columns, bleed, facing pages, guides (lib/document/pageSetup)
+    'pageRole', // canvas-level: 'master' on a master page
+    'masterId', // canvas-level: the master page drawn under this page
+    'pageNumberField', // a text that shows the page number
+    'toneParams', // screentone settings of a tone fill (lib/comic/screentone)
+    'fillBeforeTone', // the fill a tone replaced (Remove tone puts it back)
+    'comicPanel', // comic panel frame (border) …
+    'comicPanelArea', // … and its fill twin on the clip base layer
+    'panelId', // links a frame to its twin
     'backgroundColor',
 ] as const;
 

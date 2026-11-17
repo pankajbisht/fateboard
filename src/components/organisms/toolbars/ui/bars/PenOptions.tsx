@@ -8,7 +8,7 @@ import type { PenStyle } from '@/store/slices/drawingTools/penStyle';
 import { SwitchField } from '@/components/molecules/LabeledToggle';
 import { SliderField } from '@/components/molecules/LabeledSlider';
 import type { PenShape } from '@/lib/canvas/penShape';
-import { Bar, Hint, Key } from './drawToolParts';
+import { Bar, BarSelect, Hint, Key } from './drawToolParts';
 
 /** Live preview of the stroke style on the popover button (dash, line ends, arrowheads). */
 function StrokePreview({ style }: { style: PenStyle }) {
@@ -115,15 +115,18 @@ function PenHint() {
                 )}
             </Hint>
         );
+    // the point count is live status, so it stays visible; the how-to sits behind the ⓘ
     return (
-        <Hint>
-            <span className="font-semibold text-ink">
+        <span className="ml-auto flex items-center">
+            <span className="font-semibold text-ink tabular-nums">
                 {points} {points === 1 ? 'point' : 'points'}
             </span>
-            ·<Key>Shift</Key> 45° · <Key>Alt</Key>{' '}
-            {mode === 'pen' ? 'drag = sharp curve' : 'click = corner'} · <Key>Enter</Key> finish ·
-            click the first point to close
-        </Hint>
+            <Hint>
+                <Key>Shift</Key> 45° · <Key>Alt</Key>{' '}
+                {mode === 'pen' ? 'drag = sharp curve' : 'click = corner'} · <Key>Enter</Key> finish
+                · click the first point to close
+            </Hint>
+        </span>
     );
 }
 
@@ -137,21 +140,22 @@ export function PenOptions() {
     return (
         <Bar label="Pen" icon="pen-tool">
             <GlowDivider />
-            <SegmentedControl
-                aria-label="Pen mode"
-                size="sm"
-                block={false}
-                className="[&>button]:flex-none [&>button]:px-2.5"
+            <BarSelect
+                label="Pen mode"
                 value={mode}
                 onChange={setPenMode}
                 options={[
-                    { value: 'pen', label: 'Pen', title: 'Click for corners, drag for curves' },
+                    {
+                        value: 'pen',
+                        label: 'Pen',
+                        description: 'Click for corners, drag for curves',
+                    },
                     {
                         value: 'curvature',
                         label: 'Curvature',
-                        title: 'Click points: the curve bends smoothly through them',
+                        description: 'Click points: the curve bends smoothly through them',
                     },
-                    { value: 'freeform', label: 'Freeform', title: 'Drag to draw by hand' },
+                    { value: 'freeform', label: 'Freeform', description: 'Drag to draw by hand' },
                 ]}
             />
             <GlowDivider />

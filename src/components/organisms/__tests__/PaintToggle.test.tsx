@@ -38,11 +38,14 @@ describe('PaintToggle', () => {
     it('stroke and fill look different (outlined vs solid square)', () => {
         both();
         const [stroke, fill] = screen.getAllByRole('button');
-        const glyph = (b: HTMLElement) => b.querySelector('span')!.className;
+        // the glyph is an icon since 24f5203: stroke-on = outlined swatch, fill-on = solid swatch (BUG-228)
+        const glyph = (b: HTMLElement) => b.querySelector('svg')!;
         expect(stroke.dataset.paint).toBe('stroke');
         expect(fill.dataset.paint).toBe('fill');
-        expect(glyph(stroke)).toMatch(/\bborder-\[1\.5px\]/); // outlined
-        expect(glyph(fill)).not.toMatch(/\bborder-\[1\.5px\]/); // solid
+        expect(glyph(stroke).getAttribute('class')).toContain('lucide-stroke-on');
+        expect(glyph(fill).getAttribute('class')).toContain('lucide-fill-on');
+        expect(glyph(stroke).querySelector('rect[fill="currentColor"]')).toBeNull(); // outlined
+        expect(glyph(fill).querySelector('rect[fill="currentColor"]')).not.toBeNull(); // solid
     });
 
     it('nothing selected: both disabled and say why', () => {

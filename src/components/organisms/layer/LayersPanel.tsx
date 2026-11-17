@@ -607,8 +607,8 @@ export default function LayersPanel() {
                     leadingIcon="magnifying-glass"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Find a layer"
-                    aria-label="Find a layer"
+                    placeholder="Find an object"
+                    aria-label="Find an object"
                     className="min-w-0 flex-1"
                 />
                 <Badge>{layers.length}</Badge>
@@ -718,7 +718,7 @@ export default function LayersPanel() {
                 {rows.length === 0 ? (
                     <EmptyState
                         icon="layer-group"
-                        title={query ? `No layer named “${query}”` : 'No layers yet'}
+                        title={query ? `No object named “${query}”` : 'No objects yet'}
                         description={
                             query
                                 ? undefined

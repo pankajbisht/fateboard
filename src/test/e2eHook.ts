@@ -6,6 +6,7 @@
  * UI and use this only to READ what is on the canvas (Fabric draws pixels, not DOM).
  */
 import { useStore } from '@/store';
+import { canvasClientRect } from '@/lib/canvas/deepZoom';
 
 type Paint = string | null;
 
@@ -80,6 +81,14 @@ const api = {
             height: b.height,
             canvasWidth: canvas?.getWidth?.() ?? 1,
         };
+    },
+    /**
+     * The whole page's rectangle on screen (client px). On the design board in deep zoom the canvas element
+     * covers only the visible part of the page (BUG-221), so tests map canvas px with this, not its box.
+     */
+    pageRect: () => {
+        const canvas = (useStore.getState() as any).canvas;
+        return canvas ? canvasClientRect(canvas) : null;
     },
     /** True once the Fabric canvas is mounted. */
     ready: (): boolean => !!(useStore.getState() as any).canvas,

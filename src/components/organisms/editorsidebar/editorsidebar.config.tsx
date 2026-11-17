@@ -1,10 +1,14 @@
+import { lazy, Suspense } from 'react';
 import { DrawPanel } from '../DrawPanel';
 import { BrushPickerPanel } from '../brush/BrushPickerPanel';
 import { TextPanel } from '../TextPanel';
-import LayersPanel from '../layer/LayersPanel';
+import LayersTab from '../layer/LayersTab';
 import PagePanel from '../page/PagePanel';
 import { ShapePanel } from '../ShapePanel';
 import { shortcut } from '@/lib/utils/isMac';
+
+// rare panel: its own chunk (runtime-performance P5)
+const ComicPanel = lazy(() => import('../comic/ComicPanel'));
 
 const editorsidebarconfig = [
     {
@@ -25,7 +29,7 @@ const editorsidebarconfig = [
         id: 'node',
         shortcut: 'A',
         label: 'Node Tool',
-        icon: 'share-nodes',
+        icon: 'node-tool',
         kind: 'action',
     },
     {
@@ -50,10 +54,45 @@ const editorsidebarconfig = [
         kind: 'action',
     },
     {
+        id: 'lasso',
+        shortcut: 'L',
+        label: 'Lasso',
+        icon: 'lasso',
+        kind: 'action',
+    },
+    {
+        id: 'bucket',
+        shortcut: 'G',
+        label: 'Paint bucket',
+        icon: 'paint-bucket',
+        kind: 'action',
+    },
+    {
+        id: 'spray',
+        shortcut: shortcut('⇧B', 'Shift+B'),
+        label: 'Spray',
+        icon: 'spray-can',
+        kind: 'action',
+    },
+    {
+        id: 'copySpray',
+        shortcut: shortcut('⇧S', 'Shift+S'),
+        label: 'Copy spray',
+        icon: 'copy-spray',
+        kind: 'action',
+    },
+    {
+        id: 'drafter',
+        shortcut: 'D',
+        label: 'Drafter',
+        icon: 'drafter',
+        kind: 'action',
+    },
+    {
         id: 'brush',
         shortcut: 'B',
         label: 'Brush',
-        icon: 'paintbrush',
+        icon: 'brush-tool',
         kind: 'panel',
         activateTool: 'draw',
         panel: <BrushPickerPanel />,
@@ -61,7 +100,7 @@ const editorsidebarconfig = [
     {
         id: 'draw',
         label: 'Draw',
-        icon: 'pencil',
+        icon: 'brush-settings',
         kind: 'panel',
         activateTool: 'draw',
         panel: <DrawPanel />,
@@ -95,7 +134,18 @@ const editorsidebarconfig = [
         icon: 'layer-group',
         kind: 'panel',
         fullSize: true,
-        panel: <LayersPanel />,
+        panel: <LayersTab />,
+    },
+    {
+        id: 'comic',
+        label: 'Comic',
+        icon: 'comic-panels',
+        kind: 'panel',
+        panel: (
+            <Suspense fallback={null}>
+                <ComicPanel />
+            </Suspense>
+        ),
     },
     // {
     //     id: 'assets',

@@ -2,6 +2,7 @@ import { FileBar } from './bars/FileBar';
 import { EditBar } from './bars/EditBar';
 import { AlignmentBar } from './bars/AlignmentBar';
 import { GroupBar } from './bars/GroupBar';
+import { BooleanOperations } from '../../BooleanOperationsDropdown';
 import { LockBar } from './bars/LockBar';
 import { ExtraBar } from './bars/ExtraBar';
 import { UndoRedoBar } from './bars/UndoRedoBar';
@@ -14,6 +15,8 @@ const TOOLBAR_SECTIONS = [
     { id: 'edit', component: EditBar },
     { id: 'alignment', component: AlignmentBar },
     { id: 'group', component: GroupBar },
+    // Union / Subtract / … : a menu button like the grid options (moved from the footer)
+    { id: 'shapeops', component: BooleanOperations },
     { id: 'lock', component: LockBar },
     // zoom: footer only (one place per feature); shortcuts use ZoomBarConfig
     { id: 'extra', component: ExtraBar },

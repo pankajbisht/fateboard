@@ -89,3 +89,43 @@ test('a board saved before the storage upgrade opens and moves to the new databa
     await page.waitForFunction(() => !!window.__fateboard?.ready());
     await expect.poll(async () => (await editor.objects()).map((o) => o.type)).toEqual(['rect']);
 });
+
+test('changes with no object event are autosaved too: opacity, page setup (BUG-243)', async ({
+    editor,
+    page,
+}) => {
+    await editor.addShape('Rectangle');
+    await page.waitForTimeout(1500); // the shape is saved
+    // an opacity change and a page setup change fire no object event: only the history saw them
+    await page.evaluate(() =>
+        (window.__fateboard!.state('setOpacity') as (o: number) => void)(0.3),
+    );
+    await editor.openPanel('Pages');
+    await page.getByRole('button', { name: /Page setup/ }).click();
+    const bleed = page.getByRole('spinbutton', { name: 'Bleed' });
+    await bleed.fill('20');
+    await bleed.press('Enter');
+    await page.waitForTimeout(1500); // autosave debounce
+    await page.reload();
+    await page.waitForFunction(() => !!window.__fateboard?.ready());
+    await expect
+        .poll(() =>
+            page.evaluate(() =>
+                (
+                    window.__fateboard!.state('canvas') as {
+                        getObjects: () => { opacity: number }[];
+                    }
+                )
+                    .getObjects()
+                    .map((o) => o.opacity),
+            ),
+        )
+        .toEqual([0.3]);
+    await expect
+        .poll(() =>
+            page.evaluate(
+                () => (window.__fateboard!.state('pageSetup') as { bleed: number }).bleed,
+            ),
+        )
+        .toBe(20);
+});

@@ -8,6 +8,7 @@ import {
     buildBrushCursor,
     clamp,
     getPreset,
+    isBrushId,
     isStrokeBrush,
     makeTexture,
     mixWithWhite,
@@ -27,6 +28,9 @@ import {
 
 import { VariableWidthBrush, type Pt } from '../brushes/variableWidthBrush';
 import { createNibBrush } from '../brushes/nibBrush';
+import { createStampBrush } from '../brushes/stampBrush';
+import { addSymmetryCopies } from '../brushes/symmetryCopies';
+import { isSymmetryMode } from '@/lib/canvas/symmetry';
 
 const ERASER_PREVIEW = 'rgba(110, 110, 110, 0.45)';
 const HOOK_FLAG = '__fbBrushHooks';
@@ -173,7 +177,8 @@ function buildBrush(canvas: any, s: any) {
         brush.taper = s.taper;
         brush.nibAngle = (s.nibAngle * Math.PI) / 180;
         brush.speedWidth = s.speedWidth !== false;
-    } else if (engine === 'circle') brush = new fabric.CircleBrush(canvas);
+    } else if (engine === 'stamp') brush = createStampBrush(canvas, s);
+    else if (engine === 'circle') brush = new fabric.CircleBrush(canvas);
     else if (engine === 'spray') brush = new fabric.SprayBrush(canvas);
     else if (engine === 'pattern' || engine === 'texture') {
         brush = new fabric.PatternBrush(canvas);
@@ -288,48 +293,15 @@ function styleNewPath(path: any, s: any) {
     }
 }
 
-async function mirrorPath(canvas: any, path: any, s: any) {
-    if (!path || s.symmetry === 'none' || s.brush === 'eraser') return;
-    const c: Pt = s.symmetryCenter ?? sceneCenter(canvas);
-    const variants: Array<[boolean, boolean]> =
-        s.symmetry === 'x'
-            ? [[true, false]]
-            : s.symmetry === 'y'
-              ? [[false, true]]
-              : [
-                    [true, false],
-                    [false, true],
-                    [true, true],
-                ];
-    const center = path.getCenterPoint();
-
-    for (const [fx, fy] of variants) {
-        const clone = await path.clone(['perPixelTargetFind', 'targetFindTolerance', 'isFreehand']);
-        clone.set({
-            flipX: fx ? !path.flipX : path.flipX,
-            flipY: fy ? !path.flipY : path.flipY,
-        });
-        clone.setPositionByOrigin(
-            new fabric.Point(
-                fx ? 2 * c.x - center.x : center.x,
-                fy ? 2 * c.y - center.y : center.y,
-            ),
-            'center',
-            'center',
-        );
-        clone.setCoords();
-        canvas.add(clone);
-    }
-    canvas.requestRenderAll();
-}
-
 function ensureHooks(canvas: any, get: any) {
     if (canvas[HOOK_FLAG]) return;
     canvas[HOOK_FLAG] = true; // a re-created canvas is a new object, so it gets hooked again
     canvas.on('before:path:created', (opt: any) => styleNewPath(opt?.path, drawingState(get())));
     canvas.on('path:created', (opt: any) => {
-        mirrorPath(canvas, opt?.path, drawingState(get())).catch((e) =>
-            console.error('[brush] mirror failed', e),
+        const st = drawingState(get());
+        if (getPreset(st.brush).engine === 'eraser') return;
+        addSymmetryCopies(canvas, opt?.path, st, sceneCenter(canvas)).catch((e) =>
+            console.error('[brush] symmetry copies failed', e),
         );
     });
 }
@@ -342,7 +314,7 @@ const num = (v: any, fallback: number) => (Number.isFinite(Number(v)) ? Number(v
 
 function sanitize(p: any) {
     const o: any = {};
-    if (p.brush !== undefined && p.brush in DEFAULT_PRESET_KEYS) o.brush = p.brush;
+    if (p.brush !== undefined && isBrushId(p.brush)) o.brush = p.brush;
     if (p.color !== undefined) o.color = toHex6(p.color);
     if (p.width !== undefined) o.width = clamp(Math.round(num(p.width, 1)), 1, 200);
     if (p.brushOpacity !== undefined) o.brushOpacity = clamp(num(p.brushOpacity, 1), 0.05, 1);
@@ -368,30 +340,14 @@ function sanitize(p: any) {
     if (p.fillOpacity !== undefined) o.fillOpacity = clamp(num(p.fillOpacity, 1), 0.05, 1);
 
     if (['pixel', 'stroke'].includes(p.eraserMode)) o.eraserMode = p.eraserMode;
-    if (['none', 'x', 'y', 'both'].includes(p.symmetry)) o.symmetry = p.symmetry;
+    if (isSymmetryMode(p.symmetry)) o.symmetry = p.symmetry;
     if (p.symmetryCenter !== undefined) o.symmetryCenter = p.symmetryCenter;
+    if (p.symmetryAngle !== undefined) o.symmetryAngle = clamp(num(p.symmetryAngle, 90), 0, 180);
+    if (p.symmetryCount !== undefined)
+        o.symmetryCount = clamp(Math.round(num(p.symmetryCount, 6)), 2, 24);
     if (p.straightLine !== undefined) o.straightLine = !!p.straightLine;
     return o;
 }
-
-// quick membership check without importing the whole preset table by name
-const DEFAULT_PRESET_KEYS: Record<string, true> = {
-    pencil: true,
-    marker: true,
-    ink: true,
-    calligraphy: true,
-    nib: true,
-    highlighter: true,
-    neon: true,
-    chalk: true,
-    crayon: true,
-    pattern: true,
-    spray: true,
-    airbrush: true,
-    splatter: true,
-    circle: true,
-    eraser: true,
-};
 
 /* ------------------------------------------------------------------ */
 /* slice                                                               */
@@ -445,7 +401,7 @@ export const createBrushSlice = (set: any, get: any, _store: any) => {
         setBrush: (options: any = {}) => {
             const s = get();
             const type = options.brush;
-            const switching = type && type in DEFAULT_PRESET_KEYS && type !== s.brush;
+            const switching = isBrushId(type) && type !== s.brush;
             if (switching) patch({ ...presetDefaults(type), ...options }, 'canvas/brush-type');
             else patch(options);
         },

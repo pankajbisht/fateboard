@@ -6,6 +6,8 @@ import { DialogHost } from '@/components/organisms/DialogHost';
 import { ErrorBoundary } from '@/components/organisms/ErrorBoundary';
 import { ToastHost } from '@/components/organisms/ToastHost';
 import { applyFabricChrome } from '@/lib/fabricChrome';
+import { installLayerBlur } from '@/lib/canvas/layerBlur';
+import { installCrispCache } from '@/lib/canvas/crispCache';
 
 /*
  * Layout of the editor routes (store-backed). Loaded as its own lazy chunk (BUG-209) so the store and
@@ -13,6 +15,8 @@ import { applyFabricChrome } from '@/lib/fabricChrome';
  * when this chunk loads, which is before any editor route can create a Fabric object.
  */
 applyFabricChrome(); // selection handles readable in light and dark mode
+installLayerBlur(); // objects' `layerBlur` renders and exports (before any canvas draws)
+installCrispCache(); // zoomed-in objects draw as vectors instead of a stretched cache (BUG-221)
 
 // Playwright hook (read-only canvas view): only in `vite build --mode e2e`, never in production.
 // Loaded here, not in main.tsx, because it imports the store (BUG-209: site pages stay store-free).

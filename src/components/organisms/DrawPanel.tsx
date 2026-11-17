@@ -6,6 +6,7 @@ import { SliderField } from '../molecules/LabeledSlider';
 import { SegmentedControl } from '../molecules/SegmentedControl';
 import { SelectField } from '../molecules/SelectField';
 import LabeledToggle from '../molecules/LabeledToggle';
+import { SymmetryControls } from './SymmetryControls';
 import { useStore } from '@store';
 import {
     BLEND_MODES,
@@ -26,7 +27,6 @@ import {
     type LineCap,
     type LineJoin,
     type LineStyle,
-    type Symmetry,
 } from '@store/brushConfig'; // adjust to wherever you put brushConfig.ts
 
 // The store type doesn't know the new brush fields yet, so select loosely.
@@ -64,7 +64,6 @@ export function DrawPanel(_props: { closePanel?: () => void }) {
     const fillColor = toHex6(useBrushStore((s) => s.fillColor) as string);
     const fillOpacity = useBrushStore((s) => s.fillOpacity) as number;
     const straightLine = useBrushStore((s) => s.straightLine) as boolean;
-    const symmetry = useBrushStore((s) => s.symmetry) as Symmetry;
     const eraserMode = useBrushStore((s) => s.eraserMode) as EraserMode;
 
     const initBrush = useBrushStore((s) => s.initBrush);
@@ -72,8 +71,6 @@ export function DrawPanel(_props: { closePanel?: () => void }) {
     const updateBrush = useBrushStore((s) => s.updateBrush);
     const setBrushWidth = useBrushStore((s) => s.setBrushWidth);
     const setBrushColor = useBrushStore((s) => s.setBrushColor);
-    const setSymmetry = useBrushStore((s) => s.setSymmetry);
-    const recenterSymmetry = useBrushStore((s) => s.recenterSymmetry);
     const commitRecentColor = useBrushStore((s) => s.commitRecentColor);
     const resetBrush = useBrushStore((s) => s.resetBrush);
     const undo = useBrushStore((s) => s.undo);
@@ -518,28 +515,8 @@ export function DrawPanel(_props: { closePanel?: () => void }) {
                         />
                     )}
                     <div className="flex flex-col gap-1.5">
-                        <span className="text-xs font-medium text-ink">Mirror drawing</span>
-                        <SegmentedControl<Symmetry>
-                            aria-label="Mirror drawing"
-                            value={symmetry}
-                            onChange={(v) => setSymmetry(v)}
-                            options={[
-                                { value: 'none', label: 'Off' },
-                                { value: 'x', label: 'Left-right' },
-                                { value: 'y', label: 'Top-bottom' },
-                                { value: 'both', label: '4-way' },
-                            ]}
-                        />
-                        {symmetry !== 'none' && (
-                            <Button
-                                variant="secondary"
-                                size="sm"
-                                className="self-start"
-                                onClick={() => recenterSymmetry()}
-                            >
-                                Set mirror axis to view center
-                            </Button>
-                        )}
+                        <span className="text-xs font-medium text-ink">Symmetry</span>
+                        <SymmetryControls />
                     </div>
                 </Section>
             )}

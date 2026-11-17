@@ -32,6 +32,8 @@ type Hook = {
         height: number;
         canvasWidth: number;
     };
+    /** The whole page's rectangle on screen (also in deep zoom, when the element is only a window). */
+    pageRect: () => { left: number; top: number; width: number; height: number } | null;
     ready: () => boolean;
 };
 
