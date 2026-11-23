@@ -40,7 +40,7 @@
         "paper": "0.17.0",
         "react": "19.3.1",
         "react-dom": "19.3.1",
-        "react-router-dom": "7.18.5",
+        "react-router-dom": "7.18.6",
         "tailwindcss": "4.3.4",
         "zustand": "5.0.16"
     },
