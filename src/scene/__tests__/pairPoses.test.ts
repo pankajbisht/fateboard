@@ -56,9 +56,11 @@ describe('pair poses', () => {
         }
     });
 
-    it('every hand lands within 1.5 cm of its spot, in every pair and height combination', () => {
-        const misses: string[] = [];
-        for (const p of PAIR_POSES)
+    // one test per pose: the solves are the cost of this file (about 2.5 s a pose here, several times that on the CI
+    // runner with coverage), and one test for all 13 passed its 120 s limit there
+    for (const p of PAIR_POSES)
+        it(`${p.id}: every hand lands within 1.5 cm of its spot, in every pair and height combination`, () => {
+            const misses: string[] = [];
             for (const [name, a, b] of COMBOS) {
                 const s = pair(a, b);
                 const suits = pairSuits(
@@ -78,11 +80,12 @@ describe('pair poses', () => {
                     (e, i) => e > 1.5 && misses.push(`${p.id} ${name} #${i}: ${e.toFixed(1)} cm`),
                 );
             }
-        expect(misses).toEqual([]);
-    }, 120000);
+            expect(misses).toEqual([]);
+        }, 60000);
 
-    it('both people end inside their joint limits, upright on the floor, and the scene renders with finite shapes', () => {
-        for (const p of PAIR_POSES)
+    for (const p of PAIR_POSES)
+        it(`${p.id}: both people end inside their joint limits, upright on the floor, and the scene renders with finite shapes`, () => {
+            const bad: string[] = [];
             for (const [, a, b] of COMBOS.slice(0, 3)) {
                 const { scene } = solve(p.id, a, b);
                 for (const x of scene.actors) {
@@ -91,10 +94,10 @@ describe('pair poses', () => {
                 }
                 const m = renderScene(scene);
                 expect(m.actors, p.id).toHaveLength(2);
-                for (const d of m.items)
-                    expect(/NaN|Infinity/.test(d.d), `${p.id} ${d.key}`).toBe(false);
+                for (const d of m.items) if (/NaN|Infinity/.test(d.d)) bad.push(`${p.id} ${d.key}`);
             }
-    }, 120000);
+            expect(bad).toEqual([]);
+        }, 60000);
 
     it('places them for the pair: face to face on a line, side by side, or back to back; both looking at each other when it says so', () => {
         const at = (id: string) => applyPairPose(pair(2, 3), 'a', 'b', id).scene.actors;

@@ -2,8 +2,8 @@ import type { Euler, JointId, Pose } from '../schema/types';
 import { solveFK } from './fk';
 import { ground } from './grounding';
 import { clampJoint } from './limits';
-import { dist, type V3 } from './math';
-import type { Skeleton } from './skeleton';
+import { add, apply, dist, fromEuler, mul, type V3 } from './math';
+import { PARENT, type Skeleton } from './skeleton';
 
 /**
  * Reaching (docs/CHARACTER_STUDIO.md phase 3, pair poses): sets one arm so its hand is at a target point, for any
@@ -14,8 +14,8 @@ import type { Skeleton } from './skeleton';
 type Side = 'L' | 'R';
 const ZERO: Euler = { x: 0, y: 0, z: 0 };
 
-/** Where the hand is for these arm angles (the whole pose is grounded as the renderer does). */
-function handAt(skel: Skeleton, pose: Pose, s: Side, upper: Euler, elbow: number): V3 {
+/** Where the hand is for these arm angles, with the whole body posed and grounded for each one (the reference). */
+export function handAtFull(skel: Skeleton, pose: Pose, s: Side, upper: Euler, elbow: number): V3 {
     const joints = {
         ...pose.joints,
         [`upperArm${s}`]: upper,
@@ -23,6 +23,28 @@ function handAt(skel: Skeleton, pose: Pose, s: Side, upper: Euler, elbow: number
     };
     const posed = ground(skel, solveFK(skel, { ...pose, joints }), pose.ground);
     return posed.pos[`hand${s}` as JointId];
+}
+
+/**
+ * The hand's position as a function of the arm angles, the same as `handAtFull` but fast: the arm does not move the feet,
+ * so (unless the body lies on the floor, where an arm can be its lowest point) the body is posed and grounded once, and
+ * each candidate only turns the three joints of the arm. The solver tries about 1000 candidates for every reach.
+ */
+export function armHand(skel: Skeleton, pose: Pose, s: Side): (upper: Euler, elbow: number) => V3 {
+    if (pose.ground === 'floor') return (u, e) => handAtFull(skel, pose, s, u, e);
+    const upperId = `upperArm${s}` as JointId;
+    const lowerId = `lowerArm${s}` as JointId;
+    const handId = `hand${s}` as JointId;
+    const base = ground(skel, solveFK(skel, pose), pose.ground);
+    const parent = PARENT[upperId] as JointId;
+    const parentRot = base.rot[parent];
+    const upperPos = add(base.pos[parent], apply(parentRot, skel.offset[upperId]));
+    return (upper, elbow) => {
+        const upperRot = mul(parentRot, fromEuler(upper));
+        const lowerPos = add(upperPos, apply(upperRot, skel.offset[lowerId]));
+        const lowerRot = mul(upperRot, fromEuler({ x: elbow, y: 0, z: 0 }));
+        return add(lowerPos, apply(lowerRot, skel.offset[handId]));
+    };
 }
 
 const START_RAISE = [-60, -30, 0, 30, 60, 90, 120, 150, 175];
@@ -44,7 +66,8 @@ export function solveReach(skel: Skeleton, pose: Pose, s: Side, target: V3): Rea
     const lowerId = `lowerArm${s}` as JointId;
     const make = (raise: number, spread: number, twist: number): Euler =>
         clampJoint(upperId, { x: -raise, y: k * twist, z: k * (spread + 8) });
-    const cost = (u: Euler, bend: number) => dist(handAt(skel, pose, s, u, bend), target);
+    const hand = armHand(skel, pose, s);
+    const cost = (u: Euler, bend: number) => dist(hand(u, bend), target);
 
     // coarse: a grid of starting arms, the best few kept
     const starts: { u: Euler; bend: number; c: number }[] = [];

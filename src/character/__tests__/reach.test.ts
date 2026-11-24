@@ -3,10 +3,10 @@ import { RECIPES, fromRecipe } from '../data/recipes';
 import { solveFK } from '../rig/fk';
 import { ground } from '../rig/grounding';
 import { LIMITS, clampPose } from '../rig/limits';
-import { solveReach } from '../rig/reach';
+import { armHand, handAtFull, solveReach } from '../rig/reach';
 import { buildSkeleton } from '../rig/skeleton';
 import { STAND_POSE } from '../schema/parse';
-import type { JointId } from '../schema/types';
+import type { Ground, JointId } from '../schema/types';
 
 const bodies = [0, 1, 3, 8].map((i) => fromRecipe(RECIPES[i], `b${i}`));
 const handOf = (skel: ReturnType<typeof buildSkeleton>, pose: typeof STAND_POSE, s: 'L' | 'R') =>
@@ -72,5 +72,42 @@ describe('solveReach', () => {
         const a = solveReach(skel, STAND_POSE, 'L', [20, 100, 30]);
         expect(solveReach(skel, STAND_POSE, 'L', [20, 100, 30])).toEqual(a);
         expect(JSON.stringify(STAND_POSE)).toBe(before);
+    });
+});
+
+describe('armHand (the fast hand position the solver uses)', () => {
+    it('is the same as posing and grounding the whole body, in every grounding, on a child and a tall adult', () => {
+        const angles = [
+            [{ x: 0, y: 0, z: 8 }, 8],
+            [{ x: -90, y: -40, z: 60 }, 95],
+            [{ x: 30, y: 70, z: -20 }, 130],
+            [{ x: -150, y: 10, z: 120 }, 20],
+        ] as const;
+        for (const c of [bodies[0], bodies[3]]) {
+            const skel = buildSkeleton(c.body);
+            for (const g of ['both', 'left', 'right', 'air', 'floor'] as Ground[])
+                for (const side of ['L', 'R'] as const) {
+                    // a leaning, bent body, so the chain from the root to the shoulder is not trivial
+                    const pose = {
+                        ...STAND_POSE,
+                        ground: g,
+                        rootRotation: { yaw: 25, pitch: 10, roll: 4 },
+                        joints: {
+                            ...STAND_POSE.joints,
+                            spine1: { x: 12, y: 8, z: -6 },
+                            chest: { x: 9, y: -10, z: 5 },
+                            upperLegL: { x: -35, y: 0, z: 4 },
+                            lowerLegL: { x: 40, y: 0, z: 0 },
+                        },
+                    };
+                    const fast = armHand(skel, pose, side);
+                    for (const [u, e] of angles) {
+                        const a = fast(u, e);
+                        const b = handAtFull(skel, pose, side, u, e);
+                        for (let k = 0; k < 3; k++)
+                            expect(Math.abs(a[k] - b[k]), `${g} ${side} ${k}`).toBeLessThan(1e-6);
+                    }
+                }
+        }
     });
 });
