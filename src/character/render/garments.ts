@@ -72,7 +72,8 @@ export function addSleeve(ctx: Ctx, skel: Skeleton, s: Side, def: TopDef, manga 
     const lower = `lowerArm${s}` as const;
     const hand = `hand${s}` as const;
     const L = def.sleeve;
-    const roles = sleeveRoles(def);
+    // the manga body paints the cloth onto the limb itself (loose or not): only the parts left bare get an overlay
+    const roles = sleeveRoles(def, manga);
     const k = def.fit > 1.02 ? def.fit * 1.1 : 1;
     if (L > 0 && roles.upper === 'skin')
         cover(
@@ -111,13 +112,14 @@ export function legRoles(def: BottomDef, ignoreLoose = false): { thigh: Material
     };
 }
 
-export function addLegCloth(ctx: Ctx, skel: Skeleton, s: Side, def: BottomDef) {
+export function addLegCloth(ctx: Ctx, skel: Skeleton, s: Side, def: BottomDef, manga = false) {
     const z = skel.size;
     const p = ctx.posed.pos;
     const thigh = `upperLeg${s}` as const;
     const shin = `lowerLeg${s}` as const;
     const foot = `foot${s}` as const;
-    const roles = legRoles(def);
+    // the manga body paints the cloth onto the limb itself (loose or not): only bare parts get an overlay
+    const roles = legRoles(def, manga);
     if (def.leg > 0 && roles.thigh === 'skin')
         cover(
             ctx,

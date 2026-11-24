@@ -41,8 +41,8 @@ describe('manga proportions', () => {
         expect(mangaHeads(12, 'shonen')).toBeLessThan(mangaHeads(19, 'shonen'));
     });
 
-    it('landmarks: chin 1, nipples 2, navel 3, crotch 4, knee 5.8 heads from the top; legs longer than the torso', () => {
-        expect(LANDMARKS).toEqual({ chin: 1, nipples: 2, navel: 3, crotch: 4, knee: 5.8 });
+    it('landmarks: chin 1, nipples 2, navel 3, crotch 4.2, knee 5.9 heads from the top (reference sheet); legs longer than the torso', () => {
+        expect(LANDMARKS).toEqual({ chin: 1, nipples: 2, navel: 3, crotch: 4.2, knee: 5.9 });
         for (const v of MANGA_VARIANTS) {
             const c = manga(adult, v);
             const s = buildSkeleton(c.body);
@@ -56,7 +56,7 @@ describe('manga proportions', () => {
         }
     });
 
-    it('the whole width at the shoulders (deltoids included): about 2 head heights for a man, 1.5 for a woman; hips 1.2–1.6', () => {
+    it('the whole width at the shoulders (deltoids included): about 1.7 head heights for a man (the reference sheet), 1.5 for a woman; hips 1.2–1.6', () => {
         const wide = (c: typeof adult) => {
             const s = buildSkeleton(c.body);
             const outer = 2 * (s.size.shoulderW * 0.46 + s.size.upperArm * 1.12);
@@ -64,8 +64,8 @@ describe('manga proportions', () => {
         };
         const m = wide(manga(adult));
         const f = wide(manga(applyEdit(meera, { body: { gender: 1 } })));
-        expect(m.shoulder).toBeGreaterThan(1.85);
-        expect(m.shoulder).toBeLessThan(2.3);
+        expect(m.shoulder).toBeGreaterThan(1.55);
+        expect(m.shoulder).toBeLessThan(1.9);
         expect(f.shoulder).toBeGreaterThan(1.35);
         expect(f.shoulder).toBeLessThan(1.75);
         expect(m.hip).toBeGreaterThan(1.2);
@@ -85,7 +85,8 @@ describe('manga proportions', () => {
         };
         const m = shape(manga(applyEdit(adult, { body: { gender: 0 } })));
         const f = shape(manga(applyEdit(meera, { body: { gender: 1 } })));
-        expect(m.hipToShoulder).toBeLessThan(0.75);
+        // the reference sheet: bare hips about 0.76 of the outer shoulders
+        expect(m.hipToShoulder).toBeLessThan(0.8);
         expect(f.hipToShoulder).toBeGreaterThan(0.85);
         expect(f.waistToHip).toBeLessThan(0.65);
         expect(m.waistToHip).toBeGreaterThan(0.75);

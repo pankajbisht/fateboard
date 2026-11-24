@@ -132,9 +132,21 @@ describe('what each garment is made of', () => {
             parts(wear(meera, 'tshirt', 'pants')).some((p) => p.key === 'upperArmL-sleeve'),
         ).toBe(true);
         expect(role('longsleeve', 'lowerArmL')).toBe('top');
-        // a hoodie's sleeve is an overlay (thicker than the arm)
+        // a hoodie's loose sleeve: the manga arm itself takes the cloth and is wider (no overlay capsule); the classic
+        // body still draws an overlay
+        expect(role('hoodie', 'lowerArmL')).toBe('top');
+        const armW = (t: TopKind) => {
+            const d = parts(wear(meera, t, 'pants')).find((p) => p.key === 'upperArmL')!.d;
+            const xs = (d.match(/-?\d+(?:\.\d+)?/g) ?? [])
+                .map(Number)
+                .filter((_, i) => i % 2 === 0);
+            return Math.max(...xs) - Math.min(...xs);
+        };
+        expect(armW('hoodie')).toBeGreaterThan(armW('longsleeve'));
         expect(
-            parts(wear(meera, 'hoodie', 'pants')).some((p) => p.key === 'lowerArmL-sleeve'),
+            parts(
+                applyEdit(wear(meera, 'hoodie', 'pants'), { body: { bodyStyle: 'classic' } }),
+            ).some((p) => p.key === 'lowerArmL-sleeve'),
         ).toBe(true);
         // three-quarter (kurta): upper covered, forearm partly
         expect(parts(wear(meera, 'kurta', 'pants')).some((p) => p.key === 'lowerArmL-sleeve')).toBe(

@@ -22,28 +22,32 @@ const LEN = {
  * convention of about one head for a man, a little less for a woman (manga feet are small).
  */
 const FOOT_HU: Pair = [1, 0.88];
-/** Radii (half the width), as a share of H. */
+/**
+ * Radii (half the width), as a share of H. Measured from the owner's reference sheet (2026-11-24: a teen boy drawn in
+ * clean line art, 7.6 heads; widths read off its outline, row by row): the limbs are slim (upper arm 0.27 head wide,
+ * forearm 0.24, wrist 0.15, neck 0.41, thigh 0.5 bare). The female column keeps the same ratios to the male one as the
+ * first reference did, with a fuller thigh against her frame (an hourglass).
+ */
 const RADIUS = {
-    upperArm: [0.0235, 0.0185] as Pair,
-    foreArm: [0.0205, 0.0165] as Pair,
-    wrist: [0.0145, 0.0115] as Pair,
-    // a woman's thigh is fuller against her hips than the reference drew it (male, female read apart)
-    thigh: [0.0435, 0.041] as Pair,
-    knee: [0.0335, 0.0255] as Pair,
-    ankle: [0.0205, 0.0145] as Pair,
-    neck: [0.03, 0.0255] as Pair,
+    upperArm: [0.0178, 0.0152] as Pair,
+    foreArm: [0.0158, 0.0134] as Pair,
+    wrist: [0.0102, 0.0088] as Pair,
+    thigh: [0.0335, 0.0335] as Pair,
+    knee: [0.026, 0.022] as Pair,
+    ankle: [0.0158, 0.0125] as Pair,
+    neck: [0.027, 0.0235] as Pair,
 };
 /**
- * Widths in head units (hu): shoulder joints apart, waist, hips (full widths of the body, arms excluded). The male
- * waist and chest and the female hips are set away from the reference (DECISIONS 2026-11-24, owner: male and female
- * bodies must read apart): a man is a V (broad chest, waist well under it, hips about 0.7 of the shoulders), a woman an
- * hourglass (hips about as wide as the shoulders, waist under 0.65 of the hips).
+ * Widths in head units (hu): shoulder joints apart, waist, hips (full widths of the body, arms excluded). From the
+ * reference sheet: the outer shoulders 1.67 hu (joints 1.36 plus the arms' deltoids), the waist 1.05, the hips 1.25
+ * (bare; 1.33 in jeans), so a man is a V. A woman keeps the hourglass (DECISIONS 2026-11-24): narrower shoulders,
+ * hips about as wide as them, a waist under 0.65 of the hips.
  */
 const WIDTH_HU = {
-    shoulder: [1.65, 1.28] as Pair,
-    waist: [1.12, 0.8] as Pair,
-    hip: [1.42, 1.5] as Pair,
-    chest: [1.38, 0.98] as Pair,
+    shoulder: [1.36, 1.17] as Pair,
+    waist: [1.05, 0.8] as Pair,
+    hip: [1.25, 1.4] as Pair,
+    chest: [1.2, 0.95] as Pair,
 };
 
 export interface MangaAnatomy {

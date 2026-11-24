@@ -158,3 +158,34 @@ describe('a bent limb paints its lower bone over the whole limb', () => {
             }
     });
 });
+
+describe('loose cloth on manga limbs', () => {
+    it('jeans and a hoodie widen the limb itself: no capsule overlays segmenting the legs and arms', () => {
+        const c = applyEdit(fromRecipe(RECIPES[4], 'x'), {
+            top: { kind: 'hoodie' },
+            bottom: { kind: 'jeans' },
+            pose: poseById('stand')!,
+        });
+        const keys = renderCharacter(c, cam(0)).parts.map((p) => p.key);
+        for (const k of [
+            'upperLegL-cloth',
+            'lowerLegL-cloth',
+            'upperArmL-sleeve',
+            'lowerArmL-sleeve',
+        ])
+            expect(keys, k).not.toContain(k);
+        expect(keys).not.toContain('lowerLegL-kneecap');
+        // the loose cloth is wider than the bare limb
+        const width = (bottom: 'jeans' | 'leggings') => {
+            const d = renderCharacter(
+                applyEdit(c, { bottom: { kind: bottom } }),
+                cam(0),
+            ).parts.find((p) => p.key === 'upperLegL')!.d;
+            const xs = (d.match(/-?\d+(?:\.\d+)?/g) ?? [])
+                .map(Number)
+                .filter((_, i) => i % 2 === 0);
+            return Math.max(...xs) - Math.min(...xs);
+        };
+        expect(width('jeans')).toBeGreaterThan(width('leggings'));
+    });
+});

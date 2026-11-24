@@ -22,16 +22,18 @@ const body = (gender: 0 | 1) =>
         }).body,
     );
 
-/** [male, female] as a share of H, measured from the reference silhouette. */
-// the measured reference figure, except the male waist and the female hips and thigh, which were set apart on
-// purpose so the two bodies read differently (DECISIONS 2026-11-24)
+/**
+ * [male, female] as a share of H. Male: the owner's reference sheet (2026-11-24), a teen boy in clean line art, 7.6
+ * heads (outer shoulders 1.67 hu, waist 1.05, hips 1.25 bare, thigh 0.5, knee 0.4, neck 0.41, upper arm 0.27). Female:
+ * the same ratios to the male as the first reference, with hips as wide as the shoulders (DECISIONS 2026-11-24).
+ */
 const REF = {
-    shoulderOuter: [0.266, 0.21],
-    waist: [0.149, 0.115],
-    hips: [0.19, 0.2],
-    thigh: [0.087, 0.082],
-    knee: [0.068, 0.05],
-    neck: [0.06, 0.055],
+    shoulderOuter: [0.22, 0.188],
+    waist: [0.138, 0.105],
+    hips: [0.165, 0.184],
+    thigh: [0.066, 0.064],
+    knee: [0.052, 0.044],
+    neck: [0.054, 0.047],
     arm: [0.35, 0.34],
 };
 const near = (v: number, ref: number, what: string) => {

@@ -5,10 +5,10 @@ import type { MangaVariant } from '../schema/bodyStyles';
  * The manga proportion table (docs/CHARACTER_STUDIO.md, manga body). Everything is in head units, so every height
  * and age works: a teen or adult is 7.5–8 heads tall, a child 5–6, an elder about half a head less (a slight stoop
  * comes from the posture setting). Landmarks from the top of the head: chin 1.0, nipples 2.0, navel 3.0,
- * crotch 4.0, knee 5.8, feet at the full height. `mangaProportions` turns a body into the numbers
+ * crotch 4.2, knee 5.9 (the owner's reference sheet, 2026-11-24), feet at the full height. `mangaProportions` turns a body into the numbers
  * `buildSkeleton` uses; the classic body never reads this file.
  */
-export const LANDMARKS = { chin: 1.0, nipples: 2.0, navel: 3.0, crotch: 4.0, knee: 5.8 } as const;
+export const LANDMARKS = { chin: 1.0, nipples: 2.0, navel: 3.0, crotch: 4.2, knee: 5.9 } as const;
 
 interface VariantRow {
     /** full-grown height in heads */

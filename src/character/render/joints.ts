@@ -24,7 +24,7 @@ export function addJointDetail(
     bot: BottomDef,
 ) {
     const z = skel.size;
-    const legs = legRoles(bot);
+    const legs = legRoles(bot, c.body.bodyStyle === 'manga');
     const t = skel.offset.spine2[1] / 0.26;
     const depthOf = (key: string) => ctx.parts.find((x) => x.key === key)?.depth ?? 0;
     const faces = (j: JointId, v: V3 = [0, 0, 1]) =>
@@ -120,7 +120,8 @@ export function addJointDetail(
             kneeRole,
             [thigh, shin],
         );
-        if (faces(shin) > 0.25) {
+        // the kneecap line: bare knees only on the manga body (the reference draws none on trousers)
+        if (faces(shin) > 0.25 && !(manga && kneeRole !== 'skin')) {
             const ink = ctx.outline(ctx.fill[kneeRole]);
             const a = xy(on(ctx, shin, [-z.knee * 0.5, z.knee * 0.35, z.knee * 1.15]));
             const m = xy(on(ctx, shin, [0, -z.knee * 0.15, z.knee * 1.3]));
@@ -180,7 +181,9 @@ export function addJointDetail(
     const manChest = c.body.gender < 0.35 && c.body.age >= 16 && z.bust <= 0.5;
     // only while the chest faces the viewer: turned further, the lines leave the body's outline (they floated in
     // front of the chest seen from the side)
-    if (faces('chest') > 0.45 && (z.bust > 0.5 || c.body.muscle > 0.35 || manChest)) {
+    // pectorals belong to a male frame: a muscular woman showed pectoral and sternum lines under her bust
+    const pecs = c.body.gender < 0.5 && (c.body.muscle > 0.35 || manChest);
+    if (faces('chest') > 0.45 && (z.bust > 0.5 || pecs)) {
         const ink = ctx.outline(ctx.fill.top);
         const front = z.chestDepth * 0.5;
         const bust = z.bust > 0.5;
@@ -214,7 +217,7 @@ export function addJointDetail(
                 'torso',
             );
         }
-        if (c.body.muscle > 0.5 && z.bust <= 0.5)
+        if (c.body.muscle > 0.5 && z.bust <= 0.5 && c.body.gender < 0.5)
             line(
                 'sternum',
                 'torso',
@@ -226,7 +229,8 @@ export function addJointDetail(
     }
 
     // from behind: the crease between the buttocks and the curve under each
-    if (faces('pelvis') < -0.2) {
+    // (not on the manga body: the reference draws no crease on trousers or a skirt)
+    if (faces('pelvis') < -0.2 && !manga) {
         const ink = ctx.outline(ctx.fill[bot.skirt > 0 ? 'bottom' : 'bottom']);
         const hy = skel.offset.hipL[1];
         const back = -z.hipDepth * 0.5;

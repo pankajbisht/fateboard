@@ -29,6 +29,13 @@ import { addLegPocket, addTrim } from './trims';
  * render/garments.ts: sleeves, trouser legs, skirts and long tops, collars and folds.
  */
 
+/**
+ * How much a garment widens a manga limb it covers: loose cloth (fit over 1) stands off the body, tight cloth (under 1)
+ * hugs it. 1 when the limb is bare.
+ */
+const looseOf = (covered: boolean, fit: number) =>
+    !covered ? 1 : fit > 1 ? Math.min(2, 1 + (fit - 1) * 1.6) : fit;
+
 export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
     const z = skel.size;
     const p = ctx.posed.pos;
@@ -108,7 +115,12 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
         if (manga)
             addBentLimb(ctx, {
                 joints: [p[upper], p[lower], p[hand]],
-                radii: [z.upperArm, z.foreArm * 1.08, z.wrist],
+                // loose cloth widens the limb's own shape (no overlay capsules on the manga body)
+                radii: [
+                    z.upperArm * looseOf(sleeves.upper === 'top', topDef.fit),
+                    z.foreArm * 1.08 * looseOf(sleeves.upper === 'top', topDef.fit),
+                    z.wrist * looseOf(sleeves.lower === 'top', topDef.fit),
+                ],
                 profiles: [PROFILES.upperArm, PROFILES.foreArm],
                 keys: [upper, lower],
                 groups: [upper, lower],
@@ -145,7 +157,11 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
         if (manga)
             addBentLimb(ctx, {
                 joints: [p[thigh], p[shin], p[foot]],
-                radii: [z.thigh, z.knee * 0.98, z.ankle],
+                radii: [
+                    z.thigh * looseOf(legs.thigh === 'bottom', botDef.fit),
+                    z.knee * 0.98 * looseOf(legs.thigh === 'bottom', botDef.fit),
+                    z.ankle * looseOf(legs.shin === 'bottom', botDef.fit),
+                ],
                 profiles: [PROFILES.thigh, PROFILES.shin],
                 keys: [thigh, shin],
                 groups: [thigh, shin],
@@ -157,7 +173,7 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
             addLimb(ctx, thigh, thigh, legs.thigh, p[thigh], z.thigh, p[shin], z.knee);
             addLimb(ctx, shin, shin, legs.shin, p[shin], z.knee * 0.95, p[foot], z.ankle);
         }
-        addLegCloth(ctx, skel, s, botDef);
+        addLegCloth(ctx, skel, s, botDef, manga);
         addShoe(ctx, skel, s, c.dress.shoes.kind);
     }
 
