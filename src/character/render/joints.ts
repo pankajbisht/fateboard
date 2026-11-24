@@ -178,25 +178,41 @@ export function addJointDetail(
     // chest and bust: the lower edge of each pectoral, or of each breast, and a sternum line for a muscular chest
     // a grown man's chest always shows its pectorals a little (male and female bodies read apart)
     const manChest = c.body.gender < 0.35 && c.body.age >= 16 && z.bust <= 0.5;
-    if (faces('chest') > 0.2 && (z.bust > 0.5 || c.body.muscle > 0.35 || manChest)) {
+    // only while the chest faces the viewer: turned further, the lines leave the body's outline (they floated in
+    // front of the chest seen from the side)
+    if (faces('chest') > 0.45 && (z.bust > 0.5 || c.body.muscle > 0.35 || manChest)) {
         const ink = ctx.outline(ctx.fill.top);
         const front = z.chestDepth * 0.5;
-        const drop = z.bust > 0.5 ? z.bust * 0.9 : Math.max(c.body.muscle, 0.3) * 2.2;
+        const bust = z.bust > 0.5;
+        // a shallow arc under each breast (or the lower edge of each pectoral), from near the middle out and up toward
+        // the side; a deep U in the middle of the chest read as a smile
+        const drop = bust ? z.bust * 0.35 : Math.max(c.body.muscle, 0.3) * 0.9;
         for (const sx of [-1, 1]) {
             const a = xy(
-                on(ctx, 'chest', [sx * z.shoulderW * 0.05, -t * 0.12, front * 1.02 + z.bust * 0.5]),
+                on(ctx, 'chest', [sx * z.shoulderW * 0.06, -t * 0.1, front * 1.02 + z.bust * 0.6]),
             );
             const m = xy(
                 on(ctx, 'chest', [
-                    sx * z.shoulderW * 0.17,
-                    -t * 0.12 - drop * 0.5,
+                    sx * z.shoulderW * 0.19,
+                    -t * 0.1 - drop * 0.5,
                     front * 1.02 + z.bust,
                 ]),
             );
             const b = xy(
-                on(ctx, 'chest', [sx * z.shoulderW * 0.32, -t * 0.02, front * 0.9 + z.bust * 0.4]),
+                on(ctx, 'chest', [
+                    sx * z.shoulderW * 0.33,
+                    -t * 0.065,
+                    front * 0.95 + z.bust * 0.5,
+                ]),
             );
-            line(`chest-${sx}`, 'torso', curve3(a, m, b), ink, ctx.line * 0.6, 'torso');
+            line(
+                `chest-${sx}`,
+                'torso',
+                curve3(a, m, b),
+                ink,
+                ctx.line * (bust ? 0.55 : 0.5),
+                'torso',
+            );
         }
         if (c.body.muscle > 0.5 && z.bust <= 0.5)
             line(

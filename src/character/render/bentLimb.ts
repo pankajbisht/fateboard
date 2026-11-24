@@ -185,12 +185,27 @@ export function addBentLimb(ctx: Ctx, o: BentLimb) {
         false,
         [lowerPoly],
     );
-    // the contour: down the left, round the hand or foot, up the right (open at the top)
-    const open = [...L1, Lj, ...L2, ...endCap, ...[...R2].reverse(), Rj, ...[...R1].reverse()];
-    addContour(ctx, o.contour, o.groups[0], o.roles[0], smoothOpen(open), Math.max(z1, z2) + 0.002);
+    // The contour, open at the top: in two pieces, each at its own bone's depth, so a limb half behind the torso does
+    // not draw the hidden half's outline over the chest. The upper piece runs down both sides of the upper bone to the
+    // bend; the lower one from the bend round the hand or foot and back.
+    addContour(
+        ctx,
+        o.contour,
+        o.groups[0],
+        o.roles[0],
+        smoothOpen([...L1, Lj]) + smoothOpen([Rj, ...[...R1].reverse()]),
+        z1 + 0.002,
+    );
+    addContour(
+        ctx,
+        `${o.contour}-lo`,
+        o.groups[1],
+        o.roles[0],
+        smoothOpen([Lj, ...L2, ...endCap, ...[...R2].reverse(), Rj]),
+        Math.max(z1, z2) + 0.002,
+    );
     if ((o.muscle ?? 0) > 0.2) {
         // inner lines: the swell of the upper arm or thigh and of the forearm or calf, on the side away from the light
-        const ink = ctx.outline(ctx.fill[o.roles[0]]);
         const side = (n: P2): 1 | -1 => (dot(n, ctx.light) > 0 ? -1 : 1);
         const line = (
             key: string,
@@ -200,7 +215,11 @@ export function addBentLimb(ctx: Ctx, o: BentLimb) {
             rf: (t: number) => number,
             t0: number,
             t1: number,
+            bone: 0 | 1,
+            depth: number,
         ) => {
+            // each line belongs to its own bone: just over that bone's fill, under any sleeve or trouser leg on it
+            const ink = ctx.outline(ctx.fill[o.roles[bone]]);
             const s = side(n);
             const pts = Array.from({ length: 6 }, (_, i): P2 => {
                 const t = t0 + ((t1 - t0) * i) / 5;
@@ -209,17 +228,17 @@ export function addBentLimb(ctx: Ctx, o: BentLimb) {
             if (ink)
                 ctx.parts.push({
                     key,
-                    group: o.groups[0],
+                    group: o.groups[bone],
                     role: 'line',
                     d: smoothOpen(pts),
                     fill: 'none',
                     stroke: ink,
                     strokeWidth: ctx.line * 0.45,
-                    depth: Math.max(z1, z2) + 0.003,
+                    depth,
                 });
         };
-        line(`${o.contour}-m1`, A, B, n1, r1, 0.2, 0.62);
-        line(`${o.contour}-m2`, B, C, n2, r2, 0.12, 0.55);
+        line(`${o.contour}-m1`, A, B, n1, r1, 0.2, 0.62, 0, z1 + 0.003);
+        line(`${o.contour}-m2`, B, C, n2, r2, 0.12, 0.55, 1, Math.max(z1, z2) + 0.003);
     }
 }
 

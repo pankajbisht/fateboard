@@ -61,8 +61,11 @@ export function sleeveRoles(
     };
 }
 
-/** Overlays for the sleeve parts that were not recoloured. */
-export function addSleeve(ctx: Ctx, skel: Skeleton, s: Side, def: TopDef) {
+/**
+ * Overlays for the sleeve parts that were not recoloured. On the manga body the sleeve is wider: the bent arm swells to
+ * about 1.1 of its radius and carries its own outline, which showed just inside a tight sleeve as a doubled line.
+ */
+export function addSleeve(ctx: Ctx, skel: Skeleton, s: Side, def: TopDef, manga = false) {
     const z = skel.size;
     const p = ctx.posed.pos;
     const upper = `upperArm${s}` as const;
@@ -82,7 +85,7 @@ export function addSleeve(ctx: Ctx, skel: Skeleton, s: Side, def: TopDef) {
             p[lower],
             z.foreArm * 1.08,
             Math.min(L, 1),
-            1.18 * k * 0.95,
+            (manga ? 1.32 : 1.18 * 0.95) * k,
         );
     if (L > 1 && roles.lower === 'skin')
         cover(
@@ -95,7 +98,7 @@ export function addSleeve(ctx: Ctx, skel: Skeleton, s: Side, def: TopDef) {
             p[hand],
             z.wrist * 1.1,
             L - 1,
-            1.08 * k,
+            (manga ? 1.24 : 1.08) * k,
         );
 }
 
@@ -261,7 +264,8 @@ export function addCollar(ctx: Ctx, skel: Skeleton, collar: Collar) {
         addShell(ctx, 'collar-hood', 'torso', 'top', pts, torso.depth + (facing > 0 ? -0.6 : 0.6));
         return;
     }
-    if (facing < 0.12) return;
+    // front collar lines only while the chest faces the viewer: from the side they stuck out past the neck
+    if (facing < 0.4) return;
     if (collar === 'crew')
         line(
             'collar-crew',

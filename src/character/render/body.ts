@@ -129,7 +129,7 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
             );
             addLimb(ctx, lower, lower, sleeves.lower, p[lower], z.foreArm, p[hand], z.wrist);
         }
-        addSleeve(ctx, skel, s, topDef);
+        addSleeve(ctx, skel, s, topDef, manga);
         if (!pocketHands(c))
             addHand(
                 ctx,

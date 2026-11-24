@@ -94,7 +94,8 @@ const BASE_PACKS: Record<'cartoon' | 'anime' | 'realistic' | 'manga' | 'webtoon'
         id: 'manga',
         name: 'Manga B/W',
         tags: ['manga', 'black and white', 'screentone', 'ink'],
-        line: { width: 0.0072, color: 'ink', darken: 1, silhouette: 1.35 },
+        // ink lines: bold, but not so heavy that a full figure reads crude (was 0.0072 / 1.35)
+        line: { width: 0.0058, color: 'ink', darken: 1, silhouette: 1.25 },
         shading: { kind: 'cel', strength: 1, offset: 0.24 },
         hairHighlight: true,
         palette: 'manga',

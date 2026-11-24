@@ -32,8 +32,9 @@ export function addMangaTorso(ctx: Ctx, skel: Skeleton, fit: number, bust: boole
         // the slope of the shoulders: it runs out to the top of the arm, no higher than the neck base
         ring(ctx, 'chest', t * 0.26, lerp(neckBase, outer, 0.3), chestZ * 0.6 * fit, 10),
         ring(ctx, 'chest', t * 0.18, outer * 0.68, chestZ * 0.68 * fit, 12),
-        ring(ctx, 'chest', t * 0.09, outer * 0.9, chestZ * 0.76 * fit, 12),
-        ring(ctx, 'chest', t * 0.0, outer * 0.97, chestZ * 0.8 * fit, 12),
+        ring(ctx, 'chest', t * 0.09, outer * 0.9, chestZ * 0.76 * fit, 12, bust ? z.bust * 0.2 : 0),
+        // the bust spreads over four rings (upper slope, fullest, fullest, underside) so its profile is a soft curve
+        ring(ctx, 'chest', t * 0.0, outer * 0.97, chestZ * 0.8 * fit, 12, bust ? z.bust * 0.65 : 0),
         // under the arm, the body closes in to the chest, then the ribs
         ring(
             ctx,
@@ -42,9 +43,17 @@ export function addMangaTorso(ctx: Ctx, skel: Skeleton, fit: number, bust: boole
             chestHalf + z.bust * 0.3,
             chestZ * 0.98 * fit,
             12,
-            bust ? z.bust * 0.4 : 0,
+            bust ? z.bust * 0.8 : 0,
         ),
-        ring(ctx, 'spine2', 0, lerp(chestHalf, waistHalf, 0.5), chestZ * 0.9 * fit, 12),
+        ring(
+            ctx,
+            'spine2',
+            0,
+            lerp(chestHalf, waistHalf, 0.5),
+            chestZ * 0.9 * fit,
+            12,
+            bust ? z.bust * 0.22 : 0,
+        ),
         waist,
         ring(
             ctx,
