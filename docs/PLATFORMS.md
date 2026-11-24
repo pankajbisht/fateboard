@@ -336,15 +336,16 @@ paths in the same change (`claudeSetup.test.ts` checks rule paths exist).
 **Status 2026-11-24 (owner): npm workspaces, web app in `apps/web`.** The owner chose to move the web app now
 (step 3 below done first). `apps/web` is the `@fateboard/web` workspace (`src/`, `public/`, `e2e/`, `index.html`,
 all configs); the root `package.json` keeps husky + lint-staged and forwards every script, so commands and CI
-check names did not change. Repo-level files stay at the root: `.env*` (Vite `envDir`), `.claude/`, `.github/`,
-`docs/`, `scripts/guardrails/`, `Dockerfile` + `docker/`. CI uploads `apps/web/dist` (Pages),
-`apps/web/coverage`, `apps/web/playwright-report`; the Dockerfile copies `apps/web/package.json` before `npm ci`.
+check names did not change. Web-only files are in `apps/web` too (`.env*`, `Dockerfile` +
+`Dockerfile.dockerignore` + `docker/`, `.prettierignore`); the root keeps repo-level files only (`.claude/`,
+`.github/`, `.husky/`, `docs/`, `scripts/guardrails/`, `.nvmrc`, `.npmrc`, `.prettierrc`). CI uploads `apps/web/dist` (Pages),
+`apps/web/coverage`, `apps/web/playwright-report`; `apps/web/Dockerfile` (context: repo root) copies `apps/web/package.json` before `npm ci`.
 Guarded ratchet files are repo-relative (`apps/web/package.json`, …) and `check-ratchets.mjs` also reads the old
 root path on a base from before the move. `apps/desktop` and `packages/core` are README-only placeholders
 (no `package.json`, so npm ignores them). Next, each its own PR: (1) `packages/core` from the pure domains
 `src/character`, `src/scene` (minus `board.ts`) + `seededRandom`; (2) `apps/desktop` after the shell choice
 (Tauri spike vs Electron), CI job not required at first. Every new workspace `package.json` must also be copied
-into the Dockerfile deps layer before `npm ci`. Open: shell choice, agent location (`.claude/agents` vs
+into the `apps/web/Dockerfile` deps layer before `npm ci`. Open: shell choice, agent location (`.claude/agents` vs
 `.github/agents`).
 
 ## 10. Claude and MCP

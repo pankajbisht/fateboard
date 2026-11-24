@@ -28,7 +28,8 @@ jobs:
               env:
                   DOCKER_BUILD_RECORD_UPLOAD: 'false' # no extra build-record artifact per run
               with:
-                  context: . # the checkout (honours .dockerignore), not a fresh git clone
+                  context: . # the checkout (repo root: the workspace lockfile), not a fresh git clone
+                  file: apps/web/Dockerfile # ignore rules: apps/web/Dockerfile.dockerignore
                   load: true # into the local daemon for the smoke test
                   push: false
                   tags: fateboard:ci

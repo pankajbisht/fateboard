@@ -8,4 +8,4 @@ Rules once it has code: no React, Fabric, `@store` or `@/lib/storage` imports (a
 TypeScript source through `exports` (no build step); exact dependency versions only.
 
 When it gets a `package.json` it becomes an npm workspace: run `npm install`, commit `package-lock.json`, and copy
-its `package.json` into the Dockerfile `deps` layer before `npm ci`.
+its `package.json` into the `apps/web/Dockerfile` deps layer before `npm ci`.

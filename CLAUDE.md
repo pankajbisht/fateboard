@@ -7,8 +7,9 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 **Monorepo (npm workspaces).** The web app is `apps/web` (package `@fateboard/web`); `apps/desktop` and
 `packages/core` are empty placeholders. Run every command from the repo root: root scripts forward to the web
 app. **App paths in docs and rules (`src/…`, `e2e/…`, `public/…`, `vite.config.ts`, …) are relative to
-`apps/web/`.** Repo-level files stay at the root: `.env` / `.env.example`, `.claude/`, `.github/`, `docs/`,
-`scripts/guardrails/`, `Dockerfile` + `docker/`, `.husky/`, `.nvmrc`, `.npmrc`, the one `package-lock.json`.
+`apps/web/`.** Web-only files live in `apps/web` too (`.env` / `.env.example`, `Dockerfile` + `Dockerfile.dockerignore` +
+`docker/`, `.prettierignore`). Only repo-level files stay at the root: `.claude/`, `.github/`, `.husky/`, `docs/`,
+`scripts/guardrails/`, `.nvmrc`, `.npmrc`, `.prettierrc`, `package.json` + the one `package-lock.json`.
 
 ## Commands (from package.json)
 
@@ -16,7 +17,7 @@ app. **App paths in docs and rules (`src/…`, `e2e/…`, `public/…`, `vite.co
 |---|---|---|
 | Install | `npm ci` | Node 26.13.0 exactly (`.nvmrc`, `engines`, `engine-strict`); husky installs on `prepare`. All versions exact; never add `^`/`~` |
 | Dev | `npm run dev` | Vite dev server |
-| Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build`. Needs `VITE_SITE_URL` in `.env` (see `.env.example`); fails without it |
+| Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build`. Needs `VITE_SITE_URL` in `apps/web/.env` (see `apps/web/.env.example`); fails without it |
 | Build (no type-check) | `npm run build:no-check` | `vite build` only; CI uses `npm run build` |
 | Preview | `npm run preview` | serves `apps/web/dist/` on 0.0.0.0 |
 | Lint | `npm run lint` | ESLint flat config; `--max-warnings 246` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
@@ -47,7 +48,7 @@ apps/web/src/   (the web app; paths below are inside it)
   feature/import/                         image/SVG/JSON import
   test/                                   test helpers: fakeCanvas.ts, sliceHarness.ts (not shipped)
   types/                                  global.d.ts only (Fabric shims removed; real Fabric 7 types)
-apps/web/{public,e2e,index.html,vite/vitest/playwright/eslint/tsconfig configs}   rest of the web app
+apps/web/{public,e2e,index.html,configs,Dockerfile,docker/,.env.example}   rest of the web app
 apps/desktop, packages/core              npm-workspace placeholders (README only, empty on purpose; PLATFORMS.md section 9)
 scripts/guardrails/                      ratchet checks shared by CI, the guard hook and guardrails.test.ts
 docs/                                     ARCHITECTURE, STATE, CANVAS, COMPONENTS, CONVENTIONS, TESTING, BUGS, ROADMAP, DECISIONS
@@ -62,7 +63,7 @@ tests): selectors, panels, tokens, icons, keys, units, Fabric origins / serializ
 
 - Prettier: 4 spaces, single quotes, width 100, trailing commas. Run `npm run format` on touched files.
 - Dependencies: app deps go in `apps/web/package.json` (`npm install <pkg> -w @fateboard/web`); the root only has
-  husky + lint-staged. A new workspace `package.json` must also be copied in the Dockerfile before `npm ci`.
+  husky + lint-staged. A new workspace `package.json` must also be copied in `apps/web/Dockerfile` before `npm ci`.
 - Import the store via `import { useStore } from '@store'`; aliases `@/`, `@components/`, `@lib/`, `@hooks/`.
 - One store: new slices go in `combinedSlice` (`src/store/index.ts`) **before** `createAnimationSlice`; keys unique
   across slices (`storeKeys.test.ts`); cross-slice deps listed in `docs/STATE.md`.

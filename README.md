@@ -22,7 +22,7 @@ npm ci             # installs deps and husky git hooks
 npm run dev        # http://localhost:5173/draw
 ```
 
-Configuration lives in `.env` (git-ignored); copy `.env.example` and fill it in:
+Configuration lives in `apps/web/.env` (git-ignored); copy `apps/web/.env.example` and fill it in:
 
 - `VITE_SITE_URL` (**required for every build**): the public origin, e.g. `https://www.fateboard.com`. Canonical links,
   Open Graph / JSON-LD URLs, `sitemap.xml` and `robots.txt` are built from it; `npm run build` stops with a clear error
@@ -49,7 +49,7 @@ CI reads both from repository variables of the same names (Settings > Secrets an
 | `npm run server` | `json-server` on `db.json` (no `db.json` in the repo; unused) |
 | `npm run clean` | `rimraf dist` (`rimraf` is not a declared dependency) |
 
-Docker (self-hosting; the production target is GitHub Pages): `docker build --build-arg VITE_SITE_URL=https://www.example.com -t fateboard . && docker run --rm -p 8080:8080 fateboard`. Multi-stage: Node builds, an unprivileged nginx serves the static files (`docker/nginx.conf`, same routing as Pages). CI builds and smoke-tests it (`.github/workflows/_build-image.yml`, layer-cached).
+Docker (self-hosting; the production target is GitHub Pages), from the repo root: `docker build -f apps/web/Dockerfile --build-arg VITE_SITE_URL=https://www.example.com -t fateboard . && docker run --rm -p 8080:8080 fateboard`. Multi-stage: Node builds, an unprivileged nginx serves the static files (`apps/web/docker/nginx.conf`, same routing as Pages). CI builds and smoke-tests it (`.github/workflows/_build-image.yml`, layer-cached).
 
 ## Project structure
 

@@ -1,4 +1,5 @@
-# Only what the build needs goes into the image build context.
+# Only what the build needs goes into the image build context (the repo root).
+# BuildKit reads this file because it sits next to apps/web/Dockerfile (<Dockerfile>.dockerignore).
 # `**/`: patterns here are anchored to the context root, and the web app lives in apps/web
 **/node_modules
 **/dist
@@ -13,7 +14,7 @@
 .vscode
 .idea
 # never bake local config / secrets into an image: pass VITE_* as --build-arg
-.env
-.env.*
-!.env.example
+**/.env
+**/.env.*
+!**/.env.example
 *.log
