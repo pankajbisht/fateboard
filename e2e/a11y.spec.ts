@@ -31,13 +31,16 @@ for (const scheme of ['light', 'dark'] as const) {
                     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
                     .analyze()
                     .then((r) => r.violations);
-            const violations = await scan();
-            if (route.includes('tab=animate')) {
-                // the timeline is lazy: scan once it is there, and each of its panes (hidden ones are skipped)
+            const animate = route.includes('tab=animate');
+            // four full scans (one per timeline pane): axe walks the whole page each time, which took over 30 s in
+            // Firefox on the 2-vCPU CI runner
+            test.slow(animate, 'one axe scan per timeline pane');
+            // the timeline is lazy, so its page is scanned pane by pane once it is there (a scan before that was thrown away)
+            const violations = animate ? ([] as Awaited<ReturnType<typeof scan>>) : await scan();
+            if (animate) {
                 await expect(
                     page.getByRole('button', { name: 'Keyframe at playhead' }),
                 ).toBeVisible();
-                violations.splice(0, violations.length);
                 const panes = page.getByRole('radiogroup', { name: 'Timeline panes' });
                 for (const pane of ['Animate', 'Keyframe', 'View', 'Export']) {
                     await panes.getByRole('radio', { name: pane }).click();
