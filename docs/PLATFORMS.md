@@ -337,8 +337,8 @@ paths in the same change (`claudeSetup.test.ts` checks rule paths exist).
 (step 3 below done first). `apps/web` is the `@fateboard/web` workspace (`src/`, `public/`, `e2e/`, `index.html`,
 all configs); the root `package.json` keeps husky + lint-staged and forwards every script, so commands and CI
 check names did not change. Web-only files are in `apps/web` too (`.env*`, `Dockerfile` +
-`Dockerfile.dockerignore` + `docker/`, `.prettierignore`); the root keeps repo-level files only (`.claude/`,
-`.github/`, `.husky/`, `docs/`, `scripts/guardrails/`, `.nvmrc`, `.npmrc`, `.prettierrc`). CI uploads `apps/web/dist` (Pages),
+`Dockerfile.dockerignore` + `docker/`, `.prettierrc`, `.prettierignore`); the root keeps repo-level files only (`.claude/`,
+`.github/`, `.husky/`, `docs/`, `scripts/guardrails/`, `.nvmrc`, `.npmrc`, `.gitignore`). CI uploads `apps/web/dist` (Pages),
 `apps/web/coverage`, `apps/web/playwright-report`; `apps/web/Dockerfile` (context: repo root) copies `apps/web/package.json` before `npm ci`.
 Guarded ratchet files are repo-relative (`apps/web/package.json`, …) and `check-ratchets.mjs` also reads the old
 root path on a base from before the move. `apps/desktop` and `packages/core` are README-only placeholders

@@ -8,8 +8,8 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 `packages/core` are empty placeholders. Run every command from the repo root: root scripts forward to the web
 app. **App paths in docs and rules (`src/…`, `e2e/…`, `public/…`, `vite.config.ts`, …) are relative to
 `apps/web/`.** Web-only files live in `apps/web` too (`.env` / `.env.example`, `Dockerfile` + `Dockerfile.dockerignore` +
-`docker/`, `.prettierignore`). Only repo-level files stay at the root: `.claude/`, `.github/`, `.husky/`, `docs/`,
-`scripts/guardrails/`, `.nvmrc`, `.npmrc`, `.prettierrc`, `package.json` + the one `package-lock.json`.
+`docker/`, `.prettierrc`, `.prettierignore`). Only repo-level files stay at the root: `.claude/`, `.github/`, `.husky/`, `docs/`,
+`scripts/guardrails/`, `.nvmrc`, `.npmrc`, `.gitignore`, `package.json` + the one `package-lock.json`.
 
 ## Commands (from package.json)
 

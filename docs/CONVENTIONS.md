@@ -5,7 +5,7 @@ existing code to match unless that is the task.
 
 ## Formatting & lint
 
-- Prettier (`.prettierrc`): 4-space indent, single quotes, semicolons, trailing commas, `printWidth: 100`, LF.
+- Prettier (`apps/web/.prettierrc`; a new package adds its own or moves it back to the root): 4-space indent, single quotes, semicolons, trailing commas, `printWidth: 100`, LF.
   Some files (`createAnimationSlice.ts`, `engine.ts`) use 2 spaces; let Prettier fix files you
   touch.
 - ESLint 9 flat config (`eslint.config.js`): `js.recommended` + `typescript-eslint` recommended. `no-explicit-any`
