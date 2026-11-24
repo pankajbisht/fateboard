@@ -10,6 +10,7 @@ import { POSES_E } from './posesE';
 import { POSES_LYING } from './posesLying';
 import { POSES_MANGA } from './posesManga';
 import { POSES_MARTIAL } from './posesMartial';
+import { POSES_REFERENCE } from './posesReference';
 
 /**
  * The pose library: the first ones here, the rest in posesA.ts, posesB.ts and posesC.ts, all written in body terms (poseDsl). Every pose
@@ -104,7 +105,8 @@ const CORE_POSES: Pose[] = [
         hands: ['relaxed', 'point'],
     }),
     pose('thumbs-up', 'Thumbs up', 'gesture', ['thumbs up', 'ok', 'like'], {
-        armR: { raise: 32, twist: -25, bend: 100 },
+        // the forearm about level, so the thumb (the hand's +z) points up, not sideways
+        armR: { raise: 15, twist: -15, bend: 80 },
         hands: ['relaxed', 'thumbsUp'],
     }),
     pose('salute', 'Salute', 'gesture', ['salute', 'respect', 'soldier'], {
@@ -351,6 +353,7 @@ export const POSES: Pose[] = [
     ...POSES_LYING,
     ...POSES_MARTIAL,
     ...POSES_MANGA,
+    ...POSES_REFERENCE,
 ];
 
 export const POSE_CATEGORIES = [

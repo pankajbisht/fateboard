@@ -31,6 +31,13 @@ const render = (c: Character, id: string, yaw: number, shot: 'full' | 'waist') =
 };
 
 describe('the reference sheets', () => {
+    it('every pose of both sheets is in the library (none falls back to the stand)', () => {
+        const missing = [...FULL_BODY_REFERENCE, ...GESTURE_REFERENCE]
+            .map((r) => r.id)
+            .filter((id) => !poseById(id));
+        expect(missing).toEqual([]);
+    });
+
     for (const [name, list, shot] of [
         ['full-body', FULL_BODY_REFERENCE, 'full'],
         ['gestures', GESTURE_REFERENCE, 'waist'],

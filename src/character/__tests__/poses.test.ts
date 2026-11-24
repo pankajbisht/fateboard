@@ -9,8 +9,8 @@ import { renderCharacter } from '../render/renderCharacter';
 import { CATEGORY_LABELS } from '../../components/organisms/character/studioLabels';
 
 describe('pose library', () => {
-    it('has 278 poses in 13 categories, each category with at least 6, and a label for every category', () => {
-        expect(POSES.length).toBeGreaterThanOrEqual(278);
+    it('has 304 poses in 13 categories, each category with at least 6, and a label for every category', () => {
+        expect(POSES.length).toBeGreaterThanOrEqual(304);
         expect(POSE_CATEGORIES).toHaveLength(13);
         for (const c of POSE_CATEGORIES) {
             expect(POSES.filter((p) => p.category === c).length, c).toBeGreaterThanOrEqual(6);

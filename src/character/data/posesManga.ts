@@ -7,7 +7,7 @@ import { pose } from './poseDsl';
  * The arm angles of the pocket pose were found with the reach solver for a pocket at the side of the hip, on a child,
  * a teen and two adults, then rounded, so the wrists end inside the trouser pocket on any manga body.
  */
-const POCKET_ARM = { raise: -22, spread: -2, twist: -70, bend: 60 };
+export const POCKET_ARM = { raise: -22, spread: -2, twist: -70, bend: 60 };
 
 export const POSES_MANGA: Pose[] = [
     pose(
