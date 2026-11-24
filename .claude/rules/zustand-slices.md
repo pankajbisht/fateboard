@@ -1,6 +1,6 @@
 ---
 paths:
-    - 'src/store/**'
+    - 'apps/web/src/store/**'
 ---
 
 # Store and slices

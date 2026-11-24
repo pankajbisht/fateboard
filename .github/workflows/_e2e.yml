@@ -77,6 +77,6 @@ jobs:
               with:
                   name: playwright-report-${{ matrix.browser }}-${{ matrix.shard }}of${{ matrix.shard-total }}
                   path: |
-                      playwright-report
-                      test-results
+                      apps/web/playwright-report
+                      apps/web/test-results
                   retention-days: 14

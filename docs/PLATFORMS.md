@@ -333,15 +333,19 @@ one target are slowed by another. Then: npm workspaces with `apps/web`, `apps/ex
 `apps/mcp`, `packages/editor` (today's `src/`), `packages/diagram-spec`. Move guard tests and `.claude/rules`
 paths in the same change (`claudeSetup.test.ts` checks rule paths exist).
 
-**Status 2026-11-24 (owner): scaffold only.** The root `package.json` declares npm workspaces
-(`apps/*`, `packages/*`) and the placeholder folders `apps/web`, `apps/desktop`, `packages/core` exist with a
-README each and **no `package.json`**, so npm ignores them: `npm ci`, CI, Docker and the Pages deploy are
-unchanged. Steps, each its own PR: (1) `packages/core` from the pure domains `src/character`, `src/scene`
-(minus `board.ts`) + `seededRandom`, web app still at the root; (2) `apps/desktop` after the shell choice
-(Tauri spike vs Electron), CI job not required at first; (3) move the web app to `apps/web` in one PR with
-every root path (CI `dist` artifact, Dockerfile, configs, `.claude` hooks / rules, guard tests). Every new
-workspace `package.json` must also be copied into the Dockerfile deps layer before `npm ci`. Open: shell
-choice, agent location (`.claude/agents` vs `.github/agents`), timing of step 3.
+**Status 2026-11-24 (owner): npm workspaces, web app in `apps/web`.** The owner chose to move the web app now
+(step 3 below done first). `apps/web` is the `@fateboard/web` workspace (`src/`, `public/`, `e2e/`, `index.html`,
+all configs); the root `package.json` keeps husky + lint-staged and forwards every script, so commands and CI
+check names did not change. Repo-level files stay at the root: `.env*` (Vite `envDir`), `.claude/`, `.github/`,
+`docs/`, `scripts/guardrails/`, `Dockerfile` + `docker/`. CI uploads `apps/web/dist` (Pages),
+`apps/web/coverage`, `apps/web/playwright-report`; the Dockerfile copies `apps/web/package.json` before `npm ci`.
+Guarded ratchet files are repo-relative (`apps/web/package.json`, …) and `check-ratchets.mjs` also reads the old
+root path on a base from before the move. `apps/desktop` and `packages/core` are README-only placeholders
+(no `package.json`, so npm ignores them). Next, each its own PR: (1) `packages/core` from the pure domains
+`src/character`, `src/scene` (minus `board.ts`) + `seededRandom`; (2) `apps/desktop` after the shell choice
+(Tauri spike vs Electron), CI job not required at first. Every new workspace `package.json` must also be copied
+into the Dockerfile deps layer before `npm ci`. Open: shell choice, agent location (`.claude/agents` vs
+`.github/agents`).
 
 ## 10. Claude and MCP
 

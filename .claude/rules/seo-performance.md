@@ -1,11 +1,11 @@
 ---
 paths:
-    - 'src/app/**'
-    - 'src/components/pages/**'
-    - 'src/main.tsx'
-    - 'index.html'
-    - 'public/**'
-    - 'vite.config.ts'
+    - 'apps/web/src/app/**'
+    - 'apps/web/src/components/pages/**'
+    - 'apps/web/src/main.tsx'
+    - 'apps/web/index.html'
+    - 'apps/web/public/**'
+    - 'apps/web/vite.config.ts'
 ---
 
 # Pages, routes and the build: SEO + loading performance

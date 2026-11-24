@@ -51,7 +51,7 @@ const FORBIDDEN_PATHS = [
     [/(^|\/)\.env(\.(?!example$)[^/]+)?$/, 'secrets file (.env*); only .env.example is committed'],
     [/(^|\/)node_modules\//, 'installed dependency'],
     [
-        /^(dist|dist-e2e|dist-ssr|coverage|test-results|playwright-report|blob-report)\//,
+        /^(apps\/[^/]+\/)?(dist|dist-e2e|dist-ssr|coverage|test-results|playwright-report|blob-report)\//,
         'generated output',
     ],
     [/\.(pem|p12|pfx|key)$/, 'private key / certificate'],

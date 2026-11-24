@@ -25,8 +25,13 @@ const atBase = (file) => {
     }
 };
 
+/** The web app moved from the repo root to apps/web (2026-11-24): a base from before the move has the old path. */
+const MOVED_FROM_ROOT = 'apps/web/';
+const atBaseOrOldPath = (file) =>
+    atBase(file) ?? (file.startsWith(MOVED_FROM_ROOT) ? atBase(file.slice(MOVED_FROM_ROOT.length)) : undefined);
+
 const findings = Object.entries(GUARDED).flatMap(([file, check]) => {
-    const before = atBase(file);
+    const before = atBaseOrOldPath(file);
     const after = existsSync(file) ? readFileSync(file, 'utf8') : undefined;
     return before === undefined ? [] : check(before, after).map((f) => ({ ...f, file }));
 });

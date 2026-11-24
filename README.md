@@ -37,9 +37,9 @@ CI reads both from repository variables of the same names (Settings > Secrets an
 | Script | What it does |
 |---|---|
 | `npm run dev` | Vite dev server |
-| `npm run build` | type-check (see note), `tsc -b`, `vite build` → `dist/` |
+| `npm run build` | type-check (see note), `tsc -b`, `vite build` → `apps/web/dist/` |
 | `npm run build:no-check` | `vite build` only (CI and Docker now use `npm run build`) |
-| `npm run preview` | Serve `dist/` (`--host 0.0.0.0`) |
+| `npm run preview` | Serve `apps/web/dist/` (`--host 0.0.0.0`) |
 | `npm run lint` | ESLint |
 | `npm run format` / `format:check` | Prettier write/check for `src/**` |
 | `npm run type-check` | Type-check app (`tsconfig.app.json`) and build config (`tsconfig.node.json`) |
@@ -53,13 +53,17 @@ Docker (self-hosting; the production target is GitHub Pages): `docker build --bu
 
 ## Project structure
 
+npm workspaces; run every script from the repo root (it forwards to the web app).
+
 ```
-src/
-  app/rootRouter.tsx      routes: /, /draw, /setting, /command-palette, /help (each a lazy chunk)
-  store/                  single zustand store composed from slices (store/slices/*)
-  animation/              keyframe engine + video export
-  components/             atoms → molecules → organisms → templates → pages
-  lib/, hooks/, feature/  domain helpers (patterns, connectors, text shapes, import, shortcuts)
+apps/web/                 the web app (@fateboard/web): src/, public/, e2e/, index.html, configs
+  src/app/rootRouter.tsx  routes: /, /draw, /setting, /command-palette, /help (each a lazy chunk)
+  src/store/              single zustand store composed from slices (store/slices/*)
+  src/animation/          keyframe engine + video export
+  src/components/         atoms → molecules → organisms → templates → pages
+  src/lib, hooks, feature domain helpers (patterns, connectors, text shapes, import, shortcuts)
+apps/desktop/             placeholder: desktop shell (Tauri or Electron, not chosen yet)
+packages/core/            placeholder: shared pure code (@fateboard/core)
 docs/                     architecture and engineering docs (start with CLAUDE.md)
 .github/workflows/ci.yml  only entry point: reusable _quality / _e2e (4 shards) / _build-web / _build-image (parallel) → CI passed → _deploy (main only)
 .github/actions/          setup-node-deps: shared Node (.nvmrc) + npm ci step

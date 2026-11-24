@@ -1,12 +1,12 @@
 ---
 paths:
-    - 'src/store/slices/**'
-    - 'src/lib/canvas/**'
-    - 'src/lib/serialization.ts'
-    - 'src/lib/utils/**'
-    - 'src/feature/import/**'
-    - 'src/animation/**'
-    - 'src/components/organisms/board/**'
+    - 'apps/web/src/store/slices/**'
+    - 'apps/web/src/lib/canvas/**'
+    - 'apps/web/src/lib/serialization.ts'
+    - 'apps/web/src/lib/utils/**'
+    - 'apps/web/src/feature/import/**'
+    - 'apps/web/src/animation/**'
+    - 'apps/web/src/components/organisms/board/**'
 ---
 
 # Fabric canvas (Fabric 7)

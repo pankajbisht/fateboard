@@ -1,16 +1,16 @@
 ---
 paths:
-    - 'src/store/**'
-    - 'src/lib/canvas/**'
-    - 'src/lib/brushes/**'
-    - 'src/lib/storage/**'
-    - 'src/lib/serialization.ts'
-    - 'src/feature/import/**'
-    - 'src/animation/**'
-    - 'src/hooks/**'
-    - 'src/components/organisms/board/**'
-    - 'src/components/organisms/filter/**'
-    - 'src/components/config/**'
+    - 'apps/web/src/store/**'
+    - 'apps/web/src/lib/canvas/**'
+    - 'apps/web/src/lib/brushes/**'
+    - 'apps/web/src/lib/storage/**'
+    - 'apps/web/src/lib/serialization.ts'
+    - 'apps/web/src/feature/import/**'
+    - 'apps/web/src/animation/**'
+    - 'apps/web/src/hooks/**'
+    - 'apps/web/src/components/organisms/board/**'
+    - 'apps/web/src/components/organisms/filter/**'
+    - 'apps/web/src/components/config/**'
 ---
 
 # Runtime performance (target: 1000+ objects, long strokes, big photos, 60 fps)

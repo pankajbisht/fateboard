@@ -4,7 +4,9 @@
  *
  *   node .claude/skills/fate-review/scripts/metrics.mjs              # every source file over 250 lines
  *   node .claude/skills/fate-review/scripts/metrics.mjs --changed    # files changed vs main (+ working tree)
- *   node .claude/skills/fate-review/scripts/metrics.mjs src/a.tsx …  # given files
+ *   node .claude/skills/fate-review/scripts/metrics.mjs apps/web/src/a.tsx …  # given files
+ *
+ * Run from the repo root; the web app lives in apps/web (rules below match paths relative to it).
  *
  * Columns: lines, budget (300 .tsx / 400 .ts, src/__tests__/fileBudget.test.ts), useState, effects,
  * store reads, canvas calls, `any`, components defined in the file. Flags are heuristics: confirm by reading.
@@ -14,7 +16,8 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const SOURCE = /\.(ts|tsx)$/;
-const SKIP = /__tests__|\.test\.|^src\/test\/|\.d\.ts$/;
+const WEB = 'apps/web/';
+const SKIP = /__tests__|\.test\.|(^|\/)src\/test\/|\.d\.ts$/;
 
 const walk = (dir) =>
     readdirSync(dir).flatMap((name) => {
@@ -29,12 +32,12 @@ const changedFiles = () => {
         ...run(`git diff --name-only ${base}`),
         ...run('git ls-files --others --exclude-standard'),
     ]);
-    return [...files].filter((f) => f.startsWith('src/') && existsSync(f));
+    return [...files].filter((f) => f.startsWith(`${WEB}src/`) && existsSync(f));
 };
 
 const args = process.argv.slice(2);
 const all = args.length === 0;
-const files = (args[0] === '--changed' ? changedFiles() : all ? walk('src') : args).filter(
+const files = (args[0] === '--changed' ? changedFiles() : all ? walk(`${WEB}src`) : args).filter(
     (f) => SOURCE.test(f) && !SKIP.test(f),
 );
 
@@ -43,6 +46,7 @@ const count = (text, re) => (text.match(re) ?? []).length;
 const rows = files
     .map((file) => {
         const text = readFileSync(file, 'utf8');
+        const rel = file.startsWith(WEB) ? file.slice(WEB.length) : file;
         const lines = text.split('\n').length;
         const budget = file.endsWith('.tsx') ? 300 : 400;
         const row = {
@@ -61,12 +65,12 @@ const rows = files
         if (file.endsWith('.tsx') && row.components > 3) flags.push('many components in one file');
         if (file.endsWith('.tsx') && row.useState > 8) flags.push('state-heavy component');
         if (file.endsWith('.tsx') && row.effects > 5) flags.push('effect-heavy component');
-        if (file.startsWith('src/components/') && /canvas\??\.(add|remove|clear)\(/.test(text))
+        if (rel.startsWith('src/components/') && /canvas\??\.(add|remove|clear)\(/.test(text))
             flags.push('component mutates Fabric');
-        if (/^src\/(store|lib)\//.test(file) && /from '@\/components\//.test(text))
+        if (/^src\/(store|lib)\//.test(rel) && /from '@\/components\//.test(text))
             flags.push('imports from components (layering)');
-        if (/^src\/lib\//.test(file) && /from '@\/store/.test(text)) flags.push('lib imports store');
-        if (/^src\/store\/slices\//.test(file) && /^let \w+/m.test(text))
+        if (/^src\/lib\//.test(rel) && /from '@\/store/.test(text)) flags.push('lib imports store');
+        if (/^src\/store\/slices\//.test(rel) && /^let \w+/m.test(text))
             flags.push('module-level state in slice');
         return { ...row, flags };
     })

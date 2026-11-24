@@ -44,8 +44,8 @@ const ask = (reason) => {
 /** Files only tools may write: secrets, installs, build output, the lockfile. */
 const PROTECTED = [
     [/(^|\/)\.env(\.(?!example$)[^/]+)?$/, 'never edit .env files (secrets); change .env.example instead'],
-    [/^node_modules\//, 'never edit node_modules'],
-    [/^(dist|coverage|test-results|playwright-report)\//, 'build / test output is generated, not edited'],
+    [/(^|\/)node_modules\//, 'never edit node_modules'],
+    [/^(apps\/[^/]+\/)?(dist|dist-e2e|coverage|test-results|playwright-report)\//, 'build / test output is generated, not edited'],
     [/^package-lock\.json$/, 'package-lock.json changes only through npm'],
 ];
 
@@ -71,7 +71,7 @@ if (/^(Edit|Write|MultiEdit|NotebookEdit)$/.test(tool)) {
         .filter(Boolean)
         .join('\n');
     if (SECRETS.some((re) => re.test(added))) block(`${file}: the new text looks like a credential.`);
-    if (file === 'package.json' && /"[^"]+":\s*"[\^~]\d/.test(added)) {
+    if (/(^|\/)package\.json$/.test(file) && /"[^"]+":\s*"[\^~]\d/.test(added)) {
         block('package.json: versions are exact (no ^ or ~), see CLAUDE.md "Commands".');
     }
 

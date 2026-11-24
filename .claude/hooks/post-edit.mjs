@@ -15,15 +15,19 @@ const root = process.env.CLAUDE_PROJECT_DIR || input.cwd || process.cwd();
 const abs = path.resolve(root, input.tool_input?.file_path ?? '');
 const file = path.relative(root, abs).split(path.sep).join('/');
 
-if (!/^(src|e2e)\//.test(file) || !existsSync(abs)) process.exit(0);
+if (!/^apps\/web\/(src|e2e)\//.test(file) || !existsSync(abs)) process.exit(0);
+
+/** Prettier and ESLint run inside the web app (its eslint.config.js), on the path relative to it. */
+const web = path.join(root, 'apps/web');
+const webFile = path.relative(web, abs).split(path.sep).join('/');
 
 const bin = (name) => path.join(root, 'node_modules', '.bin', name);
 const run = (name, args) =>
-    execFileSync(bin(name), args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    execFileSync(bin(name), args, { cwd: web, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
 if (/\.(tsx?|jsx?|mjs|css|json|md)$/.test(file)) {
     try {
-        run('prettier', ['--write', '--log-level', 'warn', file]);
+        run('prettier', ['--write', '--log-level', 'warn', webFile]);
     } catch (error) {
         process.stderr.write(`[post-edit] Prettier could not format ${file}:\n${error.stderr || error.message}\n`);
         process.exit(2);
@@ -33,7 +37,7 @@ if (/\.(tsx?|jsx?|mjs|css|json|md)$/.test(file)) {
 if (/\.(tsx?|jsx?)$/.test(file)) {
     recordTouched(input.session_id, file);
     try {
-        run('eslint', ['--no-warn-ignored', file]); // warnings (the any ratchet) never fail an edit
+        run('eslint', ['--no-warn-ignored', webFile]); // warnings (the any ratchet) never fail an edit
     } catch (error) {
         process.stderr.write(`[post-edit] ESLint errors in ${file} (fix them now):\n${error.stdout || error.message}\n`);
         process.exit(2);

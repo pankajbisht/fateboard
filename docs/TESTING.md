@@ -255,7 +255,7 @@ export const makeStore = () => create<any>()(combinedSlice as any);
 
 | Report                                                   | Command                                  | Open                                                                    |
 | -------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
-| Unit + component coverage (per area, per file, per line) | `npm run test:coverage`                  | `coverage/index.html` (totals also in `coverage/coverage-summary.json`) |
+| Unit + component coverage (per area, per file, per line) | `npm run test:coverage`                  | `apps/web/coverage/index.html` (totals also in `coverage/coverage-summary.json`) |
 | End-to-end results (real browser, every user flow)       | `npm run e2e`, then `npm run e2e:report` | Playwright HTML report                                                  |
 | Both                                                     | `npm run report`                         | the two above                                                           |
 

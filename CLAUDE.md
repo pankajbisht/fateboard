@@ -4,6 +4,12 @@ Browser canvas editor (design pages + whiteboard) built on **Fabric.js 7.1** (co
 TypeScript, Tailwind 4, zustand 5 slices, opendb-store. Static SPA on GitHub Pages (`BrowserRouter` + build-time page per route, see docs ARCHITECTURE "SEO"). Editor route: `/draw`.
 Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in `docs/`; this file stays short.
 
+**Monorepo (npm workspaces).** The web app is `apps/web` (package `@fateboard/web`); `apps/desktop` and
+`packages/core` are empty placeholders. Run every command from the repo root: root scripts forward to the web
+app. **App paths in docs and rules (`src/…`, `e2e/…`, `public/…`, `vite.config.ts`, …) are relative to
+`apps/web/`.** Repo-level files stay at the root: `.env` / `.env.example`, `.claude/`, `.github/`, `docs/`,
+`scripts/guardrails/`, `Dockerfile` + `docker/`, `.husky/`, `.nvmrc`, `.npmrc`, the one `package-lock.json`.
+
 ## Commands (from package.json)
 
 | Task | Command | Notes |
@@ -12,19 +18,19 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 | Dev | `npm run dev` | Vite dev server |
 | Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build`. Needs `VITE_SITE_URL` in `.env` (see `.env.example`); fails without it |
 | Build (no type-check) | `npm run build:no-check` | `vite build` only; CI uses `npm run build` |
-| Preview | `npm run preview` | serves `dist/` on 0.0.0.0 |
+| Preview | `npm run preview` | serves `apps/web/dist/` on 0.0.0.0 |
 | Lint | `npm run lint` | ESLint flat config; `--max-warnings 246` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
 | Format | `npm run format` / `npm run format:check` | Prettier, `src/**` |
 | Typecheck | `npm run type-check` | app + strict island (`tsconfig.strict.json`) + node + e2e configs, must be 0 errors |
 | All checks | `npm run check` | lint + type-check + format:check |
 | Unit tests | `npm run test:run` (CI) · `npm test` (watch) | Vitest + jsdom |
-| Coverage | `npm run test:coverage` | HTML at `coverage/index.html`; `npm run report` = coverage + E2E (docs/TESTING.md "Health report") |
+| Coverage | `npm run test:coverage` | HTML at `apps/web/coverage/index.html`; `npm run report` = coverage + E2E (docs/TESTING.md "Health report") |
 | E2E | `npm run e2e` (report: `npm run e2e:report`) | Playwright 1.64.1, Chromium (+ Firefox in CI or with `E2E_FIREFOX=1`); builds `--mode e2e` and runs `e2e/` against `vite preview`. First time: `npx playwright install chromium` |
 
 ## Folder map
 
 ```
-src/
+apps/web/src/   (the web app; paths below are inside it)
   main.tsx, App.tsx, app/rootRouter.tsx   entry + routes
   store/index.ts                          ONE zustand store = spread of 30 slice creators (order matters)
   store/slices/                           create<Name>Slice.ts (canvas, pages, undo, layers, animation, …)
@@ -41,11 +47,13 @@ src/
   feature/import/                         image/SVG/JSON import
   test/                                   test helpers: fakeCanvas.ts, sliceHarness.ts (not shipped)
   types/                                  global.d.ts only (Fabric shims removed; real Fabric 7 types)
-apps/web, apps/desktop, packages/core    npm-workspace placeholders (README only, empty on purpose; PLATFORMS.md section 9)
+apps/web/{public,e2e,index.html,vite/vitest/playwright/eslint/tsconfig configs}   rest of the web app
+apps/desktop, packages/core              npm-workspace placeholders (README only, empty on purpose; PLATFORMS.md section 9)
+scripts/guardrails/                      ratchet checks shared by CI, the guard hook and guardrails.test.ts
 docs/                                     ARCHITECTURE, STATE, CANVAS, COMPONENTS, CONVENTIONS, TESTING, BUGS, ROADMAP, DECISIONS
 ```
 
-Dead code was deleted in batch 1. Every file under `src/` is now reachable from `main.tsx` (or is a test/helper); keep it that way.
+Dead code was deleted in batch 1. Every file under `apps/web/src/` is now reachable from `main.tsx` (or is a test/helper); keep it that way.
 
 ## Coding conventions (summary; full: docs/CONVENTIONS.md)
 
@@ -53,6 +61,8 @@ Area rules load by themselves when you touch those files (`.claude/rules/`: comp
 tests): selectors, panels, tokens, icons, keys, units, Fabric origins / serialization, slice rules. Always:
 
 - Prettier: 4 spaces, single quotes, width 100, trailing commas. Run `npm run format` on touched files.
+- Dependencies: app deps go in `apps/web/package.json` (`npm install <pkg> -w @fateboard/web`); the root only has
+  husky + lint-staged. A new workspace `package.json` must also be copied in the Dockerfile before `npm ci`.
 - Import the store via `import { useStore } from '@store'`; aliases `@/`, `@components/`, `@lib/`, `@hooks/`.
 - One store: new slices go in `combinedSlice` (`src/store/index.ts`) **before** `createAnimationSlice`; keys unique
   across slices (`storeKeys.test.ts`); cross-slice deps listed in `docs/STATE.md`.
@@ -79,7 +89,7 @@ tests): selectors, panels, tokens, icons, keys, units, Fabric origins / serializ
 - Never add helper objects (handles, guides) to the canvas without `excludeFromExport` + layer/snap exclusion flags.
 - Never write a new geometry/zoom path: `CanvasBoard` sizes the canvas, the Page slice (`setZoom`, `zoomToRect`) zooms, `selectedPreset` is the page size (BUG-007, docs/CANVAS.md).
 - Never use `alert()`, leave `console.log`, or add `any` to store code.
-- Never edit `node_modules`, `dist/` or `.env`. Never re-add a static import from a slice to a module that imports the store (BUG-048).
+- Never edit `node_modules`, `dist/` (any app) or `.env`. Never re-add a static import from a slice to a module that imports the store (BUG-048).
 - Never commit with failing lint, type-check, or tests; never skip hooks (`--no-verify`).
 - Never get green by lowering the bar: no raised lint limit / size ceiling, lowered coverage, `.skip` / `.only`, `@ts-ignore`, reasonless `eslint-disable`, or removed store key without the owner (guardrails, docs/AGENT_WORKFLOW.md).
 

@@ -3,8 +3,8 @@ paths:
     - '**/__tests__/**'
     - '**/*.test.ts'
     - '**/*.test.tsx'
-    - 'e2e/**'
-    - 'src/test/**'
+    - 'apps/web/e2e/**'
+    - 'apps/web/src/test/**'
 ---
 
 # Tests

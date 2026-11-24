@@ -8,8 +8,10 @@
 FROM node:26.13.0-slim AS build
 WORKDIR /app
 
-# deps first (layer cache); --ignore-scripts: no husky git hooks inside the image
+# deps first (layer cache); --ignore-scripts: no husky git hooks inside the image.
+# npm workspaces: every workspace package.json must be here before `npm ci` (apps/*, packages/*).
 COPY package.json package-lock.json .npmrc ./
+COPY apps/web/package.json apps/web/
 RUN npm ci --ignore-scripts
 
 COPY . .
@@ -23,6 +25,6 @@ RUN npm run build
 
 FROM nginxinc/nginx-unprivileged:1.31.7-alpine AS serve
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/apps/web/dist /usr/share/nginx/html
 # the base image already runs as the unprivileged `nginx` user and listens on 8080
 EXPOSE 8080

@@ -19,7 +19,7 @@ const arg = (name) => {
     const i = process.argv.indexOf(name);
     return i > 0 ? process.argv[i + 1] : undefined;
 };
-const DIST = path.resolve(arg('--dist') ?? 'dist');
+const DIST = path.resolve(arg('--dist') ?? 'apps/web/dist'); // run from the repo root
 const ASSETS = path.join(DIST, 'assets');
 if (!existsSync(path.join(DIST, 'index.html'))) {
     console.error(`No ${DIST}/index.html: run \`npm run build\` first.`);

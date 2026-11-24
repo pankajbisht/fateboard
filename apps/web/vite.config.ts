@@ -20,6 +20,8 @@ import { injectCsp } from './src/app/seo/csp';
 // ESM-compatible dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+/** `.env` / `.env.example` stay at the repo root (shared by every app); this app lives in apps/web. */
+const ENV_DIR = path.resolve(__dirname, '../..');
 
 /**
  * Static page per public route + 404.html + sitemap.xml from the built index.html (GitHub Pages has no rewrites).
@@ -67,7 +69,7 @@ function contentSecurityPolicy(analytics: boolean): Plugin {
 // https://vite.dev/config/
 export default defineConfig(({ command, mode }) => {
     // The public site URL is configuration (.env / CI variable), never code. See .env.example.
-    const env = loadEnv(mode, process.cwd(), 'VITE_');
+    const env = loadEnv(mode, ENV_DIR, 'VITE_');
     const siteUrl = normalizeSiteUrl(env[SITE_URL_ENV]);
     if (!siteUrl) {
         const message = `${SITE_URL_ENV} is missing or not an http(s) origin (got "${env[SITE_URL_ENV] ?? ''}"). Add e.g. ${SITE_URL_ENV}=https://www.example.com to .env (see .env.example) or the CI variables.`;
@@ -80,6 +82,7 @@ export default defineConfig(({ command, mode }) => {
 
     return {
         base: '/',
+        envDir: ENV_DIR,
         plugins: [
             react(),
             tailwindcss(),

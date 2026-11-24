@@ -1,10 +1,12 @@
-# apps/web (placeholder)
+# apps/web (`@fateboard/web`)
 
-Reserved for the web app. **Empty on purpose:** the web app still lives at the repo root (`src/`, `public/`,
-`e2e/`, `index.html`, configs) and deploys to GitHub Pages from `dist/`.
+The Fateboard web app: the editor at `/draw`, the landing, gallery and help pages. Deployed to GitHub Pages from
+`apps/web/dist` (CI) and served by the container image (`Dockerfile` at the repo root).
 
-Moving it here is Phase 3 of the monorepo plan (docs/PLATFORMS.md section 9): one PR that also updates every
-hard-coded root path (CI `dist` artifact, Dockerfile, tsconfig / vite / vitest / eslint, `.claude` hooks and rules,
-guard tests, lint-staged). Do not add files here before that PR.
+Run commands from the **repo root** (`npm run dev`, `npm run build`, `npm run test:run`, `npm run e2e`, …): the
+root scripts forward here. From this folder `npm run <script>` works too.
 
-While this folder has no `package.json`, npm workspaces ignore it.
+- `.env` / `.env.example` are read from the repo root (`envDir` in `vite.config.ts`).
+- Dependencies: `npm install <pkg> -w @fateboard/web` from the root (exact versions; one root `package-lock.json`).
+- Docs, Claude setup (`.claude/`), CI (`.github/`) and guardrail scripts (`scripts/guardrails/`) are repo-level;
+  paths like `src/…` in them are relative to this folder.

@@ -95,7 +95,7 @@ describe('injectCsp', () => {
 });
 
 describe('docker/nginx.conf security headers (header-only protections)', () => {
-    const conf = readFileSync(`${process.cwd()}/docker/nginx.conf`, 'utf8');
+    const conf = readFileSync(`${process.cwd()}/../../docker/nginx.conf`, 'utf8'); // Docker files stay at the repo root
     // add_header in a location replaces the server-level list, so every location must repeat them
     const locations = [...conf.matchAll(/location [^{]+\{([^}]*)\}/g)].map((m) => m[1]!);
 

@@ -17,7 +17,7 @@ export const INTEGRITY = {
 };
 
 /** Files whose source text quotes the markers above on purpose. */
-export const INTEGRITY_EXEMPT = /^(scripts\/guardrails\/|\.claude\/|src\/__tests__\/(guardrails|claudeSetup)\.test\.ts$)/;
+export const INTEGRITY_EXEMPT = /^(scripts\/guardrails\/|\.claude\/|apps\/web\/src\/__tests__\/(guardrails|claudeSetup)\.test\.ts$)/;
 export const CODE_FILE = /\.(tsx?|jsx?|mjs|cjs)$/;
 
 export const countMarkers = (text) =>
@@ -61,18 +61,18 @@ const up = (label, a, b) => (a !== undefined && (b === undefined || b > a) ? [`$
 const down = (label, a, b) => (a !== undefined && (b === undefined || b < a) ? [`${label}: ${a} → ${b ?? 'removed'}`] : []);
 
 /**
- * Per guarded file: what got looser between `before` and `after`. kind 'ratchet' needs the `ratchet-change` PR
+ * Per guarded file (repo-relative path; the web app lives in apps/web): what got looser between `before` and `after`. kind 'ratchet' needs the `ratchet-change` PR
  * label, kind 'api' (public store key removed or renamed) needs `api-change`.
  */
 export const GUARDED = {
-    'package.json': (before, after) =>
+    'apps/web/package.json': (before, after) =>
         up('lint --max-warnings', read.maxWarnings(before), read.maxWarnings(after)).map((m) => ({ kind: 'ratchet', message: m })),
-    'vitest.config.ts': (before, after) => {
+    'apps/web/vitest.config.ts': (before, after) => {
         const a = read.coverage(before);
         const b = read.coverage(after);
         return Object.keys(a).flatMap((k) => down(`coverage ${k} threshold`, a[k], b[k])).map((m) => ({ kind: 'ratchet', message: m }));
     },
-    'src/__tests__/fileBudget.test.ts': (before, after) => {
+    'apps/web/src/__tests__/fileBudget.test.ts': (before, after) => {
         const ba = read.budget(before);
         const bb = read.budget(after);
         const ca = read.ceilings(before);
@@ -82,12 +82,12 @@ export const GUARDED = {
             ...Object.keys(cb).flatMap((f) => (f in ca ? up(`size ceiling ${f}`, ca[f], cb[f]) : [`new over-budget file ${f}: ${cb[f]}`])),
         ].map((m) => ({ kind: 'ratchet', message: m }));
     },
-    'src/__tests__/guardrails.test.ts': (before, after) =>
+    'apps/web/src/__tests__/guardrails.test.ts': (before, after) =>
         up('eslint-disable without reason ceiling', read.disableCeiling(before), read.disableCeiling(after)).map((m) => ({
             kind: 'ratchet',
             message: m,
         })),
-    'src/__tests__/storeApi.baseline.json': (before, after) => {
+    'apps/web/src/__tests__/storeApi.baseline.json': (before, after) => {
         const kept = new Set(read.storeKeys(after));
         return read
             .storeKeys(before)

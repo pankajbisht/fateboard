@@ -10,7 +10,7 @@
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-const DIST = path.resolve(process.argv[2] ?? 'dist');
+const DIST = path.resolve(process.argv[2] ?? 'apps/web/dist'); // run from the repo root
 if (!existsSync(path.join(DIST, 'index.html'))) {
     console.error(`No ${DIST}/index.html: run \`npm run build\` first.`);
     process.exit(2);

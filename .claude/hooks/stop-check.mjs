@@ -17,8 +17,8 @@ const touched = readTouched(input.session_id).filter((f) => existsSync(path.join
 if (!touched.length) process.exit(0);
 
 const tail = (text, lines = 40) => text.trim().split('\n').slice(-lines).join('\n');
-const run = (cmd, args) => {
-    const r = spawnSync(cmd, args, { cwd: root, encoding: 'utf8', env: { ...process.env, CI: '1' } });
+const run = (cmd, args, cwd = root) => {
+    const r = spawnSync(cmd, args, { cwd, encoding: 'utf8', env: { ...process.env, CI: '1' } });
     return { ok: r.status === 0, out: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 };
 
@@ -26,9 +26,10 @@ const failures = [];
 const types = run('npm', ['run', '--silent', 'type-check']);
 if (!types.ok) failures.push(`npm run type-check failed:\n${tail(types.out)}`);
 
-const sources = touched.filter((f) => f.startsWith('src/'));
+// vitest runs inside the web app, on paths relative to it
+const sources = touched.filter((f) => f.startsWith('apps/web/src/')).map((f) => f.slice('apps/web/'.length));
 if (sources.length) {
-    const tests = run(path.join(root, 'node_modules', '.bin', 'vitest'), ['related', '--run', ...sources]);
+    const tests = run(path.join(root, 'node_modules', '.bin', 'vitest'), ['related', '--run', ...sources], path.join(root, 'apps/web'));
     const none = /No test files found/i.test(tests.out);
     if (!tests.ok && !none) failures.push(`vitest related ${sources.join(' ')} failed:\n${tail(tests.out)}`);
 }

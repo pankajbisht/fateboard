@@ -1,7 +1,7 @@
 ---
 paths:
-    - 'src/components/**'
-    - 'src/hooks/**'
+    - 'apps/web/src/components/**'
+    - 'apps/web/src/hooks/**'
 ---
 
 # React components
