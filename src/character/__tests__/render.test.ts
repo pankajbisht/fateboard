@@ -30,8 +30,9 @@ describe('rendering', () => {
         fromRecipe(RECIPES[10], 'elder'),
     ].map((c) => ({ ...c, style: 'cartoon' as const }));
 
-    it('every pose, on a child, an adult and an elder, from every 15° around: finite, every part drawn', () => {
-        for (const c of bodies)
+    // one test per body (the same sweep, split so each stays well inside the time limit on a loaded machine)
+    for (const c of bodies)
+        it(`every pose on the ${c.id}, from every 15° around: finite, every part drawn`, () => {
             for (const pose of POSES)
                 for (let yaw = 0; yaw < 360; yaw += 15) {
                     const m = renderCharacter({ ...c, rig: { pose } }, cam(yaw));
@@ -44,7 +45,7 @@ describe('rendering', () => {
                     for (const g of PART_GROUPS)
                         expect(groups.has(g), `${pose.id} ${yaw} ${g}`).toBe(true);
                 }
-    }, 30000);
+        }, 30000);
 
     it('parts are drawn far to near; the face only shows when it faces the camera', () => {
         const c = bodies[1];

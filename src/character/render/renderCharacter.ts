@@ -1,4 +1,4 @@
-import type { Character, CharacterCamera, Pose } from '../schema/types';
+import type { Character, CharacterCamera, Pose, ShotId } from '../schema/types';
 import { solveFK } from '../rig/fk';
 import { ground } from '../rig/grounding';
 import { clampPose } from '../rig/limits';
@@ -25,6 +25,15 @@ export interface RenderModel {
 }
 
 export type { Part } from './parts';
+
+/** Line weight per shot (share of the full-figure weight): softer than the share of the figure each shot shows. */
+const SHOT_LINE: Record<ShotId, number> = {
+    full: 1,
+    knee: 0.84,
+    waist: 0.64,
+    bust: 0.46,
+    closeup: 0.32,
+};
 
 /** Elders stoop a little (unless the user set the posture by hand). */
 export function withPosture(pose: Pose, a: number): Pose {
@@ -115,7 +124,8 @@ export function renderCharacter(
                 : pack.line.color === 'none'
                   ? (null as unknown as string)
                   : darken(f, pack.line.darken),
-        line: skel.height * pack.line.width,
+        // the same visual weight in every shot: a closer shot shows less of the figure, so its lines are thinner
+        line: skel.height * pack.line.width * SHOT_LINE[camera.shot],
         tint,
         paint: (hex: string) =>
             pack.palette === 'manga'

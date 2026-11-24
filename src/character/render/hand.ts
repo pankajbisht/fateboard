@@ -6,6 +6,7 @@ import { project } from './camera';
 import { addLimb, addShell, on, toScreen, type Ctx } from './parts';
 import { curve3, type P2 } from './shapes';
 import { darken } from './styles';
+import { addMangaHand } from './handManga';
 
 /**
  * The hand (docs/CHARACTER_STUDIO.md phase 3): a palm, four fingers and a thumb, bent by the hand shape. A closed
@@ -45,6 +46,8 @@ const RAD = Math.PI / 180;
 const MITTEN: HandShape[] = [];
 
 export function addHand(ctx: Ctx, skel: Skeleton, s: 'L' | 'R', shape: HandShape, manga = false) {
+    // the manga body: a three-bone hand inside one outline (handManga.ts)
+    if (manga) return addMangaHand(ctx, skel, s, shape);
     const hand = `hand${s}` as JointId;
     const group = hand as 'handL' | 'handR';
     const spec = SPECS[shape];
