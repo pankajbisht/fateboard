@@ -40,12 +40,15 @@ export const CUSTOM_PROPS = [
     'pageSetup', // canvas-level: margins, columns, bleed, facing pages, guides (lib/document/pageSetup)
     'pageRole', // canvas-level: 'master' on a master page
     'masterId', // canvas-level: the master page drawn under this page
+    'pageNotes', // canvas-level: the page's note pins (lib/notes/pageNotes)
     'pageNumberField', // a text that shows the page number
     'toneParams', // screentone settings of a tone fill (lib/comic/screentone)
     'fillBeforeTone', // the fill a tone replaced (Remove tone puts it back)
     'comicPanel', // comic panel frame (border) …
     'comicPanelArea', // … and its fill twin on the clip base layer
     'panelId', // links a frame to its twin
+    'characterData', // a Character Studio character on the page: { character, camera } (src/character)
+    'sceneData', // a Character Studio scene on the page: { scene } (src/scene)
     'backgroundColor',
 ] as const;
 

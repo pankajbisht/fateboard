@@ -8,7 +8,7 @@ const trackCount = (page: import('@playwright/test').Page) =>
 // BUG-010 / Q12: animation tracks are saved with their page and survive a reload
 test('a keyframe survives a reload and stays on its page', async ({ editor, page }) => {
     await editor.addShape('Rectangle'); // added shapes are selected
-    await editor.openDockTab('Animate');
+    await editor.openTimeline();
     await page.getByRole('button', { name: 'Keyframe at playhead' }).click();
     await expect.poll(() => trackCount(page)).toBe(1);
 
@@ -42,8 +42,7 @@ test('picking presets swaps them, previews only the new one, and the timeline na
     page,
 }) => {
     await editor.addShape('Rectangle');
-    await editor.openDockTab('Animate');
-    const dock = page.getByTestId('dock-panel');
+    const dock = await editor.openTimeline();
 
     await dock.getByRole('button', { name: 'Fade in', exact: true }).click();
     await expect.poll(() => keyframeTimes(page)).toEqual([0, 600]);
@@ -63,8 +62,8 @@ test('picking presets swaps them, previews only the new one, and the timeline na
 // BUG-178: after a click on Play, Space started a canvas pan and never paused
 test('Space pauses and plays after Play was clicked', async ({ editor, page }) => {
     await editor.addShape('Rectangle');
-    await editor.openDockTab('Animate');
-    await page.getByTestId('dock-panel').getByRole('button', { name: 'Play', exact: true }).click();
+    const dock = await editor.openTimeline();
+    await dock.getByRole('button', { name: 'Play', exact: true }).click();
     await expect.poll(() => editor.state('isPlaying')).toBe(true);
     await page.keyboard.press('Space');
     await expect.poll(() => editor.state('isPlaying')).toBe(false);

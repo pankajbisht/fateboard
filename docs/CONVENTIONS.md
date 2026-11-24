@@ -14,17 +14,17 @@ existing code to match unless that is the task.
 
 ## Naming
 
-| Thing | Pattern | Example |
-|---|---|---|
-| Slice creator | `create<Name>Slice` in `src/store/slices/create<Name>Slice.ts` | `createPagesSlice` |
-| Slice interface | `<Name>Slice` | `PagesSlice` |
-| Actions | verb first, camelCase | `addPage`, `setZoom`, `toggleGrid` |
-| Booleans | `is*`, `has*`, `can*` | `isPageSwitching`, `canUndo` |
-| Private slice state | leading `_` (stored) or closure variable (not stored) | `_historyPaused`, `persistLock` |
-| Components | PascalCase file = component name | `LayersPanel.tsx` |
-| Feature folder | `organisms/<feature>/{index.ts, ui/, <feature>.config.ts(x), <feature>.type.ts}` | `organisms/board/` |
-| Toolbar/command config | `components/config/toolbars/ui/<Bar>Config.tsx` | `EditBarConfig.tsx` |
-| Custom Fabric props | camelCase, no `__` prefix if they must be saved; `__` = runtime-only ref | `shapeId`, `__text` |
+| Thing                  | Pattern                                                                          | Example                            |
+| ---------------------- | -------------------------------------------------------------------------------- | ---------------------------------- |
+| Slice creator          | `create<Name>Slice` in `src/store/slices/create<Name>Slice.ts`                   | `createPagesSlice`                 |
+| Slice interface        | `<Name>Slice`                                                                    | `PagesSlice`                       |
+| Actions                | verb first, camelCase                                                            | `addPage`, `setZoom`, `toggleGrid` |
+| Booleans               | `is*`, `has*`, `can*`                                                            | `isPageSwitching`, `canUndo`       |
+| Private slice state    | leading `_` (stored) or closure variable (not stored)                            | `_historyPaused`, `persistLock`    |
+| Components             | PascalCase file = component name                                                 | `LayersPanel.tsx`                  |
+| Feature folder         | `organisms/<feature>/{index.ts, ui/, <feature>.config.ts(x), <feature>.type.ts}` | `organisms/board/`                 |
+| Toolbar/command config | `components/config/toolbars/ui/<Bar>Config.tsx`                                  | `EditBarConfig.tsx`                |
+| Custom Fabric props    | camelCase, no `__` prefix if they must be saved; `__` = runtime-only ref         | `shapeId`, `__text`                |
 
 Avoid: numbered copies (`LayerPanel1.tsx`, `clone1`, `toggleActiveObjectLock1`), files without extensions (`asd`),
 and generic store keys (`items`, `visible`, `x`, `y`, `opacity`, `color`). Use a slice prefix for new keys
@@ -96,16 +96,19 @@ changed code:
 ## How to add a new slice
 
 1. Create `src/store/slices/create<Name>Slice.ts`:
-   ```ts
-   import type { SliceCreator } from '../types';
-   export interface NameSlice { nameValue: number; setNameValue: (v: number) => void }
-   export const createNameSlice: SliceCreator<NameSlice> = (set, get) => ({
-       nameValue: 0,
-       setNameValue: (v) => set({ nameValue: v }),
-   });
-   ```
-   Existing slices pass a 3rd devtools action name (`set(p, false, 'page/setZoom')`). `SliceCreator` is not typed with
-   the devtools mutator, so whether that type-checks is **UNKNOWN - verify** once `type-check` really runs (BUG-012).
+    ```ts
+    import type { SliceCreator } from '../types';
+    export interface NameSlice {
+        nameValue: number;
+        setNameValue: (v: number) => void;
+    }
+    export const createNameSlice: SliceCreator<NameSlice> = (set, get) => ({
+        nameValue: 0,
+        setNameValue: (v) => set({ nameValue: v }),
+    });
+    ```
+    Existing slices pass a 3rd devtools action name (`set(p, false, 'page/setZoom')`). `SliceCreator` is not typed with
+    the devtools mutator, so whether that type-checks is **UNKNOWN - verify** once `type-check` really runs (BUG-012).
 2. Check every key against STATE.md and `grep -rn "\bnameValue\b" src`.
 3. Spread it in `combinedSlice` **before** `createAnimationSlice` (keep Animation last until BUG-001 is fixed).
 4. Add `src/store/slices/__tests__/create<Name>Slice.test.ts` (see TESTING.md template).
@@ -114,6 +117,7 @@ changed code:
 ## How to add a new panel
 
 **Left sidebar panel:**
+
 1. Create `src/components/organisms/<feature>/ui/<Feature>Panel.tsx` (+ `index.ts`). Read state with selectors;
    call store actions.
 2. Add an item to `organisms/editorsidebar/editorsidebar.config.tsx`:
@@ -155,21 +159,22 @@ verify whether the owner wants a `commit-msg` hook.
   (`feature/newAgentSystem`) keep their names.
 - **Commit message**: [Conventional Commits 1.0](https://www.conventionalcommits.org/en/v1.0.0/):
 
-  ```
-  fix(slider): ignore late input after release in Firefox
+    ```
+    fix(slider): ignore late input after release in Firefox
 
-  Firefox fires one more `input` event after `pointerup`, which moved the
-  value back to where the drag started. Ignore input once the drag ended.
+    Firefox fires one more `input` event after `pointerup`, which moved the
+    value back to where the drag started. Ignore input once the drag ended.
 
-  Refs: BUG-204
-  ```
+    Refs: BUG-204
+    ```
 
-  - Header `<type>(<scope>)!: <subject>` ≤ 72 chars. Types: `feat`, `fix`, `perf`, `refactor`, `test`,
-    `docs`, `build`, `ci`, `chore`, `style`, `revert`. Scope = area in lowercase kebab-case (`store`, `canvas`,
-    `seo`, `e2e`, `claude`, …), optional.
-  - Subject in the imperative mood ("add", not "added" / "adds"), lowercase first letter, no final period.
-  - Blank line, then a body that says **why** (lines ≤ 100). Footers: `Refs: BUG-xxx, R-xx`;
-    `BREAKING CHANGE: …` (with `!`) only for an owner-approved public API change.
-  - No `wip`, `fixup!` or `squash!` commits on a pushed branch.
+    - Header `<type>(<scope>)!: <subject>` ≤ 72 chars. Types: `feat`, `fix`, `perf`, `refactor`, `test`,
+      `docs`, `build`, `ci`, `chore`, `style`, `revert`. Scope = area in lowercase kebab-case (`store`, `canvas`,
+      `seo`, `e2e`, `claude`, …), optional.
+    - Subject in the imperative mood ("add", not "added" / "adds"), lowercase first letter, no final period.
+    - Blank line, then a body that says **why** (lines ≤ 100). Footers: `Refs: BUG-xxx, R-xx`;
+      `BREAKING CHANGE: …` (with `!`) only for an owner-approved public API change.
+    - No `wip`, `fixup!` or `squash!` commits on a pushed branch.
+
 - **Never**: `--no-verify`, force push (`--force-with-lease` only with the owner's OK), committing `.env*`
   (except `.env.example`), keys, build output or `CLAUDE.local.md`.

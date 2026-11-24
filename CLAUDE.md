@@ -26,10 +26,11 @@ Goal: production grade (no known bugs, docs, unit + E2E tests). Details live in 
 ```
 src/
   main.tsx, App.tsx, app/rootRouter.tsx   entry + routes
-  store/index.ts                          ONE zustand store = spread of 27 slice creators (order matters)
+  store/index.ts                          ONE zustand store = spread of 30 slice creators (order matters)
   store/slices/                           create<Name>Slice.ts (canvas, pages, undo, layers, animation, …)
   store/brushConfig.ts                    brush presets/engines
   animation/                              keyframe engine + video export (WebCodecs / MediaRecorder)
+  character/, scene/                      Character Studio + scenes: pure domains (no React/Fabric/store; board.ts = Fabric edge), docs/CHARACTER_STUDIO.md
   components/{atoms,molecules,organisms,templates,pages}   atomic design
   components/organisms/board/ui/CanvasBoard.tsx            mounts the Fabric canvas (design/whiteboard)
   components/organisms/editorsidebar/editorsidebar.config.tsx  left panels

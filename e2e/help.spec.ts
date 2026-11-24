@@ -98,7 +98,9 @@ editorTest('the Draw link arrives ready to draw', async ({ editor, page }) => {
     await expect.poll(() => editor.state('activeTool')).toBe('draw');
 });
 
-test('search opens a real-world example, and Play builds its picture step by step', async ({ page }) => {
+test('search opens a real-world example, and Play builds its picture step by step', async ({
+    page,
+}) => {
     await page.goto('/help');
     await search(page).fill('neon sign');
     await page.getByRole('list', { name: 'Search results' }).getByRole('link').first().click();

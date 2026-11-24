@@ -73,6 +73,7 @@ type Peers = PageLayersSlice & {
     showToast?: (o: { message: string; actionLabel?: string; onAction?: () => void }) => void;
     pageUnderlay?: () => FabricObject[];
     paintPageOverlay?: (ctx: CanvasRenderingContext2D) => void;
+    paintAnimationOverlay?: (ctx: CanvasRenderingContext2D) => void;
 };
 
 const PATCH_KEYS = [
@@ -176,9 +177,13 @@ export const createPageLayersSlice: SliceCreator<PageLayersSlice> = (set, get) =
             const uninstall = installLayerCompositor(c, {
                 getLayers: () => stored,
                 onReorder: () => queueMicrotask(() => peers().syncLayers?.()),
-                // master page under the layers, page guides over them (createDocumentSlice)
+                // master page under the layers; page guides (createDocumentSlice) and the timeline's onion
+                // skin / motion path (createTimelineSlice) over them
                 underlay: () => peers().pageUnderlay?.() ?? [],
-                paintOverlay: (ctx) => peers().paintPageOverlay?.(ctx),
+                paintOverlay: (ctx) => {
+                    peers().paintPageOverlay?.(ctx);
+                    peers().paintAnimationOverlay?.(ctx);
+                },
             });
 
             // A new object without a layer gets the target layer at once (tools select it in the same tick, and

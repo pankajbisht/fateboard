@@ -1,4 +1,3 @@
-import AnimationPanel from '../organisms/animation/AnimationPanel';
 import ExportCanvas from '../organisms/effects/ui/ExportCanvas';
 import { PathEffects } from '../organisms/effects/ui/PathEffects';
 import { RepeatAlongPath } from '../organisms/effects/ui/RepeatAlongPath';
@@ -103,13 +102,7 @@ export const TABS_CONFIG = [
         content: () => <ExportCanvas />,
     },
 
-    {
-        id: 'animate',
-        label: 'Animate',
-        icon: 'video',
-        closable: false,
-        content: () => <AnimationPanel />,
-    },
+    // Animate moved to the bottom timeline dock (TimelineDock, 2026-11-17)
     // {
     //     id: 'svgviewer',
     //     label: 'SVG Viewer',

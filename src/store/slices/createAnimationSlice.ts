@@ -26,15 +26,9 @@ import {
     type Tracks,
 } from '@/animation/engine';
 import { absoluteProps } from '@/animation/absoluteProps';
-import {
-    WEBCODECS_UNSUPPORTED,
-    downloadBlob,
-    renderMp4Fast,
-    renderRealtime,
-    renderStill,
-    type ContainerFormat,
-    type ExportMode,
-} from '@/animation/exportVideo';
+import type { ExportSettings } from '@/animation/exportRun';
+
+export type { ExportSettings } from '@/animation/exportRun';
 
 /** The slice only needs the Fabric canvas from the rest of your store. Rename `canvas` if yours differs. */
 export interface AnimationDeps {
@@ -44,18 +38,6 @@ export interface AnimationDeps {
 export interface KfRef {
     objectId: string;
     keyframeId: string;
-}
-
-export interface ExportSettings {
-    mode: ExportMode;
-    container: ContainerFormat; // used by 'realtime'
-    range: 'full' | 'work';
-    width: number; // 0 = canvas size
-    height: number;
-    fps?: number;
-    bitrate: number;
-    background: string;
-    fileName?: string;
 }
 
 export interface ExportState {
@@ -745,63 +727,26 @@ export const createAnimationSlice: StateCreator<
             canvas.discardActiveObject();
             // Export what the board shows (BUG-026): the design page has an identity viewport (exactly
             // the page); the whiteboard keeps its current view. Resetting it exported the scene corner.
-
-            const { tracks, animDuration } = get();
-            const [from, to] = settings.range === 'work' ? range() : [0, animDuration];
-            const fps = settings.fps ?? get().animFps;
-            const width = settings.width || canvas.getWidth();
-            const height = settings.height || canvas.getHeight();
-            const base = {
-                canvas,
-                from,
-                to,
-                fps,
-                width,
-                height,
-                bitrate: settings.bitrate,
-                background: settings.background,
-                onProgress: (p: number) =>
-                    set({ exportState: { status: 'rendering', progress: p } }),
-                renderFrame: (t: number) => {
-                    applyTracksAt(canvas, tracks, t, false);
-                },
-            };
-
+            const [from, to] = settings.range === 'work' ? range() : [0, get().animDuration];
             exportCtl = new AbortController();
             const signal = exportCtl.signal;
-            const name = settings.fileName || 'animation';
             set({ exportState: { status: 'rendering', progress: 0 } });
 
             try {
-                let file: string;
-                if (settings.mode === 'png') {
-                    base.renderFrame(prevTime);
-                    downloadBlob(await renderStill(base), (file = `${name}.png`));
-                } else {
-                    let done = false;
-                    if (settings.mode === 'mp4-fast') {
-                        try {
-                            downloadBlob(
-                                await renderMp4Fast({ ...base, signal }),
-                                (file = `${name}.mp4`),
-                            );
-                            done = true;
-                        } catch (err) {
-                            if (!(err instanceof Error && err.message === WEBCODECS_UNSUPPORTED))
-                                throw err;
-                            // fall through to realtime
-                        }
-                    }
-                    if (!done) {
-                        const { blob, ext } = await renderRealtime({
-                            ...base,
-                            signal,
-                            format: settings.container,
-                        });
-                        downloadBlob(blob, (file = `${name}.${ext}`));
-                    }
-                }
-                set({ exportState: { status: 'done', progress: 1, message: `Saved ${file!}` } });
+                // loaded on the first export (the GIF encoder only on the first GIF)
+                const { runExport } = await import('@/animation/exportRun');
+                const file = await runExport({
+                    canvas,
+                    tracks: get().tracks,
+                    settings,
+                    from,
+                    to,
+                    fps: settings.fps ?? get().animFps,
+                    still: prevTime,
+                    signal,
+                    onProgress: (p) => set({ exportState: { status: 'rendering', progress: p } }),
+                });
+                set({ exportState: { status: 'done', progress: 1, message: `Saved ${file}` } });
             } catch (err) {
                 const cancelled = err instanceof DOMException && err.name === 'AbortError';
                 set({

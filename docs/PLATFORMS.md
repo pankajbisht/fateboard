@@ -11,18 +11,18 @@ is relied on.
 
 ## 1. Summary (the decisions in one screen)
 
-| Question | Recommendation | Why, in one line |
-|---|---|---|
-| Overall approach | **One web codebase, several thin shells.** The editor stays React + Fabric in `src/`; each platform is a shell plus a small adapter | A canvas editor is ~100 % web code; rewriting it natively (React Native, Flutter, Swift) would throw away Fabric and every tool |
-| First step | **PWA** (service worker, offline, install, file handling) | Installable on Windows, macOS, ChromeOS, Android and iPad home screens in days, no store, and it forces offline-first |
-| Browser extension | **WXT** (Vite-based, Manifest V3), Chrome + Edge first, then Firefox | Same Vite / React / Tailwind toolchain; one config builds every browser |
-| Desktop + mobile shell | **Tauri 2** for Windows, macOS, Linux, iOS, iPadOS, Android, after a spike passes (section 6) | One shell for all five systems, small installers, a strict permission model, a real file system |
-| Fallback shell | **Electron** (desktop) + **Capacitor** (mobile) | If the system WebViews (WebKit) fail the spike; the adapter layer makes the swap one folder each |
-| Architecture rule | **Ports and adapters**: everything platform-specific goes through `src/platform/` (like `@/lib/storage` today) | The editor never knows where it runs; a new platform is a new adapter, not a refactor |
-| Repo layout | **Stay one package** (`src/` + `extension/` + `src-tauri/`); move to workspaces only when a trigger in section 9 happens | Today's guard tests, hooks and docs assume `src/`; a monorepo now is cost without benefit |
-| AI | Claude through **your own small backend** (never a key in a client), editor commands exposed as **tools** | The command registry already describes every action, so Claude can draw with real editor commands |
-| Backend | **Local-first**: the app never needs it. Supabase (auth, Postgres, storage) + our own **Hono** TypeScript API for AI proxy, sync, sharing, MCP; full plan in [BACKEND.md](BACKEND.md) | One managed vendor for a small team, an API we own keeps clients vendor-independent |
-| MCP | A **Fateboard MCP server** (boards as resources, diagram tools), hosted by the desktop app first | Lets Claude Desktop / Claude Code read and create boards; same diagram schema as the in-app AI |
+| Question               | Recommendation                                                                                                                                                                        | Why, in one line                                                                                                                |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Overall approach       | **One web codebase, several thin shells.** The editor stays React + Fabric in `src/`; each platform is a shell plus a small adapter                                                   | A canvas editor is ~100 % web code; rewriting it natively (React Native, Flutter, Swift) would throw away Fabric and every tool |
+| First step             | **PWA** (service worker, offline, install, file handling)                                                                                                                             | Installable on Windows, macOS, ChromeOS, Android and iPad home screens in days, no store, and it forces offline-first           |
+| Browser extension      | **WXT** (Vite-based, Manifest V3), Chrome + Edge first, then Firefox                                                                                                                  | Same Vite / React / Tailwind toolchain; one config builds every browser                                                         |
+| Desktop + mobile shell | **Tauri 2** for Windows, macOS, Linux, iOS, iPadOS, Android, after a spike passes (section 6)                                                                                         | One shell for all five systems, small installers, a strict permission model, a real file system                                 |
+| Fallback shell         | **Electron** (desktop) + **Capacitor** (mobile)                                                                                                                                       | If the system WebViews (WebKit) fail the spike; the adapter layer makes the swap one folder each                                |
+| Architecture rule      | **Ports and adapters**: everything platform-specific goes through `src/platform/` (like `@/lib/storage` today)                                                                        | The editor never knows where it runs; a new platform is a new adapter, not a refactor                                           |
+| Repo layout            | **Stay one package** (`src/` + `extension/` + `src-tauri/`); move to workspaces only when a trigger in section 9 happens                                                              | Today's guard tests, hooks and docs assume `src/`; a monorepo now is cost without benefit                                       |
+| AI                     | Claude through **your own small backend** (never a key in a client), editor commands exposed as **tools**                                                                             | The command registry already describes every action, so Claude can draw with real editor commands                               |
+| Backend                | **Local-first**: the app never needs it. Supabase (auth, Postgres, storage) + our own **Hono** TypeScript API for AI proxy, sync, sharing, MCP; full plan in [BACKEND.md](BACKEND.md) | One managed vendor for a small team, an API we own keeps clients vendor-independent                                             |
+| MCP                    | A **Fateboard MCP server** (boards as resources, diagram tools), hosted by the desktop app first                                                                                      | Lets Claude Desktop / Claude Code read and create boards; same diagram schema as the in-app AI                                  |
 
 The biggest risk is not the shell, it is **WebKit**. iOS and iPadOS only allow WebKit (every iOS shell, Tauri
 or Capacitor, uses WKWebView), Tauri uses WebKit on macOS and Linux too, and Fateboard is not tested on WebKit
@@ -31,17 +31,17 @@ version, whatever shell is chosen, so it is Phase 0 work.
 
 ## 2. Why leave the browser (what each target unlocks)
 
-| Limitation in the browser tab | PWA | Extension | Desktop app | Mobile / tablet app |
-|---|---|---|---|---|
-| Storage can be evicted (IndexedDB) | `navigator.storage.persist()` helps, not guaranteed | `unlimitedStorage` permission | Files on disk, never evicted | App sandbox + Files app / iCloud Drive |
-| Real files (open, Save in place, Save As, recent files) | File System Access only in Chromium; `file_handlers` in the manifest | Same as web | Native dialogs, file association for `.fateboard`, double-click opens | Document picker, share sheet, "Open in Fateboard" |
-| Keyboard shortcuts the browser takes (`mod+O`, `mod+N`, `mod+W`, `mod+T`) | Partly (installed window) | No | Yes, native menus | Hardware keyboard on iPad: yes |
-| Offline | Service worker | Bundled | Bundled | Bundled |
-| Memory / big canvases | Tab limits | Tab limits | More memory, GPU | iOS limits canvas memory hard (`UNKNOWN - verify` per device) |
-| System fonts | Local Font Access only in Chromium, with a prompt | Same | Enumerate installed fonts natively | Limited |
-| Pen / pressure / palm rejection | Pointer events | Same | Same | Apple Pencil, S Pen: the reason to ship a tablet app |
-| Distribution and trust | Install prompt, no store | Web Store listing (discovery) | Signed installer, auto-update | App Store / Play Store |
-| Work next to other web pages | No | **Side panel, page capture, context menu** | Second window | Split view (iPad) |
+| Limitation in the browser tab                                             | PWA                                                                  | Extension                                  | Desktop app                                                           | Mobile / tablet app                                           |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Storage can be evicted (IndexedDB)                                        | `navigator.storage.persist()` helps, not guaranteed                  | `unlimitedStorage` permission              | Files on disk, never evicted                                          | App sandbox + Files app / iCloud Drive                        |
+| Real files (open, Save in place, Save As, recent files)                   | File System Access only in Chromium; `file_handlers` in the manifest | Same as web                                | Native dialogs, file association for `.fateboard`, double-click opens | Document picker, share sheet, "Open in Fateboard"             |
+| Keyboard shortcuts the browser takes (`mod+O`, `mod+N`, `mod+W`, `mod+T`) | Partly (installed window)                                            | No                                         | Yes, native menus                                                     | Hardware keyboard on iPad: yes                                |
+| Offline                                                                   | Service worker                                                       | Bundled                                    | Bundled                                                               | Bundled                                                       |
+| Memory / big canvases                                                     | Tab limits                                                           | Tab limits                                 | More memory, GPU                                                      | iOS limits canvas memory hard (`UNKNOWN - verify` per device) |
+| System fonts                                                              | Local Font Access only in Chromium, with a prompt                    | Same                                       | Enumerate installed fonts natively                                    | Limited                                                       |
+| Pen / pressure / palm rejection                                           | Pointer events                                                       | Same                                       | Same                                                                  | Apple Pencil, S Pen: the reason to ship a tablet app          |
+| Distribution and trust                                                    | Install prompt, no store                                             | Web Store listing (discovery)              | Signed installer, auto-update                                         | App Store / Play Store                                        |
+| Work next to other web pages                                              | No                                                                   | **Side panel, page capture, context menu** | Second window                                                         | Split view (iPad)                                             |
 
 ## 3. Target architecture
 
@@ -76,18 +76,38 @@ export type Target = 'web' | 'extension' | 'tauri';
 export interface Platform {
     target: Target;
     /** Feature flags the UI reads instead of sniffing the environment. */
-    can: Record<'saveInPlace' | 'recentFiles' | 'nativeMenu' | 'multiWindow' | 'autoUpdate' | 'captureTab' | 'share', boolean>;
+    can: Record<
+        | 'saveInPlace'
+        | 'recentFiles'
+        | 'nativeMenu'
+        | 'multiWindow'
+        | 'autoUpdate'
+        | 'captureTab'
+        | 'share',
+        boolean
+    >;
     files: {
-        open(accept: string[]): Promise<OpenedFile | null>;              // dialog / <input type=file> / picker
-        save(file: SaveRequest): Promise<SavedFile | null>;               // Save (in place if possible) / download
+        open(accept: string[]): Promise<OpenedFile | null>; // dialog / <input type=file> / picker
+        save(file: SaveRequest): Promise<SavedFile | null>; // Save (in place if possible) / download
         saveAs(file: SaveRequest): Promise<SavedFile | null>;
         recent(): Promise<RecentFile[]>;
     };
-    clipboard: { writeImage(blob: Blob): Promise<boolean>; writeText(text: string): Promise<boolean> };
-    window: { setTitle(title: string): void; setDirty(dirty: boolean): void; openNew(path?: string): void };
+    clipboard: {
+        writeImage(blob: Blob): Promise<boolean>;
+        writeText(text: string): Promise<boolean>;
+    };
+    window: {
+        setTitle(title: string): void;
+        setDirty(dirty: boolean): void;
+        openNew(path?: string): void;
+    };
     share?: (file: SaveRequest) => Promise<boolean>;
-    onOpenFile(handler: (file: OpenedFile) => void): () => void;          // file association, deep links, drag-in
-    auth: { signIn(): Promise<Session | null>; signOut(): Promise<void>; getToken(): Promise<string | null> }; // BACKEND.md 4.3
+    onOpenFile(handler: (file: OpenedFile) => void): () => void; // file association, deep links, drag-in
+    auth: {
+        signIn(): Promise<Session | null>;
+        signOut(): Promise<void>;
+        getToken(): Promise<string | null>;
+    }; // BACKEND.md 4.3
 }
 ```
 
@@ -110,23 +130,23 @@ Inventory to migrate in Phase 0 (`createObjectURL` / download / file input today
 `@/lib/storage` already has contracts (`KeyValueBackend`, `SyncKeyValue`) and adapters; a target only swaps
 wiring in `lib/storage/index.ts` (ARCHITECTURE "Storage layer"):
 
-| Target | Autosaved project | Settings | Documents the user names |
-|---|---|---|---|
-| web / PWA | IndexedDB (today) + `navigator.storage.persist()` | opendb local (today) | download / File System Access |
-| extension | IndexedDB in the extension origin (separate from the website's data) + `unlimitedStorage` | `chrome.storage.local` (shared by side panel, popup, background) | download |
-| Tauri desktop | app-data file via the fs plugin (atomic write: temp file + rename) | Tauri store plugin | `.fateboard` files anywhere, file association |
-| Tauri mobile | app sandbox file | store plugin | document picker / Files app |
+| Target        | Autosaved project                                                                         | Settings                                                         | Documents the user names                      |
+| ------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------- | --------------------------------------------- |
+| web / PWA     | IndexedDB (today) + `navigator.storage.persist()`                                         | opendb local (today)                                             | download / File System Access                 |
+| extension     | IndexedDB in the extension origin (separate from the website's data) + `unlimitedStorage` | `chrome.storage.local` (shared by side panel, popup, background) | download                                      |
+| Tauri desktop | app-data file via the fs plugin (atomic write: temp file + rename)                        | Tauri store plugin                                               | `.fateboard` files anywhere, file association |
+| Tauri mobile  | app sandbox file                                                                          | store plugin                                                     | document picker / Files app                   |
 
 ### 3.3 Routing per target
 
 `src/app/routes/appRoutes.tsx` gains a `targets` field per route, and `rootRouter.tsx` becomes
 `createRouter(target)`:
 
-| Target | Router | Routes | Start route |
-|---|---|---|---|
-| web | `BrowserRouter` (today) | all | `/` |
-| extension | `HashRouter` (extension pages are static files: `chrome-extension://<id>/app.html#/draw`) | `/draw`, `/setting`, `/help` | `/draw` (side panel: compact layout) |
-| Tauri | `HashRouter` (reload-safe without a server fallback) | `/draw`, `/setting`, `/help`, `/command-palette`, new `/home` (recent files) | `/home` |
+| Target    | Router                                                                                    | Routes                                                                       | Start route                          |
+| --------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------ |
+| web       | `BrowserRouter` (today)                                                                   | all                                                                          | `/`                                  |
+| extension | `HashRouter` (extension pages are static files: `chrome-extension://<id>/app.html#/draw`) | `/draw`, `/setting`, `/help`                                                 | `/draw` (side panel: compact layout) |
+| Tauri     | `HashRouter` (reload-safe without a server fallback)                                      | `/draw`, `/setting`, `/help`, `/command-palette`, new `/home` (recent files) | `/home`                              |
 
 Web-only pieces must not run elsewhere: `RouteSeo`, the prerender plugin, sitemap, `legacyHashUrl.ts` (it would
 rewrite `#/draw` hash routes away), analytics (gtag is remote code: banned in MV3 extensions, unwanted in apps),
@@ -190,16 +210,16 @@ fate/
 
 ## 5. Tool comparison (why these picks)
 
-| | PWA | Electron | **Tauri 2** | Capacitor | React Native / Flutter |
-|---|---|---|---|---|---|
-| Windows / macOS / Linux | install from browser | ✅ | ✅ | community plugin (via Electron) | partial / ✅ (rewrite) |
-| iOS / iPadOS / Android | Android ✅, iPad home screen (limited) | ❌ | ✅ | ✅ | ✅ (rewrite) |
-| Rendering engine | user's browser | bundled Chromium, identical everywhere | system WebView: WebView2 (Chromium) on Windows, WebKit on macOS / iOS / Linux, Chromium WebView on Android | system WebView | native, Fabric unusable |
-| Installer size | 0 | large (~100 MB+) | small (a few MB to ~15 MB) | small | medium |
-| Memory | browser | high | lower | lower | lower |
-| Native access | web APIs only | full Node.js (broad, risky) | Rust + plugins behind explicit capabilities | plugins | full |
-| Fits Vite + React | ✅ | ✅ | ✅ | ✅ | ❌ |
-| Biggest risk for Fateboard | iOS limits | size, no mobile | WebKit differences (macOS, iOS, Linux WebKitGTK) | two shells to run | full rewrite |
+|                            | PWA                                    | Electron                               | **Tauri 2**                                                                                                | Capacitor                       | React Native / Flutter  |
+| -------------------------- | -------------------------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------------------------- | ----------------------- |
+| Windows / macOS / Linux    | install from browser                   | ✅                                     | ✅                                                                                                         | community plugin (via Electron) | partial / ✅ (rewrite)  |
+| iOS / iPadOS / Android     | Android ✅, iPad home screen (limited) | ❌                                     | ✅                                                                                                         | ✅                              | ✅ (rewrite)            |
+| Rendering engine           | user's browser                         | bundled Chromium, identical everywhere | system WebView: WebView2 (Chromium) on Windows, WebKit on macOS / iOS / Linux, Chromium WebView on Android | system WebView                  | native, Fabric unusable |
+| Installer size             | 0                                      | large (~100 MB+)                       | small (a few MB to ~15 MB)                                                                                 | small                           | medium                  |
+| Memory                     | browser                                | high                                   | lower                                                                                                      | lower                           | lower                   |
+| Native access              | web APIs only                          | full Node.js (broad, risky)            | Rust + plugins behind explicit capabilities                                                                | plugins                         | full                    |
+| Fits Vite + React          | ✅                                     | ✅                                     | ✅                                                                                                         | ✅                              | ❌                      |
+| Biggest risk for Fateboard | iOS limits                             | size, no mobile                        | WebKit differences (macOS, iOS, Linux WebKitGTK)                                                           | two shells to run               | full rewrite            |
 
 Decision: PWA now (cheap, useful everywhere), Tauri 2 for native after the spike, Electron + Capacitor as the
 documented fallback. Electron alone cannot reach the tablets you want. React Native / Flutter would mean
@@ -238,6 +258,7 @@ breaks an open board (chunk-load error path tested).
 ### Phase 2: browser extension (WXT, MV3)
 
 Features, smallest first:
+
 1. **Side panel editor** (`chrome.sidePanel`; Firefox `sidebar_action`): sketch and take notes next to any page.
 2. **Capture and annotate**: `tabs.captureVisibleTab` (permission `activeTab`) → new board with the screenshot
    as a locked background → arrows, text, highlights → export / copy.
@@ -281,14 +302,14 @@ Q15, Q16, Q18, Q19. The AI proxy (5a) can ship before cloud sync.
 
 ## 7. Testing per target
 
-| Target | Automated | Manual |
-|---|---|---|
-| Web (all engines) | Vitest (unchanged), Playwright Chromium + Firefox (today) + **WebKit + tablet** (Phase 0) | `npm run dev` |
-| PWA | Playwright: offline reload, update flow | install on Android + desktop |
-| Extension | Playwright persistent Chromium context with `--load-extension=dist-extension/chrome` (`e2e-extension/`) | Firefox temporary add-on |
-| Platform adapters | contract tests in `src/platform/__tests__/` run against every adapter with a faked shell | n/a |
-| Tauri desktop | WebDriver via `tauri-driver` works on Windows and Linux, not macOS (`UNKNOWN - verify` current support); the web E2E on WebKit covers most of macOS | release checklist per OS |
-| Mobile | WebKit + tablet Playwright projects for layout and touch | device checklist (iPad, Android tablet), TestFlight / Play internal track |
+| Target            | Automated                                                                                                                                           | Manual                                                                    |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Web (all engines) | Vitest (unchanged), Playwright Chromium + Firefox (today) + **WebKit + tablet** (Phase 0)                                                           | `npm run dev`                                                             |
+| PWA               | Playwright: offline reload, update flow                                                                                                             | install on Android + desktop                                              |
+| Extension         | Playwright persistent Chromium context with `--load-extension=dist-extension/chrome` (`e2e-extension/`)                                             | Firefox temporary add-on                                                  |
+| Platform adapters | contract tests in `src/platform/__tests__/` run against every adapter with a faked shell                                                            | n/a                                                                       |
+| Tauri desktop     | WebDriver via `tauri-driver` works on Windows and Linux, not macOS (`UNKNOWN - verify` current support); the web E2E on WebKit covers most of macOS | release checklist per OS                                                  |
+| Mobile            | WebKit + tablet Playwright projects for layout and touch                                                                                            | device checklist (iPad, Android tablet), TestFlight / Play internal track |
 
 ## 8. CI / release
 
@@ -324,15 +345,16 @@ The fit: the command registry (`components/config/commandConfig`) already names 
 Claude **tool definitions** from it (plus a few compound tools), so Claude edits the board through the same
 commands a user runs: undoable, validated, no new mutation path.
 
-| Feature | How | Notes |
-|---|---|---|
-| Text → diagram (flowchart, mind map, wireframe) | tool use: `add_nodes`, `connect`, `apply_layout` with a JSON **diagram spec** | build on the existing connectors; spec = section 10.3 |
-| Sketch → clean shapes | vision: send a PNG snapshot of the selection, get the diagram spec back | replace or place next to the sketch, undoable |
-| Tidy up / align / explain board | tool use over a compact board summary (types, positions, text), not full Fabric JSON | keeps tokens low |
-| Template from a prompt | structured output (diagram spec) | reuses template apply |
-| Alt text for exports | single call with an image | accessibility win |
+| Feature                                         | How                                                                                  | Notes                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------- |
+| Text → diagram (flowchart, mind map, wireframe) | tool use: `add_nodes`, `connect`, `apply_layout` with a JSON **diagram spec**        | build on the existing connectors; spec = section 10.3 |
+| Sketch → clean shapes                           | vision: send a PNG snapshot of the selection, get the diagram spec back              | replace or place next to the sketch, undoable         |
+| Tidy up / align / explain board                 | tool use over a compact board summary (types, positions, text), not full Fabric JSON | keeps tokens low                                      |
+| Template from a prompt                          | structured output (diagram spec)                                                     | reuses template apply                                 |
+| Alt text for exports                            | single call with an image                                                            | accessibility win                                     |
 
 API practices (from the current Claude API guidance; re-check the live docs when building):
+
 - Model: **`claude-opus-5-5`** by default. Cheaper routes (`claude-sonnet-5-5`, `claude-haiku-5-5`) are an owner
   choice, made per feature only after an eval shows quality holds.
 - Opus 5.5 specifics: thinking cannot be turned off, control depth with `output_config.effort` (default
@@ -351,12 +373,14 @@ API practices (from the current Claude API guidance; re-check the live docs when
 ### 10.2 Fateboard MCP server (Claude Desktop, Claude Code and other MCP clients)
 
 What it offers:
+
 - **Resources**: boards (list, read as summary + SVG / PNG).
 - **Tools**: `create_board_from_spec` (diagram spec), `add_elements`, `update_element`, `export_board`
   (png / svg / pdf), `list_templates`, `apply_template`.
 - **Prompts** (optional): "diagram this codebase", "turn these notes into a mind map".
 
 Where it runs:
+
 1. **Desktop app first** (Phase 3+): the Tauri app ships a local server (stdio via `fateboard --mcp`, launched by
    the client; or Streamable HTTP on localhost with a per-install token). It reads and writes `.fateboard`
    files, so no cloud is needed. Example: Claude Code generates an architecture diagram of a repo straight into
@@ -387,18 +411,18 @@ generation and import. Unit-tested like `serialization.ts`; round-trip tests (sp
 
 ## 11. Other things that would grow the app
 
-| Idea | Value | When |
-|---|---|---|
-| Remote error reporting (e.g. Sentry) | you cannot fix crashes you never see; required for native apps | Phase 0–1 (PRODUCTION_READINESS gap) |
-| Accounts + cloud sync | the same boards on phone, tablet and desktop | Phase 5, Q15 |
-| Real-time collaboration (CRDT, e.g. Yjs) | multiplayer whiteboard, offline edits merge | after sync; changes the document model, decide early (Q18) |
-| Share read-only links | growth loop: every shared board advertises Fateboard | with sync (Share was removed, Q6) |
-| Community gallery | users publish boards as tutorials; SEO pages for each (`/gallery` exists) | after accounts |
-| Template packs / marketplace | content keeps users; possible revenue | after accounts |
-| i18n | more markets, more search traffic | any time; extract strings first |
-| Plugin API (brushes, generators, exporters) | community extends the editor | after the platform port is stable |
-| Privacy-friendly product analytics | learn which tools are used | Phase 1, opt-in in apps |
-| Pricing (free core, paid sync / AI credits) | pays for AI and sync servers | with Phase 5 |
+| Idea                                        | Value                                                                     | When                                                       |
+| ------------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| Remote error reporting (e.g. Sentry)        | you cannot fix crashes you never see; required for native apps            | Phase 0–1 (PRODUCTION_READINESS gap)                       |
+| Accounts + cloud sync                       | the same boards on phone, tablet and desktop                              | Phase 5, Q15                                               |
+| Real-time collaboration (CRDT, e.g. Yjs)    | multiplayer whiteboard, offline edits merge                               | after sync; changes the document model, decide early (Q18) |
+| Share read-only links                       | growth loop: every shared board advertises Fateboard                      | with sync (Share was removed, Q6)                          |
+| Community gallery                           | users publish boards as tutorials; SEO pages for each (`/gallery` exists) | after accounts                                             |
+| Template packs / marketplace                | content keeps users; possible revenue                                     | after accounts                                             |
+| i18n                                        | more markets, more search traffic                                         | any time; extract strings first                            |
+| Plugin API (brushes, generators, exporters) | community extends the editor                                              | after the platform port is stable                          |
+| Privacy-friendly product analytics          | learn which tools are used                                                | Phase 1, opt-in in apps                                    |
+| Pricing (free core, paid sync / AI credits) | pays for AI and sync servers                                              | with Phase 5                                               |
 
 ## 12. Working rules (for Claude and contributors)
 

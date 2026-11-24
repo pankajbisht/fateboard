@@ -83,3 +83,33 @@ export function paintToneTile(ctx: CanvasRenderingContext2D, p: ToneParams, size
             ctx.fillRect(Math.floor(rnd() * size), Math.floor(rnd() * size), 1, 1);
     }
 }
+
+/**
+ * A tile canvas for a tone fill (one `paintToneTile` cell). `paper` fills behind the dots (character art drawn
+ * on white); without it the tile is transparent (a tone over existing art). Null when there is no 2D context.
+ */
+export function toneTile(doc: Document, p: ToneParams, paper?: string): HTMLCanvasElement | null {
+    const size = toneTileSize(p);
+    const dots = doc.createElement('canvas');
+    dots.width = dots.height = size;
+    const dctx = dots.getContext('2d');
+    if (!dctx) return null;
+    paintToneTile(dctx, p, size);
+    if (!paper) return dots;
+    const tile = doc.createElement('canvas');
+    tile.width = tile.height = size;
+    const ctx = tile.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = paper;
+    ctx.fillRect(0, 0, size, size);
+    ctx.drawImage(dots, 0, 0);
+    return tile;
+}
+
+/** The pattern transform that turns a tone to its screen angle. */
+export function tonePatternMatrix(
+    angleDeg: number,
+): [number, number, number, number, number, number] {
+    const a = (angleDeg * Math.PI) / 180;
+    return [Math.cos(a), Math.sin(a), -Math.sin(a), Math.cos(a), 0, 0];
+}

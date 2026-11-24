@@ -1,41 +1,15 @@
 import { useEffect } from 'react';
 import { useStore } from '@store';
 import { ANIM_CSS, useAnimationTheme } from '../../hooks/useAnimationTheme';
-import { PanelAction } from '../../molecules/PanelAction';
-import { PanelSection } from '../../molecules/PanelSection';
-import { ExportSection } from './ExportSection';
-import { KeyframeInspector } from './KeyframeInspector';
-import { KeyframeTools } from './KeyframeTools';
-import { PresetPicker } from './PresetPicker';
-import { SelectionSummary } from './SelectionSummary';
-import { Timeline } from './Timeline';
-import { Transport } from './Transport';
+import { DockPanes } from './DockPanes';
+import { TimelineToolbar } from './TimelineToolbar';
 import { useCanvasSelection } from './useAnimationCanvas';
 import { useAnimationKeys } from './useAnimationKeys';
 
-function ClearAll() {
-    const clear = useStore((s) => s.clearAllAnimations);
-    const has = useStore((s) => Object.keys(s.tracks).length > 0);
-    const confirmDialog = useStore((s) => s.confirmDialog);
-    const onClear = async () => {
-        const ok = await confirmDialog({
-            title: 'Remove all animations?',
-            message: 'You can undo this.',
-            confirmLabel: 'Remove all',
-            tone: 'danger',
-        });
-        if (ok) clear();
-    };
-    return (
-        <PanelAction tone="danger" icon="trash-can" disabled={!has} onClick={onClear}>
-            Clear all animations
-        </PanelAction>
-    );
-}
-
 /**
- * The Animate tab, in the order you work: what is selected, add an animation, fine-tune it on
- * the timeline, edit a keyframe, export. Composition only; each part reads the store itself.
+ * The animation timeline's content, laid out for the bottom dock (TimelineDock): a bar with playback,
+ * keyframes and overlays; under it the timeline, with the Animate / Keyframe / View / Export panes beside it.
+ * Composition only; each part reads the store itself.
  */
 export default function AnimationPanel() {
     const canvas = useStore((s) => s.canvas);
@@ -46,7 +20,7 @@ export default function AnimationPanel() {
 
     useEffect(() => bindAutoKey(), [canvas, bindAutoKey]);
 
-    // Playback and auto-key belong to the open panel: without it there is no Pause button, and
+    // Playback and auto-key belong to the open timeline: without it there is no Pause button, and
     // the auto-key listeners are gone while the switch would still say "on" (BUG-181).
     useEffect(
         () => () => {
@@ -59,7 +33,7 @@ export default function AnimationPanel() {
 
     return (
         <div
-            className="flex flex-col gap-4 outline-none"
+            className="flex min-h-0 flex-1 flex-col outline-none"
             style={theme.style}
             data-anim-theme={theme.isDark ? 'dark' : 'light'}
             tabIndex={0}
@@ -67,18 +41,8 @@ export default function AnimationPanel() {
             onKeyUp={keys.onKeyUp}
         >
             <style>{ANIM_CSS}</style>
-            <SelectionSummary selection={selection} />
-            <PresetPicker selection={selection} />
-            <PanelSection title="Timeline">
-                <div className="rounded-lg border border-line bg-surface p-2">
-                    <Transport />
-                </div>
-                <Timeline selectedIds={selection.ids} />
-                <KeyframeTools canAdd={selection.count > 0} />
-            </PanelSection>
-            <KeyframeInspector />
-            <ExportSection />
-            <ClearAll />
+            <TimelineToolbar canAdd={selection.count > 0} />
+            <DockPanes selection={selection} />
         </div>
     );
 }

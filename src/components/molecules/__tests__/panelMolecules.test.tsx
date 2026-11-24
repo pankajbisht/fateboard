@@ -13,6 +13,37 @@ import { PanelLayout } from '../../templates/PanelLayout';
 afterEach(cleanup);
 
 describe('Field', () => {
+    // BUG-258: a disabled field is dimmed as a whole; it says so (aria-disabled: inactive text is exempt from the
+    // contrast rule) and marks itself data-dimmed so the control inside does not fade a second time (docs/DESIGN.md)
+    it('a disabled field is an inactive, dimmed group; an enabled one is not', () => {
+        const { rerender } = render(
+            <LabeledToggle
+                label="Two-tone"
+                hint="Tips colour"
+                checked={false}
+                disabled
+                onChange={() => {}}
+            />,
+        );
+        const group = screen.getByText('Tips colour').parentElement!;
+        expect(group.getAttribute('aria-disabled')).toBe('true');
+        expect(group.hasAttribute('data-dimmed')).toBe(true);
+        expect(screen.getByRole('switch', { name: /Two-tone/ }).className).toContain(
+            '[[data-dimmed]_&]:disabled:opacity-100',
+        );
+        rerender(
+            <LabeledToggle
+                label="Two-tone"
+                hint="Tips colour"
+                checked={false}
+                onChange={() => {}}
+            />,
+        );
+        const on = screen.getByText('Tips colour').parentElement!;
+        expect(on.hasAttribute('aria-disabled')).toBe(false);
+        expect(on.hasAttribute('data-dimmed')).toBe(false);
+    });
+
     it('labels its control by id or by wrapping', () => {
         const { rerender } = render(
             <Field label="Name" htmlFor="f-name">
@@ -111,6 +142,48 @@ describe('PanelSection', () => {
         expect(toggle.getAttribute('aria-expanded')).toBe('true');
         fireEvent.click(toggle);
         expect(screen.queryByText('body')).toBeNull();
+    });
+
+    // BUG-246: title and description are information, so `ink-muted` (7.5:1); `ink-subtle` (3.06:1) failed
+    // axe colour contrast once a panel was scanned open (the bottom timeline, 2026-11-17). DESIGN.md: subtle
+    // is for placeholders, icons and disabled text only.
+    it('title and description are readable text (ink-muted, not ink-subtle)', () => {
+        render(
+            <PanelSection title="Motion path" description="Where objects travel.">
+                <p>body</p>
+            </PanelSection>,
+        );
+        for (const text of ['Motion path', 'Where objects travel.']) {
+            const el = screen.getByText(text);
+            expect(el.className, text).toContain('text-ink-muted');
+            expect(el.className, text).not.toContain('text-ink-subtle');
+        }
+    });
+});
+
+// BUG-252: field hints and slider units are information too (they failed axe contrast in the open
+// Character Studio, 2026-11-18): ink-muted, not ink-subtle
+describe('hint and unit text', () => {
+    it('Field hints and SliderField units are readable (ink-muted)', () => {
+        render(
+            <>
+                <Field label="Name" hint="Shown on the page.">
+                    <input aria-label="Name" />
+                </Field>
+                <SliderField
+                    label="Age"
+                    min={5}
+                    max={80}
+                    value={30}
+                    unit=" years"
+                    onChange={() => {}}
+                />
+            </>,
+        );
+        for (const el of [screen.getByText('Shown on the page.'), screen.getByText('years')]) {
+            expect(el.className).toContain('text-ink-muted');
+            expect(el.className).not.toContain('text-ink-subtle');
+        }
     });
 });
 

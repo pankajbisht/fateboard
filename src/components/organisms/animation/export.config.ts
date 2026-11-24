@@ -16,3 +16,10 @@ export const EXPORT_QUALITY = [
 ];
 
 export const EXPORT_FPS = [24, 30, 60].map((f) => ({ value: f, label: `${f} fps` }));
+
+/** GIF: small sizes (the file grows with every pixel) and frame rates GIF delays can hold (1/100 s). */
+export const GIF_WIDTHS = [320, 480, 640, 800].map((w) => ({
+    value: w,
+    label: `${w} px wide${w === 320 ? ' (small)' : w === 800 ? ' (large)' : ''}`,
+}));
+export const GIF_FPS = [10, 12, 15, 20, 25].map((f) => ({ value: f, label: `${f} fps` }));

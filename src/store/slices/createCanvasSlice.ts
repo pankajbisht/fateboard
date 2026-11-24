@@ -428,8 +428,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 case 'copySpray':
                 case 'bucket':
                 case 'lasso':
-                case 'drafter': {
-                    // the drawing-tools slice takes the clicks; nothing on the board is picked
+                case 'drafter':
+                case 'note': {
+                    // a tool slice (drawing / paint tools, notes) takes the clicks; nothing is picked
                     canvas.discardActiveObject();
                     canvas.selection = false;
                     canvas.skipTargetFind = true;
@@ -447,10 +448,8 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                     break;
                 }
 
-                case 'select':
-                default: {
+                default: // 'select'
                     break;
-                }
             }
 
             canvas.requestRenderAll();

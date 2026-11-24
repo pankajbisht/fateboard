@@ -6,6 +6,8 @@ import {
     canvasClientRect,
     canvasPxPerCss,
     clearWindow,
+    clientToScene,
+    sceneToClient,
     needsWindow,
     visibleWindow,
     windowOf,
@@ -171,5 +173,39 @@ describe('crisp cache', () => {
         expect(r.shouldCache()).toBe(true);
         zoom.value = 64; // 6400 %: a 6400 px cache side
         expect(r.shouldCache()).toBe(false);
+    });
+});
+
+describe('scene <-> client px (floats and note pins)', () => {
+    const shown = (c: ReturnType<typeof fakeCanvas>) => {
+        // the 1000 px page is shown 500 CSS px wide at (100, 50)
+        c.upperCanvasEl.getBoundingClientRect = () =>
+            ({ left: 100, top: 50, width: 500, height: 400 }) as DOMRect;
+        return c;
+    };
+
+    it('maps through the viewport (zoom 2, pan 30 / 40) and the fit scale', () => {
+        const c = shown(fakeCanvas());
+        c.viewportTransform = [2, 0, 0, 2, 30, 40];
+        // scene (10, 20) -> canvas (50, 80) -> CSS × 0.5 -> client (125, 90)
+        expect(sceneToClient(c, { x: 10, y: 20 })).toEqual({ x: 125, y: 90 });
+        expect(clientToScene(c, { x: 125, y: 90 })).toEqual({ x: 10, y: 20 });
+    });
+
+    it('round-trips while a deep zoom window is drawn', () => {
+        const c = shown(fakeCanvas());
+        applyWindow(c, { ox: 490, oy: 290, ww: 80, wh: 60, scale: 10, ratio: 20 });
+        const at = sceneToClient(c, { x: 500, y: 300 })!;
+        const back = clientToScene(c, at)!;
+        expect(back.x).toBeCloseTo(500);
+        expect(back.y).toBeCloseTo(300);
+        clearWindow(c);
+    });
+
+    it('null without an element on screen', () => {
+        const c = fakeCanvas();
+        (c as { upperCanvasEl: unknown }).upperCanvasEl = undefined;
+        expect(sceneToClient(c, { x: 0, y: 0 })).toBeNull();
+        expect(clientToScene(c, { x: 0, y: 0 })).toBeNull();
     });
 });

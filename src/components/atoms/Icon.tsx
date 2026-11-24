@@ -99,6 +99,8 @@ import {
     Type,
     Underline,
     Users,
+    PersonStanding,
+    Shuffle,
     Video,
     WandSparkles,
     PenTool,
@@ -155,6 +157,13 @@ import {
     Blend,
     Stamp,
     Sun,
+    MessageSquareText,
+    Pin,
+    PinOff,
+    Reply,
+    ListChecks,
+    CircleCheck,
+    SquareCheck,
 } from 'lucide-react';
 import {
     AlongPathIcon,
@@ -343,6 +352,12 @@ export const ICONS = {
     redo: Redo2,
     'eye-slash': EyeOff,
     keyframe: Diamond,
+    'onion-skin': Layers2,
+    'motion-path': Spline,
+
+    // character studio
+    character: PersonStanding,
+    shuffle: Shuffle,
 
     // generators (right dock)
     snowflake: Snowflake,
@@ -427,6 +442,15 @@ export const ICONS = {
     blend: Blend,
     stamp: Stamp,
     sun: Sun,
+    // notes (2026-11-17)
+    note: MessageSquareText,
+    pin: Pin,
+    'pin-off': PinOff,
+    reply: Reply,
+    'list-checks': ListChecks,
+    'circle-check': CircleCheck,
+    'check-empty': Square,
+    'check-done': SquareCheck,
 } satisfies Record<string, LucideIcon>;
 
 export type IconName = keyof typeof ICONS;

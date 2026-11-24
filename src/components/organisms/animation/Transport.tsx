@@ -16,7 +16,7 @@ function Timecode() {
     const fps = useStore((s) => s.animFps);
     return (
         <div
-            className="ml-auto text-right font-mono text-[11px] tabular-nums leading-tight"
+            className="mx-1 font-mono text-[11px] tabular-nums leading-tight"
             title="Minutes : seconds : frames"
         >
             {timecode(currentTime, fps)}
@@ -25,7 +25,7 @@ function Timecode() {
     );
 }
 
-/** Play / step / loop, keyframe undo and redo, snapping and playback speed. */
+/** Play / step / loop, timecode, keyframe undo and redo, snapping and playback speed: one row. */
 export function Transport() {
     const { isPlaying, loop, rate, snap, canUndo, canRedo } = useStore(
         useShallow((s) => ({
@@ -51,70 +51,64 @@ export function Transport() {
     );
 
     return (
-        <div className="space-y-1.5">
-            <div className="flex items-center gap-0.5">
-                <IconButton
-                    icon={<Icon name="stop" />}
-                    onClick={a.stop}
-                    title="Stop and go back to the start"
-                    aria-label="Stop"
-                />
-                <IconButton
-                    icon={<Icon name="step-back" />}
-                    onClick={() => a.stepFrames(-1)}
-                    title="Previous frame (←)"
-                    aria-label="Previous frame"
-                />
-                <IconButton
-                    size="lg"
-                    icon={<Icon name={isPlaying ? 'pause' : 'play'} filled />}
-                    tone="primary"
-                    onClick={a.togglePlay}
-                    title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
-                    aria-label={isPlaying ? 'Pause' : 'Play'}
-                />
-                <IconButton
-                    icon={<Icon name="step-forward" />}
-                    onClick={() => a.stepFrames(1)}
-                    title="Next frame (→)"
-                    aria-label="Next frame"
-                />
-                <IconButton
-                    icon={<Icon name="repeat" />}
-                    active={loop}
-                    onClick={() => a.setLoop(!loop)}
-                    title="Loop (L)"
-                    aria-label="Loop"
-                />
-                <Timecode />
-            </div>
-            <div className="flex items-center gap-0.5">
-                <IconButton
-                    icon={<Icon name="undo" />}
-                    disabled={!canUndo}
-                    onClick={a.undo}
-                    title={`Undo animation change (${shortcut('⌘Z', 'Ctrl+Z')})`}
-                    aria-label="Undo animation change"
-                />
-                <IconButton
-                    icon={<Icon name="redo" />}
-                    disabled={!canRedo}
-                    onClick={a.redo}
-                    title={`Redo animation change (${shortcut('⌘⇧Z', 'Ctrl+Shift+Z')})`}
-                    aria-label="Redo animation change"
-                />
-                <LabeledToggle label="Snap" checked={snap} onChange={a.setSnap} className="ml-2" />
-                <div className="ml-auto">
-                    <Select
-                        size="sm"
-                        block={false}
-                        aria-label="Playback speed"
-                        value={rate}
-                        onChange={a.setPlaybackRate}
-                        options={RATES}
-                    />
-                </div>
-            </div>
+        <div role="group" aria-label="Playback" className="flex items-center gap-0.5">
+            <IconButton
+                icon={<Icon name="stop" />}
+                onClick={a.stop}
+                title="Stop and go back to the start"
+                aria-label="Stop"
+            />
+            <IconButton
+                icon={<Icon name="step-back" />}
+                onClick={() => a.stepFrames(-1)}
+                title="Previous frame (←)"
+                aria-label="Previous frame"
+            />
+            <IconButton
+                size="lg"
+                icon={<Icon name={isPlaying ? 'pause' : 'play'} filled />}
+                tone="primary"
+                onClick={a.togglePlay}
+                title={isPlaying ? 'Pause (Space)' : 'Play (Space)'}
+                aria-label={isPlaying ? 'Pause' : 'Play'}
+            />
+            <IconButton
+                icon={<Icon name="step-forward" />}
+                onClick={() => a.stepFrames(1)}
+                title="Next frame (→)"
+                aria-label="Next frame"
+            />
+            <IconButton
+                icon={<Icon name="repeat" />}
+                active={loop}
+                onClick={() => a.setLoop(!loop)}
+                title="Loop (L)"
+                aria-label="Loop"
+            />
+            <Timecode />
+            <IconButton
+                icon={<Icon name="undo" />}
+                disabled={!canUndo}
+                onClick={a.undo}
+                title={`Undo animation change (${shortcut('⌘Z', 'Ctrl+Z')})`}
+                aria-label="Undo animation change"
+            />
+            <IconButton
+                icon={<Icon name="redo" />}
+                disabled={!canRedo}
+                onClick={a.redo}
+                title={`Redo animation change (${shortcut('⌘⇧Z', 'Ctrl+Shift+Z')})`}
+                aria-label="Redo animation change"
+            />
+            <LabeledToggle label="Snap" checked={snap} onChange={a.setSnap} className="mx-2" />
+            <Select
+                size="sm"
+                block={false}
+                aria-label="Playback speed"
+                value={rate}
+                onChange={a.setPlaybackRate}
+                options={RATES}
+            />
         </div>
     );
 }

@@ -29,7 +29,7 @@ const NEEDS = [
     {
         need: 'A video',
         answer: 'MP4',
-        how: 'Animate it first, then export from the Animate tab.',
+        how: 'Animate it first, then export from the timeline (Export, beside it).',
     },
     {
         need: 'Keep editing later',

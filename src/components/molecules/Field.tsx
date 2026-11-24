@@ -31,6 +31,9 @@ export function Field({
     children,
 }: FieldProps) {
     const Root = wrap ? 'label' : 'div';
+    // a disabled field fades as a whole: it is an inactive group (exempt from contrast rules, BUG-258) and the
+    // control inside does not fade a second time (data-dimmed, docs/DESIGN.md "Disabled")
+    const dimmed = disabled ? ({ 'aria-disabled': true, 'data-dimmed': true } as const) : {};
     const labelEl =
         htmlFor && !wrap ? (
             <label
@@ -45,7 +48,10 @@ export function Field({
 
     if (inline) {
         return (
-            <Root className={clsx('flex flex-col gap-1', disabled && 'opacity-50', className)}>
+            <Root
+                {...dimmed}
+                className={clsx('flex flex-col gap-1', disabled && 'opacity-50', className)}
+            >
                 <div className="flex min-h-8 items-center justify-between gap-3">
                     {labelEl}
                     <div className="flex shrink-0 items-center gap-2">
@@ -53,19 +59,22 @@ export function Field({
                         {children}
                     </div>
                 </div>
-                {hint && <p className="text-caption text-ink-subtle">{hint}</p>}
+                {hint && <p className="text-caption text-ink-muted">{hint}</p>}
             </Root>
         );
     }
 
     return (
-        <Root className={clsx('flex flex-col gap-1.5', disabled && 'opacity-50', className)}>
+        <Root
+            {...dimmed}
+            className={clsx('flex flex-col gap-1.5', disabled && 'opacity-50', className)}
+        >
             <div className="flex items-center justify-between gap-2">
                 {labelEl}
                 {trailing && <div className="shrink-0 text-xs text-ink-muted">{trailing}</div>}
             </div>
             {children}
-            {hint && <p className="text-caption text-ink-subtle">{hint}</p>}
+            {hint && <p className="text-caption text-ink-muted">{hint}</p>}
         </Root>
     );
 }
