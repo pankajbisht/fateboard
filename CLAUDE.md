@@ -41,6 +41,7 @@ src/
   feature/import/                         image/SVG/JSON import
   test/                                   test helpers: fakeCanvas.ts, sliceHarness.ts (not shipped)
   types/                                  global.d.ts only (Fabric shims removed; real Fabric 7 types)
+apps/web, apps/desktop, packages/core    npm-workspace placeholders (README only, empty on purpose; PLATFORMS.md section 9)
 docs/                                     ARCHITECTURE, STATE, CANVAS, COMPONENTS, CONVENTIONS, TESTING, BUGS, ROADMAP, DECISIONS
 ```
 
