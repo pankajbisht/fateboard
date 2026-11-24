@@ -35,5 +35,11 @@
     "devDependencies": {
         "husky": "9.1.7",
         "lint-staged": "17.6.0"
+    },
+    "lint-staged": {
+        "apps/web/src/**/*.{js,jsx,ts,tsx,json,css,md}": [
+            "prettier --write",
+            "eslint --fix"
+        ]
     }
 }

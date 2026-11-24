@@ -66,11 +66,5 @@
         "vite": "8.3.6",
         "vite-tsconfig-paths": "6.1.1",
         "vitest": "5.1.0"
-    },
-    "lint-staged": {
-        "src/**/*.{js,jsx,ts,tsx,json,css,md}": [
-            "prettier --write",
-            "eslint --fix"
-        ]
     }
 }
