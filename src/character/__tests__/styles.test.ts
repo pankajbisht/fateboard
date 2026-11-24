@@ -22,9 +22,9 @@ const styled = (style: StyleId) => ({ ...meera, style });
 const rx = (d: string) => Number(/A([\d.]+) /.exec(d)![1]);
 
 describe('style packs', () => {
-    it('19 packs (20 ids: pixel waits for the raster pipeline), all vector, unknown or unbuilt styles draw as cartoon', () => {
-        expect(AVAILABLE_STYLES).toHaveLength(19);
-        expect(new Set(AVAILABLE_STYLES).size).toBe(19);
+    it('20 packs (21 ids with line art; pixel waits for the raster pipeline), all vector, unknown or unbuilt styles draw as cartoon', () => {
+        expect(AVAILABLE_STYLES).toHaveLength(20);
+        expect(new Set(AVAILABLE_STYLES).size).toBe(20);
         for (const id of AVAILABLE_STYLES) {
             expect(STYLE_PACKS[id].id).toBe(id);
             expect(STYLE_PACKS[id].name.trim()).not.toBe('');
@@ -32,7 +32,7 @@ describe('style packs', () => {
             expect(STYLE_PACKS[id].boardOutput).toBe('vector');
             expect(STYLE_IDS).toContain(id);
         }
-        expect(STYLE_IDS).toHaveLength(20);
+        expect(STYLE_IDS).toHaveLength(21);
         expect(AVAILABLE_STYLES).not.toContain('pixel');
         expect(packFor('anime').id).toBe('anime');
         expect(packFor('pixel').id).toBe('cartoon');

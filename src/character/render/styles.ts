@@ -40,6 +40,8 @@ export interface StylePack {
     tint?: TintId;
     /** manga: black, white and screentone */
     palette: 'color' | 'manga';
+    /** line art: white fills, the face drawn in ink (irises, brows, mouth), no screentone */
+    lineArt?: boolean;
     /**
      * `headScale`: how much bigger the style draws the head on the classic body. The manga body is measured in heads
      * (rig/proportions.ts), so it ignores `headScale` unless `superDeformed` (chibi: the big head is the style).
@@ -135,6 +137,7 @@ export const AVAILABLE_STYLES = [
     'anime-90s',
     'webtoon',
     'manga',
+    'lineart',
     'realistic',
     'indian-tv',
     'chibi',

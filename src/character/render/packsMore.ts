@@ -19,9 +19,25 @@ type More =
     | 'noir'
     | 'paper-cut'
     | 'cyberpunk'
-    | 'stick';
+    | 'stick'
+    | 'lineart';
 
 export const MORE_PACKS: Record<More, StylePack> = {
+    // the owner's reference sheets: clean ink lines on white, the outer line heavier, no shading
+    lineart: {
+        id: 'lineart',
+        name: 'Line art',
+        tags: ['line art', 'clean', 'black and white', 'outline', 'reference'],
+        line: { width: 0.0042, color: 'ink', darken: 1, silhouette: 1.4 },
+        shading: { kind: 'none', strength: 0, offset: 0 },
+        tint: 'white',
+        palette: 'color',
+        lineArt: true,
+        proportion: { headScale: 1 },
+        eyes: { scale: 1.05, tall: 1.15, iris: 0.62, shine: 1 },
+        face: { chin: 'pointed', featureLine: 0.0034 },
+        boardOutput: 'vector',
+    },
     'indian-tv': {
         id: 'indian-tv',
         name: 'Indian TV cartoon',

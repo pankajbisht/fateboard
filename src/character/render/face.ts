@@ -35,6 +35,8 @@ type Feature = { facing: number; screen: V3 };
 export function addFace(ctx: Ctx, skel: Skeleton, c: Character, g: HeadGeo) {
     const { pack } = ctx;
     const manga = pack.palette === 'manga';
+    // line art draws the face in ink like manga B/W (no screentone: blush and tears stay as they are)
+    const inked = manga || pack.lineArt === true;
     const { rx, ry, rz, hc, R, depth } = g;
     const p = resolveFace(c.face, c.emotion);
 
@@ -58,7 +60,7 @@ export function addFace(ctx: Ctx, skel: Skeleton, c: Character, g: HeadGeo) {
     const tilt = (Math.atan2(side[1], side[0]) * 180) / Math.PI;
     const ux = Math.cos((tilt * Math.PI) / 180);
     const uy = Math.sin((tilt * Math.PI) / 180);
-    const ink = manga ? MANGA_INK : darken(ctx.fill.skin, 0.75);
+    const ink = inked ? MANGA_INK : darken(ctx.fill.skin, 0.75);
     const lineW = skel.height * pack.face.featureLine;
     /** visible: faces the viewer and lies inside the head's outline (centre and `reach` to each side) */
     const shows = (f: Feature, reach = 0) =>
@@ -99,7 +101,7 @@ export function addFace(ctx: Ctx, skel: Skeleton, c: Character, g: HeadGeo) {
     const baseRy = er * pack.eyes.tall * shape.tall;
     const eyeRy = baseRy * Math.max(0.0001, p.eyeOpen);
     const shut = p.eyeOpen < 0.2;
-    const irisFill = manga ? MANGA_INK : ctx.tint(f.eyeColor);
+    const irisFill = inked ? MANGA_INK : ctx.tint(f.eyeColor);
 
     for (const sx of [-1, 1]) {
         const k = sx < 0 ? 'R' : 'L';
@@ -241,7 +243,7 @@ export function addFace(ctx: Ctx, skel: Skeleton, c: Character, g: HeadGeo) {
                 `brow${k}`,
                 polyline([xy(b1), xy(b2), xy(b3)]),
                 'none',
-                manga ? MANGA_INK : darken(ctx.fill.hair, 0.3),
+                inked ? MANGA_INK : darken(ctx.fill.hair, 0.3),
                 lineW * bs.width,
             );
     }
@@ -261,8 +263,8 @@ export function addFace(ctx: Ctx, skel: Skeleton, c: Character, g: HeadGeo) {
         push(
             'nose',
             d,
-            f.noseStyle === 'dot' ? (manga ? MANGA_INK : darken(ctx.fill.skin, 0.25)) : 'none',
-            manga ? MANGA_INK : darken(ctx.fill.skin, 0.45),
+            f.noseStyle === 'dot' ? (inked ? MANGA_INK : darken(ctx.fill.skin, 0.25)) : 'none',
+            inked ? MANGA_INK : darken(ctx.fill.skin, 0.45),
             lineW * 0.9,
         );
     }
@@ -302,7 +304,7 @@ export function addFace(ctx: Ctx, skel: Skeleton, c: Character, g: HeadGeo) {
             push(
                 'mouth',
                 lens(xy(ml), xy(top), xy(bottom), xy(mr)),
-                manga ? MANGA_INK : '#7a2a2a',
+                inked ? MANGA_INK : '#7a2a2a',
                 ink,
                 lineW * 0.9,
             );

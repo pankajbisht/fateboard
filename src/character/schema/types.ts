@@ -335,6 +335,8 @@ export const STYLE_IDS = [
     'paper-cut',
     'cyberpunk',
     'stick',
+    // clean line art like the owner's reference sheets (reference pass, 2026-11-24)
+    'lineart',
 ] as const;
 export type StyleId = (typeof STYLE_IDS)[number];
 

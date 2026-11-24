@@ -1,6 +1,6 @@
 import { apply, type V3 } from '../rig/math';
 import type { Skeleton } from '../rig/skeleton';
-import { addContour, addLoft, addLoftContour, loftChains, smoothOpen } from './loft';
+import { addContour, addLoft, addLoftContour, loftChains } from './loft';
 import { ring, toScreen, type Ctx, type Material } from './parts';
 import type { P2 } from './shapes';
 
@@ -80,7 +80,8 @@ export function addMangaHanging(
     );
     const depth = legDepth + (key === 'skirt' ? 1 : 1.2);
     addLoft(ctx, key, 'torso', role, rings, depth, false);
-    addLoftContour(ctx, `${key}-contour`, 'torso', role, rings, depth + 0.002);
+    // the sides run on from the torso (full width at the top) to the hem's corners
+    addLoftContour(ctx, `${key}-contour`, 'torso', role, rings, depth + 0.002, [false, false]);
     // the hem: the front half of the last ring
     const screen = rings.map((rg) =>
         rg.map((p): P2 => {
@@ -91,5 +92,12 @@ export function addMangaHanging(
     const c = loftChains(screen);
     const hem = c ? [c.left[c.left.length - 1], ...c.bottom, c.right[c.right.length - 1]] : [];
     if (hem.length >= 2)
-        addContour(ctx, `${key}-hem`, 'torso', role, smoothOpen(hem), depth + 0.002);
+        addContour(
+            ctx,
+            `${key}-hem`,
+            'torso',
+            role,
+            [{ pts: hem, taper: [false, false] }],
+            depth + 0.002,
+        );
 }

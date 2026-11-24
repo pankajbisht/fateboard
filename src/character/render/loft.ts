@@ -1,4 +1,5 @@
 import type { V3 } from '../rig/math';
+import { inkRibbon, type InkChain } from './ink';
 import type { PartGroup } from '../schema/types';
 import { addSurface, toScreen, type Ctx, type Material } from './parts';
 import { hull, smoothClosed, smoothPoly, type P2 } from './shapes';
@@ -148,27 +149,23 @@ export function smoothOpen(p: P2[]): string {
     return `${d}L${f(last[0])} ${f(last[1])}`;
 }
 
-/** An outline-only part: the contour that goes round fills drawn without outlines. */
+/**
+ * An outline-only part: the contour that goes round fills drawn without outlines, as an ink line (ink.ts): a filled
+ * ribbon of the outline colour that narrows toward each free end.
+ */
 export function addContour(
     ctx: Ctx,
     key: string,
     group: PartGroup | 'hair',
     role: Material,
-    d: string,
+    chains: InkChain[],
     depth: number,
 ) {
-    const stroke = ctx.outline(ctx.fill[role]);
-    if (!stroke || !d) return;
-    ctx.parts.push({
-        key,
-        group,
-        role: 'line',
-        d,
-        fill: 'none',
-        stroke,
-        strokeWidth: ctx.line * ctx.pack.line.silhouette,
-        depth,
-    });
+    const ink = ctx.outline(ctx.fill[role]);
+    if (!ink) return;
+    const d = inkRibbon(chains, ctx.line * ctx.pack.line.silhouette);
+    if (!d) return;
+    ctx.parts.push({ key, group, role: 'line', d, fill: ink, stroke: null, strokeWidth: 0, depth });
 }
 
 const project3 = (ctx: Ctx, rings: V3[][]) => rings.map((r) => r.map((p) => toScreen(ctx, p)));
@@ -229,9 +226,11 @@ export function addLoftContour(
     role: Material,
     rings: V3[][],
     depth: number,
+    /** narrow the [top, bottom] ends (free ends); a side that runs on into another contour keeps full width */
+    taper: [boolean, boolean] = [true, false],
 ) {
     const c = loftChains(flat2(project3(ctx, rings)));
     if (!c) return;
-    addContour(ctx, `${key}-l`, group, role, smoothOpen(c.left), depth);
-    addContour(ctx, `${key}-r`, group, role, smoothOpen(c.right), depth);
+    addContour(ctx, `${key}-l`, group, role, [{ pts: c.left, taper }], depth);
+    addContour(ctx, `${key}-r`, group, role, [{ pts: c.right, taper }], depth);
 }

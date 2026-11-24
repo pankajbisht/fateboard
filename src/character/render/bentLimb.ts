@@ -193,7 +193,10 @@ export function addBentLimb(ctx: Ctx, o: BentLimb) {
         o.contour,
         o.groups[0],
         o.roles[0],
-        smoothOpen([...L1, Lj]) + smoothOpen([Rj, ...[...R1].reverse()]),
+        [
+            { pts: [...L1, Lj], taper: [true, false] },
+            { pts: [Rj, ...[...R1].reverse()], taper: [false, true] },
+        ],
         z1 + 0.002,
     );
     addContour(
@@ -201,7 +204,7 @@ export function addBentLimb(ctx: Ctx, o: BentLimb) {
         `${o.contour}-lo`,
         o.groups[1],
         o.roles[0],
-        smoothOpen([Lj, ...L2, ...endCap, ...[...R2].reverse(), Rj]),
+        [{ pts: [Lj, ...L2, ...endCap, ...[...R2].reverse(), Rj], taper: [false, false] }],
         Math.max(z1, z2) + 0.002,
     );
     if ((o.muscle ?? 0) > 0.2) {
