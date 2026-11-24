@@ -51,9 +51,10 @@ describe('the bust is its own setting', () => {
                 expect(/NaN|Infinity/.test(p.d), p.key).toBe(false);
     });
 
-    it('a grown man shows the lower edge of the pectorals; a woman the lower edge of the bust', () => {
-        const man = applyEdit(adult, { body: { gender: 0, muscle: 0.2 } });
+    it('a muscular man shows the lower edge of the pectorals, a slim one none (reference sheet); a woman her bust', () => {
+        const man = applyEdit(adult, { body: { gender: 0, muscle: 0.6 } });
         expect(keys(man)).toContain('chest-1');
+        expect(keys(applyEdit(man, { body: { muscle: 0.2 } }))).not.toContain('chest-1');
         const woman = applyEdit(adult, { body: { gender: 1 } });
         expect(keys(woman)).toContain('chest-1');
         // a child has neither

@@ -182,7 +182,10 @@ export function addJointDetail(
     // only while the chest faces the viewer: turned further, the lines leave the body's outline (they floated in
     // front of the chest seen from the side)
     // pectorals belong to a male frame: a muscular woman showed pectoral and sternum lines under her bust
-    const pecs = c.body.gender < 0.5 && (c.body.muscle > 0.35 || manChest);
+    // on the manga body a man's chest shows its pectorals only when he is muscular: on a slim boy in a T-shirt the
+    // arcs read as a bust (the reference sheets draw none)
+    const pecs =
+        c.body.gender < 0.5 && c.body.age >= 14 && (c.body.muscle > 0.35 || (manChest && !manga));
     if (faces('chest') > 0.45 && (z.bust > 0.5 || pecs)) {
         const ink = ctx.outline(ctx.fill.top);
         const front = z.chestDepth * 0.5;

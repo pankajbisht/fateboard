@@ -3,6 +3,7 @@ import type { PartGroup } from '../schema/types';
 import { addContour, smoothOpen } from './loft';
 import { addSurface, toScreen, type Ctx, type Material } from './parts';
 import { capsulePoly, hull, smoothClosed, smoothPoly, type P2 } from './shapes';
+import { addFolds } from './clothDetail';
 
 /**
  * Bent limbs (manga body, docs/CHARACTER_STUDIO.md): an arm or a leg drawn as ONE shape that follows its bent centre
@@ -207,6 +208,7 @@ export function addBentLimb(ctx: Ctx, o: BentLimb) {
         [{ pts: [Lj, ...L2, ...endCap, ...[...R2].reverse(), Rj], taper: [false, false] }],
         Math.max(z1, z2) + 0.002,
     );
+    limbFolds(ctx, o, B, u1, u2, rJ, Math.max(z1, z2) + 0.003);
     if ((o.muscle ?? 0) > 0.2) {
         // inner lines: the swell of the upper arm or thigh and of the forearm or calf, on the side away from the light
         const side = (n: P2): 1 | -1 => (dot(n, ctx.light) > 0 ? -1 : 1);
@@ -281,6 +283,11 @@ function addCapsuleLimb(ctx: Ctx, o: BentLimb, S: V3[], [rA, rJ, rC]: [number, n
     );
     // the outline: both capsules stroked twice as wide, just behind the fills, so only the outer half shows and the
     // two read as one form with no line where they overlap
+    const u = (p: P2, q: P2): P2 => {
+        const l = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
+        return [(q[0] - p[0]) / l, (q[1] - p[1]) / l];
+    };
+    limbFolds(ctx, o, B, u(A, B), u(B, C), rJ, Math.max(z1, z2) + 0.003);
     const stroke = ctx.outline(ctx.fill[o.roles[0]]);
     if (stroke)
         ctx.parts.push({
@@ -293,4 +300,10 @@ function addCapsuleLimb(ctx: Ctx, o: BentLimb, S: V3[], [rA, rJ, rC]: [number, n
             strokeWidth: 2 * ctx.line * ctx.pack.line.silhouette,
             depth: Math.min(z1, z2) - 0.001,
         });
+}
+
+/** Folds on the inside of the bend when the whole limb is in cloth (clothDetail.ts): `legL-fold0`, `armR-fold1` … */
+function limbFolds(ctx: Ctx, o: BentLimb, B: P2, u1: P2, u2: P2, r: number, depth: number) {
+    if (o.roles[0] === 'skin' || o.roles[1] === 'skin') return;
+    addFolds(ctx, o.contour.replace('-contour', ''), o.groups[1], o.roles[1], B, u1, u2, r, depth);
 }

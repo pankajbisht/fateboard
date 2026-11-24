@@ -1,6 +1,7 @@
 import type { V3 } from '../rig/math';
 import type { Skeleton } from '../rig/skeleton';
 import { addLoft, addLoftContour } from './loft';
+import { addRingHem } from './clothDetail';
 import { on, ring, type Ctx } from './parts';
 
 /**
@@ -10,7 +11,13 @@ import { on, ring, type Ctx } from './parts';
  * thighs with an arch for the crotch. The top and the hips are two lofts that overlap at the waist; the cloth roles
  * stay separate, but there is one contour round everything, so no seam shows where a top meets trousers.
  */
-export function addMangaTorso(ctx: Ctx, skel: Skeleton, fit: number, bust: boolean) {
+export function addMangaTorso(
+    ctx: Ctx,
+    skel: Skeleton,
+    fit: number,
+    bust: boolean,
+    untucked = false,
+) {
     const z = skel.size;
     const t = skel.offset.spine2[1] / 0.26; // torso length
     const hy = skel.offset.hipL[1]; // hip joint below the pelvis (negative)
@@ -32,9 +39,27 @@ export function addMangaTorso(ctx: Ctx, skel: Skeleton, fit: number, bust: boole
         // the slope of the shoulders: it runs out to the top of the arm, no higher than the neck base
         ring(ctx, 'chest', t * 0.26, lerp(neckBase, outer, 0.3), chestZ * 0.6 * fit, 10),
         ring(ctx, 'chest', t * 0.18, outer * 0.68, chestZ * 0.68 * fit, 12),
-        ring(ctx, 'chest', t * 0.09, outer * 0.9, chestZ * 0.76 * fit, 12, bust ? z.bust * 0.2 : 0),
+        ring(
+            ctx,
+            'chest',
+            t * 0.09,
+            lerp(outer, chestHalf, 0.25),
+            chestZ * 0.76 * fit,
+            12,
+            bust ? z.bust * 0.2 : 0,
+        ),
         // the bust spreads over four rings (upper slope, fullest, fullest, underside) so its profile is a soft curve
-        ring(ctx, 'chest', t * 0.0, outer * 0.97, chestZ * 0.8 * fit, 12, bust ? z.bust * 0.65 : 0),
+        ring(
+            ctx,
+            'chest',
+            t * 0.0,
+            // at the armpit the body is the chest, not the deltoid: the hanging arm carries that (a male torso
+            // bulged out here like a bust once the arms were slim)
+            lerp(outer, chestHalf + z.bust * 0.3, 0.6),
+            chestZ * 0.8 * fit,
+            12,
+            bust ? z.bust * 0.65 : 0,
+        ),
         // under the arm, the body closes in to the chest, then the ribs
         ring(
             ctx,
@@ -128,6 +153,13 @@ export function addMangaTorso(ctx: Ctx, skel: Skeleton, fit: number, bust: boole
         crotch,
     ];
     addLoft(ctx, 'hips', 'torso', 'bottom', hips, undefined, false);
+    // an untucked top hangs over the trousers: drawn over them, with its hem across the hips
+    const top = ctx.parts.find((x) => x.key === 'torso');
+    const bottom = ctx.parts.find((x) => x.key === 'hips');
+    if (untucked && top && bottom) {
+        top.depth = Math.max(top.depth, bottom.depth + 0.001);
+        addRingHem(ctx, 'top-hem', 'torso', 'top', rings[rings.length - 1], top.depth + 0.003);
+    }
     // one contour round shoulders, chest, waist and hips: no seam where the top meets the trousers
     const depth = Math.max(
         ...['torso', 'hips'].map((k) => ctx.parts.find((x) => x.key === k)?.depth ?? 0),

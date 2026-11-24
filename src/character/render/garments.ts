@@ -1,5 +1,6 @@
 import type { BottomDef, Collar, TopDef } from '../data/garments';
 import { addMangaHanging } from './hangLoft';
+import { mangaLeg, mangaSleeve } from './mangaGarments';
 import { apply, lerp3, normalize, type V3 } from '../rig/math';
 import type { Skeleton } from '../rig/skeleton';
 import { project } from './camera';
@@ -72,8 +73,9 @@ export function addSleeve(ctx: Ctx, skel: Skeleton, s: Side, def: TopDef, manga 
     const lower = `lowerArm${s}` as const;
     const hand = `hand${s}` as const;
     const L = def.sleeve;
-    // the manga body paints the cloth onto the limb itself (loose or not): only the parts left bare get an overlay
+    // the manga body paints the cloth onto the limb itself (loose or not): only the parts left bare get a tube
     const roles = sleeveRoles(def, manga);
+    if (manga) return mangaSleeve(ctx, skel, s, def, roles);
     const k = def.fit > 1.02 ? def.fit * 1.1 : 1;
     if (L > 0 && roles.upper === 'skin')
         cover(
@@ -118,8 +120,9 @@ export function addLegCloth(ctx: Ctx, skel: Skeleton, s: Side, def: BottomDef, m
     const thigh = `upperLeg${s}` as const;
     const shin = `lowerLeg${s}` as const;
     const foot = `foot${s}` as const;
-    // the manga body paints the cloth onto the limb itself (loose or not): only bare parts get an overlay
+    // the manga body paints the cloth onto the limb itself (loose or not): only bare parts get a tube
     const roles = legRoles(def, manga);
+    if (manga) return mangaLeg(ctx, skel, s, def, roles);
     if (def.leg > 0 && roles.thigh === 'skin')
         cover(
             ctx,

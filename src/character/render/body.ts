@@ -1,5 +1,6 @@
 import type { Character } from '../schema/types';
-import type { V3 } from '../rig/math';
+import { apply, type V3 } from '../rig/math';
+import { project } from './camera';
 import type { Skeleton } from '../rig/skeleton';
 import { BOTTOM_DEFS, TOP_DEFS } from '../data/garments';
 import { addBodyAccessories } from './accessoriesBody';
@@ -7,6 +8,7 @@ import { addHand } from './hand';
 import { addJointDetail } from './joints';
 import { PROFILES, addBentLimb } from './bentLimb';
 import { addMangaTorso } from './mangaTorso';
+import { addHoodieDetail, looseOf } from './clothDetail';
 import { addPocketCovers, pocketHands } from './pockets';
 import { addProps, handShapeFor } from './props';
 import {
@@ -28,13 +30,6 @@ import { addLegPocket, addTrim } from './trims';
  * twist with it), neck, arms, hands, legs and shoes. Clothes come from the garment data (data/garments.ts) through
  * render/garments.ts: sleeves, trouser legs, skirts and long tops, collars and folds.
  */
-
-/**
- * How much a garment widens a manga limb it covers: loose cloth (fit over 1) stands off the body, tight cloth (under 1)
- * hugs it. 1 when the limb is bare.
- */
-const looseOf = (covered: boolean, fit: number) =>
-    !covered ? 1 : fit > 1 ? Math.min(2, 1 + (fit - 1) * 1.6) : fit;
 
 export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
     const z = skel.size;
@@ -82,7 +77,8 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
             torso.push(
                 on(ctx, 'chest', [sx * z.shoulderW * 0.17, -t * 0.03, z.chestDepth * 0.5 + z.bust]),
             );
-    if (manga) addMangaTorso(ctx, skel, fit, z.bust > 0.5);
+    // a top that ends at the waist hangs over the trousers (the reference sheets draw T-shirts untucked)
+    if (manga) addMangaTorso(ctx, skel, fit, z.bust > 0.5, topDef.hang === 'waist');
     else addShell(ctx, 'torso', 'torso', 'top', torso);
 
     // hips and the top of the legs (trousers / shorts / skirt waistband)
@@ -183,6 +179,8 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
     addTrim(ctx, skel, topDef.trim);
     addTopHang(ctx, skel, topDef, manga);
     addCollar(ctx, skel, topDef.collar);
+    if (manga && c.dress.top.kind.includes('hoodie'))
+        addHoodieDetail(ctx, skel, project(ctx.view, apply(ctx.posed.rot.chest, [0, 0, 1]))[2]);
     if (topDef.folds) addFolds(ctx, skel, topDef.hang);
     addPocketCovers(ctx, skel, c, botDef);
     addJointDetail(ctx, skel, c, topDef, botDef);
