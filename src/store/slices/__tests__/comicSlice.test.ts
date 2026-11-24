@@ -117,3 +117,109 @@ describe('tones and effects', () => {
         expect(h.get().addMangaEffect('burst')).toBe(true);
     });
 });
+
+describe('a scene or picture in a panel', () => {
+    /** a 16:9 "scene" (any object with a size works) on panel `i` of a 2 x 2 layout */
+    const place = (i: number) => {
+        h.get().addPanelLayout('grid-4');
+        const f = frames()[i];
+        // a big 16:9 scene dropped so that its centre is in panel `i` (it spills over the others)
+        const scene = new fabric.Rect({
+            left: f.left + f.width / 2,
+            top: f.top + f.height / 2,
+            width: 800,
+            height: 450,
+            fill: '#888',
+            strokeWidth: 0,
+            originX: 'center',
+            originY: 'center',
+        }) as unknown as Obj;
+        canvas.add(scene);
+        canvas.setActiveObject(scene);
+        return { scene, frame: f };
+    };
+    /** a frame's own box (the stroke is not part of the panel) */
+    const panelBox = (f: Obj) => {
+        const w = (f.width as number) * (f.scaleX as number);
+        const hh = (f.height as number) * (f.scaleY as number);
+        const c = f.getCenterPoint();
+        return { left: c.x - w / 2, top: c.y - hh / 2, width: w, height: hh };
+    };
+    const box = (o: Obj) => {
+        const r = o.getBoundingRect();
+        return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, h: r.height };
+    };
+
+    it('Fill covers the panel it overlaps most, centred, on the Art layer (so the panel cuts the overflow)', () => {
+        const { scene, frame } = place(2);
+        expect(h.get().fitToPanel('fill')).toBe(true);
+        const b = box(scene);
+        const fb = panelBox(frame);
+        expect(b.cx).toBeCloseTo(fb.left + fb.width / 2, 1);
+        expect(b.cy).toBeCloseTo(fb.top + fb.height / 2, 1);
+        expect(b.w).toBeGreaterThanOrEqual(fb.width - 0.5);
+        expect(b.h).toBeGreaterThanOrEqual(fb.height - 0.5);
+        // one of the two sides fits exactly (the other is cropped)
+        expect(Math.min(b.w - fb.width, b.h - fb.height)).toBeCloseTo(0, 0);
+        expect(scene.layerId).toBe(layerNamed('Art').id);
+        expect(saveState).toHaveBeenCalled();
+    });
+
+    it('Fit shows the whole scene inside the panel', () => {
+        const { scene, frame } = place(1);
+        expect(h.get().fitToPanel('fit')).toBe(true);
+        const b = box(scene);
+        const fb = panelBox(frame);
+        expect(b.w).toBeLessThanOrEqual(fb.width + 0.5);
+        expect(b.h).toBeLessThanOrEqual(fb.height + 0.5);
+        expect(Math.max(b.w - fb.width, b.h - fb.height)).toBeCloseTo(0, 0);
+    });
+
+    it('a rotated picture is turned upright to fit', () => {
+        const { scene } = place(0);
+        scene.set({ angle: 30 });
+        h.get().fitToPanel('fill');
+        expect(scene.angle).toBe(0);
+    });
+
+    it('an explicit panel wins over the nearest one', () => {
+        const { scene } = place(0);
+        const other = frames()[3];
+        expect(h.get().fitToPanel('fill', other)).toBe(true);
+        const fb = panelBox(other);
+        expect(box(scene).cx).toBeCloseTo(fb.left + fb.width / 2, 1);
+    });
+
+    it('Zoom in and out scale about the centre, so the shot stays framed', () => {
+        const { scene } = place(0);
+        h.get().fitToPanel('fill');
+        const before = box(scene);
+        expect(h.get().zoomInPanel(1.25)).toBe(true);
+        const after = box(scene);
+        expect(after.w).toBeCloseTo(before.w * 1.25, 1);
+        expect(after.cx).toBeCloseTo(before.cx, 1);
+        expect(after.cy).toBeCloseTo(before.cy, 1);
+        h.get().zoomInPanel(0.8);
+        expect(box(scene).w).toBeCloseTo(before.w, 1);
+        expect(h.get().zoomInPanel(0)).toBe(false);
+        expect(h.get().zoomInPanel(Number.NaN)).toBe(false);
+    });
+
+    it('does nothing for a panel frame, nothing selected, or a page without panels (and says so)', () => {
+        const toast = vi.fn();
+        h.set({ showToast: toast } as never);
+        const rect = new fabric.Rect({ left: 0, top: 0, width: 50, height: 50 });
+        canvas.add(rect);
+        canvas.setActiveObject(rect);
+        expect(h.get().fitToPanel('fill')).toBe(false);
+        expect(toast).toHaveBeenCalledWith(
+            expect.objectContaining({ message: expect.stringMatching(/panels first/i) }),
+        );
+        h.get().addPanelLayout('single');
+        canvas.setActiveObject(frames()[0]);
+        expect(h.get().fitToPanel('fill')).toBe(false);
+        canvas.discardActiveObject();
+        expect(h.get().fitToPanel('fill')).toBe(false);
+        expect(h.get().zoomInPanel(1.1)).toBe(false);
+    });
+});

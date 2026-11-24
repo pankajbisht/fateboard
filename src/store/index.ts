@@ -31,6 +31,9 @@ import { createPageLayersSlice } from './slices/createPageLayersSlice.ts';
 import { createDocumentSlice } from './slices/createDocumentSlice.ts';
 import { createComicSlice } from './slices/createComicSlice.ts';
 import { createNotesSlice } from './slices/createNotesSlice.ts';
+import { createTimelineSlice } from './slices/createTimelineSlice.ts';
+import { createCharacterSlice } from './slices/createCharacterSlice.ts';
+import { createSceneSlice } from './slices/createSceneSlice.ts';
 import { createAnimationSlice } from './slices/createAnimationSlice.ts';
 
 export const combinedSlice = (set, get, store) => ({
@@ -64,6 +67,9 @@ export const combinedSlice = (set, get, store) => ({
     ...createDocumentSlice(set, get, store),
     ...createComicSlice(set, get, store),
     ...createNotesSlice(set, get, store),
+    ...createTimelineSlice(set, get, store),
+    ...createCharacterSlice(set, get, store),
+    ...createSceneSlice(set, get, store),
     ...createAnimationSlice(set, get, store),
 });
 

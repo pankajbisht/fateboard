@@ -41,7 +41,7 @@ const LEGACY_CEILINGS: Record<string, number> = {
     '/src/components/organisms/effects/ui/ExportCanvas.tsx': 1150, // was 1183: export bounds moved to lib/export/exportBounds.ts (2026-11-17)
     '/src/store/slices/createLayersSlice.ts': 1024,
     '/src/store/slices/templateSlice.ts': 933,
-    '/src/store/slices/createAnimationSlice.ts': 861,
+    '/src/store/slices/createAnimationSlice.ts': 806, // was 861: export runner → animation/exportRun.ts (GIF export, 2026-11-17)
     '/src/lib/utils/shapeConnectors.ts': 851,
     '/src/components/organisms/effects/ui/TemplateGallery.tsx': 818,
     '/src/components/organisms/layer/LayersPanel.tsx': 791, // -23: key labels moved to layer/layerKeys.ts (2026-11-13)

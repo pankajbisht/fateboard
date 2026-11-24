@@ -1685,6 +1685,83 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
         },
     ],
 
+    characters: [
+        {
+            id: 'webtoon-hero',
+            title: 'A waving hero for a webtoon panel',
+            brief: 'Start from a cast member, make her older and taller, pose her, and put her on the page.',
+            icon: 'character',
+            steps: [
+                s('Open Characters and pick Meera from the cast', 'Characters › Cast', [40, 60]),
+                s('Make her a teenager: age 15, a little taller', 'Studio › Body', [120, 70]),
+                s('Search “wave” and pick the Wave pose', 'Studio › Poses', [150, 50]),
+                s('Turn the camera to ¾ for a livelier view', 'Studio › Turn', [160, 150]),
+                s('Place her on the page; select her later to edit', 'Place on page', [240, 90]),
+            ],
+            result: 'A posed, editable character on the page, the same from every side.',
+            scene: [
+                ...at(0, rect(20, 14, 280, 152, { fill: 'page', stroke: 'line', w: 1 })),
+                ...during(0, 1, circle(160, 52, 13, { fill: '#b87a4b', stroke: 'ink', w: 1 })),
+                ...during(
+                    0,
+                    1,
+                    path('M146 98 h28 l6 26 h-40Z', { fill: '#7c3aed', stroke: 'ink', w: 1 }),
+                ),
+                ...during(0, 1, rect(148, 66, 24, 34, { fill: '#ec4899', stroke: 'ink', w: 1 })),
+                ...during(0, 1, path('M152 124 v24 M168 124 v24', { stroke: 'ink', w: 3 })),
+                ...at(1, circle(160, 44, 14, { fill: '#b87a4b', stroke: 'ink', w: 1 })),
+                ...at(1, path('M146 40 q14 -20 28 0 v18 q-14 -8 -28 0Z', { fill: '#2b1d14' })),
+                ...at(1, rect(147, 60, 26, 40, { fill: '#ec4899', stroke: 'ink', w: 1 })),
+                ...at(
+                    1,
+                    path('M145 100 h30 l7 28 h-44Z', { fill: '#7c3aed', stroke: 'ink', w: 1 }),
+                ),
+                ...at(1, path('M153 128 v28 M167 128 v28', { stroke: 'ink', w: 3 })),
+                ...at(1, path('M148 64 l-10 30', { stroke: '#b87a4b', w: 4 })),
+                ...during(1, 2, path('M172 64 l10 30', { stroke: '#b87a4b', w: 4 })),
+                ...at(2, path('M172 64 l18 -6 l4 -22', { stroke: '#b87a4b', w: 4 })),
+                ...at(3, path('M120 168 a40 6 0 1 0 80 0', { stroke: 'muted', w: 1, dash: '3 3' })),
+                ...at(4, rect(132, 22, 72, 140, SELECT)),
+            ],
+            uses: ['layers'],
+        },
+        {
+            id: 'class-photo',
+            title: 'A class photo in the school yard',
+            brief: 'Start a scene, pick a place, add four classmates, arrange them by height and frame them.',
+            icon: 'image',
+            steps: [
+                s('Open Characters and press New scene', 'Characters › Scenes', [40, 60]),
+                s('Pick School yard, then Golden hour', 'Scene › Place', [60, 50]),
+                s('Add character four times', 'Scene › Cast', [60, 90]),
+                s(
+                    'Press Class photo: the tallest stand at the back',
+                    'Scene › Cast › Group',
+                    [160, 110],
+                ),
+                s('Pick ¾ corner, then Place scene on page', 'Scene › Camera', [240, 40]),
+            ],
+            result: 'One framed picture on the page, the same light on the yard and the children.',
+            scene: [
+                ...at(0, rect(20, 14, 280, 152, { fill: 'page', stroke: 'line', w: 1 })),
+                ...at(1, rect(20, 14, 280, 70, { fill: '#f7b267' })),
+                ...at(1, rect(20, 84, 280, 82, { fill: '#cdbfa8' })),
+                ...at(1, rect(60, 40, 200, 44, { fill: '#e8c39e', stroke: 'ink', w: 1 })),
+                // in a line, as they come in
+                ...during(2, 3, rect(110, 96, 14, 40, { fill: '#16a34a', stroke: 'ink', w: 1 })),
+                ...during(2, 3, rect(140, 92, 14, 44, { fill: '#2563eb', stroke: 'ink', w: 1 })),
+                ...during(2, 3, rect(170, 104, 14, 34, { fill: '#ec4899', stroke: 'ink', w: 1 })),
+                ...during(2, 3, rect(196, 108, 14, 30, { fill: '#f59e0b', stroke: 'ink', w: 1 })),
+                // class photo: the tall two at the back, the small two in front
+                ...at(3, rect(134, 84, 14, 40, { fill: '#16a34a', stroke: 'ink', w: 1 })),
+                ...at(3, rect(164, 80, 14, 44, { fill: '#2563eb', stroke: 'ink', w: 1 })),
+                ...at(3, rect(122, 112, 14, 34, { fill: '#ec4899', stroke: 'ink', w: 1 })),
+                ...at(3, rect(176, 116, 14, 30, { fill: '#f59e0b', stroke: 'ink', w: 1 })),
+                ...at(4, rect(20, 14, 280, 152, SELECT)),
+            ],
+            uses: ['layers'],
+        },
+    ],
     comic: [
         {
             id: 'four-panel-manga',

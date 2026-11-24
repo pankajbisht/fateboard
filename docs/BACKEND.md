@@ -14,7 +14,7 @@ limits, prices, store rules) must be checked against current docs before it is r
    must reach other devices or people, enforce quotas, serve public pages.
 3. **Never lose a board** (the P0 data-safety rule, BUG-154 / 172 apply to the server too): a conflict keeps both
    versions, a failed upload stays queued and visible, every delete is soft first.
-4. **One API contract we own.** Clients talk to *our* HTTP API with schemas in one shared module; the database,
+4. **One API contract we own.** Clients talk to _our_ HTTP API with schemas in one shared module; the database,
    auth and storage vendors sit behind it, so they can be replaced without touching the editor.
 5. **Same TypeScript everywhere**: one language for app and API, shared types, shared validation.
 6. **Least privilege and privacy by default**: row-level access rules on every table, board content and AI
@@ -22,32 +22,32 @@ limits, prices, store rules) must be checked against current docs before it is r
 
 ## 2. What the backend does (and does not)
 
-| Capability | Needs backend? | Phase |
-|---|---|---|
-| Draw, autosave, open / save files, templates, export | no (stays client-only) | today |
-| Crash / error reporting | no: a SaaS (e.g. Sentry) receives it directly | Phase 0–1 |
-| Desktop auto-update feed | no: a static JSON + signed files on GitHub Releases | Phase 3 |
-| Accounts (sign in on every platform) | **yes** | 5a |
-| AI features (Claude proxy, quotas) | **yes** (the key must stay server-side) | 5a |
-| Cloud save / open, then automatic sync across devices | **yes** | 5b, 5c |
-| Share links (read-only), public share pages with OG previews | **yes** | 5d |
-| Real-time collaboration | **yes** (WebSocket rooms) | 5e, only if Q18 = yes |
-| Remote MCP server for claude.ai and other MCP clients | **yes** | 5f |
-| Payments / plans | **yes** (webhooks → entitlements) | 5g |
+| Capability                                                   | Needs backend?                                      | Phase                 |
+| ------------------------------------------------------------ | --------------------------------------------------- | --------------------- |
+| Draw, autosave, open / save files, templates, export         | no (stays client-only)                              | today                 |
+| Crash / error reporting                                      | no: a SaaS (e.g. Sentry) receives it directly       | Phase 0–1             |
+| Desktop auto-update feed                                     | no: a static JSON + signed files on GitHub Releases | Phase 3               |
+| Accounts (sign in on every platform)                         | **yes**                                             | 5a                    |
+| AI features (Claude proxy, quotas)                           | **yes** (the key must stay server-side)             | 5a                    |
+| Cloud save / open, then automatic sync across devices        | **yes**                                             | 5b, 5c                |
+| Share links (read-only), public share pages with OG previews | **yes**                                             | 5d                    |
+| Real-time collaboration                                      | **yes** (WebSocket rooms)                           | 5e, only if Q18 = yes |
+| Remote MCP server for claude.ai and other MCP clients        | **yes**                                             | 5f                    |
+| Payments / plans                                             | **yes** (webhooks → entitlements)                   | 5g                    |
 
 ## 3. Recommended stack
 
-| Piece | Pick | Why | Alternative |
-|---|---|---|---|
-| Auth, database, file storage | **Supabase** (managed: Auth, Postgres with Row Level Security, Storage) | one managed service covers the first three needs for a solo team; Postgres is a long-term safe choice; free tier to start | Firebase (NoSQL, more lock-in); self-hosted Postgres + an auth library (more ops) |
-| API (our code) | **Hono** (TypeScript web framework) | tiny, Web-standard `Request` / `Response`, runs unchanged on Supabase Edge Functions (Deno), Cloudflare Workers, Node or Bun, so hosting can move without a rewrite | Fastify on Node (needs an always-on server) |
-| API hosting, first | **Supabase Edge Functions** running the Hono app | one vendor while small | **Cloudflare Workers** when needed: longer streaming responses, global latency, or real-time rooms (`UNKNOWN - verify` Edge Function wall-clock limits against long AI streams) |
-| Validation + shared types | **zod** schemas in one contract module, used by client and API | a request the client can build is a request the server accepts | JSON Schema + codegen |
-| Database access in the API | SQL migrations in git (`supabase/migrations/`), a typed query layer (Supabase client or Drizzle) | migrations reviewed like code | Prisma |
-| Real-time collaboration (only if Q18 = yes) | **Yjs** documents, rooms on **Cloudflare Durable Objects** (one object per board, WebSockets) | per-board state with strong ordering, scales to zero | Supabase Realtime broadcast carrying Yjs updates (`UNKNOWN - verify` fit); a hosted Yjs service |
-| Large files (boards, images, exports) | Supabase Storage first; **Cloudflare R2** if download (egress) costs grow | R2 has no egress fees | S3 |
-| Email (magic links, notices) | the auth provider's built-in sender first, a transactional email service at launch | deliverability | n/a |
-| Payments | **Stripe** (web), app-store purchases on iOS / Android where store rules require them (`UNKNOWN - verify` current Apple / Google rules) | standard | Paddle / Lemon Squeezy (merchant of record handles tax) |
+| Piece                                       | Pick                                                                                                                                    | Why                                                                                                                                                                 | Alternative                                                                                                                                                                     |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Auth, database, file storage                | **Supabase** (managed: Auth, Postgres with Row Level Security, Storage)                                                                 | one managed service covers the first three needs for a solo team; Postgres is a long-term safe choice; free tier to start                                           | Firebase (NoSQL, more lock-in); self-hosted Postgres + an auth library (more ops)                                                                                               |
+| API (our code)                              | **Hono** (TypeScript web framework)                                                                                                     | tiny, Web-standard `Request` / `Response`, runs unchanged on Supabase Edge Functions (Deno), Cloudflare Workers, Node or Bun, so hosting can move without a rewrite | Fastify on Node (needs an always-on server)                                                                                                                                     |
+| API hosting, first                          | **Supabase Edge Functions** running the Hono app                                                                                        | one vendor while small                                                                                                                                              | **Cloudflare Workers** when needed: longer streaming responses, global latency, or real-time rooms (`UNKNOWN - verify` Edge Function wall-clock limits against long AI streams) |
+| Validation + shared types                   | **zod** schemas in one contract module, used by client and API                                                                          | a request the client can build is a request the server accepts                                                                                                      | JSON Schema + codegen                                                                                                                                                           |
+| Database access in the API                  | SQL migrations in git (`supabase/migrations/`), a typed query layer (Supabase client or Drizzle)                                        | migrations reviewed like code                                                                                                                                       | Prisma                                                                                                                                                                          |
+| Real-time collaboration (only if Q18 = yes) | **Yjs** documents, rooms on **Cloudflare Durable Objects** (one object per board, WebSockets)                                           | per-board state with strong ordering, scales to zero                                                                                                                | Supabase Realtime broadcast carrying Yjs updates (`UNKNOWN - verify` fit); a hosted Yjs service                                                                                 |
+| Large files (boards, images, exports)       | Supabase Storage first; **Cloudflare R2** if download (egress) costs grow                                                               | R2 has no egress fees                                                                                                                                               | S3                                                                                                                                                                              |
+| Email (magic links, notices)                | the auth provider's built-in sender first, a transactional email service at launch                                                      | deliverability                                                                                                                                                      | n/a                                                                                                                                                                             |
+| Payments                                    | **Stripe** (web), app-store purchases on iOS / Android where store rules require them (`UNKNOWN - verify` current Apple / Google rules) | standard                                                                                                                                                            | Paddle / Lemon Squeezy (merchant of record handles tax)                                                                                                                         |
 
 Why not "everything in one BaaS, no API of our own": AI calls, quotas, share pages and MCP need server logic and
 secrets anyway, and an API we own keeps the client independent of the vendor (principle 4).
@@ -75,15 +75,15 @@ secrets anyway, and an API we own keeps the client independent of the vendor (pr
 
 ### 4.1 Data model (first version)
 
-| Table | Key columns | Notes |
-|---|---|---|
-| `profiles` | `id` (= auth user id), `display_name`, `created_at` | one row per account |
-| `boards` | `id`, `owner_id`, `title`, `version` (int), `updated_at`, `size_bytes`, `thumbnail_path`, `deleted_at` | the index; the content lives in storage |
-| `board_revisions` | `board_id`, `version`, `object_path`, `created_at`, `device_id` | keep the last N revisions: undo across devices, conflict recovery |
-| `assets` | `hash` (sha-256), `owner_id`, `object_path`, `mime`, `size_bytes` | images stored once by hash (Q17: zip / assets format makes this natural) |
-| `shares` | `token` (random, unguessable), `board_id`, `version` (pinned or latest), `expires_at`, `revoked_at` | read-only links |
-| `ai_usage` | `user_id`, `day`, `input_tokens`, `output_tokens`, `requests` | quotas and cost tracking |
-| `entitlements` | `user_id`, `plan`, `ai_quota`, `storage_quota`, `source` (stripe / apple / google) | written only by webhooks |
+| Table             | Key columns                                                                                            | Notes                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ |
+| `profiles`        | `id` (= auth user id), `display_name`, `created_at`                                                    | one row per account                                                      |
+| `boards`          | `id`, `owner_id`, `title`, `version` (int), `updated_at`, `size_bytes`, `thumbnail_path`, `deleted_at` | the index; the content lives in storage                                  |
+| `board_revisions` | `board_id`, `version`, `object_path`, `created_at`, `device_id`                                        | keep the last N revisions: undo across devices, conflict recovery        |
+| `assets`          | `hash` (sha-256), `owner_id`, `object_path`, `mime`, `size_bytes`                                      | images stored once by hash (Q17: zip / assets format makes this natural) |
+| `shares`          | `token` (random, unguessable), `board_id`, `version` (pinned or latest), `expires_at`, `revoked_at`    | read-only links                                                          |
+| `ai_usage`        | `user_id`, `day`, `input_tokens`, `output_tokens`, `requests`                                          | quotas and cost tracking                                                 |
+| `entitlements`    | `user_id`, `plan`, `ai_quota`, `storage_quota`, `source` (stripe / apple / google)                     | written only by webhooks                                                 |
 
 Every table has Row Level Security: a user reads and writes only rows where `owner_id = auth.uid()`; `shares`
 are read through the API only. Storage paths start with the owner id and use signed URLs.
@@ -104,10 +104,10 @@ are read through the API only. Storage paths start with the owner id and use sig
 
 ### 4.3 Auth on every platform
 
-| Platform | Sign-in flow |
-|---|---|
-| web / PWA | provider redirect (OAuth with PKCE) or email magic link |
-| extension | `chrome.identity.launchWebAuthFlow` (Firefox: `browser.identity`) with the extension's redirect URL |
+| Platform               | Sign-in flow                                                                                                                                                                |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| web / PWA              | provider redirect (OAuth with PKCE) or email magic link                                                                                                                     |
+| extension              | `chrome.identity.launchWebAuthFlow` (Firefox: `browser.identity`) with the extension's redirect URL                                                                         |
 | Tauri desktop / mobile | open the system browser, return through a deep link `fateboard://auth/callback` (PKCE); tokens kept in the OS keychain / keystore (`UNKNOWN - verify` the plugin that fits) |
 
 This becomes `platform.auth.signIn()` / `signOut()` / `getToken()` in the platform port (PLATFORMS.md 3.1), so
@@ -193,11 +193,11 @@ allowed on every platform (plain `fetch`); only sign-in goes through the platfor
 
 ## 7. Environments, deploy, secrets
 
-| Environment | Database / auth | API | Who deploys |
-|---|---|---|---|
-| local | Supabase CLI local stack (Docker) | `supabase functions serve` or `wrangler dev` | developer |
-| preview | a separate Supabase project (or branching, `UNKNOWN - verify` plan) | preview deploy per PR | CI |
-| production | production project, point-in-time backups on (`UNKNOWN - verify` plan) | deploy on merge to `main` after approval | CI, GitHub environment with required reviewers |
+| Environment | Database / auth                                                        | API                                          | Who deploys                                    |
+| ----------- | ---------------------------------------------------------------------- | -------------------------------------------- | ---------------------------------------------- |
+| local       | Supabase CLI local stack (Docker)                                      | `supabase functions serve` or `wrangler dev` | developer                                      |
+| preview     | a separate Supabase project (or branching, `UNKNOWN - verify` plan)    | preview deploy per PR                        | CI                                             |
+| production  | production project, point-in-time backups on (`UNKNOWN - verify` plan) | deploy on merge to `main` after approval     | CI, GitHub environment with required reviewers |
 
 - Migrations: `supabase/migrations/` in git; CI applies them to preview on every PR and to production on
   release; never edit an applied migration.
@@ -209,14 +209,14 @@ allowed on every platform (plain `fetch`); only sign-in goes through the platfor
 
 ## 8. Testing
 
-| Layer | How |
-|---|---|
-| Contract | zod schemas tested once; client and API both import them, so drift is a type error |
-| API routes | Vitest with Hono's `app.request()`; Claude replaced by a fake that streams canned events |
+| Layer          | How                                                                                                                                   |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Contract       | zod schemas tested once; client and API both import them, so drift is a type error                                                    |
+| API routes     | Vitest with Hono's `app.request()`; Claude replaced by a fake that streams canned events                                              |
 | Database rules | RLS tests against the local stack: user A can never read or write user B's rows (`UNKNOWN - verify` tool: pgTAP / `supabase test db`) |
-| Sync engine | pure unit tests for every case: offline edits, 409 conflict keeps both, retry after failure, delete vs edit, two devices |
-| End to end | Playwright against local stack: sign in, save to cloud, open on a second browser context, conflict copy appears |
-| Load / cost | a script that replays N AI requests and checks quota enforcement |
+| Sync engine    | pure unit tests for every case: offline edits, 409 conflict keeps both, retry after failure, delete vs edit, two devices              |
+| End to end     | Playwright against local stack: sign in, save to cloud, open on a second browser context, conflict copy appears                       |
+| Load / cost    | a script that replays N AI requests and checks quota enforcement                                                                      |
 
 ## 9. Security and privacy checklist
 
@@ -232,16 +232,16 @@ allowed on every platform (plain `fetch`); only sign-in goes through the platfor
 
 ## 10. Order of work (inside PLATFORMS.md Phase 5)
 
-| Step | Delivers | Exit check |
-|---|---|---|
-| 5.0 | monorepo move (refactor only), `packages/contract`, `apps/api` skeleton with `/health`, Supabase project + first migration, CI deploy to preview | all existing checks green; preview API answers |
-| 5a | accounts on web (then extension, Tauri) + **AI proxy** with quotas | sign-in works on each shipped platform; quota blocks request N+1 |
-| 5b | cloud save / open (manual), board list in the app | save on web, open on desktop |
-| 5c | automatic sync with outbox and conflict copies | sync engine tests + two-context E2E green |
-| 5d | share links and public share pages | `fate-seo` audit clean on share pages; revoke works |
-| 5e | real-time collaboration (only if Q18 = yes) | two users edit one board; offline edits merge |
-| 5f | remote MCP | Claude client lists and creates boards for a signed-in user |
-| 5g | plans and payments | webhook → entitlement → quota change, tested |
+| Step | Delivers                                                                                                                                         | Exit check                                                       |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| 5.0  | monorepo move (refactor only), `packages/contract`, `apps/api` skeleton with `/health`, Supabase project + first migration, CI deploy to preview | all existing checks green; preview API answers                   |
+| 5a   | accounts on web (then extension, Tauri) + **AI proxy** with quotas                                                                               | sign-in works on each shipped platform; quota blocks request N+1 |
+| 5b   | cloud save / open (manual), board list in the app                                                                                                | save on web, open on desktop                                     |
+| 5c   | automatic sync with outbox and conflict copies                                                                                                   | sync engine tests + two-context E2E green                        |
+| 5d   | share links and public share pages                                                                                                               | `fate-seo` audit clean on share pages; revoke works              |
+| 5e   | real-time collaboration (only if Q18 = yes)                                                                                                      | two users edit one board; offline edits merge                    |
+| 5f   | remote MCP                                                                                                                                       | Claude client lists and creates boards for a signed-in user      |
+| 5g   | plans and payments                                                                                                                               | webhook → entitlement → quota change, tested                     |
 
 ## 11. Cost (what grows the bill)
 

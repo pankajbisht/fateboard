@@ -10,6 +10,8 @@
  * `panelId`, `toneParams`, `fillBeforeTone` (CUSTOM_PROPS).
  */
 import { ActiveSelection, Path, Pattern, Rect, util, type Canvas, type FabricObject } from 'fabric';
+import { boxOf, fitObjectToPanel, zoomObject } from '../comicFit';
+import type { FitMode } from '@/lib/comic/fitToPanel';
 import type { SliceCreator } from '../types';
 import { isLayerHelper, makeLayer, normalizeLayers, type DocLayer } from '@/lib/canvas/docLayers';
 import { contentRect, normalizePageSetup, type Rect as Box } from '@/lib/document/pageSetup';
@@ -18,8 +20,8 @@ import { burstPath, focusLinesPath, speedLinesPath } from '@/lib/comic/mangaEffe
 import {
     DEFAULT_TONE,
     normalizeTone,
-    paintToneTile,
-    toneTileSize,
+    tonePatternMatrix,
+    toneTile,
     type ToneParams,
 } from '@/lib/comic/screentone';
 
@@ -45,6 +47,10 @@ export interface ComicSlice {
     removeTone: () => number;
     /** Effect lines in the selected panel, else in the page margins. */
     addMangaEffect: (kind: MangaEffect) => boolean;
+    /** Put the selected scene or picture in a panel ('fill' covers it, 'fit' shows it whole); false if nothing fits. */
+    fitToPanel: (mode: FitMode, panel?: FabricObject) => boolean;
+    /** Zoom the selected scene or picture about its centre (it stays in its panel; the Art layer crops it). */
+    zoomInPanel: (factor: number) => boolean;
 }
 
 export const COMIC_LAYERS = {
@@ -57,6 +63,7 @@ export const COMIC_LAYERS = {
 type Obj = FabricObject & Record<string, unknown>;
 type ComicCanvas = Canvas & { docLayers?: DocLayer[]; pageSetup?: unknown };
 type Peers = ComicSlice & {
+    showToast?: (o: { message: string; tone?: string }) => void;
     canvas?: ComicCanvas | null;
     pageWidth?: number;
     pageHeight?: number;
@@ -73,14 +80,6 @@ const EFFECT_NAMES: Record<MangaEffect, string> = {
     speed: 'Speed lines',
     burst: 'Burst',
 };
-
-/** A frame's box on the page (its own size and position; rotation is ignored). */
-function boxOf(o: FabricObject): Box {
-    const d = util.qrDecompose(o.calcTransformMatrix());
-    const width = (o.width ?? 0) * Math.abs(d.scaleX);
-    const height = (o.height ?? 0) * Math.abs(d.scaleY);
-    return { left: d.translateX - width / 2, top: d.translateY - height / 2, width, height };
-}
 
 export const createComicSlice: SliceCreator<ComicSlice> = (set, get) => {
     const peers = () => get() as Peers;
@@ -264,16 +263,41 @@ export const createComicSlice: SliceCreator<ComicSlice> = (set, get) => {
                 return true;
             }),
 
+        fitToPanel: (mode, panel) =>
+            run('fitToPanel', false, (c) => {
+                const sel = c.getActiveObject() as Obj | undefined;
+                if (!sel || sel.comicPanel || sel.comicPanelArea || isLayerHelper(sel))
+                    return false;
+                const panels = content(c).filter((o) => o.comicPanel);
+                if (!panels.length) {
+                    peers().showToast?.({ message: 'Add panels first: pick a layout in Comic.' });
+                    return false;
+                }
+                if (!fitObjectToPanel(sel, panels, mode, panel)) return false;
+                // on the Art layer, so the panel's edge cuts it
+                sel.layerId = comicLayers(c).art;
+                c.requestRenderAll();
+                peers().saveState?.();
+                return true;
+            }),
+
+        zoomInPanel: (factor) =>
+            run('zoomInPanel', false, (c) => {
+                const sel = c.getActiveObject() as Obj | undefined;
+                if (!sel || sel.comicPanel || sel.comicPanelArea || isLayerHelper(sel))
+                    return false;
+                if (!Number.isFinite(factor) || factor <= 0) return false;
+                zoomObject(sel, factor);
+                c.requestRenderAll();
+                peers().saveState?.();
+                return true;
+            }),
+
         applyTone: (params) =>
             run('applyTone', 0, (c) => {
                 const p = normalizeTone({ ...DEFAULT_TONE, ...params });
-                const size = toneTileSize(p);
-                const tile = (c.getElement().ownerDocument ?? document).createElement('canvas');
-                tile.width = size;
-                tile.height = size;
-                const ctx = tile.getContext('2d');
-                if (ctx) paintToneTile(ctx, p, size);
-                const a = (p.angle * Math.PI) / 180;
+                const tile = toneTile(c.getElement().ownerDocument ?? document, p);
+                if (!tile) return 0;
                 const targets = (c.getActiveObjects() as Obj[]).filter(
                     (o) => !isLayerHelper(o) && !o.comicPanel,
                 );
@@ -283,14 +307,7 @@ export const createComicSlice: SliceCreator<ComicSlice> = (set, get) => {
                         fill: new Pattern({
                             source: tile,
                             repeat: 'repeat',
-                            patternTransform: [
-                                Math.cos(a),
-                                Math.sin(a),
-                                -Math.sin(a),
-                                Math.cos(a),
-                                0,
-                                0,
-                            ],
+                            patternTransform: tonePatternMatrix(p.angle),
                         }),
                     });
                     o.toneParams = p;

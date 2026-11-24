@@ -3,37 +3,37 @@
 Ordered by **dependency first, then priority**. Each feature lists the bugs that must be fixed before (blocking)
 and decisions it needs ([DECISIONS.md](DECISIONS.md)). "Exists" means code is already in the repo.
 
-Features you named: animation + video export, snap/grid, templates, shapes ("etc."). Items marked *(proposed)* are
+Features you named: animation + video export, snap/grid, templates, shapes ("etc."). Items marked _(proposed)_ are
 my suggestions to confirm, not requests from you.
 
 ## M0: Foundation (no user-visible features)
 
 Goal: make every later change safe to ship.
 
-| # | Work | Fixes | Needs |
-|---|---|---|---|
-| 0.1 | Real type-check in CI (`tsc -p tsconfig.app.json --noEmit`), CI runs type-check + tests + build | BUG-012, BUG-044 | Q8 (dead files break type-check) |
-| 0.2 | Delete dead code + unused deps | BUG-031, BUG-032 | Q8 |
-| 0.3 | Test harness (fake canvas, `makeStore`, canvas mock), Playwright smoke | none | Q9 |
-| 0.4 | Store collision guard + rename colliding keys (**done** 2026-11-07, BUG-017 left) | BUG-001, BUG-002, BUG-017, BUG-019, BUG-020, BUG-023 | Q1 ✅ |
-| 0.5 | Single serialization contract (`CUSTOM_PROPS`, `serializeCanvas`, `loadCanvas`), await all `loadFromJSON` | BUG-003, BUG-014 | none |
-| 0.6 | Remove Fabric `any` shims; explicit origins | BUG-013, BUG-008 (part) | Q4, Q10 |
+| #   | Work                                                                                                      | Fixes                                                | Needs                            |
+| --- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | -------------------------------- |
+| 0.1 | Real type-check in CI (`tsc -p tsconfig.app.json --noEmit`), CI runs type-check + tests + build           | BUG-012, BUG-044                                     | Q8 (dead files break type-check) |
+| 0.2 | Delete dead code + unused deps                                                                            | BUG-031, BUG-032                                     | Q8                               |
+| 0.3 | Test harness (fake canvas, `makeStore`, canvas mock), Playwright smoke                                    | none                                                 | Q9                               |
+| 0.4 | Store collision guard + rename colliding keys (**done** 2026-11-07, BUG-017 left)                         | BUG-001, BUG-002, BUG-017, BUG-019, BUG-020, BUG-023 | Q1 ✅                            |
+| 0.5 | Single serialization contract (`CUSTOM_PROPS`, `serializeCanvas`, `loadCanvas`), await all `loadFromJSON` | BUG-003, BUG-014                                     | none                             |
+| 0.6 | Remove Fabric `any` shims; explicit origins                                                               | BUG-013, BUG-008 (part)                              | Q4, Q10                          |
 
 ## M1: Data integrity (users stop losing work)
 
-| # | Work | Fixes | Blocked by | Needs |
-|---|---|---|---|---|
-| 1.1 | Undo/redo correct: register history events, per-page stacks, pause during loads | BUG-005, BUG-006, BUG-034 | 0.4, 0.5 | Q7 |
-| 1.2 | Destructive actions safe (Ctrl+O, New board, Apply template, Clear page) | BUG-040, BUG-009 (**done** 2026-11-07: template = one undo step + Undo toast) | 1.1 | Q11 ✅ |
-| 1.3 | Project persistence: pages + meta in one versioned document, migration from `drawJson` | BUG-004 (**done** 2026-11-07, IndexedDB), BUG-036 (**done** 2026-11-08: `lib/storage/localList`) | 0.5 | Q5 ✅ |
-| 1.4 | Mount/restore race fixed | BUG-016 | 1.3 | none |
+| #   | Work                                                                                   | Fixes                                                                                            | Blocked by | Needs  |
+| --- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ---------- | ------ |
+| 1.1 | Undo/redo correct: register history events, per-page stacks, pause during loads        | BUG-005, BUG-006, BUG-034                                                                        | 0.4, 0.5   | Q7     |
+| 1.2 | Destructive actions safe (Ctrl+O, New board, Apply template, Clear page)               | BUG-040, BUG-009 (**done** 2026-11-07: template = one undo step + Undo toast)                    | 1.1        | Q11 ✅ |
+| 1.3 | Project persistence: pages + meta in one versioned document, migration from `drawJson` | BUG-004 (**done** 2026-11-07, IndexedDB), BUG-036 (**done** 2026-11-08: `lib/storage/localList`) | 0.5        | Q5 ✅  |
+| 1.4 | Mount/restore race fixed                                                               | BUG-016                                                                                          | 1.3        | none   |
 
 ## M2: One canvas geometry model
 
-| # | Work | Fixes | Blocked by | Needs |
-|---|---|---|---|---|
-| 2.1 | Single viewport/geometry owner; page/template/zoom call it (**done** 2026-11-07; BUG-022 left) | BUG-007, BUG-022, BUG-025 | M1 | Q2, Q3 |
-| 2.2 | Mode model (design/whiteboard) wired end-to-end | BUG-015 | 2.1 | Q3 |
+| #   | Work                                                                                           | Fixes                     | Blocked by | Needs  |
+| --- | ---------------------------------------------------------------------------------------------- | ------------------------- | ---------- | ------ |
+| 2.1 | Single viewport/geometry owner; page/template/zoom call it (**done** 2026-11-07; BUG-022 left) | BUG-007, BUG-022, BUG-025 | M1         | Q2, Q3 |
+| 2.2 | Mode model (design/whiteboard) wired end-to-end                                                | BUG-015                   | 2.1        | Q3     |
 
 ## Features (after M0-M2)
 
@@ -64,15 +64,33 @@ store, template thumbnails.
 ### F4. Animation + video export (exists: keyframes, presets, curves, auto-key, playback, MP4 via WebCodecs, WebM/MP4 realtime fallback, PNG still)
 
 Priority: high (headline feature), but it has the most blockers. Work, in order:
+
 1. ~~Persist animation data per page in the project document; serialize `animId` (BUG-010).~~ Done 2026-11-07.
 2. ~~Never save animated values: capture/persist from rest state; refresh rest on edits (BUG-011).~~ Done 2026-11-07
    (left: multi-selection rest refresh BUG-142, playhead after canvas undo BUG-140, keyframe history per page BUG-141).
 3. Separate history + clipboard + shortcuts from the canvas (BUG-001, BUG-017, BUG-018).
 4. Export the page rect regardless of zoom/pan; output size presets (1080p/4K/square/vertical) (BUG-026).
-5. Multi-page export as scenes *(proposed, Q12)*; audio track *(proposed; not in code today)*.
+5. Multi-page export as scenes _(proposed, Q12)_; audio track _(proposed; not in code today)_.
 6. Performance: selectors instead of `useStore()` so playback does not re-render the editor (BUG-029).
-**Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). 
-**Depends on:** M0, M1, M2.1. **Decisions:** Q1, Q5, Q7, Q12.
+7. ~~Timeline as a dock under the board (owner request), onion skin, motion paths (from the owner's "Anime Studio"
+   brief).~~ Done 2026-11-17 (`TimelineDock`, Timeline slice, `src/animation/overlay/`; BUG-185 fixed with it).
+8. _(proposed, from the brief; one plan + owner decisions each, in this order)_:
+   a. **Audio track** (music / SFX / recorded or uploaded voice, waveform, volume / mute / solo) with the audio clock
+   as the playback master, mixed into the MP4 export (`OfflineAudioContext` + `AudioEncoder`; mp4-muxer already takes
+   audio). Owner (2026-11-17): clips are stored in the project with their page (size-capped).
+   b. **Scenes** = pages played in order with transitions (cut / fade / slide), one video for a multi-page project (Q12
+   proposed). **Camera** track (zoom / pan / shake keyframes, close-up / wide presets) on the same engine. Owner
+   (2026-11-17): a camera frame drawn on the board; only the export follows it (the board's zoom is untouched).
+   c. **Text-to-speech + lip sync**: a `TTSProvider` interface (Web Speech previews only: it gives no audio for export;
+   a server or WASM provider for export), phoneme → viseme keyframes. Needs a mouth to drive, so after (e).
+   d. ~~**GIF export**~~ Done 2026-11-17: in-house GIF89a encoder (`src/animation/gif/`, no dependency): median-cut
+   palette from up to 32 frames, optional dither, only the changed box per frame, identical frames merged, a Web
+   Worker; 320–800 px wide, 10–25 fps, ≤ 30 s, loop / once, transparent background.
+   e. **Character rig and Room builder** from the brief are separate products (SVG rigs, not Fabric; their own
+   schema). Owner (2026-11-17): plan them later, with the `fate-architect` agent, in their own session; their JSON
+   contracts would be adapted to this app (Fabric 7, React 19, zustand slices), not copied.
+   **Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). Open, minor: BUG-183, BUG-184, BUG-248 … BUG-251.
+   **Depends on:** M0, M1, M2.1. **Decisions:** Q1, Q5, Q7, Q12.
 
 ### F5. Layers polish (exists)
 
@@ -81,8 +99,8 @@ rect and pan. **Depends on:** M0.5, M2.1.
 
 ### F6. Export & sharing (exists: Export tab PNG/JPEG/SVG/JSON with crop; `saveBoard`; per-page PNG; local-only share)
 
-Work: one export pipeline that uses page geometry; PDF *(proposed; no PDF library installed today)*;
-decide Share (Q6). **Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md). 
+Work: one export pipeline that uses page geometry; PDF _(proposed; no PDF library installed today)_;
+decide Share (Q6). **Blocking bugs:** none open (all fixed by 2026-11-09, see BUGS.md).
 
 ### F7. Brush quality (exists: 102 brushes in 17 categories, eraser, symmetry, paint tools; lightning `jag` 2026-11-17)
 
@@ -96,15 +114,15 @@ drag, one group per drag. Limits vs native editors: docs/LIMITATIONS.md.
 **Next:** paint mixing / smudge (needs a raster layer type), tilt and barrel rotation for brushes, saving brush
 settings (BUG-222), per-action undo for tools (BUG-223); Copy spray: symmetry while spraying, Alt-click a new source,
 shared photos in saved files (BUG-239).
-**Blocking bugs:** none open. 
+**Blocking bugs:** none open.
 
-### F9. Manga kit *(owner request 2026-11-17, phase 2)*
+### F9. Manga kit _(owner request 2026-11-17, phase 2)_
 
 **Done 2026-11-17 (first version):** 12 panel layouts, split, frames + clipped Art layer (`createComicSlice`), 6 manga
 balloons (text shapes), screentones (dots, lines, cross-hatch, noise), focus / speed lines, bursts (left rail Comic).
 **Next:** slanted and polygon panel cuts, balloon tails you can drag, vertical text, gradient tones, BUG-236.
 
-### F10. Document tools *(owner request 2026-11-17, phase 3; next session)*
+### F10. Document tools _(owner request 2026-11-17, phase 3; next session)_
 
 **Done 2026-11-17 (first version):** margins / columns / bleed / guides, facing pages, master pages, page numbers
 (`createDocumentSlice`, Pages panel > Page setup). **2026-11-17 (2):** slug, crop marks (board + export), bleed / slug
@@ -114,13 +132,27 @@ area), webtoon, digital art and paper sizes; portrait pages open 1.3 × taller t
 **Next:** linked (threaded) text frames, baseline grid, spreads on the board, BUG-234 / BUG-235 / BUG-237. Adds store
 state; plan first.
 
-### F11. Layer system *(owner request 2026-11-17, phase 4)*
+### F11. Layer system _(owner request 2026-11-17, phase 4)_
 
 **Done 2026-11-17 (first version):** real page layers + folders holding objects, whole-layer opacity / blend, clip to
 layer below, reference layer (bucket), merge down / flatten, drag cache (`createPageLayersSlice`, `lib/canvas/layerCompositor`).
 **Next:** SVG clipping (BUG-231), per-layer thumbnails, layer masks, lock transparency, object rows filtered by layer.
 
-### F8. Performance & a11y hardening *(proposed)*
+### F10. Character Studio _(owner request 2026-11-18)_
+
+Rigged manga / webtoon characters made in a studio and placed on pages. Spec, contracts and phases:
+[CHARACTER_STUDIO.md](CHARACTER_STUDIO.md) (the owner's brief, rewritten for this repo).
+
+1. ~~Phase 1, foundation~~ Done 2026-11-18: 24-joint skeleton (proportions from age and body), FK, two-bone IK, joint
+   limits, mirror, blend, pose → keyframes, foot contact on any body; 2.5D renderer (any yaw / pitch, shots, view bins,
+   cartoon style); body sliders, skin, 4 hair styles, clothes per segment; 45 poses; 12 recipes; studio UI; library +
+   draft in IndexedDB; place / update on the page.
+2. Phase 2, face and styles (eye layers, emotions, visemes, 5 styles, 120 poses, rig tracks in the Animation engine).
+3. Phase 3, content (hair and garment libraries, 50+ outfits, 100 characters, 250 poses, pair poses).
+4. Phase 4, import and story tools. _Ask:_ PSD / PDF dependencies.
+5. Phase 5, polish. _Ask:_ pose capture (MediaPipe).
+
+### F8. Performance & a11y hardening _(proposed)_
 
 Selectors everywhere (BUG-029), no full-canvas stringify on selection (BUG-034), incremental history, accessible
 names on toolbar buttons (BUG-043), remove `console.log` (BUG-037).

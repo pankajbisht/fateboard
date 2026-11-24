@@ -50,6 +50,8 @@ export default function ComicPanel() {
     const addLayout = useStore((s) => s.addPanelLayout);
     const split = useStore((s) => s.splitComicPanel);
     const addShape = useStore((s) => s.addShape);
+    const fitToPanel = useStore((s) => s.fitToPanel);
+    const zoomInPanel = useStore((s) => s.zoomInPanel);
 
     return (
         <div className="flex flex-col gap-3 p-4">
@@ -104,6 +106,46 @@ export default function ComicPanel() {
                         onClick={() => split('vertical')}
                     >
                         Split left / right
+                    </Button>
+                </div>
+            </PanelSection>
+
+            <PanelSection
+                title="Scene in a panel"
+                description="Select a scene or picture, then fit it to the panel it sits on. Fill covers the panel and the panel's edge crops it; zoom to frame the shot."
+            >
+                <div className="grid grid-cols-2 gap-2">
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={!hasSelection}
+                        onClick={() => fitToPanel('fill')}
+                    >
+                        Fill panel
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={!hasSelection}
+                        onClick={() => fitToPanel('fit')}
+                    >
+                        Fit in panel
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={!hasSelection}
+                        onClick={() => zoomInPanel(1.1)}
+                    >
+                        Zoom in
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={!hasSelection}
+                        onClick={() => zoomInPanel(1 / 1.1)}
+                    >
+                        Zoom out
                     </Button>
                 </div>
             </PanelSection>

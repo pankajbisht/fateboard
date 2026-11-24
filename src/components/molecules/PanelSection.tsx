@@ -35,7 +35,8 @@ export function PanelSection({
     const bodyId = useId();
     const showBody = !collapsible || open;
 
-    const heading = <span className="text-label uppercase text-ink-subtle">{title}</span>;
+    // information, so ink-muted (7.5:1); ink-subtle is for placeholders, icons, disabled (BUG-246)
+    const heading = <span className="text-label uppercase text-ink-muted">{title}</span>;
 
     return (
         <section
@@ -87,7 +88,7 @@ export function PanelSection({
                 </header>
             )}
             {description && showBody && (
-                <p className="-mt-1.5 text-caption text-ink-subtle">{description}</p>
+                <p className="-mt-1.5 text-caption text-ink-muted">{description}</p>
             )}
             {showBody && (
                 <div id={bodyId} className="flex flex-col gap-3">

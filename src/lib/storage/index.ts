@@ -16,6 +16,10 @@ import { createOpendbBackend } from './adapters/opendbIndexed';
 import { createOpendbSyncStore } from './adapters/opendbLocal';
 import { createProjectStorage } from './projectStorage';
 import { createSettingsStorage } from './settingsStorage';
+import { createUiPrefsStorage } from './uiPrefs';
+import { createCharacterStorage } from './characterStorage';
+import { createSceneStorage } from './sceneStorage';
+import type { KeyValueBackend } from './types';
 
 /** IndexedDB database of the opendb store (projects). */
 export const PROJECT_DATABASE = 'fateboard-data';
@@ -37,6 +41,20 @@ export const projectStorage = createProjectStorage(() =>
 
 export const settingsStorage = createSettingsStorage(() => preferences);
 
+/** View preferences per browser (dock sizes, overlays): not part of any document. */
+export const uiPrefsStorage = createUiPrefsStorage(() => preferences);
+
+let characterBackend: KeyValueBackend | null = null;
+/** Character Studio library + draft, in the project database (memory in tests / without IndexedDB). */
+const projectBackend = () =>
+    (characterBackend ??=
+        typeof indexedDB !== 'undefined'
+            ? createOpendbBackend({ database: PROJECT_DATABASE })
+            : createMemoryBackend());
+export const characterStorage = createCharacterStorage(projectBackend);
+/** Scene Studio draft, in the same project database. */
+export const sceneStorage = createSceneStorage(projectBackend);
+
 export type { KeyValueBackend, LegacySource, SyncKeyValue } from './types';
 export { createMemoryBackend, createMemorySyncStore } from './adapters/memory';
 export {
@@ -54,5 +72,18 @@ export {
     createSettingsStorage,
     type SettingsStorage,
 } from './settingsStorage';
+export { UI_PREFS_KEY, createUiPrefsStorage, type UiPrefsStorage } from './uiPrefs';
+export {
+    CHARACTER_DRAFT_KEY,
+    CHARACTER_LIBRARY_KEY,
+    createCharacterStorage,
+    type CharacterStorage,
+} from './characterStorage';
+export {
+    SCENE_DRAFT_KEY,
+    SCENE_LIBRARY_KEY,
+    createSceneStorage,
+    type SceneStorage,
+} from './sceneStorage';
 export { readLocalList, writeLocalList } from './localList';
 export { readSessionFlag, writeSessionFlag } from './sessionFlags';

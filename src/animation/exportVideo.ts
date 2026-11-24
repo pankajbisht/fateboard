@@ -1,6 +1,6 @@
 import type { Canvas } from 'fabric';
 
-export type ExportMode = 'mp4-fast' | 'realtime' | 'png';
+export type ExportMode = 'mp4-fast' | 'realtime' | 'png' | 'gif';
 export type ContainerFormat = 'mp4' | 'webm';
 
 export const WEBCODECS_UNSUPPORTED = 'WEBCODECS_UNSUPPORTED';
@@ -23,8 +23,8 @@ export interface BaseOptions {
 }
 
 const even = (n: number) => Math.max(2, Math.round(n / 2) * 2);
-const abortError = () => new DOMException('Export cancelled', 'AbortError');
-const yieldToUi = () => new Promise<void>((r) => setTimeout(r, 0));
+export const abortError = () => new DOMException('Export cancelled', 'AbortError');
+export const yieldToUi = () => new Promise<void>((r) => setTimeout(r, 0));
 
 /* ───────────────────────── capability detection ───────────────────────── */
 
@@ -43,24 +43,56 @@ export const getRealtimeFormats = (): ContainerFormat[] =>
 
 /* ───────────────────────── frame compositor ───────────────────────── */
 
-/** Letterboxes the (re-rendered, crisp) Fabric canvas onto a fixed-size output canvas. */
-function makeCompositor(canvas: Canvas, width: number, height: number, background: string) {
+/**
+ * Runs `render` with the board's background colour and image left out (Fabric paints them into every frame),
+ * then puts them back. Plain property writes: no event fires, nothing reaches history or autosave.
+ */
+function withoutBackground<T>(canvas: Canvas, render: () => T): T {
+    const color = canvas.backgroundColor;
+    const image = canvas.backgroundImage;
+    canvas.backgroundColor = '';
+    canvas.backgroundImage = undefined;
+    try {
+        return render();
+    } finally {
+        canvas.backgroundColor = color;
+        canvas.backgroundImage = image;
+    }
+}
+
+/**
+ * Letterboxes the (re-rendered, crisp) Fabric canvas onto a fixed-size output canvas. `background: null`
+ * keeps transparency (GIF); `readBack` asks for a canvas that is cheap to read pixels from every frame.
+ */
+export function makeCompositor(
+    canvas: Canvas,
+    width: number,
+    height: number,
+    background: string | null,
+    readBack = false,
+) {
     const out = document.createElement('canvas');
     out.width = width;
     out.height = height;
-    const ctx = out.getContext('2d', { alpha: false });
+    const ctx = out.getContext('2d', { alpha: background === null, willReadFrequently: readBack });
     if (!ctx) throw new Error('Could not create a 2D context for export.');
     const scale = Math.min(width / canvas.getWidth(), height / canvas.getHeight());
 
     const draw = () => {
         // toCanvasElement re-renders the scene at `scale`, so 1080p output is sharp, not an upscaled screenshot.
-        const frame = canvas.toCanvasElement(scale);
-        ctx.fillStyle = background;
-        ctx.fillRect(0, 0, width, height);
+        const frame =
+            background === null
+                ? withoutBackground(canvas, () => canvas.toCanvasElement(scale))
+                : canvas.toCanvasElement(scale);
+        if (background === null) ctx.clearRect(0, 0, width, height);
+        else {
+            ctx.fillStyle = background;
+            ctx.fillRect(0, 0, width, height);
+        }
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(frame, (width - frame.width) / 2, (height - frame.height) / 2);
     };
-    return { out, draw };
+    return { out, ctx, draw };
 }
 
 /* ───────────────────────── 1. MP4, offline (WebCodecs) ───────────────────────── */

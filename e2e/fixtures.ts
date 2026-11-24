@@ -100,6 +100,14 @@ export class Editor {
             .click();
     }
 
+    /** The animation timeline under the board (footer button); resolves once its panel has loaded. */
+    async openTimeline() {
+        await this.page.getByRole('button', { name: 'Timeline', exact: true }).click();
+        const dock = this.page.getByRole('region', { name: 'Timeline' });
+        await expect(dock.getByRole('button', { name: 'Keyframe at playhead' })).toBeVisible();
+        return dock;
+    }
+
     /** Shapes panel: add a catalog shape by its label (Rectangle, Circle, Sticky Note, …). */
     async addShape(label: string) {
         await this.openPanel('Shapes');

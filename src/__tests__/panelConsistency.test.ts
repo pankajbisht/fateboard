@@ -126,7 +126,7 @@ describe('panel consistency', () => {
         ].map((p) => `/src/components/${p}`);
         for (const file of withFinalAction) expect(SOURCES[file], file).toMatch(/<PanelAction\b/);
         // Panel-level destructive actions share the same shape, in the danger tone.
-        expect(SOURCES['/src/components/organisms/animation/AnimationPanel.tsx']).toMatch(
+        expect(SOURCES['/src/components/organisms/animation/ClearAllAnimations.tsx']).toMatch(
             /<PanelAction\s[^>]*tone="danger"[^>]*>\s*Clear all animations/,
         );
         // No hand-made "big primary" buttons left: full-width / large Buttons are PanelAction.

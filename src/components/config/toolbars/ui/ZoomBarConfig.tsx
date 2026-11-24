@@ -1,6 +1,7 @@
 import { Icon } from '@/components/atoms/Icon';
 import { shortcut } from '@/lib/utils/isMac';
 import { useStore } from '@/store';
+import { TIMELINE_KEYS } from '@/components/organisms/animation/timelineKeys';
 
 export const ZoomBarConfig = [
     {
@@ -79,6 +80,19 @@ export const ZoomBarConfig = [
         onClick: () => useStore.getState().toggleDistractionFree(),
         handler: ({ get }) => {
             get().toggleDistractionFree();
+        },
+    },
+    {
+        // the animation timeline under the board; ⌘⌥T as in Adobe Animate (Window › Timeline)
+        id: 'toggle-timeline',
+        label: 'Timeline',
+        title: 'Timeline',
+        description: 'Show or hide the animation timeline under the board',
+        shortcut: TIMELINE_KEYS,
+        icon: <Icon name="video" />,
+        onClick: () => useStore.getState().toggleTimeline(),
+        handler: ({ get }) => {
+            get().toggleTimeline();
         },
     },
 ];

@@ -747,6 +747,79 @@ export const HELP_TOPICS: HelpTopic[] = [
         related: ['layers', 'settings', 'basics'],
     },
     {
+        id: 'characters',
+        group: 'Tools',
+        title: 'Characters',
+        icon: 'character',
+        summary:
+            'Make a rigged character, pose it from any angle, put up to five in a scene with a background, and place it on the page.',
+        keywords:
+            'character studio person people manga webtoon anime pose rig body cast avatar figure kid elder emotion face expression eyes mouth lip sync scene background place classroom city park perspective camera group',
+        open: { panel: 'characters', label: 'Open Characters' },
+        sections: [
+            {
+                title: 'Make a character',
+                items: [
+                    'Open Characters in the left rail, then Open Character Studio, or pick someone from the cast',
+                    'Body style: Classic or Manga (7.5–8 heads tall with long legs; shonen, shojo or webtoon), with a side-by-side preview. It works with every art style. Body: age, gender, height, body fat, muscle, shoulders, hips, arm, leg and neck length, skin tone',
+                    'Children get bigger heads for their size; elders stoop a little and their hair greys unless you pick its colour',
+                    'Look: 44 hairstyles (short, medium, long, tied up, curly, older), hair colour and an optional second colour for the tips, eyes, brows, nose, mouth, eye colour, 47 tops (T-shirt, polo, shirt, sweater, hoodie, jacket, kurta, lab coat, raincoat, sherwani and more) and 38 bottoms (trousers, jeans, shorts, leggings, churidar, dhoti, palazzo, skirts and a lehenga) with their colours',
+                    'Wardrobe: 64 outfit presets (everyday, school, work, traditional, sports, weather, party, army and combat), 13 kinds of shoes, and 22 accessories (glasses, caps, hats, berets, army helmet, scarf, tie, jewellery, watch, belt, backpack, apron). Things that do not go together are kept apart and the studio says why',
+                    'In the hands: a katana, sword, knife, bamboo staff, torch, bat, rifle or boxing gloves, in either hand. They follow the arms in every pose and from every side',
+                    'Hands have real fingers and a thumb that bend with the hand shape; joints (shoulders, elbows, knees, ankles), chest or bust and hips show their shape from every side',
+                    'Click a part of the character to select it, then change its colour on the right',
+                    'Surprise me makes a new random person; `mod+Z` undoes studio changes',
+                    'Art style: 19 looks, from Cartoon, Anime, Webtoon, Manga B/W (black, white and screentone) and Realistic to Chibi, Noir, Cyberpunk, Watercolor, Flat vector, Pencil sketch, Stick figure and more. Only the look changes; switch back any time',
+                ],
+            },
+            {
+                title: 'Face',
+                items: [
+                    'Face tab: 20 emotions (happy, laughing, sad, crying, angry, surprised, scared, embarrassed and more); Strength blends from the resting face to the full emotion',
+                    'Look left / right and up / down move the eyes; Look straight ahead resets them. Eyes closed holds a blink',
+                    'Mouth shape (M, A, E, I, O, U, F, TH) is for lip sync; Rest leaves the mouth to the emotion',
+                    'Eyes, brows and mouth hide when they turn away from you, so a character seen from behind has no face',
+                ],
+            },
+            {
+                title: 'Pose and camera',
+                items: [
+                    'Poses: 278 poses (standing, gestures, walk and run, sitting, fight, sports, emotion, daily life, dance, work, lying down, action, boxing, Muay Thai and army). Search by name or tag',
+                    'In a scene with two or more people, Together gives contact poses (hug, handshake, arm round a shoulder, high-five) that fit the heights of both people',
+                    'Every pose fits every body: feet stay on the floor for a child, an adult or an elder',
+                    'Mirror flips the pose left to right',
+                    'Turn the camera all the way round, tilt it, and pick a shot: full body, knee, waist, bust or close-up',
+                ],
+            },
+            {
+                title: 'On the page',
+                items: [
+                    'Place on page puts the character, as the camera sees it, in the middle of the view',
+                    'Select a character on the page and open the studio to edit it; Update on page keeps its place and size',
+                    'Save to my characters keeps a character to use again in any project',
+                ],
+            },
+            {
+                title: 'Scenes',
+                items: [
+                    'New scene (Characters panel), or Scene at the top of the studio: your character stands in a place',
+                    'Save to my scenes (top bar) keeps the scene for every project; Start › Your scenes opens it again, over the scene you are editing (Undo brings that back); saving again updates it',
+                    'Start: 30 ready scenes (class photo, picnic, rooftop talk, temple festival, team photo, neon city and more); pick one and change anything, Undo brings your scene back',
+                    'Place: 13 places (studio, classroom, room, school yard, road, city street, market, rooftop, park, river, jungle, temple, stadium), each with looks; Rearrange the place shuffles trees, people and buildings',
+                    'Time of day, weather and season light the place and the characters with one light. Crowd (Place tab) adds up to 80 simple people standing in the background; the same crowd every time',
+                    'Same style for everyone (Cast tab) keeps all characters in one art style, also new ones; switch it off to give one character its own style',
+                    'Cast: add up to 5 characters, Edit character opens one in Character mode (changes come back to the scene), Facing and Looks at turn them',
+                    'Group: Class photo puts the tallest at the back; Conversation, Face to face, V shape, Circle and more arrange everyone at once',
+                    'Drag a character on the stage to walk it on the ground; arrow keys move the selected one, [ and ] turn it',
+                    'Camera: Front, ¾ corner, Side, Back, High angle, Bird’s-eye, Worm’s-eye, Isometric, Over the shoulder and Point of view; or turn, tilt, raise it and change the lens',
+                    'Frame: wide, square, phone or cinema shapes, rounded or round corners, a border. Export (Frame tab): Download layers (ZIP) gives the place, each character and the frame as separate pictures that line up exactly, plus the whole picture as a PNG (1920 px wide), a PDF (one page, the size of the frame) or an SVG, and the scene file (JSON) to open later',
+                    'Place scene on page puts the picture on the page as one object; select it and Edit it later, Update scene on page keeps it in place',
+                ],
+            },
+        ],
+        related: ['comic', 'layers'],
+    },
+    {
         id: 'comic',
         group: 'Tools',
         title: 'Comic',
@@ -1321,11 +1394,32 @@ export const HELP_TOPICS: HelpTopic[] = [
         group: 'Finish',
         title: 'Animate',
         icon: 'video',
-        summary: 'Keyframes and ready-made motion on a timeline, exported as video.',
-        keywords: 'animation timeline keyframe video mp4 webm motion preset entrance exit emphasis',
-        open: { tab: 'animate', label: 'Open Animate' },
+        summary:
+            'Keyframes and ready-made motion on a timeline under the board, exported as video.',
+        keywords:
+            'animation timeline keyframe video mp4 webm motion preset entrance exit emphasis onion skin motion path dock bottom',
+        open: { tab: 'animate', label: 'Open the timeline' },
         demo: 'animate',
         sections: [
+            {
+                title: 'The timeline',
+                items: [
+                    'The timeline sits under the board, as in other animation tools. Open it with the Timeline button in the footer or `mod+alt+T` (on Linux desktops where that key opens a terminal, use the button)',
+                    'Drag its top edge to make it taller or shorter. Double-click the edge for the default height',
+                    'Beside the timeline: Animate (presets), Keyframe (easing and values), View (onion skin, motion path) and Export',
+                    'On a narrow screen the timeline and these panes take turns',
+                    'Closing the timeline pauses playback and turns auto-key off',
+                ],
+            },
+            {
+                title: 'Onion skin and motion path',
+                items: [
+                    'Onion skin shows faint copies of the frames before (red) and after (green) the playhead while paused',
+                    'Choose how many frames on each side, how far apart and how strong, in View',
+                    'Motion path shows where an animated object travels: a dot per frame (closer dots = slower) and a diamond per keyframe',
+                    'Both are guides on the board only. They are never exported',
+                ],
+            },
             {
                 title: 'Presets',
                 items: [
@@ -1358,10 +1452,12 @@ export const HELP_TOPICS: HelpTopic[] = [
                 ],
             },
             {
-                title: 'Export video',
+                title: 'Export video or GIF',
                 items: [
                     'MP4 fast is frame-exact, in browsers that support it',
                     'Video realtime records as it plays, as MP4 or WebM where the browser allows',
+                    'GIF makes an animated GIF up to 30 s long, 320 to 800 px wide, 10 to 25 fps. Frames that do not change take no space',
+                    'GIF options: loop forever or play once, dither for smoother gradients (larger file), transparent background (hard edges)',
                     'PNG saves the current frame',
                     'Choose resolution, frame rate, quality and background',
                     'Range exports the whole timeline or only the work area',

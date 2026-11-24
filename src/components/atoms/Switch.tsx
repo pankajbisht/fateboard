@@ -10,6 +10,7 @@ export type SwitchProps = {
     className?: string;
     'aria-label'?: string;
     'aria-labelledby'?: string;
+    'aria-describedby'?: string;
 };
 
 const TRACK = { sm: 'h-4 w-7', md: 'h-5 w-9' } as const;
@@ -36,7 +37,7 @@ export function Switch({
             onClick={() => onChange(!checked)}
             className={clsx(
                 'relative inline-flex shrink-0 cursor-pointer items-center rounded-full p-0.5 transition-colors',
-                'disabled:cursor-not-allowed disabled:opacity-50',
+                'disabled:cursor-not-allowed disabled:opacity-50 [[data-dimmed]_&]:disabled:opacity-100',
                 FOCUS_RING,
                 TRACK[size],
                 checked ? 'bg-primary-600' : 'bg-line-strong',

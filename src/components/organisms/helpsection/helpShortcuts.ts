@@ -132,6 +132,7 @@ const CATEGORY_BY_ID: Record<string, HelpShortcutCategory> = {
     'fit-width': 'View',
     'actual-size': 'View',
     'distraction-free': 'View',
+    'toggle-timeline': 'View',
 };
 
 /** The browser keeps these for itself, so a web page can never see them being pressed. */

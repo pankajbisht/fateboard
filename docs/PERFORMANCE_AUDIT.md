@@ -14,38 +14,38 @@ incomplete), **PARTIAL** (part done), **N/A** (does not apply, with the reason).
 
 ## 1. Verdict at a glance
 
-| # | Item | Status | Impact | Fix |
-|---|---|---|---|---|
-| 1 | Flyweight presets | WRONGLY USED | Medium | P7 |
-| 2 | Typed arrays for points | USED (JSON form) | Low | none |
-| 3 | Path simplification | PARTIAL | **High** | P6 |
-| 4 | Object pooling | USED | Low | none |
-| 5 | Serialization size | WRONGLY USED | Medium | P7, §5 E18 |
-| 6 | Image memory | NOT USED | **Massive** | P1 |
-| 7 | Undo as commands | NOT USED | High | design §4.1 |
-| 8 | History limits / coalescing | USED | Low | none |
-| 9 | Store writes mid-gesture | USED (by design, mitigated) | Low | none |
-| 10 | One render per frame | USED | Low | none |
-| 11 | Live stroke on the top canvas | PARTIAL | Medium | P6 |
-| 12 | Object caching | WRONGLY USED (BUG-149) | Medium | BUG-149 |
-| 13 | Offscreen culling + DPR cap | WRONGLY USED (area) | UNKNOWN | P12 |
-| 14 | Coalesced pointer events | NOT USED | High | P3 |
-| 15 | Brush textures cached | USED | Low | none |
-| 16 | Layer raster caching | PARTIAL | High | design §4.3 |
-| 17 | Hit-testing cost | WRONGLY USED (minor) | Medium | P9 |
-| 18 | Storage format | NOT USED (binary) | **Massive** | P1, design §4.2 |
-| 19 | Save debouncing | USED (too eager) | High | P2 |
-| 20 | Autosave safety | PARTIAL | High | P2 |
-| 21 | Schema versioning | WRONGLY USED | Medium | P10 |
-| 22 | Chunked loading | NOT USED | Low now | design §4.4 |
-| 23 | Only the active page loaded | USED | Low | none |
-| 24 | Workers / OffscreenCanvas | PARTIAL | Medium | §4.5 (BUG-150) |
-| 25 | Filters (WebGL, throttled) | PARTIAL | High (leak) | P4 |
-| 26 | Code splitting of panels | PARTIAL | Medium | P5 |
-| 27 | Leaks / cleanup | PARTIAL | High | P4, P8 |
-| 28 | Profiling + budgets | NOT USED | Medium (enables all) | P11 |
-| 29 | Touch + stylus | WRONGLY USED (pressure dead) | **High** | P3 |
-| 30 | Fonts before measuring | WRONGLY USED | Medium | P8 |
+| #   | Item                          | Status                                                                                                                                             | Impact               | Fix             |
+| --- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------- |
+| 1   | Flyweight presets             | WRONGLY USED                                                                                                                                       | Medium               | P7              |
+| 2   | Typed arrays for points       | USED (JSON form)                                                                                                                                   | Low                  | none            |
+| 3   | Path simplification           | PARTIAL                                                                                                                                            | **High**             | P6              |
+| 4   | Object pooling                | USED                                                                                                                                               | Low                  | none            |
+| 5   | Serialization size            | WRONGLY USED                                                                                                                                       | Medium               | P7, §5 E18      |
+| 6   | Image memory                  | NOT USED                                                                                                                                           | **Massive**          | P1              |
+| 7   | Undo as commands              | NOT USED                                                                                                                                           | High                 | design §4.1     |
+| 8   | History limits / coalescing   | USED                                                                                                                                               | Low                  | none            |
+| 9   | Store writes mid-gesture      | USED (by design, mitigated)                                                                                                                        | Low                  | none            |
+| 10  | One render per frame          | USED                                                                                                                                               | Low                  | none            |
+| 11  | Live stroke on the top canvas | PARTIAL                                                                                                                                            | Medium               | P6              |
+| 12  | Object caching                | WRONGLY USED (BUG-149)                                                                                                                             | Medium               | BUG-149         |
+| 13  | Offscreen culling + DPR cap   | WRONGLY USED (area)                                                                                                                                | UNKNOWN              | P12             |
+| 14  | Coalesced pointer events      | NOT USED                                                                                                                                           | High                 | P3              |
+| 15  | Brush textures cached         | USED                                                                                                                                               | Low                  | none            |
+| 16  | Layer raster caching          | PARTIAL                                                                                                                                            | High                 | design §4.3     |
+| 17  | Hit-testing cost              | WRONGLY USED (minor)                                                                                                                               | Medium               | P9              |
+| 18  | Storage format                | NOT USED (binary)                                                                                                                                  | **Massive**          | P1, design §4.2 |
+| 19  | Save debouncing               | USED (too eager)                                                                                                                                   | High                 | P2              |
+| 20  | Autosave safety               | PARTIAL                                                                                                                                            | High                 | P2              |
+| 21  | Schema versioning             | WRONGLY USED                                                                                                                                       | Medium               | P10             |
+| 22  | Chunked loading               | NOT USED                                                                                                                                           | Low now              | design §4.4     |
+| 23  | Only the active page loaded   | USED                                                                                                                                               | Low                  | none            |
+| 24  | Workers / OffscreenCanvas     | PARTIAL (2026-11-17: GIF export encodes in a Web Worker, `animation/gif/gif.worker.ts`, ≤ 4 frames queued)                                         | Medium               | §4.5 (BUG-150)  |
+| 25  | Filters (WebGL, throttled)    | PARTIAL                                                                                                                                            | High (leak)          | P4              |
+| 26  | Code splitting of panels      | PARTIAL (2026-11-17: the animation UI is lazy, `TimelineDock` loads `AnimationPanel` on first open, own 44 kB chunk; other dock tabs still static) | Medium               | P5              |
+| 27  | Leaks / cleanup               | PARTIAL                                                                                                                                            | High                 | P4, P8          |
+| 28  | Profiling + budgets           | NOT USED                                                                                                                                           | Medium (enables all) | P11             |
+| 29  | Touch + stylus                | WRONGLY USED (pressure dead)                                                                                                                       | **High**             | P3              |
+| 30  | Fonts before measuring        | WRONGLY USED                                                                                                                                       | Medium               | P8              |
 
 **Order of work:** P11 first (so every other fix has a before / after number), then P1, P2, P3, P4, P6, then
 the rest. New bugs found by this audit: BUG-234 … BUG-238 (docs/BUGS.md).
@@ -304,7 +304,7 @@ export async function downscaleImageFile(file: Blob, maxSide = MAX_IMAGE_SIDE): 
 ```ts
 import { downscaleImageFile } from './downscaleImage';
 // …
-        const url = await readAsDataURL(await downscaleImageFile(file));
+const url = await readAsDataURL(await downscaleImageFile(file));
 ```
 
 Failing test first, `src/feature/import/__tests__/downscaleImage.test.ts`:
@@ -317,13 +317,21 @@ describe('downscaleImageFile', () => {
     afterEach(() => vi.unstubAllGlobals());
 
     it('keeps a small photo as it is', async () => {
-        vi.stubGlobal('createImageBitmap', async () => ({ width: 800, height: 600, close: vi.fn() }));
+        vi.stubGlobal('createImageBitmap', async () => ({
+            width: 800,
+            height: 600,
+            close: vi.fn(),
+        }));
         const file = new Blob(['x'], { type: 'image/jpeg' });
         expect(await downscaleImageFile(file)).toBe(file);
     });
 
     it('scales the longer side of a big photo to the cap, as JPEG', async () => {
-        vi.stubGlobal('createImageBitmap', async () => ({ width: 8000, height: 2000, close: vi.fn() }));
+        vi.stubGlobal('createImageBitmap', async () => ({
+            width: 8000,
+            height: 2000,
+            close: vi.fn(),
+        }));
         const sizes: number[][] = [];
         vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockImplementation(function (
             this: HTMLCanvasElement,
@@ -433,15 +441,15 @@ const writeProjectToStorage = () => {
 and in `persist()`, replace `cancelPersist(); persistTimer = setTimeout(() => { … }, PERSIST_DELAY_MS);` with:
 
 ```ts
-            if (persistTimer === undefined) firstChangeAt = Date.now();
-            cancelPersist();
-            const left = firstChangeAt + PERSIST_MAX_WAIT_MS - Date.now();
-            persistTimer = setTimeout(
-                () => {
-                    /* the existing body, unchanged */
-                },
-                Math.max(0, Math.min(PERSIST_DELAY_MS, left)),
-            );
+if (persistTimer === undefined) firstChangeAt = Date.now();
+cancelPersist();
+const left = firstChangeAt + PERSIST_MAX_WAIT_MS - Date.now();
+persistTimer = setTimeout(
+    () => {
+        /* the existing body, unchanged */
+    },
+    Math.max(0, Math.min(PERSIST_DELAY_MS, left)),
+);
 ```
 
 Capture must stay synchronous at the call site: a capture deferred until the writer is free could run during a
@@ -526,9 +534,11 @@ function pointerBehind(el: object | undefined, e: unknown): PointerEvent | null 
 /** Is `e` from a stylus, and how hard is it pressed? A mouse or a finger is 1. */
 export function penSample(el: object | undefined, e: unknown): PenSample {
     const direct = e as { pointerType?: unknown } | null;
-    if (direct && typeof direct.pointerType === 'string') return fromPointer(direct as PointerEvent);
+    if (direct && typeof direct.pointerType === 'string')
+        return fromPointer(direct as PointerEvent);
     const touch = stylusTouch(e);
-    if (touch) return { pen: true, pressure: (touch.force ?? 0) > 0 ? Math.min(1, touch.force!) : 1 };
+    if (touch)
+        return { pen: true, pressure: (touch.force ?? 0) > 0 ? Math.min(1, touch.force!) : 1 };
     const behind = pointerBehind(el, e);
     return behind ? fromPointer(behind) : MOUSE;
 }
@@ -544,7 +554,10 @@ export function coalescedScenePoints(
 ): Array<{ x: number; y: number; pressure: number }> {
     const c = canvas as PointerCanvas;
     const own = e as Partial<PointerEvent> | null;
-    const src = typeof own?.getCoalescedEvents === 'function' ? (own as PointerEvent) : pointerBehind(c.upperCanvasEl, e);
+    const src =
+        typeof own?.getCoalescedEvents === 'function'
+            ? (own as PointerEvent)
+            : pointerBehind(c.upperCanvasEl, e);
     if (!src || typeof src.getCoalescedEvents !== 'function' || !c._getPointerImpl) return [];
     return src
         .getCoalescedEvents()
@@ -663,21 +676,21 @@ delete the `PointerLike` type, and replace `pressureOf`, the end of `onMouseDown
 '@/lib/canvas/penInput';`, then
 
 ```ts
-        const sample = penSample(this.canvas.upperCanvasEl, e);
-        const pen = sample.pen;
-        // …and in both places below, `e.pressure` → `sample.pressure`
+const sample = penSample(this.canvas.upperCanvasEl, e);
+const pen = sample.pen;
+// …and in both places below, `e.pressure` → `sample.pressure`
 ```
 
 `src/store/brushes/nibBrush.ts` line 25:
 
 ```ts
-        const sample = penSample(this.canvas?.upperCanvasEl, e);
-        const pen = sample.pen;
-        const target = nibWidthFactor({
-            speed,
-            thinning: this.nib.thinning,
-            pressure: pen ? sample.pressure : undefined,
-        });
+const sample = penSample(this.canvas?.upperCanvasEl, e);
+const pen = sample.pen;
+const target = nibWidthFactor({
+    speed,
+    thinning: this.nib.thinning,
+    pressure: pen ? sample.pressure : undefined,
+});
 ```
 
 Failing tests first: `src/lib/canvas/__tests__/penInput.test.ts` (a recorded `pointermove` with
@@ -766,15 +779,15 @@ const MacroPanel = lazy(() =>
 `src/components/organisms/DockRoot.tsx` line 68 (add `Suspense` to the `react` import):
 
 ```tsx
-                        <Suspense
-                            fallback={
-                                <p role="status" className="p-4 text-sm text-ink">
-                                    Loading…
-                                </p>
-                            }
-                        >
-                            <activeTab.content />
-                        </Suspense>
+<Suspense
+    fallback={
+        <p role="status" className="p-4 text-sm text-ink">
+            Loading…
+        </p>
+    }
+>
+    <activeTab.content />
+</Suspense>
 ```
 
 If a panel is also imported statically elsewhere (for example a top-bar Export button), the split does nothing
@@ -812,7 +825,9 @@ export function simplifyPolyline<T extends XY>(points: readonly T[], epsilon: nu
         let at = -1;
         for (let i = a + 1; i < b; i++) {
             const P = points[i]!;
-            const t = len2 ? Math.min(1, Math.max(0, ((P.x - A.x) * dx + (P.y - A.y) * dy) / len2)) : 0;
+            const t = len2
+                ? Math.min(1, Math.max(0, ((P.x - A.x) * dx + (P.y - A.y) * dy) / len2))
+                : 0;
             const ex = A.x + t * dx - P.x;
             const ey = A.y + t * dy - P.y;
             const d2 = ex * ex + ey * ey;
@@ -833,8 +848,8 @@ export function simplifyPolyline<T extends XY>(points: readonly T[], epsilon: nu
 `variableWidthBrush.ts` `finalizePath` (line 170), first line becomes:
 
 ```ts
-        // input is only exact to one screen pixel: drop what deviates less than a quarter of it
-        const poly = simplifyPolyline(this.outline(true), 0.25 / (this.canvas.getZoom?.() || 1));
+// input is only exact to one screen pixel: drop what deviates less than a quarter of it
+const poly = simplifyPolyline(this.outline(true), 0.25 / (this.canvas.getZoom?.() || 1));
 ```
 
 Stamp strokes get the half-pixel distance filter inside `add` (P3 code). Tests: `simplifyPath.test.ts` (a
@@ -908,7 +923,7 @@ Not breaking. `lib/serialization.ts` `CUSTOM_PROPS`, after `'isFreehand'`:
 `createBrushSlice.ts:283`: drop the dead `targetFindTolerance: 4` (a canvas option in Fabric 7):
 
 ```ts
-    path.set({ perPixelTargetFind: true, isFreehand: true });
+path.set({ perPixelTargetFind: true, isFreehand: true });
 ```
 
 Strokes saved before the fix still load without it; if that matters, set it on load for `isFreehand` objects in
@@ -960,7 +975,7 @@ export function upgradeProject(input: unknown, current: number): ProjectData | n
 '@/lib/serialization';` and in `importProject` the first line inside `try` becomes:
 
 ```ts
-                    const data = upgradeProject(json, PROJECT_VERSION);
+const data = upgradeProject(json, PROJECT_VERSION);
 ```
 
 (The next line's `!Array.isArray(raw)` check already returns false for `null`.) Tests: version 99 → `null` and
@@ -1008,13 +1023,13 @@ Wrap (one line each): the snapshot in `createUndoRedoSlice.commit` (`history:sna
 (`page:load`), `makeThumbnail` (`page:thumbnail`), `StampBrush.finish` (`brush:commit`), `importImage`
 (`import:image`). Budgets (record before / after for each fix in this file):
 
-| Mark | Budget at 500 objects | Budget at 1500 |
-|---|---|---|
-| frame while scrolling (p95) | ≤ 16.7 ms on a GPU laptop | ≤ 33 ms |
-| `history:snapshot` / `autosave:capture` | ≤ 10 ms | ≤ 25 ms |
-| `history:restore` (undo) | ≤ 100 ms | ≤ 250 ms |
-| `page:load` | ≤ 300 ms | ≤ 800 ms |
-| JS heap after load (DevTools) | ≤ 150 MB | ≤ 300 MB |
+| Mark                                    | Budget at 500 objects     | Budget at 1500 |
+| --------------------------------------- | ------------------------- | -------------- |
+| frame while scrolling (p95)             | ≤ 16.7 ms on a GPU laptop | ≤ 33 ms        |
+| `history:snapshot` / `autosave:capture` | ≤ 10 ms                   | ≤ 25 ms        |
+| `history:restore` (undo)                | ≤ 100 ms                  | ≤ 250 ms       |
+| `page:load`                             | ≤ 300 ms                  | ≤ 800 ms       |
+| JS heap after load (DevTools)           | ≤ 150 MB                  | ≤ 300 MB       |
 
 New spec `e2e/perf-budget.spec.ts` (budgets are generous so CI noise passes and a big regression fails; real
 numbers go to the report as annotations):
@@ -1090,9 +1105,7 @@ test('500 objects: open, scroll and undo stay within budget', async ({ editor, p
         mimeType: 'application/json',
         buffer: Buffer.from(JSON.stringify(project)),
     });
-    await expect
-        .poll(async () => (await editor.objects()).length, { timeout: 30_000 })
-        .toBe(COUNT);
+    await expect.poll(async () => (await editor.objects()).length, { timeout: 30_000 }).toBe(COUNT);
     const openMs = Date.now() - opened;
 
     // frame times while the board scrolls (every frame repaints every object on screen)
@@ -1110,7 +1123,9 @@ test('500 objects: open, scroll and undo stay within budget', async ({ editor, p
         requestAnimationFrame(tick);
     });
     for (let i = 0; i < 30; i++) await page.mouse.wheel(0, i % 2 ? -80 : 80);
-    const frames = (await page.evaluate(() => (window as unknown as { __frames: number[] }).__frames))
+    const frames = (
+        await page.evaluate(() => (window as unknown as { __frames: number[] }).__frames)
+    )
         .slice(5)
         .sort((a, b) => a - b);
     const p95 = frames[Math.floor(frames.length * 0.95)] ?? 0;
@@ -1145,17 +1160,17 @@ Only after BUG-238 is confirmed on an iPad with iOS 17. `lib/canvas/renderRatio.
 /** iPhone / iPad Safari before iOS 18 blanks a canvas above this many pixels (docs/LIMITATIONS.md). */
 export const MAX_BACKSTORE_AREA = 16_777_216;
 // in designRenderRatio:
-    const cap = Math.min(
-        MAX_BACKSTORE_PX / Math.max(width, height),
-        Math.sqrt(MAX_BACKSTORE_AREA / (width * height)),
-    );
+const cap = Math.min(
+    MAX_BACKSTORE_PX / Math.max(width, height),
+    Math.sqrt(MAX_BACKSTORE_AREA / (width * height)),
+);
 ```
 
 and the deep-zoom switch (`lib/canvas/deepZoom.ts:41`) must use the same limit, or the page would stay a full
 (blurred) buffer instead of switching to the sharp window:
 
 ```ts
-    Math.max(pageW, pageH) * ratio > MAX_BACKSTORE_PX ||
+Math.max(pageW, pageH) * ratio > MAX_BACKSTORE_PX ||
     pageW * pageH * ratio * ratio > MAX_BACKSTORE_AREA;
 ```
 
@@ -1235,7 +1250,9 @@ export async function makeThumbnailAsync(
     if (!w) return undefined;
     try {
         const el = canvas.toCanvasElement(width / w);
-        const blob = await new Promise<Blob | null>((resolve) => el.toBlob(resolve, 'image/webp', 0.8));
+        const blob = await new Promise<Blob | null>((resolve) =>
+            el.toBlob(resolve, 'image/webp', 0.8),
+        );
         if (!blob) return undefined;
         return await new Promise<string>((resolve, reject) => {
             const reader = new FileReader();

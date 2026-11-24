@@ -1,22 +1,29 @@
 import { useMemo, useState } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 import { useStore } from '@store';
+import { GIF_DEFAULTS, GIF_MAX_MS, type GifSettings } from '@/animation/gif/gifSettings';
 import {
     getRealtimeFormats,
     supportsWebCodecs,
     type ContainerFormat,
     type ExportMode,
 } from '@/animation/exportVideo';
-import { Button } from '../../atoms/Button';
 import { Input } from '../../atoms/Input';
 import { Select } from '../../atoms/Select';
 import { Field } from '../../molecules/Field';
 import { PaintTargetSwatch } from '../../molecules/PaintTargetSwatch';
 import { PanelAction } from '../../molecules/PanelAction';
 import { PanelSection } from '../../molecules/PanelSection';
-import { EXPORT_FPS, EXPORT_QUALITY, EXPORT_SIZES } from './export.config';
+import { EXPORT_FPS, EXPORT_QUALITY, EXPORT_SIZES, GIF_FPS, GIF_WIDTHS } from './export.config';
+import { ExportProgress } from './ExportProgress';
+import { GifFields } from './GifFields';
 
-/** Video (MP4 / WebM) or a PNG of the current frame. */
+const GIF_MAX_S = GIF_MAX_MS / 1000;
+
+/** The GIF form: its own size and frame rate (not the timeline's) and the encoder switches. */
+type GifForm = GifSettings & { width: number; fps: number };
+
+/** Video (MP4 / WebM), an animated GIF, or a PNG of the current frame. */
 export function ExportSection() {
     const { exportState, duration, fps, workIn, workOut } = useStore(
         useShallow((s) => ({
@@ -28,11 +35,7 @@ export function ExportSection() {
         })),
     );
     const a = useStore(
-        useShallow((s) => ({
-            exportVideo: s.exportVideo,
-            cancelExport: s.cancelExport,
-            setAnimFps: s.setAnimFps,
-        })),
+        useShallow((s) => ({ exportVideo: s.exportVideo, setAnimFps: s.setAnimFps })),
     );
 
     const fast = useMemo(() => supportsWebCodecs(), []);
@@ -44,15 +47,23 @@ export function ExportSection() {
     const [quality, setQuality] = useState('high');
     const [bg, setBg] = useState('#ffffff');
     const [name, setName] = useState('animation');
+    const [gif, setGif] = useState<GifForm>({ ...GIF_DEFAULTS, width: 480, fps: 15 });
+    const setGifField = (patch: Partial<GifForm>) => setGif((g) => ({ ...g, ...patch }));
     const rendering = exportState.status === 'rendering';
-    const percent = Math.round(exportState.progress * 100);
+    const isGif = mode === 'gif';
+    const isVideo = mode === 'mp4-fast' || mode === 'realtime';
 
     const hasWork = workIn > 0 || workOut !== null;
     const span = (range === 'work' ? (workOut ?? duration) - workIn : duration) / 1000 || 0;
     const bps = EXPORT_QUALITY.find((q) => q.id === quality)!.bps;
+    const gifTooLong = isGif && span > GIF_MAX_S;
     const canRun =
-        mode === 'png' ||
-        (mode === 'mp4-fast' ? fast || realtimeFormats.length > 0 : realtimeFormats.length > 0);
+        !gifTooLong &&
+        (mode === 'png' ||
+            isGif ||
+            (mode === 'mp4-fast'
+                ? fast || realtimeFormats.length > 0
+                : realtimeFormats.length > 0));
 
     const run = () => {
         const sz = EXPORT_SIZES.find((x) => x.id === size)!;
@@ -60,8 +71,14 @@ export function ExportSection() {
             mode,
             container,
             range,
-            width: sz.w,
-            height: sz.h,
+            width: isGif ? gif.width : sz.w,
+            height: isGif ? 0 : sz.h, // GIF: the board's proportions
+            ...(isGif
+                ? {
+                      fps: gif.fps,
+                      gif: { loop: gif.loop, dither: gif.dither, transparent: gif.transparent },
+                  }
+                : {}),
             bitrate: bps,
             background: bg,
             fileName: name.trim() || 'animation',
@@ -69,7 +86,7 @@ export function ExportSection() {
     };
 
     return (
-        <PanelSection title="Export video" collapsible>
+        <PanelSection title="Export" collapsible>
             <Field wrap label="Output">
                 <Select<ExportMode>
                     aria-label="Output"
@@ -87,6 +104,7 @@ export function ExportSection() {
                             label: 'Video · realtime (compatibility)',
                             disabled: !realtimeFormats.length,
                         },
+                        { value: 'gif', label: `GIF · animated, up to ${GIF_MAX_S} s` },
                         { value: 'png', label: 'PNG · current frame' },
                     ]}
                 />
@@ -94,48 +112,59 @@ export function ExportSection() {
 
             <div className="grid grid-cols-2 gap-2">
                 {mode !== 'png' && (
-                    <>
-                        <Field wrap label="Frame rate">
-                            <Select
-                                aria-label="Frame rate"
-                                value={fps}
-                                onChange={a.setAnimFps}
-                                disabled={rendering}
-                                options={EXPORT_FPS}
-                            />
-                        </Field>
-                        <Field wrap label="Quality">
-                            <Select<string>
-                                aria-label="Quality"
-                                value={quality}
-                                onChange={setQuality}
-                                disabled={rendering}
-                                options={EXPORT_QUALITY.map((q) => ({
-                                    value: q.id,
-                                    label: q.label,
-                                }))}
-                            />
-                        </Field>
-                    </>
+                    <Field wrap label="Frame rate">
+                        <Select<number>
+                            aria-label="Frame rate"
+                            value={isGif ? gif.fps : fps}
+                            onChange={isGif ? (v) => setGifField({ fps: v }) : a.setAnimFps}
+                            disabled={rendering}
+                            options={isGif ? GIF_FPS : EXPORT_FPS}
+                        />
+                    </Field>
                 )}
-                <Field wrap label="Resolution">
-                    <Select<string>
-                        aria-label="Resolution"
-                        value={size}
-                        onChange={setSize}
-                        disabled={rendering}
-                        options={EXPORT_SIZES.map((x) => ({ value: x.id, label: x.label }))}
-                    />
-                </Field>
-                <Field wrap label="Background">
-                    <PaintTargetSwatch
-                        id="video-export-background"
-                        label="Video background"
-                        value={bg}
-                        onChange={setBg}
-                        disabled={rendering}
-                    />
-                </Field>
+                {isVideo && (
+                    <Field wrap label="Quality">
+                        <Select<string>
+                            aria-label="Quality"
+                            value={quality}
+                            onChange={setQuality}
+                            disabled={rendering}
+                            options={EXPORT_QUALITY.map((q) => ({ value: q.id, label: q.label }))}
+                        />
+                    </Field>
+                )}
+                {isGif ? (
+                    <Field wrap label="Size">
+                        <Select<number>
+                            aria-label="Size"
+                            value={gif.width}
+                            onChange={(v) => setGifField({ width: v })}
+                            disabled={rendering}
+                            options={GIF_WIDTHS}
+                        />
+                    </Field>
+                ) : (
+                    <Field wrap label="Resolution">
+                        <Select<string>
+                            aria-label="Resolution"
+                            value={size}
+                            onChange={setSize}
+                            disabled={rendering}
+                            options={EXPORT_SIZES.map((x) => ({ value: x.id, label: x.label }))}
+                        />
+                    </Field>
+                )}
+                {!(isGif && gif.transparent) && (
+                    <Field wrap label="Background">
+                        <PaintTargetSwatch
+                            id="video-export-background"
+                            label="Video background"
+                            value={bg}
+                            onChange={setBg}
+                            disabled={rendering}
+                        />
+                    </Field>
+                )}
                 {mode === 'realtime' && (
                     <Field wrap label="Container">
                         <Select<ContainerFormat>
@@ -166,6 +195,8 @@ export function ExportSection() {
                 )}
             </div>
 
+            {isGif && <GifFields value={gif} onChange={setGifField} disabled={rendering} />}
+
             <Field wrap label="File name">
                 <Input
                     size="sm"
@@ -175,40 +206,19 @@ export function ExportSection() {
                 />
             </Field>
 
-            {rendering ? (
-                <div className="space-y-1.5">
-                    <div
-                        className="h-2 overflow-hidden rounded an-track"
-                        role="progressbar"
-                        aria-label="Export progress"
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={percent}
-                    >
-                        <div
-                            className="h-full bg-primary-600 transition-[width]"
-                            style={{ width: `${percent}%` }}
-                        />
-                    </div>
-                    <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-ink-muted">Rendering… {percent}%</span>
-                        <Button variant="secondary" size="sm" icon="xmark" onClick={a.cancelExport}>
-                            Cancel
-                        </Button>
-                    </div>
-                </div>
-            ) : (
+            {!rendering && (
                 // playback does not block it: the export pauses first
                 <PanelAction
                     icon={mode === 'png' ? 'image' : 'video'}
                     onClick={run}
                     disabled={!canRun}
                 >
-                    {mode === 'png' ? 'Save PNG' : 'Export video'}
+                    {mode === 'png' ? 'Save PNG' : isGif ? 'Export GIF' : 'Export video'}
                 </PanelAction>
             )}
+            <ExportProgress />
 
-            {!rendering && mode !== 'png' && (
+            {!rendering && isVideo && (
                 <p className="text-[11px] text-ink-muted">
                     {span.toFixed(1)} s · about {((bps * span) / 8 / 1_000_000).toFixed(1)} MB.{' '}
                     {mode === 'mp4-fast' && fast
@@ -216,14 +226,11 @@ export function ExportSection() {
                         : `Realtime export takes about ${span.toFixed(1)} s. Keep this tab open.`}
                 </p>
             )}
-            {exportState.status === 'done' && (
-                <p role="status" className="text-[11px] text-success">
-                    {exportState.message}
-                </p>
-            )}
-            {exportState.status === 'error' && (
-                <p role="alert" className="text-[11px] text-danger">
-                    {exportState.message}
+            {!rendering && isGif && (
+                <p className="text-[11px] text-ink-muted">
+                    {gifTooLong
+                        ? `A GIF can be at most ${GIF_MAX_S} s; this is ${span.toFixed(1)} s. Set a work area (I and O on the timeline) and pick Range › Work area.`
+                        : `${span.toFixed(1)} s · ${Math.floor(span * gif.fps) + 1} frames, ${gif.width} px wide. Frames that do not change take no space.`}
                 </p>
             )}
         </PanelSection>

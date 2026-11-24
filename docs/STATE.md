@@ -15,7 +15,7 @@ Spread order (it matters):
 1 Canvas  2 Brush  3 UI  4 Layers  5 Page  6 Pages  7 Background  8 Command  9 ShapeStyle  10 UndoRedo
 11 Transform  12 Shape  13 Text  14 BackgroundColor  15 ContextMenu  16 Setting  17 advanceOperation
 19 NodeEditor  20 Filter  22 Template  23 Notebook  24 Dialog  26 DrawingTools  29 PaintTools  27 Generator
-28 Macro  30 PageLayers  31 Document  32 Comic  33 Notes  25 Animation
+28 Macro  30 PageLayers  31 Document  32 Comic  33 Notes  34 Timeline  35 Character  25 Animation
 (each spread once; 18 geometryEngine removed, the second Page spread removed: BUG-002 / BUG-030)
 ```
 
@@ -35,19 +35,19 @@ templates use `readLocalList` / `writeLocalList` from the same module).
 `src/__tests__/storeKeys.test.ts` (reads the spread order from `src/store/index.ts`) and
 `src/store/__tests__/storeComposition.test.ts`. What was resolved:
 
-| Key(s) | Was | Now |
-|---|---|---|
-| `zoomIn`, `zoomOut` | UI → Page | Page only (UI copies were dead) |
-| `setOrientation` | Page → Setting → Page (Page spread twice) | Page only; the second Page spread is gone |
-| `setBackgroundStyle`, `toggleGrid` | Background → Setting / Notebook | Setting / Notebook only (Background copies were shadowed) |
-| `setBackgroundColor` | BackgroundColor → Setting | Setting only |
-| `setGridSize` | Setting → Notebook | Notebook only |
-| `gridSize` | Background → Notebook | Notebook; background patterns use `patternSize` |
-| `_isSyncing` | Transform → advanceOperation | Transform only |
-| `color`, `fillColor` (+ `setColor`, `setFillColor`) | Brush → Text | Brush only (Text copies had no readers) |
-| `strokeWidth` (+ `setStrokeWidth`) | ShapeStyle → Text | ShapeStyle only (`setStrokeWidth` moved there, store-only) |
-| `shadowColor` | Brush → Text | Text keeps the shape shadow colour; brush → `brushShadowColor` |
-| `opacity` | Brush → ShapeStyle → Filter | ShapeStyle (selection); brush → `brushOpacity`; Filter → `filterOpacity` |
+| Key(s)                                              | Was                                       | Now                                                                      |
+| --------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------ |
+| `zoomIn`, `zoomOut`                                 | UI → Page                                 | Page only (UI copies were dead)                                          |
+| `setOrientation`                                    | Page → Setting → Page (Page spread twice) | Page only; the second Page spread is gone                                |
+| `setBackgroundStyle`, `toggleGrid`                  | Background → Setting / Notebook           | Setting / Notebook only (Background copies were shadowed)                |
+| `setBackgroundColor`                                | BackgroundColor → Setting                 | Setting only                                                             |
+| `setGridSize`                                       | Setting → Notebook                        | Notebook only                                                            |
+| `gridSize`                                          | Background → Notebook                     | Notebook; background patterns use `patternSize`                          |
+| `_isSyncing`                                        | Transform → advanceOperation              | Transform only                                                           |
+| `color`, `fillColor` (+ `setColor`, `setFillColor`) | Brush → Text                              | Brush only (Text copies had no readers)                                  |
+| `strokeWidth` (+ `setStrokeWidth`)                  | ShapeStyle → Text                         | ShapeStyle only (`setStrokeWidth` moved there, store-only)               |
+| `shadowColor`                                       | Brush → Text                              | Text keeps the shape shadow colour; brush → `brushShadowColor`           |
+| `opacity`                                           | Brush → ShapeStyle → Filter               | ShapeStyle (selection); brush → `brushOpacity`; Filter → `filterOpacity` |
 
 ---
 
@@ -185,12 +185,13 @@ object), BUG-194 (ungroup splits text shapes).
 1.3 × the fit, never wider than the board, scrolled to the top; others 1), `fitToWidth` (design: zoom = fit width / fit page, `lib/canvas/pageFit.ts`, reads the
 `[data-board-scroll]` size and Document `pageSetup`; whiteboard: `fitToScreen`; 2026-11-17), `zoomToRect(rect, padding?)` (whiteboard), `centerViewOn({ x, y })` (scene point to the middle of the view, same zoom, through `panBy`; note pins, 2026-11-17), `panBy(dx, dy)` and
 `pinchZoom(factor, clientX, clientY)` (touch, screen px; design scrolls the `[data-board-scroll]` element, zoom goes through `setZoom`; `panBy` is the one pan path: the Canvas slice's Hand tool and wheel pan call it too), `applyPageSize` (design: state only, zoom 1
-+ `pageWidth/Height` from `selectedPreset`; whiteboard: viewport back to 1:1). Exports: `resolvePageSize`, `isFreehand`, `MIN/MAX_ZOOM`,
-`MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`. Zoom range 2 % … 6400 % (BUG-221, was 10 … 400 %).
-**Depends on:** Canvas (`canvas`, `cw`, `ch`, `selectedPreset`), Setting (`settings.freehand` before the board reports
-`boardMode`), Background (`drawBackground`, whiteboard only).
-**Risks:** `pageFormat` / `orientation` /
-`customSize` are legacy mirrors (the page size is `selectedPreset`); `PAGE_SIZES` keys differ from settings formats.
+
+- `pageWidth/Height` from `selectedPreset`; whiteboard: viewport back to 1:1). Exports: `resolvePageSize`, `isFreehand`, `MIN/MAX_ZOOM`,
+  `MIN/MAX_PAGE_PX`, `DEFAULT_PAGE_BACKGROUND`. Zoom range 2 % … 6400 % (BUG-221, was 10 … 400 %).
+  **Depends on:** Canvas (`canvas`, `cw`, `ch`, `selectedPreset`), Setting (`settings.freehand` before the board reports
+  `boardMode`), Background (`drawBackground`, whiteboard only).
+  **Risks:** `pageFormat` / `orientation` /
+  `customSize` are legacy mirrors (the page size is `selectedPreset`); `PAGE_SIZES` keys differ from settings formats.
 
 ## 6. Pages (multi-page document): `createPagesSlice.ts`
 
@@ -646,11 +647,137 @@ slice does not call it (it is at its size ceiling).
 `isPageSwitching`), UndoRedo (`saveState`, `undo`, `_isRestoring`), Page (`centerViewOn`), Dialog (`showToast`).
 Other pages' notes are read from their `canvasJSON.pageNotes` (`collectNotes`); the Pages slice is unchanged.
 
+## 35. Character: `createCharacterSlice.ts` (+ `src/character/`, `organisms/character/`, docs/CHARACTER_STUDIO.md)
+
+**Purpose:** the Character Studio (phase 1, 2026-11-18): the character being edited, the studio camera, its own undo
+history, the saved library and the autosaved draft, and placing / updating a character on the page. Spread before
+Animation.
+**State:** `characterStudioOpen`, `studioCharacter` (a `Character`, `src/character/schema/types.ts`), `studioCamera`
+(`{ yaw, pitch, roll, shot }`), `studioSelectedPart`, `studioEditingPlaced`, `characterLibrary`,
+`characterLibraryStatus` (`idle | loading | ready | error`), `studioPast` / `studioFuture` (30 snapshots).
+**Actions:** `openCharacterStudio(start?)` (else the selected character on the page, else the draft, else the first
+recipe), `closeCharacterStudio`, `editStudioCharacter(edit, historyKey?)` (pure merge in `character/studio/edit.ts`;
+same key within 0.8 s = one step; a no-op edit is no step; a picked hair colour stops age greying it),
+`loadStudioCharacter(c, opts?)` (`fromScene`: a scene actor, own history, no standalone draft write), `setStudioCamera`, `selectStudioPart`, `recolorStudioPart` (the part's material: skin, top,
+bottom, shoes, hair), `mirrorStudioPose`, `studioUndo` / `studioRedo`, `surpriseStudioCharacter`,
+`loadCharacterLibrary`, `saveStudioToLibrary`, `deleteFromLibrary`, `placeStudioCharacter`.
+**Page contract:** a placed character is a Fabric group built from the rendered SVG (`character/board.ts`, drawn at
+`PX_PER_CM` × creation scale, so a child is smaller than an adult) with `characterData = { character, camera }`
+(CUSTOM_PROPS), so it saves with the page and survives undo. "Update on page" puts the new drawing into the SAME
+group (`swapCharacterDrawing`: the fresh shapes take the group's transform first, so the centre, scale and turn stay)
+under `pauseHistory`, fires `object:modified` (connectors reroute) and records one step (`saveState(true)`); the
+object keeps its id, `animId`, pinned notes, connectors, locks and layer. A new placement is one step
+through `object:added`.
+**Persistence:** `characterStorage` (`@/lib/storage`, IndexedDB `fateboard-data`, keys `characterLibrary`,
+`characterDraft`). Library saves are read-modify-write in storage (`upsert` / `remove`): a failed read rejects
+before writing, and entries the app cannot read (a newer schema) are kept. The draft is written only after an edit
+(1.5 s later, at once on close, and on `pagehide` when the tab closes: BUG-254); opening another character keeps the replaced one one undo step away and does
+not touch the stored draft; an unreadable draft is reported and left alone. Failures are toasts, never throws
+(also when the studio's lazy code cannot load).
+**Clothes (phase 3):** `character.dress.top.kind` (11) and `.bottom.kind` (10) are ids into `data/garments.ts`
+(`TOP_DEFS`, `BOTTOM_DEFS`: sleeve / leg length 0..2 along the limb, fit, hang, collar, folds, who it suits); the first three
+of each keep their ids. `render/garments.ts` draws them.
+**Hair (phase 3):** `character.hair` = `{ style, color, tip }` (schema v3; `tip` null = one colour, a hex = two-tone
+tips on styles with length). 44 styles in `data/hairStyles.ts`; `hairPool(female, age)` says who a style suits (used by
+the cast generator and Surprise me).
+**Face (phase 2):** `character.emotion` (`{ id, intensity }`, one of 20) and `character.face.{gaze, blink, viseme}`
+(schema v2; v1 characters migrate with a straight gaze, open eyes, resting mouth). `data/emotions.ts` `resolveFace` blends
+the resting face (mouth style) toward the emotion by intensity, then applies the mouth shape and blink; `render/face.ts`
+draws it. Edited with `editStudioCharacter({ emotion, face })`; slider drags (`gaze`, `blink`, `emotion-strength`) are one
+undo step.
+**Styles:** `character.style` picks a style pack (`character/render/styles.ts`, §7.3 of CHARACTER_STUDIO.md):
+cartoon, anime, webtoon, manga, realistic. Shading, rim light and hair highlights are shapes (crescents from
+`shapes.crescent`, cut from the outline as drawn so they never spill past it), gradients are SVG linear
+gradients, manga screentone is an SVG pattern in the studio and the Comic tone fill (`toneParams`) on the page, so
+a placed character looks as in the studio. Manga maps light colours to paper, middle ones to a 25 % tone and dark
+ones to ink; skin is never ink (dark skin = a 45 % tone), and a shadow is 20 % denser than its part. The page tile
+comes from the same `toneTile` / `tonePatternMatrix` as the Comic slice's `applyTone`. Switching style changes only
+that field (undoable). Phase 9: 19 packs (`render/styles.ts` + `packsMore.ts`); a pack may set a `tint` (`tints.ts`: a
+colour grade applied to every material and the eye colour before the scene's grade) and `proportion.limb`. In a scene,
+`styleLock` (default on for a new scene) makes everyone share one style: adding an actor or editing a character sets
+the scene's style; off = per-actor styles.
+**Loading:** the renderer, the recipes and the Fabric builder are dynamic imports (first open / place / Surprise
+me), so the editor's store chunk carries only the schema and the edit helpers.
+**Depends on:** Canvas (`canvas`), UndoRedo (`saveState`, `pauseHistory`, `resumeHistory`), Page (`boardMode`,
+`pageWidth`, `pageHeight` for `creationScaleOf`), Dialog (`showToast`), Scene (`sceneEditingActor`: a linked actor
+is kept by the scene draft, not the character draft).
+
+## 36. Scene: `createSceneSlice.ts` (+ `src/scene/`, `organisms/scene/`, docs/CHARACTER_STUDIO.md §9)
+
+**Purpose (2026-11-18):** Scene mode of the Character Studio: up to 5 characters in a place (13 environments), one
+light (time, weather, season), a perspective or flat camera with named views, a frame; placed on the page as one
+group. All logic is pure in `src/scene` (`applySceneEdit`); the renderer, environments, views and the Fabric builder
+load on first use (dynamic imports), so the store chunk holds only the schema. Spread after Character, before
+Animation.
+**State:** `studioMode` (`character | scene`), `studioScene` (a `Scene`, `src/scene/schema/types.ts`),
+`sceneSelectedActor`, `sceneEditingActor` (the actor Character mode edits: every change to `studioCharacter` is
+copied into it, no scene history step), `sceneEditingPlaced`, `scenePast` / `sceneFuture` (30 snapshots),
+`sceneGuides` (`thirds | horizon | grid`, studio only).
+**Actions:** `openSceneStudio(start?)` (else the selected scene on the page, else the scene being edited, else the
+draft, else a new scene with the current character; opens the studio through `openCharacterStudio`),
+`setStudioMode(mode)` (Character mode loads the selected actor, else the linked one, whenever the scene's copy
+differs; with `loadStudioCharacter(c, { fromScene: true })`: its own history, the standalone draft saved first and
+then left alone), `editStudioScene(edit, historyKey?)` (a `SceneEdit`; same key within 0.8 s = one step, a
+`gesture:` key (one drag) = one step however slow; no-op = no step), `selectSceneActor`, `addSceneActor(character?)` (next cast member
+not in the scene, at a free spot; a toast at 5), `sceneUndo` / `sceneRedo`, `toggleSceneGuide`, `placeStudioScene()`
+(new group at the view centre, or the same group updated: one board undo step).
+**Crowd:** `studioScene.set.crowd` (0–80, edited with a `set` patch, one undo step per drag) adds `sets/crowd.ts` extras
+to the place; they are set pieces, cached with the place (the key includes `set`).
+**Library:** `sceneLibrary` (parsed `Scene[]`; entries from a newer schema are not listed but stay in storage),
+`sceneLibraryStatus`, `loadSceneLibrary()`, `saveStudioScene()` (tidy name; the same scene saved again updates its entry),
+`deleteSavedScene(id)`; failures are toasts. `editStudioScene({ kind: 'load', scene })` opens a saved scene over the one
+being edited (keeps its id). Storage: `sceneStorage` key `sceneLibrary` through the shared `createLibrary`.
+**Templates:** `editStudioScene({ kind: 'template', id })` applies `scene/templates/apply.ts` (place, cast with poses,
+formation, camera, aspect; the scene keeps its id and frame border); the first new character is selected and the old link
+to Character mode is dropped. After an undo that removes the selected character, the first one is selected.
+**Export:** `scene/export/layers.ts` (`sceneExportFiles`, pure) lists the files; the Frame tab zips them with `lib/zip.ts`
+and downloads through `lib/export/downloadBlob.ts` (no store action: it changes nothing).
+**Session:** closing the studio ends the link to an actor, the placed object being updated and Scene mode (the
+scene stays in memory and in the draft), so opening another character later can never change a scene actor.
+**Storage:** `sceneStorage` draft (`sceneDraft`, project database, name tidied by `cleanScene`), written 1.5 s after
+an edit, at once when the studio closes and on `pagehide`. Renders cache the place and each actor (bounded LRU,
+`render/memo.ts`): a drag re-renders only the dragged actor. Placed scenes live in the page (`sceneData`, CUSTOM_PROPS): a group of the frame's exact size (fixed
+layout + a frame clip).
+**Depends on:** Character (`characterStudioOpen`, `studioCharacter`, `openCharacterStudio`, `loadStudioCharacter`),
+Canvas (`canvas`), UndoRedo (`saveState`, `pauseHistory`, `resumeHistory`), Page (`boardMode`, `pageWidth`,
+`pageHeight` for `creationScaleOf`), Dialog (`showToast`).
+
+## 34. Timeline: `createTimelineSlice.ts` (+ `src/animation/overlay/`, `organisms/animation/TimelineDock.tsx`)
+
+**Purpose:** the animation timeline as a dock under the board (owner request 2026-11-17: "like other animation
+tools"; it was the right-dock Animate tab) and its board overlays: onion skin and motion path. View state only;
+the animation itself stays in the Animation slice and the page. Spread before Animation.
+**State:** `timelineOpen`, `timelineHeight` (CSS px, 160 … 1200; the dock also never takes more than 70 % of the
+window), `onionSkin` (`{ on, count 1…3 per side, step 1…30 frames, opacity 0.05…0.8 }`), `motionPath`.
+**Actions:** `setTimelineOpen`, `toggleTimeline` (footer Timeline button, command `toggle-timeline` = ⌘⌥T /
+Ctrl+Alt+T), `setTimelineHeight`, `setOnionSkin(patch)` (merged and clamped), `setMotionPath`,
+`paintAnimationOverlay(ctx)`.
+**Persistence:** per browser, `uiPrefsStorage` section `timeline` (`@/lib/storage`, localStorage key `fateboard-ui`),
+one write 400 ms after changes settle (a resize drag is one write). Broken values fall back to the defaults.
+**Overlay:** `paintAnimationOverlay` is called by the layer compositor's `paintOverlay` (PageLayers, after the page
+guides): only on the editor's own canvas element, so never in an export, a thumbnail or a video frame; only while the
+timeline is open. `src/animation/overlay/animationOverlay.ts` caches: ghosts (`ghosts.ts`) are rendered into small
+scene-space bitmaps again only when the frame, the tracks, the settings, the objects or the zoom (about 20 %) change,
+and not while playing or exporting; paths (`motionPath.ts`) only when the tracks, the fps or the objects change.
+Showing another time uses `objectLook.ts` (capture → `showSample` → put back exactly, flips included, in a
+`finally`; one pass per ghost; no events, `__animRest` untouched; objects in a selection and a text being typed in
+get no ghost, BUG-250). Motion paths sample over the track's absolute `rest`, so they are right inside a
+multi-selection too. A store subscription repaints the board when a view setting changes and frees the bitmaps when off.
+**Depends on:** Canvas (`canvas`), Animation (`tracks`, `currentTime`, `animFps`, `animDuration`, `isPlaying`,
+`exportState`). Closing the dock unmounts `AnimationPanel`, which pauses and turns auto-key off (BUG-181).
+
 ## 25. Animation: `createAnimationSlice.ts` (+ `src/animation/engine.ts`, `exportVideo.ts`)
 
 **Purpose:** keyframe timeline (per-object tracks), presets (entrance/emphasis/exit, typewriter), easing/bezier
-curves, auto-key, playback via `requestAnimationFrame`, its own undo history, video/PNG export (WebCodecs+mp4-muxer
-fast path; MediaRecorder realtime fallback).
+curves, auto-key, playback via `requestAnimationFrame`, its own undo history, video / GIF / PNG export (WebCodecs +
+mp4-muxer fast path; MediaRecorder realtime fallback; GIF by the in-house encoder in `src/animation/gif/`, worker).
+`exportVideo` keeps the state (progress, cancel, the playhead) and loads `src/animation/exportRun.ts` on the first
+export (`runExport`: renders, downloads; GIF loads `gif/renderGif.ts` on demand). `ExportSettings` (re-exported here)
+has `gif?: { loop, dither, transparent }` (type, defaults and the 30 s limit in `gif/gifSettings.ts`, no imports, so the
+Export pane does not load the runner); `height: 0` keeps the board's proportions for a width-only size. A transparent
+GIF leaves the board's background colour / image out of each frame (`makeCompositor`, put back in `finally`). The
+encoder worker answers `ready` after `init`; a worker that cannot start (blocked script, load error) makes the export
+encode on the page instead (`openSink`, a `console.warn`), never fail.
 **State:** `animDuration`, `animFps`, `currentTime`, `isPlaying`, `loop`, `playbackRate`, `autoKey`, `snap`, `workIn`,
 `workOut`, `tracks`, `selectedKeyframes`, `keyframeClipboard`, `past`, `future`, `exportState`.
 **Actions:** `setAnimDuration`, `setAnimFps`, `setLoop`, `setPlaybackRate`, `setAutoKey`, `setSnap`, `setWorkArea`,

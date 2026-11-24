@@ -99,6 +99,8 @@ import {
     Type,
     Underline,
     Users,
+    PersonStanding,
+    Shuffle,
     Video,
     WandSparkles,
     PenTool,
@@ -350,6 +352,12 @@ export const ICONS = {
     redo: Redo2,
     'eye-slash': EyeOff,
     keyframe: Diamond,
+    'onion-skin': Layers2,
+    'motion-path': Spline,
+
+    // character studio
+    character: PersonStanding,
+    shuffle: Shuffle,
 
     // generators (right dock)
     snowflake: Snowflake,

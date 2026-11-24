@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useStore } from '@store';
 import { useBoardMode } from '@hooks/useBoardMode';
@@ -15,8 +15,20 @@ import editorsidebarconfig from '@/components/organisms/editorsidebar/editorside
 import { CanvasBoard } from '@/components/organisms/board/index.ts';
 import type { EditorTool } from '@/components/organisms/editorsidebar/editorsidebar.type.ts';
 import { EditorSidebar } from '@/components/organisms/editorsidebar/index.ts';
+import { TimelineDock } from '@/components/organisms/animation/TimelineDock';
+
+// full-screen workspace, loaded the first time it opens
+const CharacterStudio = lazy(() => import('@/components/organisms/character/CharacterStudio'));
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { SIDE_PANEL_WIDTH, SIDE_RAIL_WIDTH } from '@/components/organisms/sidebar/sidebar.const';
+import { SEO_ROUTES } from '@/app/seo/routes';
+import { PATHS } from '@/app/routes/paths';
+
+/**
+ * The page's one level-one heading, for screen readers (BUG-247): the same words as the static SEO
+ * fallback it replaces, so crawlers that run JavaScript read the same heading.
+ */
+const EDITOR_HEADING = SEO_ROUTES.find((r) => r.path === PATHS.draw)?.heading ?? 'Fateboard editor';
 
 export type EditorPageProps = {
     onToolChange?: (tool: EditorTool) => void;
@@ -33,6 +45,7 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
     const activeTool = useStore((state) => state.activeTool);
     const setActiveTool = useStore((state) => state.setActiveTool);
     const addText = useStore((state) => state.addText);
+    const characterStudioOpen = useStore((state) => state.characterStudioOpen);
 
     // The store is the single source of truth for the canvas size
     // (before: a second useState here that nothing else could see).
@@ -110,6 +123,8 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
     return (
         <>
             <EditorTemplate
+                heading={EDITOR_HEADING}
+                inert={characterStudioOpen}
                 header={<Header />}
                 leftSidebar={
                     <EditorSidebar
@@ -129,12 +144,18 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
                         pageSize={selectedPreset}
                     />
                 }
+                bottomPanel={<TimelineDock />}
                 footer={<Footer />}
                 chromeHidden={distractionFree} // only the canvas (⌘\ / footer button)
             />
 
             <ContextMenu />
             <DistractionFreeExit />
+            {characterStudioOpen && (
+                <Suspense fallback={null}>
+                    <CharacterStudio />
+                </Suspense>
+            )}
         </>
     );
 }

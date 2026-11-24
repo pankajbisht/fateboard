@@ -8,6 +8,7 @@ import { test, expect } from './fixtures';
 const ROUTES = [
     '/',
     '/draw',
+    '/draw?tab=animate', // the editor with the bottom timeline open (2026-11-17)
     '/setting',
     '/help',
     '/help?topic=shortcuts',
@@ -22,11 +23,28 @@ for (const scheme of ['light', 'dark'] as const) {
             // reduced motion: entrance fades finish at once, so contrast is measured on final colours
             await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
             await page.goto(route);
-            if (route === '/draw') await page.waitForFunction(() => !!window.__fateboard?.ready());
+            if (route.startsWith('/draw'))
+                await page.waitForFunction(() => !!window.__fateboard?.ready());
             await page.waitForLoadState('networkidle');
-            const { violations } = await new AxeBuilder({ page })
-                .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
-                .analyze();
+            const scan = () =>
+                new AxeBuilder({ page })
+                    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
+                    .analyze()
+                    .then((r) => r.violations);
+            const violations = await scan();
+            if (route.includes('tab=animate')) {
+                // the timeline is lazy: scan once it is there, and each of its panes (hidden ones are skipped)
+                await expect(
+                    page.getByRole('button', { name: 'Keyframe at playhead' }),
+                ).toBeVisible();
+                violations.splice(0, violations.length);
+                const panes = page.getByRole('radiogroup', { name: 'Timeline panes' });
+                for (const pane of ['Animate', 'Keyframe', 'View', 'Export']) {
+                    await panes.getByRole('radio', { name: pane }).click();
+                    for (const v of await scan())
+                        if (!violations.some((seen) => seen.id === v.id)) violations.push(v);
+                }
+            }
             const report = violations.map(
                 (v) =>
                     `${v.id} (${v.impact}): ${v.nodes

@@ -23,7 +23,7 @@ function Playhead({ pps }: { pps: number }) {
     );
 }
 
-/** The timeline: one row per animated object, keyframes as diamonds, a ruler to scrub. */
+/** The timeline: one row per animated object, keyframes as diamonds, a ruler to scrub. Fills its pane. */
 export function Timeline({ selectedIds }: { selectedIds: string[] }) {
     const s = useStore(
         useShallow((st) => ({
@@ -102,8 +102,8 @@ export function Timeline({ selectedIds }: { selectedIds: string[] }) {
     };
 
     return (
-        <div className="overflow-hidden rounded-lg border border-line bg-surface">
-            <div className="flex items-center gap-2 px-2 py-1.5">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-surface">
+            <div className="flex shrink-0 items-center gap-2 px-2 py-1">
                 <span className="text-[11px] text-ink-muted">Length</span>
                 <NumberField
                     aria-label="Timeline length"
@@ -136,7 +136,7 @@ export function Timeline({ selectedIds }: { selectedIds: string[] }) {
                 />
             </div>
 
-            <div ref={scrollRef} className="max-h-72 overflow-auto border-t an-bd">
+            <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto border-t an-bd">
                 <div
                     ref={innerRef}
                     className="relative"
@@ -186,7 +186,7 @@ export function Timeline({ selectedIds }: { selectedIds: string[] }) {
                     <Playhead pps={pps} />
                 </div>
             </div>
-            <p className="border-t an-bd px-2 py-1.5 text-[10px] text-ink-muted">
+            <p className="shrink-0 truncate border-t an-bd px-2 py-1 text-[10px] text-ink-muted">
                 Click a keyframe to jump to it, drag to retime, Shift-click to select more.
                 Double-click a row to add one. {shortcut('⌘', 'Ctrl')} + wheel zooms.
             </p>

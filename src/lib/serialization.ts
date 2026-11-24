@@ -47,6 +47,8 @@ export const CUSTOM_PROPS = [
     'comicPanel', // comic panel frame (border) …
     'comicPanelArea', // … and its fill twin on the clip base layer
     'panelId', // links a frame to its twin
+    'characterData', // a Character Studio character on the page: { character, camera } (src/character)
+    'sceneData', // a Character Studio scene on the page: { scene } (src/scene)
     'backgroundColor',
 ] as const;
 

@@ -1,9 +1,10 @@
 import { FullScreen } from '@components/molecules/FullScreen';
 import { DistractionFreeToggle } from '@components/molecules/DistractionFree';
 import { StrokeControls } from '@components/organisms/StrokeControls';
+import { TimelineToggle } from '@components/organisms/animation/TimelineToggle';
 import { ZoomControl } from './ZoomControl';
 
-/** Bottom bar: object style on the left; view (zoom + page size, fullscreen) on the right. */
+/** Bottom bar: object style on the left; view (timeline, zoom + page size, fullscreen) on the right. */
 export function Footer() {
     return (
         // px-4: same 16 px inset on both sides as the panels (labels never touch the window edge)
@@ -17,6 +18,7 @@ export function Footer() {
                 data-testid="footer-view"
                 className="flex shrink-0 items-center gap-2 border-l border-line pl-3"
             >
+                <TimelineToggle />
                 <ZoomControl />
                 <DistractionFreeToggle />
                 <FullScreen />

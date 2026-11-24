@@ -78,7 +78,7 @@ export function SliderField({
                 trailing={
                     <span className="font-semibold tabular-nums text-ink">
                         {text}
-                        {unit && <span className="ml-0.5 font-normal text-ink-subtle">{unit}</span>}
+                        {unit && <span className="ml-0.5 font-normal text-ink-muted">{unit}</span>}
                     </span>
                 }
             >

@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { TIMELINE_LINK_TAB } from '../../animation/timelineKeys';
 import { HELP_TOPICS, topicText } from '../helpTopics';
 
 /**
@@ -28,6 +29,10 @@ const tabIds = [...configSource('config/tabs.config.tsx').matchAll(/^\s*id: '([^
     (m) => m[1]!,
 );
 const allText = HELP_TOPICS.map(topicText).join('\n');
+/** The scene export is the one place with a PDF (Frame tab, `lib/export/pdf.ts`); no other topic may promise one. */
+const textWithoutSceneExport = HELP_TOPICS.filter((t) => t.id !== 'characters')
+    .map(topicText)
+    .join('\n');
 
 describe('help topics', () => {
     it('reads the panel and tab lists from the editor configs', () => {
@@ -39,6 +44,7 @@ describe('help topics', () => {
             'Pages',
             'layers',
             'notes',
+            'characters',
             'comic',
         ]);
         expect(tabIds).toEqual([
@@ -54,7 +60,6 @@ describe('help topics', () => {
             'automata',
             'macro',
             'export',
-            'animate',
         ]);
     });
 
@@ -74,7 +79,8 @@ describe('help topics', () => {
     it('only links to panels and tabs that exist', () => {
         for (const { open } of HELP_TOPICS) {
             if (open?.panel) expect(panelIds).toContain(open.panel);
-            if (open?.tab) expect(tabIds).toContain(open.tab);
+            // the bottom timeline is opened by `?tab=animate` too (TimelineDock reads it)
+            if (open?.tab) expect([...tabIds, TIMELINE_LINK_TAB]).toContain(open.tab);
         }
     });
 
@@ -107,7 +113,13 @@ describe('help topics', () => {
         ['the wrong Ungroup key', /mod\+shift\+G/i],
         ['Shift to keep proportions', /shift[^.]*(keep|maintain)[^.]*(proportion|aspect)/i],
     ])('does not promise %s', (_name, claim) => {
-        expect(allText).not.toMatch(claim);
+        expect(claim.source === '\\bpdf\\b' ? textWithoutSceneExport : allText).not.toMatch(claim);
+    });
+
+    it('promises a PDF only where it exists: the scene export in the Characters topic', () => {
+        const text = topicText(HELP_TOPICS.find((t) => t.id === 'characters')!);
+        expect(text).toMatch(/\bpdf\b/i);
+        expect(text).toMatch(/Frame tab/);
     });
 
     it('documents the real keys of the Pen, Pencil and Laser pointer', () => {

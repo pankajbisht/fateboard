@@ -13,24 +13,24 @@ Mount path: `pages/Editor/Editor.tsx` → `<CanvasBoard mode pageSize>` → `Can
 
 1. Creates `<canvas>` in code and appends it to `hostRef` (JSX canvas breaks React unmount, since Fabric re-parents it).
 2. `useStore.getState().init(el, host)` (Canvas slice):
-   1. Guard: returns if `el` is missing or a canvas already exists.
-   2. `create(el, container)` → `new fabric.Canvas(el, { backgroundColor: fateboardCanvasConfig.bg, preserveObjectStacking: true, stopContextMenu: true })`; stores `cw/ch` from the container **only if `settings.freehand`**.
-   3. `mount(canvas)` → `set({ canvas })`.
-   4. `defaultSettings()` → `setPageFormat(settings.format, settings.orientation)` (page slice → `applyPageSize` → `setDimensions` + VPT + `drawBackground`) and `setBrush()`.
-   5. `loadLib(canvas)` → `geditor = new MultiStopGradientTool(canvas, () => get().fill)`.
-   6. `registerCanvasEvents(canvas)` (see Events) + `installShapeBehavior(canvas)`.
-   7. Adds `beforeunload`/`pagehide` → `flushPersist`.
-   8. Async `restoreFromStorage()` (takes `persistLock`, reads the project from IndexedDB via `projectStorage.load()` → `importProject(project)`; an old opendb `drawJson` board → `importJSON(saved, {persist:false})`), then `initPages()`.
+    1. Guard: returns if `el` is missing or a canvas already exists.
+    2. `create(el, container)` → `new fabric.Canvas(el, { backgroundColor: fateboardCanvasConfig.bg, preserveObjectStacking: true, stopContextMenu: true })`; stores `cw/ch` from the container **only if `settings.freehand`**.
+    3. `mount(canvas)` → `set({ canvas })`.
+    4. `defaultSettings()` → `setPageFormat(settings.format, settings.orientation)` (page slice → `applyPageSize` → `setDimensions` + VPT + `drawBackground`) and `setBrush()`.
+    5. `loadLib(canvas)` → `geditor = new MultiStopGradientTool(canvas, () => get().fill)`.
+    6. `registerCanvasEvents(canvas)` (see Events) + `installShapeBehavior(canvas)`.
+    7. Adds `beforeunload`/`pagehide` → `flushPersist`.
+    8. Async `restoreFromStorage()` (takes `persistLock`, reads the project from IndexedDB via `projectStorage.load()` → `importProject(project)`; an old opendb `drawJson` board → `importJSON(saved, {persist:false})`), then `initPages()`.
 3. Back in `CanvasSurface`: sets `stopContextMenu`, wires the `contextmenu` canvas event to `openMenu(...)`, adds
    `calcOffset` refreshers (pointerdown/enter, scroll, resize), then `initHistory()`. Content comes only from step 2.8
    (the autosaved project), so nothing races on the canvas (BUG-016 fixed).
 4. Further effects:
-   - **Whiteboard:** ResizeObserver → `setDimensions(host size)`; a CSS dot-grid overlay follows the VPT on
-     `after:render`.
-   - **Design:** default page `DEFAULT_CANVAS_PRESET` = Presentation 16:9 (1920 × 1080), white artboard with a soft
-     shadow. `setDimensions(preset, {backstoreOnly:true})` and `setDimensions(fitSize, {cssOnly:true})`, so the
-     document stays at true pixels and only CSS is scaled. Rulers + artboard are DOM.
-   - Floating text toolbar position recomputed on `after:render`.
+    - **Whiteboard:** ResizeObserver → `setDimensions(host size)`; a CSS dot-grid overlay follows the VPT on
+      `after:render`.
+    - **Design:** default page `DEFAULT_CANVAS_PRESET` = Presentation 16:9 (1920 × 1080), white artboard with a soft
+      shadow. `setDimensions(preset, {backstoreOnly:true})` and `setDimensions(fitSize, {cssOnly:true})`, so the
+      document stays at true pixels and only CSS is scaled. Rulers + artboard are DOM.
+    - Floating text toolbar position recomputed on `after:render`.
 5. Other slices/panels attach on their own: Notebook (via `store.subscribe` on `canvas` change), LayersPanel →
    `bindLayerEvents`, AnimationPanel → `bindAutoKey` (leaving the tab pauses playback and turns auto-key off, BUG-181), PagePanel → `initPages` + autosave listener, Brush hooks.
 
@@ -49,14 +49,14 @@ subscribe), brush hooks, layer events (LayersPanel unmount), history events (nev
 
 Registered by `createCanvasSlice.registerCanvasEvents`:
 
-| Fabric event | Handler | Effect |
-|---|---|---|
-| `selection:created`, `selection:updated` | `handleSelectionChange` | skip connector handles; `filterUnlockedSelection`; `hasActiveShape`; `fillMode`; `setToolbar`; `updateFromFabric`; `saveState()` |
-| `selection:cleared` | `handleSelectionClear` | reset toolbar/fillMode, `clearGradientSession` |
-| `mouse:down` | `handleMouseDown` | no-op |
-| `mouse:dblclick` | `handleDBLClick` | `editShapeText` for text shapes |
-| `object:modified` | `handleObjectChange` | `updateMaster` (linked clones) + `persist()` |
-| `object:added`, `object:removed`, `path:created`, `text:changed` | `handlePersistEvent` | `persist()` unless helper (`excludeFromExport`) or node handle |
+| Fabric event                                                     | Handler                 | Effect                                                                                                                           |
+| ---------------------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `selection:created`, `selection:updated`                         | `handleSelectionChange` | skip connector handles; `filterUnlockedSelection`; `hasActiveShape`; `fillMode`; `setToolbar`; `updateFromFabric`; `saveState()` |
+| `selection:cleared`                                              | `handleSelectionClear`  | reset toolbar/fillMode, `clearGradientSession`                                                                                   |
+| `mouse:down`                                                     | `handleMouseDown`       | no-op                                                                                                                            |
+| `mouse:dblclick`                                                 | `handleDBLClick`        | `editShapeText` for text shapes                                                                                                  |
+| `object:modified`                                                | `handleObjectChange`    | `updateMaster` (linked clones) + `persist()`                                                                                     |
+| `object:added`, `object:removed`, `path:created`, `text:changed` | `handlePersistEvent`    | `persist()` unless helper (`excludeFromExport`) or node handle                                                                   |
 
 Other listeners (by owner): Pan (`mouse:wheel/down/move/up`, only while `activeTool==='pan'`); Shape
 (`object:added` rehydrate, `object:scaling`, `object:modified`, `selection:cleared/updated` bake text shapes +
@@ -85,9 +85,9 @@ list travels with every snapshot, page and save. Objects carry `layerId`.
 `serializeCanvas` writes two kinds of objects with values other than their live ones (swapped in, serialized, swapped
 back):
 
-| Object state | Written with | Why |
-|---|---|---|
-| text box in typing mode | its `_savedProps` (selectable, movement locks…) | Fabric locks a text box while editing |
+| Object state                                                                | Written with                                                                        | Why                                        |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------------------ |
+| text box in typing mode                                                     | its `_savedProps` (selectable, movement locks…)                                     | Fabric locks a text box while editing      |
 | shown mid-animation (`__animRest`, set by `animation/engine.applyTracksAt`) | the rest values of the props its track animates, and the full text for a typewriter | saves never hold animated values (BUG-011) |
 
 Custom props in use: `id`, `name` (layers), `_locked` (lock), `customId`, `customType` (`'shape'`,
@@ -152,10 +152,10 @@ setup). `initHistory` (a board's base snapshot) does not autosave; undo / redo p
 One geometry owner per board (decision Q2, BUG-007 fixed 2026-11-07); `src/store/__tests__/geometryOwner.test.ts` and
 `e2e/geometry.spec.ts` guard it.
 
-| Board | Canvas size | Viewport | Zoom | Pan |
-|---|---|---|---|---|
-| **Design** (fixed page) | `CanvasBoard` only: backstore = page px (`selectedPreset`), CSS size = fit × zoom | always identity | Page `setZoom` changes `zoom` state only; CanvasBoard redraws (footer, toolbar, Ctrl / ⌘ + wheel or pinch, UI `actualSize`) | the wheel scrolls the board natively (`[data-board-scroll]`); Hand tool drags it |
-| **Whiteboard** (infinite) | `CanvasBoard` only: canvas = host size | Page slice only: `setZoom(z, point)` (`zoomToPoint`), `zoomToRect(rect)`, `applyPageSize` (reset 1:1) | same actions; `zoom` always equals the viewport zoom (BUG-025); Ctrl / ⌘ + wheel or pinch zooms at the pointer | wheel / trackpad `relativePan` (Shift + wheel sideways), Hand tool drag |
+| Board                     | Canvas size                                                                       | Viewport                                                                                              | Zoom                                                                                                                        | Pan                                                                              |
+| ------------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| **Design** (fixed page)   | `CanvasBoard` only: backstore = page px (`selectedPreset`), CSS size = fit × zoom | always identity                                                                                       | Page `setZoom` changes `zoom` state only; CanvasBoard redraws (footer, toolbar, Ctrl / ⌘ + wheel or pinch, UI `actualSize`) | the wheel scrolls the board natively (`[data-board-scroll]`); Hand tool drags it |
+| **Whiteboard** (infinite) | `CanvasBoard` only: canvas = host size                                            | Page slice only: `setZoom(z, point)` (`zoomToPoint`), `zoomToRect(rect)`, `applyPageSize` (reset 1:1) | same actions; `zoom` always equals the viewport zoom (BUG-025); Ctrl / ⌘ + wheel or pinch zooms at the pointer              | wheel / trackpad `relativePan` (Shift + wheel sideways), Hand tool drag          |
 
 **Fit (2026-11-17, `lib/canvas/pageFit.ts`):** CanvasBoard's fit scale = the page plus `extent` page px on every side
 (bleed + slug frames when Show guides is on, crop marks when shown: `pageFrameExtent`, `lib/document/printMarks.ts`)
@@ -231,8 +231,9 @@ hit), `_setSVGObjects` (hidden layers left out, opacity / blend as `<g>`; clippi
 selection guard (`selection:created/updated`). It keeps `canvas._objects` in layer order (hit testing walks it);
 helpers (`excludeFromExport` / `excludeFromLayers` / `_isHelper`) draw above all layers and stay on top of the stack.
 Two host hooks (2026-11-17, Document slice): `underlay` (a master page's objects, drawn first in every render
-and in SVG, never in the stack, never hit) and `paintOverlay` (margin / column guides, only when drawing the
-editor's own canvas element, so never in exports or thumbnails). More canvas-level saved props: `pageSetup`,
+and in SVG, never in the stack, never hit) and `paintOverlay` (margin / column guides, then the timeline's onion
+skin and motion paths (Timeline slice, `src/animation/overlay/`), only when drawing the editor's own canvas element,
+so never in exports or thumbnails). More canvas-level saved props: `pageSetup`,
 `pageRole`, `masterId` (`lib/canvas/canvasProp.ts` accessors), `pageNotes` (note pins, Notes slice, 2026-11-17: drawn
 as DOM over the board by `NotePins`, so never in exports; positions from `sceneToClient` in `lib/canvas/deepZoom.ts`,
 the same mapping the text / node floats use, recomputed once per frame after a render, and an object walk only when a

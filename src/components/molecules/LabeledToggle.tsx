@@ -8,6 +8,7 @@ function LabeledToggle({
     checked: controlledChecked,
     onChange,
     hint,
+    description,
     disabled,
     className,
 }: {
@@ -15,10 +16,13 @@ function LabeledToggle({
     checked?: boolean;
     onChange: (v: boolean) => void;
     hint?: string;
+    /** Read by screen readers, not shown: for an explanation too long for a toolbar (use `hint` to show it). */
+    description?: string;
     disabled?: boolean;
     className?: string;
 }) {
     const id = useId();
+    const descriptionId = useId();
     const [innerChecked, setInnerChecked] = useState(controlledChecked ?? false);
     const checked = controlledChecked ?? innerChecked;
 
@@ -36,11 +40,17 @@ function LabeledToggle({
                 size="sm"
                 checked={checked}
                 disabled={disabled}
+                aria-describedby={description ? descriptionId : undefined}
                 onChange={(v) => {
                     setInnerChecked(v);
                     onChange(v);
                 }}
             />
+            {description && (
+                <span id={descriptionId} className="sr-only">
+                    {description}
+                </span>
+            )}
         </Field>
     );
 }

@@ -30,6 +30,7 @@ src/
   store/slices/                           create<Name>Slice.ts (canvas, pages, undo, layers, animation, …)
   store/brushConfig.ts                    brush presets/engines
   animation/                              keyframe engine + video export (WebCodecs / MediaRecorder)
+  character/, scene/                      Character Studio + scenes: pure domains (no React/Fabric/store; board.ts = Fabric edge), docs/CHARACTER_STUDIO.md
   components/{atoms,molecules,organisms,templates,pages}   atomic design
   components/organisms/board/ui/CanvasBoard.tsx            mounts the Fabric canvas (design/whiteboard)
   components/organisms/editorsidebar/editorsidebar.config.tsx  left panels
