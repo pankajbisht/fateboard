@@ -11,6 +11,7 @@ import { migrateCharacter } from '../schema/migrate';
 import { parseCharacter } from '../schema/parse';
 import { CHARACTER_SCHEMA_VERSION, type CharacterCamera } from '../schema/types';
 import { applyEdit } from '../studio/edit';
+import { anglesFor } from './sweep';
 
 const cam = (yaw: number, shot: CharacterCamera['shot'] = 'closeup'): CharacterCamera => ({
     yaw,
@@ -145,13 +146,14 @@ describe('the drawn face', () => {
     });
 
     it('every emotion, mouth shape and style renders finite shapes', () => {
+        const bad: string[] = [];
         for (const style of AVAILABLE_STYLES)
             for (const e of EMOTIONS) {
                 const c = applyEdit({ ...meera, style }, { emotion: { id: e.id, intensity: 1 } });
                 for (const p of renderCharacter(c, cam(25)).parts)
-                    for (const n of numbers(p.d))
-                        expect(Number.isFinite(n), `${style} ${e.id} ${p.key}`).toBe(true);
+                    if (!numbers(p.d).every(Number.isFinite)) bad.push(`${style} ${e.id} ${p.key}`);
             }
+        expect(bad).toEqual([]);
         for (const v of VISEMES)
             expect(part(applyEdit(meera, { face: { viseme: v.id } }), 0, 'mouth')).toBeTruthy();
     }, 60_000); // 19 styles × every emotion: about 6 s on a busy machine
@@ -208,10 +210,12 @@ describe('BUG-253: no feature leaves the head', () => {
 
     it('eyes and brows stay inside the head outline from every side, in every style and mood', () => {
         const misses: string[] = [];
+        let combo = 0;
+        // 12 of the 36 angles (10° steps) for each style, person and mood, a different set for each, so all 36 are drawn
         for (const style of AVAILABLE_STYLES)
             for (const r of [RECIPES[0], RECIPES[3], RECIPES[8]])
                 for (const emotion of ['neutral', 'surprised', 'laughing'])
-                    for (let yaw = 0; yaw < 360; yaw += 10) {
+                    for (const yaw of anglesFor(combo++, 12, 10)) {
                         const c = applyEdit(
                             { ...fromRecipe(r, 'x'), style },
                             { emotion: { id: emotion, intensity: 1 } },

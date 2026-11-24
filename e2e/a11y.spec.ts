@@ -64,3 +64,14 @@ for (const scheme of ['light', 'dark'] as const) {
         });
     }
 }
+
+// BUG-200 (fixed): PanelSection titles were text-ink-subtle (#8a94a6, below AA on the panel); they are text-ink-muted now
+test('BUG-200: panel section titles pass AA contrast', async ({ editor, page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await editor.openPanel('Pages');
+    const { violations } = await new AxeBuilder({ page })
+        .include('section[aria-label="Pages panel"] .text-label')
+        .withRules(['color-contrast'])
+        .analyze();
+    expect(violations.flatMap((v) => v.nodes.map((n) => n.target.join(' ')))).toEqual([]);
+});

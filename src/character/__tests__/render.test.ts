@@ -33,18 +33,20 @@ describe('rendering', () => {
     // one test per body (the same sweep, split so each stays well inside the time limit on a loaded machine)
     for (const c of bodies)
         it(`every pose on the ${c.id}, from every 15° around: finite, every part drawn`, () => {
+            // failures are collected and asserted once: an expect per part was about 1.5 million calls
+            const bad: string[] = [];
             for (const pose of POSES)
                 for (let yaw = 0; yaw < 360; yaw += 15) {
                     const m = renderCharacter({ ...c, rig: { pose } }, cam(yaw));
-                    expect(m.viewBox.every(Number.isFinite), `${pose.id} ${yaw}`).toBe(true);
+                    if (!m.viewBox.every(Number.isFinite)) bad.push(`${pose.id} ${yaw} viewBox`);
                     for (const p of m.parts)
-                        expect(/NaN|Infinity/.test(p.d), `${c.id} ${pose.id} ${yaw} ${p.key}`).toBe(
-                            false,
-                        );
+                        if (/NaN|Infinity/.test(p.d))
+                            bad.push(`${c.id} ${pose.id} ${yaw} ${p.key}`);
                     const groups = new Set(m.parts.map((p) => p.group));
                     for (const g of PART_GROUPS)
-                        expect(groups.has(g), `${pose.id} ${yaw} ${g}`).toBe(true);
+                        if (!groups.has(g)) bad.push(`${pose.id} ${yaw} missing ${g}`);
                 }
+            expect(bad).toEqual([]);
         }, 30000);
 
     it('parts are drawn far to near; the face only shows when it faces the camera', () => {

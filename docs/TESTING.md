@@ -83,6 +83,20 @@ gestures), so these stay `UNKNOWN - verify` until someone runs them on hardware.
 9. Swipe from the screen edge (iOS back gesture) in the middle of a stroke: the stroke ends cleanly (BUG-213).
 10. Android: pulling down on the toolbar does not reload the page.
 
+## Keeping the unit run fast (2026-11-24)
+
+The CI coverage job has a 10-minute limit on a 2-vCPU runner, and v8 coverage slows every test. A sweep over styles ×
+poses × angles with an `expect` per part or per number reached tens of thousands of renders and millions of assertions
+and got the job cancelled. Rules for a sweep:
+
+- Collect failures in an array and `expect(bad).toEqual([])` once. Never an `expect` per part, number or point.
+- Do not cross every dimension. Give each combination a few angles spread round the circle (`anglesFor` in
+  `src/character/__tests__/sweep.ts`), a different set for each, so every style, pose and angle is still drawn.
+  `render.test.ts` keeps the full pose × 15° geometry sweep on both bodies.
+- A deterministic solver (pair poses) is solved once per input for the whole file (a `Map`), not once per test.
+- Find the slow files with `npx vitest run --reporter=json --outputFile=<file>` and sort `testResults` by
+  `endTime - startTime`.
+
 ## Guardrails
 
 `src/__tests__/guardrails.test.ts` keeps the suite honest (no `.only` / `.skip` / `xit`, no `@ts-ignore` /

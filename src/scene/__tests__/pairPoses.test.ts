@@ -26,6 +26,16 @@ const pair = (a: number, b: number): Scene => ({
     actors: [actor('a', a, -60), actor('b', b, 60)],
 });
 // meera 111, aarav 124, ananya 157, kabir 170, kenji 189, kamala 150 (elder)
+/**
+ * The reach solver is the cost here (a grid of starting arms, then refining), and it is deterministic, so a pose for a
+ * pair of people is solved once for the whole file: two tests use the same pairs.
+ */
+const solved = new Map<string, ReturnType<typeof applyPairPose>>();
+const solve = (p: string, a: number, b: number) => {
+    const key = `${p} ${a} ${b}`;
+    if (!solved.has(key)) solved.set(key, applyPairPose(pair(a, b), 'a', 'b', p));
+    return solved.get(key)!;
+};
 const COMBOS: [string, number, number][] = [
     ['adult + child', 8, 1],
     ['teen + adult', 3, 2],
@@ -61,7 +71,7 @@ describe('pair poses', () => {
                     expect(applyPairPose(s, 'a', 'b', p.id).scene, `${p.id} ${name}`).toBe(s);
                     continue;
                 }
-                const { errors } = applyPairPose(s, 'a', 'b', p.id);
+                const { errors } = solve(p.id, a, b);
                 const reaches = (p.a.reach?.length ?? 0) + (p.b.reach?.length ?? 0);
                 expect(errors, `${p.id} ${name}`).toHaveLength(reaches);
                 errors.forEach(
@@ -74,7 +84,7 @@ describe('pair poses', () => {
     it('both people end inside their joint limits, upright on the floor, and the scene renders with finite shapes', () => {
         for (const p of PAIR_POSES)
             for (const [, a, b] of COMBOS.slice(0, 3)) {
-                const { scene } = applyPairPose(pair(a, b), 'a', 'b', p.id);
+                const { scene } = solve(p.id, a, b);
                 for (const x of scene.actors) {
                     const pose = x.character.rig.pose;
                     expect(clampPose(pose).joints, `${p.id} ${x.id}`).toEqual(pose.joints);

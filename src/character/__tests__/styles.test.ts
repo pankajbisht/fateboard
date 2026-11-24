@@ -11,6 +11,7 @@ import { AVAILABLE_STYLES, MANGA_INK, MANGA_PAPER, STYLE_PACKS, packFor } from '
 import { TONE_PLACEHOLDER, characterSvg } from '../render/toSvg';
 import { applyEdit } from '../studio/edit';
 import { PART_GROUPS, STYLE_IDS, type CharacterCamera, type StyleId } from '../schema/types';
+import { anglesFor } from './sweep';
 
 const cam = (yaw: number): CharacterCamera => ({ yaw, pitch: 0, roll: 0, shot: 'full' });
 // the style packs are tested on the classic body (circle-arc limbs, outlined parts); the manga body has its own tests
@@ -38,21 +39,24 @@ describe('style packs', () => {
         expect(packFor('pixel').id).toBe('cartoon');
     });
 
-    it('every style draws every pose from every 30° without a broken path or a missing part', () => {
-        // every third pose in every style (the render test draws every pose)
+    it('every style draws every pose, from angles spread round the circle, without a broken path or a missing part', () => {
+        // every style × every third pose (the render test draws every pose from every 15°), each from 3 angles of
+        // the twelve 30° steps, a different set for each pair so all twelve are drawn. The full product was 26 000
+        // renders with an expect per part
+        const bad: string[] = [];
+        let i = 0;
         for (const style of AVAILABLE_STYLES)
-            for (const pose of POSES.filter((_, i) => i % 3 === 0))
-                for (let yaw = 0; yaw < 360; yaw += 30) {
+            for (const pose of POSES.filter((_, k) => k % 3 === 0))
+                for (const yaw of anglesFor(i++, 3, 30)) {
                     const m = renderCharacter({ ...styled(style), rig: { pose } }, cam(yaw));
                     for (const d of drawables(m.parts))
-                        expect(
-                            /NaN|Infinity/.test(d.d),
-                            `${style} ${pose.id} ${yaw} ${d.key}`,
-                        ).toBe(false);
+                        if (/NaN|Infinity/.test(d.d))
+                            bad.push(`${style} ${pose.id} ${yaw} ${d.key}`);
                     const groups = new Set(m.parts.map((p) => p.group));
                     for (const g of PART_GROUPS)
-                        expect(groups.has(g), `${style} ${pose.id} ${g}`).toBe(true);
+                        if (!groups.has(g)) bad.push(`${style} ${pose.id} ${g}`);
                 }
+        expect(bad).toEqual([]);
     }, 90000);
 
     it('switching style changes only the style field', () => {
@@ -177,12 +181,13 @@ describe('style fixes', () => {
 
     it('shading on body shapes stays inside the drawn outline (every style, many poses and angles)', () => {
         const misses: string[] = [];
-        // both bodies: the manga torso is a waisted loft with its own shadow band
+        let n = 0;
+        // both bodies: the manga torso is a waisted loft with its own shadow band; 3 of the 8 angles for each combination
         for (const bodyStyle of ['classic', 'manga'] as const)
             for (const style of ['anime', 'realistic', 'manga', 'webtoon'] as const)
                 for (const r of [RECIPES[0], RECIPES[1], RECIPES[9]])
                     for (const pose of POSES.filter((_, i) => i % 11 === 0))
-                        for (let yaw = 0; yaw < 360; yaw += 45) {
+                        for (const yaw of anglesFor(n++, 3, 45)) {
                             const base = fromRecipe(r, r.id);
                             const m = renderCharacter(
                                 {
@@ -204,7 +209,6 @@ describe('style fixes', () => {
                             }
                         }
         expect(misses).toEqual([]);
-        // ~1600 renders: a few seconds alone, more while the whole suite runs in parallel
     }, 90000);
 
     it('manga: dark skin is screentone, never ink, so the face stays readable', () => {

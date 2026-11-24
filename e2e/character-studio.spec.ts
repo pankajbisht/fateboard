@@ -216,6 +216,9 @@ test('the Face tab: an emotion and a mouth shape change the face the page gets',
 
 for (const scheme of ['light', 'dark'] as const) {
     test(`the open studio has no axe violations (${scheme})`, async ({ editor, page }) => {
+        // six tabs, each scanned whole: the Cast and Poses tabs hold hundreds of SVG previews, so axe takes about 12 s
+        // in Chromium here and far longer in Firefox on a 2-vCPU CI runner (it timed out at 30 s)
+        test.slow();
         await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
         await editor.openPanel('Characters');
         await page.getByRole('button', { name: 'Open Character Studio' }).click();

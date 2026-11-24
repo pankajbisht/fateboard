@@ -66,6 +66,7 @@ describe('garment catalogue', () => {
     });
 
     it('every top and bottom draws from every 45° on a child, an adult and a tall adult, finite, with every part', () => {
+        const bad: string[] = [];
         for (const c of [aarav, meera, kenji])
             // every top and every bottom at least once (and each top with two bottoms), not the full product
             for (const [i, top] of TOP_KINDS.entries())
@@ -76,16 +77,11 @@ describe('garment catalogue', () => {
                     for (const yaw of [0, 90, 180, 270]) {
                         const ps = parts(wear(c, top, bottom), yaw);
                         for (const p of ps)
-                            for (const n of numbers(p.d))
-                                expect(
-                                    Number.isFinite(n),
-                                    `${c.id} ${top} ${bottom} ${yaw} ${p.key}`,
-                                ).toBe(true);
-                        expect(
-                            ps.find((p) => p.key === 'torso'),
-                            `${top} ${bottom}`,
-                        ).toBeTruthy();
+                            if (!numbers(p.d).every(Number.isFinite))
+                                bad.push(`${c.id} ${top} ${bottom} ${yaw} ${p.key}`);
+                        if (!ps.some((p) => p.key === 'torso')) bad.push(`${top} ${bottom} torso`);
                     }
+        expect(bad).toEqual([]);
     }, 60_000); // about 1100 renders of a body that now has fingers and joints
 
     it('every garment looks different from the others (same body, same pose)', () => {
@@ -210,14 +206,15 @@ describe('what each garment is made of', () => {
     });
 
     it('clothes follow every pose (sit, kick, dance): finite on a sample of poses, kurta and long skirt included', () => {
+        const bad: string[] = [];
         for (const pose of POSES.filter((_, i) => i % 6 === 0))
             for (const [t, b] of [
                 ['kurta', 'long-skirt'],
                 ['hoodie', 'wide-pants'],
             ] as const)
                 for (const p of parts({ ...wear(meera, t, b), rig: { pose } }, 45))
-                    for (const n of numbers(p.d))
-                        expect(Number.isFinite(n), `${pose.id} ${t} ${p.key}`).toBe(true);
+                    if (!numbers(p.d).every(Number.isFinite)) bad.push(`${pose.id} ${t} ${p.key}`);
+        expect(bad).toEqual([]);
     });
 });
 
