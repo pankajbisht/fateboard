@@ -24,6 +24,8 @@ export function addMangaTorso(
     const chestZ = z.chestDepth * 0.5;
     // where the top of the arm ends: the joint, plus the radius of the upper arm and its deltoid swell
     const outer = skel.size.shoulderW * 0.46 + z.upperArm * 1.12;
+    // the inner edge of the upper arm, where it meets the side of the chest
+    const armIn = skel.size.shoulderW * 0.46 - z.upperArm * 0.9;
     const chestHalf = ((z.chestW ?? z.shoulderW * 0.82) / 2) * fit;
     const waistHalf = z.waistW * 0.4;
     // the outer edge of the thigh where it leaves the hip: the hips run straight on into it
@@ -37,13 +39,16 @@ export function addMangaTorso(
     const rings: V3[][] = [
         ring(ctx, 'chest', t * 0.3, neckBase, z.neck * 1.3, 10),
         // the slope of the shoulders: it runs out to the top of the arm, no higher than the neck base
-        ring(ctx, 'chest', t * 0.26, lerp(neckBase, outer, 0.3), chestZ * 0.6 * fit, 10),
-        ring(ctx, 'chest', t * 0.18, outer * 0.68, chestZ * 0.68 * fit, 12),
+        ring(ctx, 'chest', t * 0.26, lerp(neckBase, outer, 0.42), chestZ * 0.6 * fit, 10),
+        // the shoulder point, rounded over the top of the arm
+        ring(ctx, 'chest', t * 0.18, outer * 0.88, chestZ * 0.68 * fit, 12),
+        // below it the body stays inside the arm's outer edge, so the arm (or sleeve) carries the outline down: at the
+        // width of the deltoid it bulged out beside the sleeve, an S-curve like a bust on a man
         ring(
             ctx,
             'chest',
             t * 0.09,
-            lerp(outer, chestHalf, 0.25),
+            lerp(armIn, outer, 0.45),
             chestZ * 0.76 * fit,
             12,
             bust ? z.bust * 0.2 : 0,
@@ -55,7 +60,7 @@ export function addMangaTorso(
             t * 0.0,
             // at the armpit the body is the chest, not the deltoid: the hanging arm carries that (a male torso
             // bulged out here like a bust once the arms were slim)
-            lerp(outer, chestHalf + z.bust * 0.3, 0.6),
+            lerp(lerp(armIn, outer, 0.3), chestHalf + z.bust * 0.3, 0.6),
             chestZ * 0.8 * fit,
             12,
             bust ? z.bust * 0.65 : 0,
