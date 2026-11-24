@@ -7,6 +7,7 @@ import { addShell, ellipsoid, on, toScreen, type Ctx } from './parts';
 import { polyline, type P2 } from './shapes';
 import { MANGA_INK, darken } from './styles';
 import { hairHidden } from './accessoriesHead';
+import { addMangaHair } from './hairManga';
 
 /**
  * Hair (docs/CHARACTER_STUDIO.md phase 3): any of the styles of `data/hairStyles.ts`, drawn as layered shells on the
@@ -27,6 +28,8 @@ export interface HairGeo {
 }
 
 export function addHair(ctx: Ctx, c: Character, g: HairGeo) {
+    // the manga body: pointed locks inside one outline (hairManga.ts)
+    if (c.body.bodyStyle === 'manga') return addMangaHair(ctx, c, g);
     const def = HAIR_DEFS[c.hair.style] ?? HAIR_DEFS.short;
     const { rx, ry, rz, hc, headDepth, facing } = g;
     const tip = c.hair.tip !== null;
