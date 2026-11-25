@@ -1,0 +1,485 @@
+# Testing
+
+## End-to-end tests (Playwright) — implemented 2026-11-07
+
+`npm run e2e` (report: `npm run e2e:report`). Config: `playwright.config.ts`; specs: `e2e/`.
+
+- **What runs:** a production-like bundle (`npm run build:e2e` = `vite build --mode e2e --outDir dist-e2e`) served by
+  `vite preview` on port 4173. The only difference from production is the read-only `window.__fateboard` hook
+  (`src/test/e2eHook.ts`, loaded from `templates/RootLayout.tsx` (editor routes; BUG-209 keeps site pages store-free) only when `import.meta.env.MODE === 'e2e'`; the production bundle has no
+  reference to it, verified). Owner decision Q9.
+- **How tests work:** they click the real UI (roles / labels); the hook only READS canvas content (`objects()`,
+  `selection()`, `state(key)`, `ready()`), because Fabric draws pixels, not DOM.
+- **Fixture (`e2e/fixtures.ts`):** fresh profile per test, opens `/draw`, waits for the canvas, and **fails any test with
+  a console error or uncaught exception**. Helpers: `openPanel`, `openDockTab`, `addShape`, `clickEmptyCanvas`,
+  `objects`, `selection`, `state`, `footer`, `footerView`, `textFloat`.
+- **Projects:** `desktop-chromium` (1440×900, all specs), `laptop-chromium` (1024×700, `layout.spec.ts`) and
+  `desktop-firefox` (1440×900, all specs; **CI only**, locally `E2E_FIREFOX=1` after `npx playwright install firefox`).
+  Firefox could not start inside the agent's sandbox, so its first results come from CI: **UNKNOWN - verify on the first CI run**.
+- **Known bugs** are `test.fail` in `e2e/known-bugs.spec.ts` (undo, ⌘B, Delete key): they pass while the bug exists and
+  turn red when it is fixed; remove the marker with the fix.
+- **CI:** job `e2e` (installs Chromium, runs the suite, uploads `playwright-report` on failure); `build-deploy` `needs: e2e`.
+- **Stability (2026-11-09):** 76 specs on Chromium, 152 / 152 green over two full runs (`--repeat-each=2`);
+  the former flaky deselect test 20 / 20. Firefox runs the same specs in CI.
+- **Firefox fixes (2026-11-12):** `openPanel` waits for the side panel to finish widening (`settledCanvasBox`): a click
+  during the 200 ms width transition could press one shape button and release on another as the grid reflowed, so
+  nothing was added (`data-safety` "cannot read is kept", 1 in ~10 runs). The BUG-155 test's PNG is opaque xorshift
+  noise: translucent noise compressed under its 20 000-character check in Firefox. The flaky "imported photo survives
+  a reload" was an app bug (BUG-186).
+
+| Spec                       | Covers                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `smoke.spec.ts`            | editor shell; routes `/`, `/setting`, `/help`, 404                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `shapes.spec.ts`           | add shape, type W + click canvas (commit before deselect), counter ± / Shift, footer fill / stroke toggles, disabled with nothing selected, Backspace deletes; new shapes and text on a 1920 × 1080 page are 1.8 × the base size (BUG-169)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `text.spec.ts`             | one text float (font, size, style, align) for text boxes and sticky notes; no header text tools                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `color.spec.ts`            | palette strip swatch + ring, All colors grid, custom picker hex + Recent                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `many-objects.spec.ts`     | busy boards: Layers list mounts only part of a long list and stays usable; hover outline on the top canvas in the right place (retina), nothing left behind                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `canvas-keys.spec.ts`      | ⌘A selects all; arrows nudge, one undo per run; hold Space drags the view, keeps the selection and moves nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `help.spec.ts`             | Help search reaches inside topics, topic URLs and Back, press-to-find, node demo; links open the right panel / tab; Text link adds nothing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `pages.spec.ts`            | add / switch pages, objects per page, Clear page with confirm                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `zoom.spec.ts`             | footer zoom − / + / 100% / Fit                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `paint-tools.spec.ts`      | 2026-11-16: Layer blur (slider → `layerBlur`, SVG `feGaussianBlur`, Shadow blur named apart); Drafter (D) snapped line, Dimension group, Escape; Paint bucket (G) fills an area enclosed by four lines under them (one undo step) and recolours a closed shape; Lasso (L) selects what it touches and returns to Select; Spray (Shift + B) builds up while held still (`StampStroke`, `spray-paint`); a library brush (Fire) paints a stamp stroke; radial symmetry makes 6 strokes; Reflect selection; colour Wheel turns the hue; deep zoom 3200 %: windowed buffer at screen density, a click still selects the shape, back to a full buffer at 100 %                                                                                  |
+| `file.spec.ts`             | Save downloads the whole project (all pages); Open restores it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `export.spec.ts`           | Export tab downloads a real PNG (signature checked)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `settings.spec.ts`         | theme / icon size apply and persist; only working preferences; Large icons size swatches; a new visitor on a dark device gets Light, Fate Blue, Small, px; Reset asks, can be cancelled, restores every default and keeps it after a reload; Settings > Canvas size resizes the open page when the editor loads (one undo step, not again on reload) and New board starts at it; Orientation portrait gives a portrait first board; no Canvas Size panel in the left rail; Custom size typed in mm resizes the open page as typed (794 × 1123 px)                                                                                                                                                                                         |
+| `seo.spec.ts`              | hash links redirect, per-route head, build files; SEO fallback hidden while the app loads, visible without JS (BUG-144)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `persistence.spec.ts`      | autosave survives reload; all pages + the open page survive reload (BUG-004); an imported photo survives reload (BUG-121)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `gallery.spec.ts`          | `/` requests no gallery artwork; landing header link Gallery and the teaser (Browse the gallery) open `/gallery` (title, h1, 18 cards, every artwork loads); Manga filter, a card opens `/gallery/manga-ronin` (title, h1), step groups hidden until their step and shown after (CSS opacity), Ghost shows later steps at 0.12, All pieces returns to `/gallery`; direct visits to `/gallery` and a tutorial are HTTP 200, download link, next-piece link. `a11y.spec.ts` also covers `/gallery` and `/gallery/manga-ronin`                                                                                                                                                                                                               |
+| `mobile.spec.ts`           | 390 × 844: the editor opens with no "larger screen" notice (BUG-215); the landing page has no notice and no horizontal scroll                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `responsive.spec.ts`       | 6 screens (390 × 844 phone … 1920 × 1080): no horizontal scroll, the page gets ≥ 40 % of the width (≥ 85 % on an upright phone, BUG-219), every visible button is on screen (or in a strip that scrolls to it) and not covered; the Shapes panel and the Export dock panel fit on screen (BUG-215)                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `touch.spec.ts`            | touch events built in the page (Chromium / Firefox `Touch`; WebKit cannot construct one, so a plain event with the same lists): one finger draws, pinch zooms and draws nothing, long press = context menu, double tap = node editing, whiteboard two-finger pan + pinch, Hand tool one-finger scroll (BUG-211)                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `a11y.spec.ts`             | axe (WCAG 2.1 A / AA + best-practice) on `/`, `/draw`, `/setting`, `/help`, light + dark, reduced motion: zero violations                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `units.spec.ts`            | Settings > Units (mm) shows in the footer page size and the top-bar W field (BUG-082)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `whiteboard.spec.ts`       | whiteboard starts with its dot grid on, one grid renderer (BUG-107); the wheel moves the board, Ctrl + wheel zooms, a shape added while zoomed out keeps its on-screen size (BUG-169, BUG-171)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `keyboard.spec.ts`         | Delete key deletes like Backspace (BUG-103); ⌘B / ⌘I / ⌘U style text (BUG-096)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `geometry.spec.ts`         | two pages with different sizes (page 2 resized from Settings > Canvas size) keep them across switches and reload; backstore = page, identity viewport; a click selects the shape under the cursor (BUG-007, BUG-109)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `templates.spec.ts`        | applying a template shows an Undo toast; Undo brings the previous content back (BUG-009)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `animation.spec.ts`        | a keyframe survives reload; each page has its own timeline (BUG-010, Q12); presets swap, preview only the new one, the track shows the object's name (BUG-176, BUG-177); Space pauses after a click on Play (BUG-178)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `timeline-dock.spec.ts`    | the timeline is a dock under the board, between the rails, not a right-dock tab; resized from its top edge and still open and sized after a reload; ⌘⌥T / Ctrl+Alt+T toggles it; onion skin and motion path change the board but never an export (2026-11-17)                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `gif-export.spec.ts`       | a GIF of the animation downloads through the Export pane, encoded in the Web Worker: GIF89a, chosen width and the board's proportions, loops, still frames merged, delays add up to the timeline (Chromium + Firefox, 2026-11-17)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `character-studio.spec.ts` | Character Studio: pick from the cast, pose (search), turn, place; saved with the page (reload); select, edit, Update on page in place; one board undo brings the old one back; axe on every studio tab (Cast, Body, Look, Wardrobe, Face, Poses), light + dark (2026-11-18); recolour with a custom colour, Tab stays in the studio; switch art style, a manga character reaches the page with screentone; Face tab: Angry + eyes closed reach the page (2026-11-18); Wardrobe: outfit, shoes, a katana in the right hand and glasses change the dress, a tie is refused on a tank top (2026-11-18)                                                                                                                                       |
+| `scene-studio.spec.ts`     | Scenes: New scene, pick a place and golden hour, add two people, Conversation, ¾ view, drag a character on the stage, place; saved with the page (reload); select, Edit Scene, night + square frame, Update scene on page in place; one board undo brings the old one back; axe on every Scene tab, light + dark (2026-11-18); export downloads a real ZIP with the layers, a real PNG (signature and 1920 × 1080 header) and a real PDF (header, page size, image, xref offset); templates tab: pick "Temple festival", place it; saved scenes: save, reload the page, open from Your scenes; crowd slider adds people and the page keeps the setting; Together: a pair pose changes both people and one undo restores both (2026-11-18) |
+| `placement.spec.ts`        | one place per feature in the real UI; canvas size is in Settings, not the left rail                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `layout.spec.ts`           | no horizontal scroll, header / footer inside the window, footer 16 px inset (both viewports)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `data-safety.spec.ts`      | New board: the first change can be undone (BUG-156); a project file with a page that cannot be read shows a dialog and leaves the board and the autosave alone (BUG-154); undo history holds one copy of a photo and undo brings it back whole (BUG-155)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `drawing-tools.spec.ts`    | Pen (P): clicks + a drag make a closed path, selected, one undo step; Enter finishes an open path, Backspace removes the last point; Pencil (Shift + P) draws a path and leaves the Draw brush as it was; Laser (K) shows red pixels on the top canvas that fade to none, adds nothing, Undo stays disabled                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `known-bugs.spec.ts`       | expected failures for open bugs (none open today)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+
+## Device checklist (touch; run on a real iPad and an Android tablet / phone before a release)
+
+Playwright cannot reproduce real iOS Safari (its WebKit is desktop WebKit; synthetic touches skip the browser's own
+gestures), so these stay `UNKNOWN - verify` until someone runs them on hardware. Open `/draw` on the deployed site:
+
+1. Pinch on the page and on the grey board: the board zooms, the browser page never does; two fingers pan.
+2. Draw with one finger (Brush / Pencil): the stroke starts at once when you move; a held finger leaves a dot after ~0.1 s.
+3. Start a stroke, add a second finger: the stroke goes on (no restart, no jump); put two fingers down together: no dot.
+4. Apple Pencil / S Pen: draws instantly with the palm resting on the screen; lift the pen with the palm still down,
+   then draw again: both strokes appear. After using the pen, one finger pans with the Brush.
+5. Long press a shape (Select): it is selected and the menu opens; the menu fits on screen; tap an item.
+6. Double tap a shape: node editing; double tap a text box: it edits and the keyboard opens (BUG-217: is the text visible above the keyboard?).
+7. Hand tool: one finger scrolls the page / pans the whiteboard.
+8. Portrait and landscape, phone and tablet: nothing cut off; open a left panel and a dock panel; both fit and close
+   with ✕; the footer and the X / Y row scroll sideways; the left rail scrolls on a short screen (BUG-218).
+9. Swipe from the screen edge (iOS back gesture) in the middle of a stroke: the stroke ends cleanly (BUG-213).
+10. Android: pulling down on the toolbar does not reload the page.
+
+## Keeping the unit run fast (2026-11-24)
+
+The CI coverage job has a 10-minute limit on a 2-vCPU runner, and v8 coverage slows every test. A sweep over styles ×
+poses × angles with an `expect` per part or per number reached tens of thousands of renders and millions of assertions
+and got the job cancelled. Rules for a sweep:
+
+- Collect failures in an array and `expect(bad).toEqual([])` once. Never an `expect` per part, number or point.
+- Do not cross every dimension. Give each combination a few angles spread round the circle (`anglesFor` in
+  `src/character/__tests__/sweep.ts`), a different set for each, so every style, pose and angle is still drawn.
+  `render.test.ts` keeps the full pose × 15° geometry sweep on both bodies.
+- A deterministic solver (pair poses) is solved once per input for the whole file (a `Map`), not once per test.
+- Find the slow files with `npx vitest run --reporter=json --outputFile=<file>` and sort `testResults` by
+  `endTime - startTime`.
+
+## Guardrails
+
+`src/__tests__/guardrails.test.ts` keeps the suite honest (no `.only` / `.skip` / `xit`, no `@ts-ignore` /
+`@ts-nocheck`, `@ts-expect-error` with a reason, reasonless `eslint-disable` only going down) and
+`storeApi.test.ts` locks the store's public keys (`storeApi.baseline.json`). CI compares every PR's ratchets with its
+base (`scripts/guardrails/check-ratchets.mjs`). Details and approval labels: docs/AGENT_WORKFLOW.md "Guardrails".
+
+## Current state (after batch 1, 2026-11-06)
+
+- **15 test files, 117 tests**: 115 passed and 1 macOS-only test skipped under the agent's runner (see below); the
+  1 app integration test needs real Vitest. New in batch 1:
+  `src/test/{fakeCanvas,sliceHarness}.ts` (helpers), `src/animation/__tests__/engine.test.ts`,
+  `src/store/slices/__tests__/create{Setting,Page,Pages,UndoRedo,Layers,Animation}Slice.test.ts`,
+  `src/store/__tests__/storeComposition.test.ts` (collision freeze + `it.fails` for BUG-001/017),
+  `src/components/config/toolbars/__tests__/fileCommands.test.ts` (BUG-040),
+  `src/lib/utils/__tests__/shortcuts.test.ts`; `src/__tests__/store/brushSlice.test.ts` rewritten (was stale).
+- **How they were run:** the agent shell could not run Vitest (macOS `node_modules`, Linux shell, no network for
+  Linux binaries). The tests were executed with a throwaway Node runner (TypeScript transpile + jsdom + a small
+  `vitest` shim) and all passed except `app.integration.test.tsx`, which needs `vi.mock` hoisting. **Run
+  `npm run test:run` locally to confirm under real Vitest.**
+- **Color task (after batch 1): 17 test files, 135 tests** (133 passed + 1 skipped under the agent runner; app
+  integration still needs real Vitest). New: `src/store/slices/__tests__/paletteRouting.test.ts` (palette →
+  target / selection / defaults, `toOpaqueHex`) and `src/components/molecules/__tests__/PaintTargetSwatch.test.tsx`.
+- `npm run type-check` now really checks (`tsc -p tsconfig.app.json` + `tsconfig.node.json`) and passes with 0 errors.
+- Helpers: `createHarness([...sliceCreators], extraState)` runs slices without zustand/React;
+  `createFakeCanvas(objects)` implements the canvas API slices use (events, JSON round-trip, z-order, size/VPT).
+- CI: `ci.yml` is the only entry point and wires reusable workflows (`workflow_call`, `_`-prefixed, one file per stage); shared setup in `.github/actions/setup-node-deps`. Check names read `<Stage> / <Job>`. In parallel: `Quality / Static analysis` and `Quality / Unit tests (coverage)` (`_quality.yml`: guardrails, signatures + prod `npm audit`, format, lint, type-check; unit + coverage ratchet), `Test / E2E (<browser>, shard n/2)` (`_e2e.yml`: matrix chromium/firefox × 2 shards, each job installs and caches only its browser; the chromium shards also run `laptop-chromium`), `Build / Web bundle` (`_build-web.yml`) and `Build / Container image` (`_build-image.yml`, Buildx with GitHub Actions layer cache) → one `CI passed` check (keep this name: branch protection requires it) → `Deploy / GitHub Pages` (`_deploy.yml`, push to `main` only, `actions/deploy-pages`, `github-pages` environment). A `Detect changes` job skips E2E and the container image on docs-only PRs (every file under `docs/`, `.claude/` or `*.md`); `CI passed` accepts `skipped`. Rebalance E2E by changing `shard` + `shard-total` in `_e2e.yml`. Actions pinned by SHA; Dependabot weekly (`.github/dependabot.yml`).
+
+## Original state (before batch 1)
+
+- Vitest 5.1 + jsdom 31 + Testing Library (react 16.3, dom 10.4, jest-dom 7) are pinned (Node 26.13.0). Config: `vitest.config.ts` (`globals`, `jsdom`,
+  `setupFiles: src/setupTests.ts`, `include: src/**/*.{test,spec}.{ts,tsx}`, coverage provider `v8`).
+- Existing tests (5 files): `src/__tests__/smoke.test.tsx`, `app.integration.test.tsx` (marketing → editor
+  navigation with mocked pages and Fabric), `atoms/button.test.tsx`, `atoms/input.test.tsx`,
+  `store/brushSlice.test.ts`. Whether they pass today is **UNKNOWN - verify** (`npm run test:run`). The brush test
+  asserts direct `freeDrawingBrush` writes and may be stale against the current `setBrush`.
+- `src/setupTests.ts` mocks `matchMedia` and replaces `HTMLCanvasElement.prototype.getContext` with a partial 2D stub,
+  then spies on `fabric.Canvas.prototype.requestRenderAll`.
+- `test:coverage` uses `@vitest/coverage-v8` 5.1.0 (pinned with vitest); see Health report.
+- No E2E framework. CI runs `npm run test:run` after the build.
+
+## Strategy
+
+| Layer              | Tool                                                    | What                                                                                                                                                                                                    | Where                              |
+| ------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Pure logic         | Vitest                                                  | engine maths (`easeKeyframe`, `sampleTrack`, `mergeKeyframes`, `buildPreset`), `sanitizeSettings`, `resolvePageSize`, shortcut matching (`replaceToShortcut`), shape catalog/normalizers, pattern rules | next to source in `__tests__/`     |
+| Slices             | Vitest                                                  | each slice in isolation with a stub `set/get` (fake canvas), plus **store-composition** tests on the real `combinedSlice`                                                                               | `src/store/slices/__tests__/`      |
+| Canvas integration | Vitest + real Fabric objects                            | serialization round-trips, history, page switching, load/save; uses Fabric objects with a mocked 2D context                                                                                             | `src/store/__tests__/integration/` |
+| Panels/components  | React Testing Library (+ `@testing-library/user-event`) | panels render from store state and call the right actions; keyboard scoping                                                                                                                             | `src/components/**/__tests__/`     |
+| End-to-end         | Playwright (Chromium first; WebKit later for export)    | critical user flows in a real browser (real canvas, real downloads, real storage)                                                                                                                       | `e2e/` at repo root                |
+
+Principles:
+
+- **Every bug fix starts with a failing test** that reproduces it (use the "Test needed" column in BUGS.md).
+- Known bugs that are not fixed yet may get `it.fails('BUG-00X …')`, so CI stays green and the test flips
+  automatically when fixed. Remove `.fails` in the fixing PR.
+- Tests must not depend on module-level state. Build a **fresh store per test** (see harness below). Note:
+  `createPagesSlice` `opChain` and `createAnimationSlice` `rafId`/`exportCtl` are module-level today (BUG-035).
+- Prefer asserting on Fabric/canvas state and store state over DOM snapshots.
+
+## Folder layout (proposed)
+
+```
+src/
+  test/                       # shared test utilities (not shipped)
+    fakeCanvas.ts             # minimal Fabric-like canvas for pure slice tests
+    makeStore.ts              # fresh zustand store from combinedSlice or a subset of slices
+    renderWithStore.tsx       # RTL render + store reset
+  store/slices/__tests__/     # one file per slice: create<Name>Slice.test.ts
+  store/__tests__/            # composition + integration (collisions, serialization, pages+history)
+  animation/__tests__/        # engine + export maths
+  components/**/__tests__/    # RTL panel tests
+e2e/
+  smoke.spec.ts
+  fixtures/                   # sample .fateboard / project files
+playwright.config.ts
+```
+
+Existing `src/__tests__/` can stay; new tests go next to the code they test.
+
+**Storage tests** (`src/lib/storage/__tests__/`): adapters run against the real opendb-store on `fake-indexeddb`
+(`import 'fake-indexeddb/auto'`; a fresh `IDBFactory` or database name per test, because opendb shares one
+connection per database name). They pin the contract the app relies on: failed reads/writes reject, a refused
+database rejects every call, a save started before a load is read by it, and the old `fateboard/kv` layout is
+adopted once. Slice and component tests use `projectStorage.useBackend(createMemoryBackend())` from `@/lib/storage`.
+`e2e/persistence.spec.ts` checks the move from the old database in a real browser.
+
+## Mocking Fabric.js
+
+Three levels; use the lightest that proves the behaviour:
+
+1. **Fake canvas (pure slice tests).** A plain object implementing only what the slice calls. Fast and
+   deterministic.
+    ```ts
+    // src/test/fakeCanvas.ts
+    export function createFakeCanvas(initial: any[] = []) {
+        let objects = initial.map((o) => ({ ...o }));
+        const handlers: Record<string, Function[]> = {};
+        return {
+            getObjects: () => objects,
+            add: (...o: any[]) => {
+                objects.push(...o);
+                handlers['object:added']?.forEach((h) => h({ target: o[0] }));
+            },
+            remove: (...o: any[]) => {
+                objects = objects.filter((x) => !o.includes(x));
+            },
+            toObject: (_props?: string[]) => ({
+                version: 'test',
+                objects: objects.map((o) => ({ ...o })),
+            }),
+            loadFromJSON: async (json: any) => {
+                const data = typeof json === 'string' ? JSON.parse(json) : json;
+                objects = (data.objects ?? []).map((o: any) => ({ ...o }));
+            },
+            discardActiveObject: () => {},
+            setActiveObject: () => {},
+            getActiveObject: () => null,
+            getActiveObjects: () => [],
+            requestRenderAll: () => {},
+            renderAll: () => {},
+            on: (n: string, h: Function) => ((handlers[n] ??= []).push(h), () => {}),
+            off: (n: string, h: Function) => {
+                handlers[n] = (handlers[n] ?? []).filter((x) => x !== h);
+            },
+            fire: (n: string, e: any) => handlers[n]?.forEach((h) => h(e)),
+            getWidth: () => 800,
+            getHeight: () => 600,
+            getZoom: () => 1,
+            viewportTransform: [1, 0, 0, 1, 0, 0],
+        };
+    }
+    ```
+2. **Real Fabric objects, mocked 2D context (integration).** `new fabric.Rect({...})`, `toObject`, `clone`, and
+   `loadFromJSON` on a `fabric.StaticCanvas` work in jsdom with a canvas mock. Replace the hand-written stub in
+   `setupTests.ts` with **`vitest-canvas-mock`** (`import 'vitest-canvas-mock'` in setup), which implements the full
+   2D API, so Fabric can construct `Canvas`/`StaticCanvas`. **UNKNOWN - verify** that Fabric 7's `Canvas` (with an
+   upper canvas) constructs under jsdom; if not, use `StaticCanvas` for data tests and leave pointer behaviour to
+   Playwright.
+3. **Module mock (component tests that only need "a canvas").** `vi.mock('fabric', …)` as in
+   `app.integration.test.tsx`. Use sparingly: it hides real API misuse (BUG-014).
+
+Never mock zustand. Create a real store per test:
+
+```ts
+// src/test/makeStore.ts
+import { create } from 'zustand';
+import { combinedSlice } from '@/store';
+export const makeStore = () => create<any>()(combinedSlice as any);
+```
+
+> `combinedSlice` is exported from `src/store/index.ts`, but importing that module also creates the app's
+> `useStore` singleton. That is acceptable in tests; the harness uses its own instance.
+
+## Health report (how to check how much works)
+
+| Report                                                   | Command                                  | Open                                                                    |
+| -------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------- |
+| Unit + component coverage (per area, per file, per line) | `npm run test:coverage`                  | `apps/web/coverage/index.html` (totals also in `coverage/coverage-summary.json`) |
+| End-to-end results (real browser, every user flow)       | `npm run e2e`, then `npm run e2e:report` | Playwright HTML report                                                  |
+| Both                                                     | `npm run report`                         | the two above                                                           |
+
+Coverage is measured on app code only (`src/**`, without tests and `src/test` helpers). It counts unit / component
+tests; the Playwright suite exercises flows on top of that (e.g. Export is 6 % in unit coverage but covered end to end).
+Only files that tests load are counted, so a test that imports a config full of panels adds all of them to the total
+(BUG-153). Guard tests that only need ids read the config as text, like `helpTopics.test.ts` and `panelConsistency.test.ts`.
+
+Snapshot 2026-11-07 (87 unit files, 631 tests; 44 E2E tests in 15 specs, plus 3 known-bug expected failures):
+
+| Area                   | Lines covered                                                                                                                 |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| hooks                  | 97 %                                                                                                                          |
+| UI atoms               | 92 %                                                                                                                          |
+| UI molecules           | 91 %                                                                                                                          |
+| animation engine       | 59 %                                                                                                                          |
+| store slices           | 58 % (UndoRedo 99 %, Dialog 97 %, Pages 87 %, Text 86 %; low: advanceOperation 7 %, Filter 17 %, Background 21 %, Shape 27 %) |
+| UI panels (organisms)  | 48 %                                                                                                                          |
+| lib (canvas logic)     | 36 %                                                                                                                          |
+| **Total (2026-11-09)** | **54 % lines, 45 % branches** (CI ratchet: 54 / 45 / 54 / 52)                                                                 |
+
+Must-have flows verified end to end (all green): add / select / move / resize shapes, colors, text, text shapes,
+drawing, duplicate, copy / paste, group / ungroup, delete, lock, layer order, align, undo / redo (keyboard, buttons,
+fields, text, per page), node tool (all catalog shapes, toolbar, switching), pages, save / open, export PNG (also
+filtered photos), zoom, settings, layout. Open known bugs are listed in `e2e/known-bugs.spec.ts` (Delete key,
+⌘B while typing, pages after reload).
+
+## Coverage targets (proposal; enforce after the first fixes land)
+
+| Scope                                                                                | Lines | Branches |
+| ------------------------------------------------------------------------------------ | ----- | -------- |
+| `src/animation/engine.ts`, pure helpers in `src/lib`, `createSettingSlice` helpers   | 90%   | 80%      |
+| `src/store/slices/*` (core: Canvas, UndoRedo, Page, Pages, Layers, Shape, Animation) | 80%   | 70%      |
+| Other slices                                                                         | 60%   | 50%      |
+| `src/components/**`                                                                  | 50%   | n/a      |
+| Global floor (target)                                                                | 60%   | n/a      |
+
+Today CI enforces a **ratchet** at the current level (`vitest.config.ts` `coverage.thresholds`: statements 52, branches 45, functions 54, lines 54); `test:coverage` fails below it. Raise the numbers as coverage grows until the 60% floor.
+
+## Critical flow tests (what each must cover)
+
+| Flow                   | Level              | Must assert                                                                                                                                                                                                                                                                              |
+| ---------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Store integrity        | unit               | every slice key is unique (BUG-002); `undo`/`redo` are the canvas history (BUG-001)                                                                                                                                                                                                      |
+| Serialization contract | integration        | an object with every custom prop survives autosave, undo snapshot, page capture, project export/import, `.fateboard` save/open (BUG-003)                                                                                                                                                 |
+| Undo/redo              | unit + E2E         | each add/remove/modify/path is one step; redo after undo; new change clears redo; history paused during load; per-page (BUG-005/006)                                                                                                                                                     |
+| Autosave/restore       | integration + E2E  | edit → reload → same objects; no save of half-loaded canvas (`persistLock`); `flushPersist` on `pagehide`                                                                                                                                                                                |
+| Pages                  | integration + E2E  | add/duplicate/delete/switch keeps each page's content and size; survives reload (BUG-004: `store/__tests__/projectPersistence.test.ts`, `e2e/persistence.spec.ts`)                                                                                                                       |
+| Layers                 | unit               | sync from canvas, lock blocks delete/move, group/ungroup keeps world transform, z-order ops                                                                                                                                                                                              |
+| Canvas geometry        | integration + E2E  | preset switch: backstore = preset, VPT identity; pointer hits the object under the cursor (BUG-007: `store/__tests__/geometryOwner.test.ts`, `e2e/geometry.spec.ts`)                                                                                                                     |
+| Keyboard               | RTL + E2E          | shortcuts run the right command; typing in inputs/text editing is ignored; panel-scoped keys don't leak (BUG-018); Ctrl+O never clears (BUG-040)                                                                                                                                         |
+| Animation              | unit + integration | sampling/easing, presets, keyframe edits + undo, rest state never saved (BUG-011), data persists per page (BUG-010): `animation/__tests__/animationPersistence.test.ts`, `e2e/animation.spec.ts`; the panel (presets, timeline, keys, leaving the tab): `organisms/animation/__tests__/` |
+| Export                 | integration + E2E  | PNG dimensions = page size at 1×; JSON export re-imports; video export produces a non-empty file (Chromium)                                                                                                                                                                              |
+| Templates              | integration + E2E  | applied template fits the artboard (BUG-008); previous content recoverable (BUG-009: `store/__tests__/templateUndo.test.ts`, `e2e/templates.spec.ts`)                                                                                                                                    |
+| Crash recovery         | RTL                | render error → fallback with Reload / Download autosave / confirmed clear (`organisms/__tests__/ErrorBoundary.test.tsx`)                                                                                                                                                                 |
+| Bundle / assets        | source + file scan | pages lazy-loaded (`__tests__/codeSplitting.test.ts`); template thumbnails < 150 KB, images < 1 MB (`__tests__/templateAssets.test.ts`)                                                                                                                                                  |
+| No debug logging       | source scan        | no `console.log` in shipped code (`__tests__/noConsoleLog.test.ts`, BUG-104)                                                                                                                                                                                                             |
+| One serialize path     | source scan        | no canvas-level `toObject` / `toJSON` outside `lib/serialization` (`__tests__/oneSerializeList.test.ts`, BUG-003)                                                                                                                                                                        |
+
+---
+
+## Phase 3 proposal: test foundation (Playwright part implemented, see top)
+
+### Packages to install (dev)
+
+```bash
+npm i -D @playwright/test @testing-library/user-event vitest-canvas-mock
+npx playwright install chromium
+```
+
+(Versions: latest compatible with Vitest 5 / Node 26. `.npmrc` pins them exactly.)
+
+### Config files
+
+1. **`vitest.config.ts`** (update):
+    ```ts
+    import { defineConfig } from 'vitest/config';
+    import tsconfigPaths from 'vite-tsconfig-paths';
+    export default defineConfig({
+        plugins: [tsconfigPaths()],
+        test: {
+            globals: true,
+            environment: 'jsdom',
+            setupFiles: ['src/setupTests.ts'],
+            include: ['src/**/*.{test,spec}.{ts,tsx}'],
+            exclude: ['e2e/**', 'node_modules/**'],
+            restoreMocks: true,
+            coverage: {
+                provider: 'v8',
+                reporter: ['text', 'html', 'lcov'],
+                include: ['src/**/*.{ts,tsx}'],
+                exclude: [
+                    'src/**/__tests__/**',
+                    'src/test/**',
+                    'src/**/*.d.ts',
+                    'src/components/pages/web/**',
+                ],
+                // thresholds: { lines: 60 },  // enable after the first milestone
+            },
+        },
+    });
+    ```
+2. **`src/setupTests.ts`**: add `import 'vitest-canvas-mock';` at the top and remove the hand-written
+   `getContext` stub (keep `matchMedia`). Add `afterEach(() => localStorage.clear())`.
+3. **`playwright.config.ts`** (new):
+    ```ts
+    import { defineConfig, devices } from '@playwright/test';
+    export default defineConfig({
+        testDir: 'e2e',
+        timeout: 30_000,
+        retries: process.env.CI ? 2 : 0,
+        use: { baseURL: 'http://localhost:4173', trace: 'on-first-retry', acceptDownloads: true },
+        webServer: {
+            command: 'npm run build:no-check && npm run preview -- --port 4173',
+            port: 4173,
+            reuseExistingServer: !process.env.CI,
+        },
+        projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+    });
+    ```
+4. **`package.json` scripts** (add): `"e2e": "playwright test"`, `"e2e:ui": "playwright test --ui"`;
+   change `"type-check"` per BUG-012.
+5. **CI**: done, see "Current state" above (Playwright report + traces uploaded on failure).
+6. **Test hook (small source change, needs approval: DECISIONS Q9):** expose the store for E2E only:
+   `if (import.meta.env.MODE !== 'production' || import.meta.env.VITE_E2E) (window as any).__fateboard = useStore;`
+   This lets E2E read `canvas.getObjects().length` instead of comparing pixels.
+
+### Sample slice test: `createUndoRedoSlice` (isolated) + store composition
+
+```ts
+// src/store/slices/__tests__/createUndoRedoSlice.test.ts
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { createUndoRedoSlice } from '../createUndoRedoSlice';
+import { createFakeCanvas } from '@/test/fakeCanvas';
+
+function setup(objects: any[] = []) {
+    const canvas = createFakeCanvas(objects);
+    let state: any = { canvas, clearToolbar: vi.fn(), persist: vi.fn() };
+    const set = (patch: any) => {
+        state = { ...state, ...(typeof patch === 'function' ? patch(state) : patch) };
+    };
+    const get = () => state;
+    state = { ...state, ...createUndoRedoSlice(set as any, get as any, {} as any) };
+    return { canvas, get };
+}
+
+describe('createUndoRedoSlice', () => {
+    beforeEach(() => vi.useFakeTimers());
+    afterEach(() => vi.useRealTimers());
+
+    it('initHistory stores one base snapshot and cannot undo', () => {
+        const { get } = setup();
+        get().initHistory();
+        expect(get().undoStack).toHaveLength(1);
+        expect(get().canUndo).toBe(false);
+    });
+
+    it('saveState is debounced and deduplicated', () => {
+        const { canvas, get } = setup();
+        get().initHistory();
+        canvas.add({ type: 'rect', left: 0 });
+        get().saveState();
+        get().saveState();
+        vi.advanceTimersByTime(150);
+        expect(get().undoStack).toHaveLength(2);
+        get().saveState(true); // nothing changed
+        expect(get().undoStack).toHaveLength(2);
+    });
+
+    it('undo restores the previous snapshot and redo re-applies it', async () => {
+        const { canvas, get } = setup();
+        get().initHistory();
+        canvas.add({ type: 'rect', left: 0 });
+        get().saveState(true);
+        await get().undo();
+        expect(canvas.getObjects()).toHaveLength(0);
+        expect(get().canRedo).toBe(true);
+        await get().redo();
+        expect(canvas.getObjects()).toHaveLength(1);
+    });
+
+    it('does not record while paused', () => {
+        const { canvas, get } = setup();
+        get().initHistory();
+        get().pauseHistory();
+        canvas.add({ type: 'rect' });
+        get().saveState(true);
+        expect(get().undoStack).toHaveLength(1);
+    });
+});
+```
+
+```ts
+// src/store/__tests__/storeComposition.test.ts
+import { it, expect } from 'vitest';
+import { makeStore } from '@/test/makeStore';
+
+// Canvas undo works on `undoStack`; the animation undo works on `past`/`future`.
+it.fails('BUG-001: store.undo is the canvas history action', () => {
+    const store = makeStore();
+    expect(store.getState().undo.toString()).toContain('undoStack');
+});
+```
+
+(The composition test is intentionally simple; after BUG-002 the guard in `combinedSlice` makes it redundant.)
+
+### Playwright smoke test plan (`e2e/smoke.spec.ts`)
+
+Preconditions: fresh browser context (empty storage); open `/draw`; wait for `.upper-canvas`. Default preset is
+"YouTube Thumbnail" 1280×720 (`CANVAS_PRESETS[0]`).
+
+| #   | Step              | Action                                                                                                                   | Assert                                                                               | Known blockers                                           |
+| --- | ----------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| 1   | Editor loads      | `goto('/draw')`                                                                                                          | `.upper-canvas` visible; no console errors; `__fateboard.getState().canvas` not null |                                                          |
+| 2   | Draw shape        | click rail button `aria-label="Shapes"` → tile `aria-label="Rectangle"`                                                  | object count = 1; Layers panel shows "Rectangle 1"                                   |                                                          |
+| 3   | Draw freehand     | rail `aria-label="Draw"`, drag across the canvas with `page.mouse`                                                       | one more object (`path`)                                                             |                                                          |
+| 4   | Undo              | `Control+z` (`Meta+z` on mac)                                                                                            | count back to 1 (path removed), rectangle still there                                | **BUG-001**, **BUG-006**: mark `test.fail()` until fixed |
+| 5   | Redo              | `Control+Shift+z`                                                                                                        | count = 2                                                                            | BUG-001                                                  |
+| 6   | Autosave + reload | wait 500 ms, `page.reload()`                                                                                             | count restored; rectangle keeps `customType: 'shape'`                                | BUG-003 (props)                                          |
+| 7   | Save file         | click File → "Save Board" (its `title`/`aria-label` are undefined, BUG-043; locate by tooltip text or add `data-testid`) | `download.suggestedFilename() === 'drawing.fateboard'`; JSON has 2 objects           |                                                          |
+| 8   | Export PNG        | dock tab "Export" → format PNG → Export                                                                                  | download event; PNG signature bytes; width×height = 1280×720 at 1×                   | BUG-007 if a page op ran                                 |
+| 9   | Shortcut safety   | press `Control+o`                                                                                                        | object count unchanged                                                               | **BUG-040**: `test.fail()` until fixed                   |
+
+Selector gaps to fix with small `data-testid` additions (approval needed, DECISIONS Q9): FileBar buttons
+(`aria-label={action.tooltip}` is always `undefined`), Export button, dock tab buttons.
+
+Later suites: pages (`e2e/pages.spec.ts`), layers, animation export (Chromium WebCodecs), templates.
