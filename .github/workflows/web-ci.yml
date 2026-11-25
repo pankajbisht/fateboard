@@ -1,0 +1,134 @@
+# Web CI/CD: the pipeline of apps/web only (apps/web/docs/ARCHITECTURE.md "Deploy", apps/web/docs/TESTING.md "CI").
+# Pipelines are separate per app: each app has its own entry workflow (`<app>-ci.yml`) and stages
+# (`_<app>-*.yml`) and only runs for changes to that app or to shared files. GitHub reads workflows only from the
+# repo-root .github/; every `run:` step of this pipeline works inside apps/web (its own package.json + lockfile).
+# Check names read "<Stage> / <Job>", e.g. "Quality / Static analysis", "Test / E2E (firefox, shard 1/2)".
+#
+#   Detect changes ─┬─> Quality / Static analysis ° ─┐
+#                   ├─> Quality / Unit tests ° ───────┤
+#                   ├─> Test / E2E (4 shards) * ──────┤
+#                   ├─> Build / Web bundle ° ─────────┼─> CI passed (required) ─> Deploy / GitHub Pages
+#                   └─> Build / Container image * ────┘                           (push to main only)
+#
+#   ° skipped when a PR does not touch the web app at all (e.g. only apps/desktop/** or another app's workflow).
+#   * also skipped when the web change is docs only (apps/web/docs/**, apps/web/.claude/**, *.md).
+#   Shared files (.github/actions/**, packages/**, root config) count as web. "CI passed" treats skipped as OK.
+#
+# Shared Node setup: .github/actions/setup-node-deps. Third-party actions are pinned to
+# full commit SHAs (tag in the trailing comment); Dependabot keeps them current.
+name: Web CI/CD
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+    workflow_dispatch:
+
+# Least privilege by default; only the jobs that need more widen it.
+permissions:
+    contents: read
+
+# One run per ref: a new push to a PR cancels the stale run. Runs on main are never
+# cancelled mid-way (_web-deploy.yml has its own `pages` group as well).
+concurrency:
+    group: ci-${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+    changes:
+        name: Detect changes
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        permissions:
+            pull-requests: read # list the PR's changed files
+        outputs:
+            web: ${{ steps.classify.outputs.web }}
+            web_code: ${{ steps.classify.outputs.web_code }}
+        steps:
+            # web: the PR touches apps/web or a shared file. web_code: the same, minus docs-only changes.
+            # Push to main, manual runs and any API error run the full pipeline (fail safe).
+            - name: Classify changed files
+              id: classify
+              env:
+                  GH_TOKEN: ${{ github.token }}
+                  PR_NUMBER: ${{ github.event.pull_request.number }}
+                  REPO: ${{ github.repository }}
+              run: |
+                  full() { printf 'web=true\nweb_code=true\n' >> "$GITHUB_OUTPUT"; exit 0; }
+                  if [ -z "$PR_NUMBER" ]; then echo "Not a pull request: running the full pipeline."; full; fi
+                  if ! files=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/files" --jq '.[].filename'); then
+                      echo "::warning::Could not list changed files; running the full pipeline."; full
+                  fi
+                  printf 'Changed files:\n%s\n' "$files"
+                  # other apps and their pipelines belong to those apps, not to this one
+                  mine=$(printf '%s\n' "$files" \
+                      | grep -vE '^apps/' \
+                      | grep -vE '^\.github/workflows/' || true)
+                  mine="$mine
+                  $(printf '%s\n' "$files" | grep -E '^apps/web/|^\.github/workflows/(web-ci\.yml|_web-)' || true)"
+                  mine=$(printf '%s\n' "$mine" | sed 's/^ *//' | grep -v '^$' || true)
+                  code=$(printf '%s\n' "$mine" | grep -vE '^apps/web/(docs|\.claude)/|\.md$' | grep -v '^$' || true)
+                  web=false; web_code=false
+                  [ -n "$mine" ] && web=true
+                  [ -n "$code" ] && web_code=true
+                  printf 'web=%s\nweb_code=%s\n' "$web" "$web_code" >> "$GITHUB_OUTPUT"
+                  echo "Touches the web app: $web; web code: $web_code"
+
+    quality:
+        name: Quality
+        needs: changes
+        if: ${{ needs.changes.outputs.web == 'true' }}
+        uses: ./.github/workflows/_web-quality.yml
+
+    e2e:
+        name: Test
+        needs: changes
+        if: ${{ needs.changes.outputs.web_code == 'true' }}
+        uses: ./.github/workflows/_web-e2e.yml
+
+    build-web:
+        name: Build
+        needs: changes
+        if: ${{ needs.changes.outputs.web == 'true' }}
+        uses: ./.github/workflows/_web-build.yml
+
+    build-image:
+        name: Build
+        needs: changes
+        if: ${{ needs.changes.outputs.web_code == 'true' }}
+        uses: ./.github/workflows/_web-image.yml
+
+    # Single status to mark "required" in branch protection, so adding/renaming stages
+    # never needs a settings change. Keep this name: branch protection matches it exactly.
+    ci:
+        name: CI passed
+        if: ${{ always() }}
+        needs: [changes, quality, e2e, build-web, build-image]
+        runs-on: ubuntu-latest
+        timeout-minutes: 5
+        steps:
+            # `skipped` is OK only because the skippable jobs depend on `changes`, which must succeed.
+            - name: Check job results
+              env:
+                  CHANGES: ${{ needs.changes.result }}
+                  RESULTS: ${{ join(needs.*.result, ' ') }}
+              run: |
+                  echo "Job results: $RESULTS"
+                  [ "$CHANGES" = "success" ] || { echo "::error::Detect changes did not succeed ($CHANGES)"; exit 1; }
+                  for r in $RESULTS; do
+                      case "$r" in
+                          success | skipped) ;;
+                          *) echo "::error::A required job did not succeed ($r)"; exit 1 ;;
+                      esac
+                  done
+
+    # Only a push to main (never a PR, BUG-057), only after every gate is green.
+    deploy:
+        name: Deploy
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        needs: ci
+        permissions:
+            pages: write
+            id-token: write
+        uses: ./.github/workflows/_web-deploy.yml

@@ -2,8 +2,9 @@
 # bumps the pinned version instead of widening ranges.
 version: 2
 updates:
+    # one npm entry per app (each app has its own package.json + lockfile)
     - package-ecosystem: npm
-      directory: /
+      directory: /apps/web
       schedule:
           interval: weekly
           day: monday

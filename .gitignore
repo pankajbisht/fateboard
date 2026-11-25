@@ -1,3 +1,6 @@
+# Patterns without a slash match at any depth (root, apps/web, apps/*, packages/*).
+# Patterns with a slash are anchored, so they start with **/ to work inside apps/web too.
+
 # Logs
 logs
 *.log
@@ -7,15 +10,32 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Secrets / local config (only .env.example is committed)
 .env
+.env.*
+!.env.example
+*.local
+
+# Dependencies and build output
 node_modules
 dist
 dist-ssr
-*.local
+dist-e2e
+*.tsbuildinfo
+
+# Tests: Playwright (end-to-end) and coverage (npm run test:coverage)
+test-results
+playwright-report
+blob-report
+coverage
+
+# Dead code kept locally for reference, never pushed (see README "Dead code")
+deadcode/
+.dead-code-backup-*.tar.gz
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
+**/.vscode/*
+!**/.vscode/extensions.json
 .idea
 .DS_Store
 *.suo
@@ -24,19 +44,7 @@ dist-ssr
 *.sln
 *.sw?
 
-# local backup of deleted dead code (2026-11-06)
-.dead-code-backup-*.tar.gz
-
-# Playwright (end-to-end tests)
-dist-e2e
-test-results
-playwright-report
-blob-report
-
-# test coverage output (npm run test:coverage)
-coverage
-
 # Claude Code: personal files (the shared setup in .claude/ and CLAUDE.md is committed)
 CLAUDE.local.md
-.claude/settings.local.json
-.claude/worktrees
+**/.claude/settings.local.json
+**/.claude/worktrees

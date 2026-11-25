@@ -1,0 +1,46 @@
+# Reusable (called by web-ci.yml as "Build"): production bundle, uploaded as the Pages artifact that
+# _web-deploy.yml publishes. Runs on PRs too, so a broken build is caught before merge.
+name: Build web bundle
+
+on:
+    workflow_call:
+
+permissions:
+    contents: read
+
+# Every `run:` step works inside the web app (its own package.json, lockfile and .nvmrc).
+defaults:
+    run:
+        working-directory: apps/web
+
+jobs:
+    web-bundle:
+        name: Web bundle
+        runs-on: ubuntu-latest
+        timeout-minutes: 15
+        steps:
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Setup Node and dependencies
+              uses: ./.github/actions/setup-node-deps
+              with:
+                  app-dir: apps/web
+
+            # --ignore-scripts skips `prebuild` (type-check already runs in _web-quality.yml);
+            # `build` itself still runs `tsc -b && vite build`.
+            - name: Build
+              run: npm run build --ignore-scripts
+              env:
+                  # Google Analytics id (repo Settings > Variables); empty = analytics off (BUG-131)
+                  VITE_GA_ID: ${{ vars.VITE_GA_ID }}
+                  # Public site origin (repo Settings > Variables, required): canonical, Open Graph, sitemap, robots.txt
+                  VITE_SITE_URL: ${{ vars.VITE_SITE_URL }}
+
+            - name: Upload Pages artifact
+              uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+              with:
+                  path: apps/web/dist # artifact paths are relative to the checkout, not working-directory
+                  retention-days: 7

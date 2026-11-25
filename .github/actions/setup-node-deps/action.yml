@@ -1,19 +1,27 @@
-# Shared setup used by every CI job: Node from .nvmrc (npm cache) + `npm ci`.
+# Shared setup used by every app's CI jobs: Node from the app's .nvmrc (npm cache keyed on the app's lockfile),
+# then `npm ci` inside the app folder. Each app is its own npm project (apps/web, later apps/desktop, …).
 # Run actions/checkout first (a local action is read from the checked-out repo).
 name: Setup Node and dependencies
-description: Install Node from .nvmrc with the npm cache, then run npm ci.
+description: Install Node from <app-dir>/.nvmrc with the npm cache, then run npm ci in <app-dir>.
+
+inputs:
+    app-dir:
+        description: App folder that holds package.json, package-lock.json and .nvmrc (e.g. apps/web).
+        required: true
 
 runs:
     using: composite
     steps:
-        - name: Set up Node.js (.nvmrc)
+        - name: Set up Node.js (${{ inputs.app-dir }}/.nvmrc)
           uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
           with:
-              node-version-file: .nvmrc
+              node-version-file: ${{ inputs.app-dir }}/.nvmrc
               cache: npm
+              cache-dependency-path: ${{ inputs.app-dir }}/package-lock.json
 
         - name: Install dependencies
           shell: bash
+          working-directory: ${{ inputs.app-dir }}
           run: npm ci
           env:
               NPM_CONFIG_FUND: 'false'

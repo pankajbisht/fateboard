@@ -1,0 +1,18 @@
+# Only what the build needs goes into the image build context (apps/web).
+# `**/`: patterns are anchored to the context root; `**/` also matches nested folders.
+**/node_modules
+**/dist
+**/dist-e2e
+**/coverage
+**/playwright-report
+**/test-results
+.husky
+.claude
+.zed
+.vscode
+.idea
+# never bake local config / secrets into an image: pass VITE_* as --build-arg
+**/.env
+**/.env.*
+!**/.env.example
+*.log

@@ -15,14 +15,13 @@ import {
     countMarkers,
     GUARDED,
     INTEGRITY_EXEMPT,
-} from '../../../../scripts/guardrails/ratchets.mjs';
+} from '../../scripts/guardrails/ratchets.mjs';
 
 /** Lower this when you add a reason to (or remove) an eslint-disable. Raising it needs the owner (CI label). */
 const DISABLE_WITHOUT_REASON_CEILING = 96;
 
-/** Repo root: vitest runs in apps/web; paths below are repo-relative like the guard hook and CI checker. */
-const ROOT = path.resolve(process.cwd(), '../..');
-const files = ['apps/web/src', 'apps/web/e2e', 'scripts']
+const ROOT = process.cwd();
+const files = ['src', 'e2e', 'scripts']
     .flatMap((dir) =>
         (readdirSync(path.join(ROOT, dir), { recursive: true }) as string[]).map((f) =>
             `${dir}/${f}`.split(path.sep).join('/'),
@@ -68,39 +67,35 @@ describe('guardrails: ratchet checks', () => {
         );
 
     it('lint warning limit may go down, not up', () => {
-        expect(v('apps/web/package.json', '--max-warnings 249', '--max-warnings 240')).toEqual([]);
-        expect(v('apps/web/package.json', '--max-warnings 249', '--max-warnings 250')).toHaveLength(
-            1,
-        );
+        expect(v('package.json', '--max-warnings 249', '--max-warnings 240')).toEqual([]);
+        expect(v('package.json', '--max-warnings 249', '--max-warnings 250')).toHaveLength(1);
     });
 
     it('coverage thresholds may go up, not down or away', () => {
         const at = (s: number) =>
             `thresholds: { statements: ${s}, branches: 45, functions: 54, lines: 54 }`;
-        expect(v('apps/web/vitest.config.ts', at(52), at(53))).toEqual([]);
-        expect(v('apps/web/vitest.config.ts', at(52), at(51))).toHaveLength(1);
-        expect(v('apps/web/vitest.config.ts', at(52), 'coverage: {}')).toHaveLength(4);
+        expect(v('vitest.config.ts', at(52), at(53))).toEqual([]);
+        expect(v('vitest.config.ts', at(52), at(51))).toHaveLength(1);
+        expect(v('vitest.config.ts', at(52), 'coverage: {}')).toHaveLength(4);
     });
 
     it('size ceilings may shrink, not grow, and no new file joins the list', () => {
         const src = (rows: string) =>
             `const BUDGET = { tsx: 300, ts: 400 };\nconst LEGACY_CEILINGS: Record<string, number> = {\n${rows}\n};`;
         const a = src(`    '/src/a.ts': 500,`);
-        expect(
-            v('apps/web/src/__tests__/fileBudget.test.ts', a, src(`    '/src/a.ts': 480,`)),
-        ).toEqual([]);
-        expect(
-            v('apps/web/src/__tests__/fileBudget.test.ts', a, src(`    '/src/a.ts': 510,`)),
-        ).toHaveLength(1);
+        expect(v('src/__tests__/fileBudget.test.ts', a, src(`    '/src/a.ts': 480,`))).toEqual([]);
+        expect(v('src/__tests__/fileBudget.test.ts', a, src(`    '/src/a.ts': 510,`))).toHaveLength(
+            1,
+        );
         expect(
             v(
-                'apps/web/src/__tests__/fileBudget.test.ts',
+                'src/__tests__/fileBudget.test.ts',
                 a,
                 src(`    '/src/a.ts': 500,\n    '/src/b.ts': 450,`),
             ),
         ).toHaveLength(1);
         expect(
-            v('apps/web/src/__tests__/fileBudget.test.ts', a, a.replace('ts: 400', 'ts: 600')),
+            v('src/__tests__/fileBudget.test.ts', a, a.replace('ts: 400', 'ts: 600')),
         ).toHaveLength(1);
     });
 
@@ -114,7 +109,7 @@ describe('guardrails: ratchet checks', () => {
                 : text.replace(
                       /(--max-warnings\s+|CEILING\s*=\s*|:\s*)(\d+)/g,
                       (_, p: string, n: string) =>
-                          file.endsWith('vitest.config.ts')
+                          file === 'vitest.config.ts'
                               ? `${p}${Number(n) - 1}`
                               : `${p}${Number(n) + 1}`,
                   );

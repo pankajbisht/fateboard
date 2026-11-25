@@ -7,5 +7,5 @@ server / backend. First candidates are the pure domains `src/character` and `src
 Rules once it has code: no React, Fabric, `@store` or `@/lib/storage` imports (add a guard test); ship
 TypeScript source through `exports` (no build step); exact dependency versions only.
 
-When it gets a `package.json` it becomes an npm workspace: run `npm install`, commit `package-lock.json`, and copy
-its `package.json` into the `apps/web/Dockerfile` deps layer before `npm ci`.
+When it gets code it needs its own `package.json`. Apps then consume it as a local dependency
+(`"@fateboard/core": "file:../../packages/core"`), and the `apps/web` Dockerfile build context must include it.

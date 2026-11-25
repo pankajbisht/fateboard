@@ -1,13 +1,16 @@
-# apps/web (`@fateboard/web`)
+# Fateboard web app
 
-The Fateboard web app: the editor at `/draw`, the landing, gallery and help pages. Deployed to GitHub Pages from
-`apps/web/dist` (CI) and served by the container image (`Dockerfile` here; build it from the repo root with
-`docker build -f apps/web/Dockerfile .`, ignore rules in `Dockerfile.dockerignore`).
+This folder is the complete Fateboard web application: source (`src/`), end-to-end tests (`e2e/`), assets
+(`public/`), docs (`docs/`), configs, Docker image, CI workflows and the Claude Code setup.
 
-Run commands from the **repo root** (`npm run dev`, `npm run build`, `npm run test:run`, `npm run e2e`, …): the
-root scripts forward here. From this folder `npm run <script>` works too.
+Quick start (Node 26.13.0, see `.nvmrc`):
 
-- Config: `apps/web/.env` (copy `.env.example` in this folder).
-- Dependencies: `npm install <pkg> -w @fateboard/web` from the root (exact versions; one root `package-lock.json`).
-- Docs, Claude setup (`.claude/`), CI (`.github/`) and guardrail scripts (`scripts/guardrails/`) are repo-level;
-  paths like `src/…` in them are relative to this folder.
+```bash
+nvm use
+npm ci
+cp .env.example .env    # set VITE_SITE_URL
+npm run dev             # http://localhost:5173/draw
+```
+
+The full guide (layout, every command, tests, build, Docker, CI/CD, git workflow, dead code, docs index,
+troubleshooting) is the repository README: [../../README.md](../../README.md).

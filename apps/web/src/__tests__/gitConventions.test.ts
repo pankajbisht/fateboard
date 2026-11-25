@@ -10,11 +10,9 @@ import path from 'node:path';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-/** `.claude/` is at the repo root; vitest runs in apps/web. */
-const REPO = path.resolve(process.cwd(), '../..');
-const SCRIPT = path.join(REPO, '.claude/skills/fate-ship/scripts/validate.mjs');
+const SCRIPT = path.join(process.cwd(), '.claude/skills/fate-ship/scripts/validate.mjs');
 
-const run = (args: string[], input = '', cwd = REPO) =>
+const run = (args: string[], input = '', cwd = process.cwd()) =>
     spawnSync('node', [SCRIPT, ...args], { input, encoding: 'utf8', cwd });
 const branch = (name: string) => run(['branch', name]).status;
 const message = (text: string) => run(['message', '-'], text);

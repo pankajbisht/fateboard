@@ -4,8 +4,9 @@ Reserved for the desktop shell that wraps the web build (`VITE_TARGET=desktop`, 
 behind `src/platform/`). **Empty on purpose:** the shell is not chosen yet: Tauri 2 (docs/PLATFORMS.md
 section 6, Phase 3 spike) or Electron (documented fallback). Log the choice in docs/DECISIONS.md first.
 
-When it gets a `package.json` it becomes an npm workspace. Then, in the same PR:
+When it gets code, it becomes its own project like `apps/web` (own `package.json`, `package-lock.json`,
+`node_modules`). Then, in the same PR:
 
-- run `npm install` and commit `package-lock.json`;
-- copy its `package.json` into the `apps/web/Dockerfile` deps layer (before `npm ci`), or `npm ci` fails in the image;
+- run `npm install` here and commit its `package-lock.json`;
+- if it imports the web build, build `apps/web` first (`npm run build` there) instead of reaching into its files;
 - add a `Build / Desktop` CI job that is **not** part of `CI passed` until it is stable.

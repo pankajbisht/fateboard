@@ -9,8 +9,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-/** Repo root (vitest runs in apps/web): `.claude/` and the hook's paths are repo-relative. */
-const ROOT = path.resolve(process.cwd(), '../..');
+const ROOT = process.cwd();
 const CLAUDE = path.join(ROOT, '.claude');
 
 const guard = (tool: string, toolInput: Record<string, unknown>) =>
@@ -30,9 +29,7 @@ describe('guard hook (PreToolUse)', () => {
         ['.env.production'],
         ['node_modules/react/index.js'],
         ['dist/index.html'],
-        ['apps/web/dist/index.html'],
-        ['apps/web/coverage/index.html'],
-        ['apps/web/node_modules/x/index.js'],
+        ['coverage/index.html'],
         ['package-lock.json'],
     ])('blocks editing %s', (file) => {
         const r = edit(file);
@@ -40,13 +37,12 @@ describe('guard hook (PreToolUse)', () => {
         expect(r.stderr).toMatch(/fateboard guard/);
     });
 
-    it.each([['.env.example'], ['apps/web/src/App.tsx'], ['docs/BUGS.md'], ['package.json']])(
+    it.each([['.env.example'], ['src/App.tsx'], ['docs/BUGS.md'], ['package.json']])(
         'allows editing %s',
         (file) => expect(edit(file).status).toBe(0),
     );
 
     it('keeps package.json versions exact', () => {
-        expect(edit('apps/web/package.json', '"react": "^19.2.0"').status).toBe(2);
         expect(edit('package.json', '"react": "^19.2.0"').status).toBe(2);
         expect(edit('package.json', '"react": "~19.2.0"').status).toBe(2);
         expect(edit('package.json', '"react": "19.2.0"').status).toBe(0);
@@ -54,8 +50,8 @@ describe('guard hook (PreToolUse)', () => {
 
     it('blocks credentials in any file', () => {
         const key = ['AKIA', 'ABCDEFGHIJKLMNOP'].join(''); // split so this file never holds one
-        expect(edit('apps/web/src/config.ts', `const k = '${key}';`).status).toBe(2);
-        expect(edit('apps/web/src/config.ts', `-----BEGIN ${'PRIVATE'} KEY-----`).status).toBe(2);
+        expect(edit('src/config.ts', `const k = '${key}';`).status).toBe(2);
+        expect(edit('src/config.ts', `-----BEGIN ${'PRIVATE'} KEY-----`).status).toBe(2);
     });
 
     it.each([
@@ -98,19 +94,15 @@ describe('guard hook: guardrails ask the owner', () => {
     const change = (file: string, old_string: string, new_string: string) =>
         decision('Edit', { file_path: path.join(ROOT, file), old_string, new_string });
     const write = (content: string) =>
-        decision('Write', { file_path: path.join(ROOT, 'apps/web/src/lib/x.ts'), content });
+        decision('Write', { file_path: path.join(ROOT, 'src/lib/x.ts'), content });
 
     it('loosening a ratchet asks; tightening it does not', () => {
-        expect(change('apps/web/package.json', '--max-warnings 246', '--max-warnings 260')).toBe(
-            'ask',
-        );
-        expect(change('apps/web/package.json', '--max-warnings 246', '--max-warnings 240')).toBe(
-            'allow',
-        );
-        expect(change('apps/web/vitest.config.ts', 'statements: 52', 'statements: 40')).toBe('ask');
+        expect(change('package.json', '--max-warnings 246', '--max-warnings 260')).toBe('ask');
+        expect(change('package.json', '--max-warnings 246', '--max-warnings 240')).toBe('allow');
+        expect(change('vitest.config.ts', 'statements: 52', 'statements: 40')).toBe('ask');
         expect(
             change(
-                'apps/web/src/__tests__/fileBudget.test.ts',
+                'src/__tests__/fileBudget.test.ts',
                 "createCanvasSlice.ts': 1223",
                 "createCanvasSlice.ts': 1300",
             ),
@@ -118,15 +110,11 @@ describe('guard hook: guardrails ask the owner', () => {
     });
 
     it('removing a public store key asks', () => {
-        expect(
-            change('apps/web/src/__tests__/storeApi.baseline.json', '    "setZoom",\n', ''),
-        ).toBe('ask');
+        expect(change('src/__tests__/storeApi.baseline.json', '    "setZoom",\n', '')).toBe('ask');
     });
 
     it('hiding a failure asks; doing it with a reason does not', () => {
-        expect(change('apps/web/src/__tests__/smoke.test.tsx', 'describe(', 'describe.skip(')).toBe(
-            'ask',
-        );
+        expect(change('src/__tests__/smoke.test.tsx', 'describe(', 'describe.skip(')).toBe('ask');
         expect(write('// @ts-ignore\nexport const a = 1;')).toBe('ask');
         expect(write('// eslint-disable-next-line no-console\nexport const a = 1;')).toBe('ask');
         expect(write('// @ts-expect-error fabric types miss this prop\nexport const a = 1;')).toBe(
