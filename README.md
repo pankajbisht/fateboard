@@ -168,7 +168,7 @@ there). The web app's pipeline:
 | `_web-e2e.yml` | `Test / E2E` (Chromium + Firefox, 2 shards each) |
 | `_web-build.yml` | `Build / Web bundle` (uploads the GitHub Pages artifact) |
 | `_web-image.yml` | `Build / Container image` (build + smoke test) |
-| `_web-deploy.yml` | `Deploy / GitHub Pages` (push to `main` only, after `CI passed`) |
+| `_web-deploy.yml` | `Deploy / GitHub Pages` (push to `main` only, after `CI passed`), then a live smoke test: `/`, `/draw`, `/help`, `/gallery` answer 200, an unknown page 404, and every JS / CSS file `/draw` loads answers 200 (retries for 3 min; red job = check the site, roll back by reverting the merge) |
 
 How the pipelines stay separate:
 

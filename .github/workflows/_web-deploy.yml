@@ -27,3 +27,34 @@ jobs:
             - name: Deploy
               id: deployment
               uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1
+
+            # A deploy is done only when the live site answers: the main routes, a real 404, and the JS / CSS the
+            # live HTML points to. A query string per run skips the Pages CDN cache; retries cover propagation.
+            # On failure the site may already be live: roll back by reverting the merge commit on main.
+            - name: Smoke test the live site
+              env:
+                  PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+                  RUN_ID: ${{ github.run_id }}
+              run: |
+                  site="${PAGE_URL%/}"
+                  status() { curl -s -o /dev/null -w '%{http_code}' "$site$1?deploy=$RUN_ID"; }
+                  check() {
+                      for path in / /draw /help /gallery; do
+                          [ "$(status "$path")" = 200 ] || { echo "not yet: $path"; return 1; }
+                      done
+                      [ "$(status /this-page-does-not-exist)" = 404 ] || { echo "not yet: 404 page"; return 1; }
+                      html=$(curl -sf "$site/draw?deploy=$RUN_ID") || return 1
+                      assets=$(printf '%s' "$html" | grep -oE '(src|href)="/assets/[^"]+\.(js|css)"' | cut -d'"' -f2)
+                      [ -n "$assets" ] || { echo "no /assets/ script or stylesheet in /draw"; return 1; }
+                      for a in $assets; do
+                          [ "$(status "$a")" = 200 ] || { echo "not yet: $a"; return 1; }
+                      done
+                      echo "Live site OK: $site (routes, 404, $(printf '%s\n' $assets | wc -l | tr -d ' ') assets of /draw)"
+                  }
+                  for attempt in $(seq 1 12); do
+                      check && exit 0
+                      echo "attempt $attempt/12 failed; retrying in 15 s"
+                      sleep 15
+                  done
+                  echo "::error::The live site at $site did not pass the smoke test after the deploy"
+                  exit 1

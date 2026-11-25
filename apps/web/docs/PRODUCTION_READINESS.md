@@ -44,8 +44,8 @@ changes lost on reload) found and fixed before deploy.
 2. Wait for **CI passed**. This is the first run of the new layout: check that Quality, the 4 E2E shards, Web bundle
    and Container image all ran (none skipped) and passed.
 3. Merge: the deploy job publishes `apps/web/dist` to GitHub Pages. Rollback: revert the merge commit.
-4. After the deploy: open fateboard.com and `/draw`, draw a shape, reload, check it is still there; open `/gallery`
-   and `/help`.
+4. After the deploy: the deploy job's **live smoke test** must be green (routes 200, unknown page 404, every
+   `/draw` JS / CSS file 200). Then by hand: open `/draw`, draw a shape, reload, check it is still there.
 5. Contributors: run commands and open Claude Code in `apps/web` from now on (root README).
 
 Should fix soon (not blocking): **BUG-174** (ask the browser to keep saved boards), **BUG-187** (startup save race),
