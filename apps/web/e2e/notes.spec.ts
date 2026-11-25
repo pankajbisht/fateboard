@@ -102,7 +102,11 @@ test('a note on an object follows it; a free pin can be dragged', async ({ edito
     await page.mouse.move(start.x + 40, start.y + 10, { steps: 4 });
     await page.mouse.move(start.x + 70, start.y + 10, { steps: 4 });
     await page.mouse.up();
-    await expect.poll(async () => Math.round((await free.boundingBox())!.x - start.x)).toBe(60);
+    // pins sit on whole pixels (useNotePins rounds): a 60 px drag lands within 1 px of it; exactly 60
+    // failed on CI Firefox (61) when the board's offset was a fraction of a pixel
+    await expect
+        .poll(async () => Math.abs((await free.boundingBox())!.x - start.x - 60))
+        .toBeLessThanOrEqual(1);
     await expect(page.getByRole('dialog', { name: 'Note 2' })).toHaveCount(0); // a drag does not open it
 });
 
