@@ -19,3 +19,27 @@ test('the landing page has no notice and no horizontal scroll on a phone', async
     );
     expect(overflow).toBeLessThanOrEqual(0);
 });
+
+// upright phones: one tool bar under the board; panels, colors and zoom fold behind "More"
+test('the phone editor gives the board most of the screen; "More" unfolds the rest', async ({
+    page,
+}) => {
+    await page.goto('/draw');
+    await expect(page.locator('canvas.upper-canvas')).toBeVisible();
+    const docks = page.getByRole('toolbar', { name: 'Dock panels' });
+    await expect(docks).toBeHidden();
+    await expect(page.getByTestId('footer-view')).toBeHidden();
+    await expect(page.getByTestId('property-bar')).toBeHidden(); // nothing selected
+    const board = (await page
+        .getByRole('region', { name: 'Editor canvas workspace' })
+        .boundingBox())!;
+    expect(board.height).toBeGreaterThan(844 * 0.7);
+
+    const more = page.getByRole('button', { name: 'More: panels, colors and zoom' });
+    await more.click();
+    await expect(more).toHaveAttribute('aria-expanded', 'true');
+    await expect(docks).toBeVisible();
+    await expect(page.getByTestId('footer-view')).toBeVisible();
+    await more.click();
+    await expect(docks).toBeHidden();
+});

@@ -107,6 +107,7 @@ for (const screen of SCREENS) {
             await panel.getByRole('button', { name: /close/i }).first().click();
 
             // short screens: the dock rail moves the last tabs into its "More tabs" menu
+            await editor.showPhoneTray();
             const rail = page.getByRole('toolbar', { name: 'Dock panels' });
             const exportTab = rail.getByRole('button', { name: 'Export', exact: true });
             if (await exportTab.isVisible()) await exportTab.click();
