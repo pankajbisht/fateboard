@@ -48,7 +48,7 @@ describe('pose library', () => {
                 const feet = m.parts.filter((p) => p.key === 'footL' || p.key === 'footR');
                 expect(feet.length, `${c.id} ${pose.id}`).toBe(2);
             }
-    });
+    }, 60_000); // about 870 renders (every grounded pose × 3 bodies): over 5 s on a busy CI runner
 
     it('a pose search by tag finds what people would look for', () => {
         const find = (q: string) =>
