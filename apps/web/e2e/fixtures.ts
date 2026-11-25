@@ -92,8 +92,20 @@ export class Editor {
         }
     }
 
+    /** Upright phones: unfold the dock, colors and footer from the tool bar's "More" (no-op elsewhere). */
+    async showPhoneTray() {
+        const more = this.page.getByRole('button', { name: 'More: panels, colors and zoom' });
+        if (!(await more.isVisible()) || (await more.getAttribute('aria-expanded')) === 'true')
+            return;
+        await more.click();
+        // the dock rail measures which tabs fit only once it is shown; the board re-fits above it
+        await expect(this.page.getByRole('toolbar', { name: 'Dock panels' })).toBeVisible();
+        await this.settledCanvasBox();
+    }
+
     /** Right dock: open a tab (Fill & Shadow, Export, …). */
     async openDockTab(label: string) {
+        await this.showPhoneTray();
         await this.page
             .getByRole('toolbar', { name: 'Dock panels' })
             .getByRole('button', { name: label, exact: true })
@@ -102,6 +114,7 @@ export class Editor {
 
     /** The animation timeline under the board (footer button); resolves once its panel has loaded. */
     async openTimeline() {
+        await this.showPhoneTray();
         await this.page.getByRole('button', { name: 'Timeline', exact: true }).click();
         const dock = this.page.getByRole('region', { name: 'Timeline' });
         await expect(dock.getByRole('button', { name: 'Keyframe at playhead' })).toBeVisible();

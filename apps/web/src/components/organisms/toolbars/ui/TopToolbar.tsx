@@ -10,16 +10,16 @@ import { GlowDivider } from '@/components/atoms/GlowDivider';
 import { OverflowToolbar } from '@/components/molecules/OverflowToolbar';
 
 const TOOLBAR_SECTIONS = [
-    { id: 'file', component: FileBar },
-    { id: 'undoredo', component: UndoRedoBar },
-    { id: 'edit', component: EditBar },
-    { id: 'alignment', component: AlignmentBar },
-    { id: 'group', component: GroupBar },
+    { id: 'file', label: 'File', component: FileBar },
+    { id: 'undoredo', label: 'History', component: UndoRedoBar },
+    { id: 'edit', label: 'Edit', component: EditBar },
+    { id: 'alignment', label: 'Align & distribute', component: AlignmentBar },
+    { id: 'group', label: 'Group', component: GroupBar },
     // Union / Subtract / … : a menu button like the grid options (moved from the footer)
-    { id: 'shapeops', component: BooleanOperations },
-    { id: 'lock', component: LockBar },
+    { id: 'shapeops', label: 'Combine shapes', component: BooleanOperations },
+    { id: 'lock', label: 'Lock', component: LockBar },
     // zoom: footer only (one place per feature); shortcuts use ZoomBarConfig
-    { id: 'extra', component: ExtraBar },
+    { id: 'extra', label: 'Grid, snap & help', component: ExtraBar },
 ];
 
 const TopToolbar = () => (
@@ -27,7 +27,11 @@ const TopToolbar = () => (
     <OverflowToolbar
         className="gap-1 px-1 py-1"
         divider={<GlowDivider />}
-        items={TOOLBAR_SECTIONS.map(({ id, component: Section }) => ({ id, node: <Section /> }))}
+        items={TOOLBAR_SECTIONS.map(({ id, label, component: Section }) => ({
+            id,
+            label,
+            node: <Section />,
+        }))}
     />
 );
 

@@ -32,6 +32,8 @@ export const DockPanel = ({
                 sidePanelFrame,
                 dockPanelSize,
                 phoneSheet,
+                // upright phones: covers the "More" sheet it was opened from (DockRoot is `static`)
+                'max-sm:bottom-0!',
                 open ? 'border-l max-lg:shadow-xl' : phoneSheetClosed,
             )}
             style={

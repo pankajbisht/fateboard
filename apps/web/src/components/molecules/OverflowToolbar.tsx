@@ -3,7 +3,12 @@ import { Fragment, useEffect, useLayoutEffect, useRef, useState, type ReactNode 
 import { Icon } from '../atoms/Icon';
 import { IconButton } from '../atoms/IconButton';
 
-export type OverflowToolbarItem = { id: string; node: ReactNode };
+export type OverflowToolbarItem = {
+    id: string;
+    node: ReactNode;
+    /** Heading of the group in the "More tools" menu (the row shows only the icons). */
+    label?: string;
+};
 
 /** Width assumed for a tool group that has never been measured (it started in the menu). */
 const UNKNOWN_WIDTH = 120;
@@ -121,18 +126,32 @@ export function OverflowToolbar({
                         role="group"
                         aria-label="More tools"
                         className={clsx(
-                            'absolute right-0 top-full z-50 mt-1 flex w-max max-w-[min(32rem,90vw)] flex-wrap items-center gap-1',
-                            'rounded-lg border border-line bg-surface p-1.5 shadow-lg',
+                            'absolute right-0 top-full z-50 mt-1 flex w-[min(22rem,calc(100vw-1rem))] flex-col',
+                            'max-h-[calc(100dvh-6rem)] overflow-y-auto rounded-xl border border-line bg-surface p-1 shadow-lg',
                             !isOpen && 'hidden',
                         )}
                     >
-                        {hidden.map((it) => (
+                        {/* one named section per group, divided by a hairline */}
+                        {hidden.map((it, i) => (
                             <div
                                 key={it.id}
                                 data-toolbar-overflow={it.id}
-                                className="flex items-center rounded-md bg-surface-muted/60 px-0.5"
+                                role={it.label ? 'group' : undefined}
+                                aria-label={it.label}
+                                className={clsx(
+                                    'flex flex-col gap-0.5 px-2 py-1.5',
+                                    i > 0 && 'border-t border-line',
+                                )}
                             >
-                                {it.node}
+                                {it.label && (
+                                    <span
+                                        aria-hidden
+                                        className="text-xs font-medium text-ink-muted"
+                                    >
+                                        {it.label}
+                                    </span>
+                                )}
+                                <div className="flex flex-wrap items-center">{it.node}</div>
                             </div>
                         ))}
                     </div>

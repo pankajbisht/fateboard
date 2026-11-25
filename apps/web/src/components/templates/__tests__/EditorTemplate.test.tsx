@@ -1,6 +1,7 @@
 /** The editor frame: `chromeHidden` (distraction-free mode) leaves only the canvas on screen. */
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { PHONE_QUERY } from '@hooks/useIsPhone';
 import EditorTemplate from '../Editor.template';
 
 afterEach(cleanup);
@@ -56,5 +57,61 @@ describe('EditorTemplate', () => {
             expect(el!.closest('[hidden]'), t).not.toBeNull(); // not shown, not in the a11y tree
         }
         expect(screen.queryByRole('banner')).toBeNull();
+    });
+
+    // upright phones: one tool bar under the board; the dock and footer live in the "More" sheet
+    describe('on an upright phone', () => {
+        beforeEach(() => {
+            vi.spyOn(window, 'matchMedia').mockImplementation(
+                (query: string) =>
+                    ({
+                        matches: query === PHONE_QUERY,
+                        media: query,
+                        addEventListener: () => {},
+                        removeEventListener: () => {},
+                    }) as unknown as MediaQueryList,
+            );
+        });
+        afterEach(() => vi.restoreAllMocks());
+
+        it('the dock and footer sit in a "More" sheet opened from the tool bar', () => {
+            frame();
+            const more = screen.getByRole('button', { name: 'More: panels, colors and zoom' });
+            expect(more.getAttribute('aria-expanded')).toBe('false');
+            expect(screen.getByText('LEFT').closest('main')!.contains(more)).toBe(true);
+            // mounted while closed (shortcuts), but not shown
+            const sheet = screen.getByText('DOCK').closest('section')!;
+            expect(sheet.getAttribute('aria-label')).toBe('More');
+            expect(sheet.hidden).toBe(true);
+            expect(sheet.contains(screen.getByText('FOOTER'))).toBe(true);
+
+            fireEvent.click(more);
+            expect(more.getAttribute('aria-expanded')).toBe('true');
+            expect(sheet.hidden).toBe(false);
+            expect(within(sheet).getByRole('heading', { name: 'More' })).toBeTruthy();
+            expect(within(sheet).getByText('Style & view')).toBeTruthy();
+
+            fireEvent.click(within(sheet).getByRole('button', { name: 'Close More' }));
+            expect(sheet.hidden).toBe(true);
+        });
+
+        it('Escape or picking a tool puts the sheet away', () => {
+            frame();
+            const more = screen.getByRole('button', { name: 'More: panels, colors and zoom' });
+            const sheet = screen.getByText('DOCK').closest('section')!;
+            fireEvent.click(more);
+            fireEvent.keyDown(document, { key: 'Escape' });
+            expect(sheet.hidden).toBe(true);
+            fireEvent.click(more);
+            fireEvent.pointerDown(screen.getByText('LEFT'));
+            expect(sheet.hidden).toBe(true);
+        });
+    });
+
+    it('wider screens: no "More" toggle; the dock and footer are in place', () => {
+        frame();
+        expect(screen.queryByRole('button', { name: /^More:/ })).toBeNull();
+        expect(screen.getByText('DOCK').closest('aside')!.closest('main')).not.toBeNull();
+        expect(screen.getByText('FOOTER').closest('footer')).not.toBeNull();
     });
 });

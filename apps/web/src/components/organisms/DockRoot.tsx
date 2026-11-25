@@ -6,6 +6,9 @@ import { DockPanel } from './DockPanel';
 import { SIDE_PANEL_WIDTH } from './sidebar/sidebar.const';
 import { PanelLayout } from '../templates/PanelLayout';
 
+/** Section headings of the phone "More" sheet (hidden on wider screens). */
+const PHONE_HEADING = 'hidden px-4 pt-2 text-xs font-medium text-ink-muted max-sm:block';
+
 export const DockRoot = () => {
     const [tabs, setTabs] = useState<TabConfig[]>([...TABS_CONFIG]);
     // a link from Help can name the tab to open (/draw?tab=export): read once, when the dock mounts
@@ -51,8 +54,10 @@ export const DockRoot = () => {
     const activeTab = tabs.find((t) => t.id === active);
 
     return (
-        // upright phones: tabs and colors are horizontal bars under the board (BUG-219)
-        <aside className="relative flex h-full max-sm:h-auto max-sm:w-full max-sm:flex-col">
+        // upright phones: tabs and colors are rows in the editor's "More" sheet (BUG-219); `static`
+        // there, so an open panel covers the whole sheet (DockPanel)
+        // a div: the editor frame gives the landmark (desktop <aside>, phone sheet <aside>)
+        <div className="relative flex h-full max-sm:static max-sm:h-auto max-sm:w-full max-sm:flex-col">
             <DockPanel open={open} width={width}>
                 {activeTab && (
                     <PanelLayout
@@ -70,6 +75,7 @@ export const DockRoot = () => {
                 )}
             </DockPanel>
 
+            <p className={PHONE_HEADING}>Panels</p>
             <TabsRail
                 tabs={tabs}
                 activeTab={active}
@@ -79,6 +85,7 @@ export const DockRoot = () => {
                 onTogglePanel={() => setOpen((o) => !o)}
             />
 
+            <p className={PHONE_HEADING}>Colors</p>
             {/* two columns; one row on an upright phone (`contents` keeps the desktop layout as is) */}
             <div className="contents max-sm:flex max-sm:min-w-0 max-sm:border-t max-sm:border-line">
                 <div
@@ -94,6 +101,6 @@ export const DockRoot = () => {
                     <ColorPicker />
                 </div>
             </div>
-        </aside>
+        </div>
     );
 };

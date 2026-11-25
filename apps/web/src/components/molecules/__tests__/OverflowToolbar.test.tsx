@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { useEffect } from 'react';
 import { OverflowToolbar } from '../OverflowToolbar';
 
@@ -112,5 +112,20 @@ describe('OverflowToolbar', () => {
         fireEvent.click(more);
         fireEvent.keyDown(document, { key: 'Escape' });
         expect(more.getAttribute('aria-expanded')).toBe('false');
+    });
+
+    // phones: the menu is a list of named sections, not a jumble of unlabeled icons
+    it('shows each group in the menu under its label', () => {
+        rowWidth = 350;
+        const labelled = ITEMS.map((it) => ({ ...it, label: `Group ${it.id.toUpperCase()}` }));
+        render(<OverflowToolbar items={labelled} />);
+        fireEvent.click(screen.getByRole('button', { name: 'More tools' }));
+        const menu = screen.getByRole('group', { name: 'More tools' });
+        const d = within(menu).getByRole('group', { name: 'Group D' });
+        expect(within(d).getByText('Group D')).toBeTruthy();
+        expect(within(d).getByRole('button', { name: 'd' })).toBeTruthy();
+        expect(within(menu).getByRole('group', { name: 'Group E' })).toBeTruthy();
+        // labels are for the menu only: the row stays icons
+        expect(screen.queryByText('Group A')).toBeNull();
     });
 });
