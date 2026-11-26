@@ -43,17 +43,20 @@ describe('hairstyle catalogue', () => {
             expect(HAIR_STYLES).toContain(id);
     });
 
-    it('every style draws from every 45°, finite, and bald draws no hair', () => {
-        for (const id of HAIR_STYLES)
+    // one test per style, failures collected and asserted once: all styles in one test, with an expect per number of
+    // every path, passed the 5 s limit on CI (the same renders and checks, as render.test.ts's sweep)
+    for (const id of HAIR_STYLES)
+        it(`${id} draws from every 45°, finite${id === 'bald' ? ', and no hair' : ''}`, () => {
+            const bad: string[] = [];
             for (let yaw = 0; yaw < 360; yaw += 45) {
                 const parts = hairParts(id, yaw);
                 for (const p of parts)
-                    for (const n of numbers(p.d))
-                        expect(Number.isFinite(n), `${id} ${yaw} ${p.key}`).toBe(true);
-                if (id === 'bald') expect(parts).toHaveLength(0);
-                else expect(parts.length, `${id} ${yaw}`).toBeGreaterThan(0);
+                    if (!numbers(p.d).every(Number.isFinite)) bad.push(`${yaw} ${p.key}`);
+                if (id === 'bald' ? parts.length !== 0 : parts.length === 0)
+                    bad.push(`${yaw}: ${parts.length} parts`);
             }
-    });
+            expect(bad).toEqual([]);
+        });
 
     it('looks different: no two styles draw the same hair', () => {
         const seen = new Map<string, string>();
