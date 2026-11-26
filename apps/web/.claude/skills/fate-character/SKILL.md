@@ -160,6 +160,12 @@ Use `parts` mode to get keys, depths (draw order: higher = nearer), roles and bb
 - **Depth**: a part shows through when its depth is higher than the cloth over it (a shin through a long skirt).
   A cover's depth is based on everything it must cover, and on its limb's depth, not its own spot's.
 
+### Render cost
+- **The 15° pose sweep timed out on CI** (`render.test.ts`, 30 s): path text is the cost (`fmt` runs for every number,
+  ~60 ns each). Two Chaikin passes on every contour quadrupled its points; dense chains now take one pass, and
+  `inkRibbon` drops points closer together than the line is wide. After adding parts or smoothing, compare the sweep
+  with `main` (`npx vitest run src/character/__tests__/render.test.ts --reporter=verbose`); never raise its limit.
+
 ### Colour, style, small pieces
 - **Trim colours**: details (kurta placket with buttons, borders, jersey stripes, badges) in a deeper shade of the
   cloth (`darken`) with its ink, never a pale stripe (reads as tape).
