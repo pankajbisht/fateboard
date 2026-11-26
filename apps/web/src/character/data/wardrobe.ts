@@ -45,7 +45,9 @@ export type Slot =
     | 'waist'
     | 'back'
     | 'hand'
-    | 'torso';
+    | 'torso'
+    | 'hair'
+    | 'legs';
 
 export interface AccessoryDef {
     name: string;
@@ -132,6 +134,16 @@ export const ACCESSORY_DEFS: Record<AccessoryKind, AccessoryDef> = {
         suits: 'any',
     },
     apron: { name: 'Apron', slot: 'torso', color: '#f8fafc', suits: 'any' },
+    // a ribbon bow at the collar (one neck piece at a time, so not with a tie or a scarf)
+    bow: {
+        name: 'Collar bow',
+        slot: 'neck',
+        color: '#d6405e',
+        blocksCollar: ['high', 'hood'],
+        suits: 'any',
+    },
+    'hair-clip': { name: 'Hair clip', slot: 'hair', color: '#f2b632', suits: 'any' },
+    socks: { name: 'Socks', slot: 'legs', color: '#f5f7fb', suits: 'any' },
 };
 
 export const SHOE_IDS = Object.keys(SHOE_DEFS) as ShoeKind[];

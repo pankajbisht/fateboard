@@ -96,12 +96,17 @@ test('a note on an object follows it; a free pin can be dragged', async ({ edito
     const box = await editor.settledCanvasBox();
     await dropNote(editor, { x: box.x + 40, y: box.y + box.height - 40 }, 'Free');
     const free = page.getByRole('button', { name: 'Note 2: Free' });
+    // measured with the pointer off the pin: a hovered pin is scaled to 110% about its centre, so its box starts
+    // 1.4 px further left (failed on CI Firefox by exactly that when the hover had applied at one measurement only)
+    const away = async () => page.mouse.move(box.x + box.width / 2, box.y + 10);
+    await away();
     const start = (await free.boundingBox())!;
     await page.mouse.move(start.x + 10, start.y + 10);
     await page.mouse.down();
     await page.mouse.move(start.x + 40, start.y + 10, { steps: 4 });
     await page.mouse.move(start.x + 70, start.y + 10, { steps: 4 });
     await page.mouse.up();
+    await away();
     // pins sit on whole pixels (useNotePins rounds): a 60 px drag lands within 1 px of it; exactly 60
     // failed on CI Firefox (61) when the board's offset was a fraction of a pixel
     await expect

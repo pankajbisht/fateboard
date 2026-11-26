@@ -23,6 +23,8 @@ export interface TopDef {
     /** fabric folds drawn on loose garments */
     folds?: boolean;
     trim?: Trim;
+    /** no straps (a tube top): the shoulders and the chest above the bust are bare */
+    strapless?: boolean;
     suits: 'any' | 'feminine' | 'masculine';
 }
 

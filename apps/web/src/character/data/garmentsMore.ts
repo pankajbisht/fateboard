@@ -10,6 +10,24 @@ type T = (typeof MORE_TOP_KINDS)[number];
 type B = (typeof MORE_BOTTOM_KINDS)[number];
 
 export const MORE_TOPS: Record<T, TopDef> = {
+    // waist-length collared tops (the owner's reference characters): over a skirt or shorts, not down to the hip
+    'school-blouse': {
+        name: 'School blouse',
+        sleeve: 0.5,
+        fit: 1,
+        hang: 'waist',
+        collar: 'polo',
+        suits: 'feminine',
+    },
+    'camp-shirt': {
+        name: 'Short-sleeve shirt',
+        sleeve: 0.5,
+        fit: 1.02,
+        hang: 'waist',
+        collar: 'polo',
+        trim: 'buttons',
+        suits: 'any',
+    },
     'crop-hoodie': {
         name: 'Cropped hoodie',
         sleeve: 2,
@@ -118,7 +136,7 @@ export const MORE_TOPS: Record<T, TopDef> = {
         fit: 1.0,
         hang: 'waist',
         collar: 'none',
-        trim: 'border',
+        strapless: true,
         suits: 'feminine',
     },
     kaftan: {

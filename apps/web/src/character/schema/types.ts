@@ -292,6 +292,9 @@ export const ACCESSORY_KINDS = [
     'apron',
     'beret',
     'army-helmet',
+    'bow',
+    'hair-clip',
+    'socks',
 ] as const;
 export const MAX_ACCESSORIES = 6;
 export type TopKind = (typeof TOP_KINDS)[number];

@@ -1,12 +1,13 @@
-import type { BottomDef, Collar, TopDef } from '../data/garments';
+import type { BottomDef, TopDef } from '../data/garments';
+import { looseOf } from './clothDetail';
 import { addMangaHanging } from './hangLoft';
 import { mangaLeg, mangaSleeve } from './mangaGarments';
+export { addCollar } from './collars';
 import { apply, lerp3, normalize, type V3 } from '../rig/math';
 import type { Skeleton } from '../rig/skeleton';
 import { project } from './camera';
-import { addLimb, addShell, ellipsoid, on, ring, toScreen, type Ctx, type Material } from './parts';
-import { curve3, polyline, type P2 } from './shapes';
-import { darken } from './styles';
+import { addLimb, addShell, on, ring, toScreen, type Ctx, type Material } from './parts';
+import { curve3, type P2 } from './shapes';
 
 /**
  * Garments on the body (docs/CHARACTER_STUDIO.md phase 3), driven by the data in `data/garments.ts`: sleeves and
@@ -174,8 +175,9 @@ export function addHanging(
     t: number,
     flare: number,
     manga = false,
+    underLoose = 1,
 ) {
-    if (manga) return addMangaHanging(ctx, skel, key, role, t, flare);
+    if (manga) return addMangaHanging(ctx, skel, key, role, t, flare, underLoose);
     const z = skel.size;
     const torsoLen = skel.offset.spine2[1] / 0.26;
     const hem: V3[] = [];
@@ -211,7 +213,14 @@ export function addHanging(
 
 const HANG_T = { waist: 0, hip: 0.18, thigh: 0.6, knee: 1.08 } as const;
 
-export function addTopHang(ctx: Ctx, skel: Skeleton, def: TopDef, manga = false) {
+export function addTopHang(
+    ctx: Ctx,
+    skel: Skeleton,
+    def: TopDef,
+    manga = false,
+    /** what is worn under it: a long top stays wider than loose trouser legs */
+    bottom?: BottomDef,
+) {
     if (def.hang === 'waist') return;
     addHanging(
         ctx,
@@ -221,114 +230,8 @@ export function addTopHang(ctx: Ctx, skel: Skeleton, def: TopDef, manga = false)
         HANG_T[def.hang],
         def.hang === 'knee' ? 1.3 : 1.45,
         manga,
+        bottom && bottom.skirt <= 0 ? looseOf(true, bottom.fit) : 1,
     );
-}
-
-/** Collar and neckline on the chest's front; hidden when the chest turns away (a hood shows from behind). */
-export function addCollar(ctx: Ctx, skel: Skeleton, collar: Collar) {
-    if (collar === 'none') return;
-    const z = skel.size;
-    const t = skel.offset.spine2[1] / 0.26;
-    const torso = ctx.parts.find((x) => x.key === 'torso');
-    if (!torso) return;
-    const facing = project(ctx.view, apply(ctx.posed.rot.chest, normalize([0, 0, 1])))[2];
-    const depth = torso.depth + 0.4;
-    const nw = z.neck * 1.12;
-    const ny = t * 0.3;
-    const nf = z.neck * 1.1;
-    const at = (x: number, y: number, f: number): V3 => on(ctx, 'chest', [x, y, f]);
-    const xy = (v: V3): P2 => {
-        const s = toScreen(ctx, v);
-        return [s[0], s[1]];
-    };
-    const ink = ctx.outline(ctx.fill.top) ?? darken(ctx.fill.top, 0.4);
-    const line = (key: string, d: string) =>
-        ctx.parts.push({
-            key,
-            group: 'torso',
-            role: 'line',
-            d,
-            fill: 'none',
-            stroke: ink,
-            strokeWidth: ctx.line * 0.8,
-            depth,
-        });
-    const front = z.chestDepth * 0.5;
-
-    if (collar === 'hood') {
-        // the hood hangs behind the neck: seen from behind it is the whole back of the collar
-        const pts = ellipsoid(
-            ctx,
-            'chest',
-            [0, ny + t * 0.04, -z.neck * 0.9],
-            [z.neck * 1.7, z.neck * 1.35, z.neck * 1.3],
-            () => true,
-            5,
-            9,
-        );
-        addShell(ctx, 'collar-hood', 'torso', 'top', pts, torso.depth + (facing > 0 ? -0.6 : 0.6));
-        return;
-    }
-    // front collar lines only while the chest faces the viewer: from the side they stuck out past the neck
-    if (facing < 0.4) return;
-    if (collar === 'crew')
-        line(
-            'collar-crew',
-            curve3(xy(at(-nw, ny, nf)), xy(at(0, ny - t * 0.07, nf * 1.12)), xy(at(nw, ny, nf))),
-        );
-    else if (collar === 'high') {
-        const pts = [
-            ...ring(ctx, 'chest', ny - t * 0.02, z.neck * 1.22, z.neck * 1.12, 10),
-            ...ring(ctx, 'chest', ny + t * 0.1, z.neck * 1.1, z.neck, 10),
-        ];
-        addShell(ctx, 'collar-high', 'torso', 'top', pts, depth);
-    } else {
-        const deep =
-            collar === 'lapel' || collar === 'open' ? 0.34 : collar === 'polo' ? 0.16 : 0.2;
-        // the opening: a sharp V of skin with no outline across the neck, and its two edges as lines (a smoothed
-        // outlined shell read as a teardrop hanging under the chin)
-        const [l, r, tip] = [
-            at(-nw * 0.95, ny, nf),
-            at(nw * 0.95, ny, nf),
-            at(0, ny - t * deep, front),
-        ].map(xy);
-        ctx.parts.push({
-            key: 'neckline',
-            group: 'torso',
-            role: 'skin',
-            d: `${polyline([l, r, tip])}Z`,
-            fill: ctx.fill.skin,
-            stroke: null,
-            strokeWidth: 0,
-            depth,
-            ...(ctx.tone.skin ? { tone: ctx.tone.skin } : {}),
-        });
-        line('neckline-v', polyline([l, tip, r]));
-        if (collar !== 'v') {
-            // two flaps (a shirt collar, lapels)
-            for (const sx of [-1, 1])
-                addShell(
-                    ctx,
-                    `collar-flap${sx}`,
-                    'torso',
-                    'top',
-                    [
-                        at(sx * nw * 1.12, ny + t * 0.02, nf),
-                        at(sx * nw * 0.2, ny - t * deep * 0.95, front),
-                        at(sx * nw * 0.85, ny - t * deep * 0.55, front * 1.02),
-                    ],
-                    depth + 0.1,
-                );
-        }
-        if (collar === 'open')
-            line(
-                'zip',
-                polyline([
-                    xy(at(0, ny - t * deep, front)),
-                    xy(on(ctx, 'spine1', [0, 0, z.chestDepth * 0.45 + z.belly])),
-                ]),
-            );
-    }
 }
 
 /** A few curved fold lines on the front of loose cloth (torso and hanging part). */

@@ -284,12 +284,12 @@ describe('manga look', () => {
 });
 
 describe('clothes', () => {
-    it('offers 47 tops and 38 bottoms by name, and the character wears the pick', async () => {
+    it('offers 49 tops and 38 bottoms by name, and the character wears the pick', async () => {
         await openMeera();
         tab('Look');
         const c = () => useStore.getState().studioCharacter!;
         fireEvent.click(screen.getByRole('combobox', { name: 'Top' }));
-        expect(screen.getAllByRole('option')).toHaveLength(47);
+        expect(screen.getAllByRole('option')).toHaveLength(49);
         fireEvent.click(screen.getByRole('option', { name: 'Hoodie' }));
         expect(c().dress.top.kind).toBe('hoodie');
         fireEvent.click(screen.getByRole('combobox', { name: 'Bottom' }));

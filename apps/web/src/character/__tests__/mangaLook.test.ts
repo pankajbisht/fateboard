@@ -188,7 +188,8 @@ describe('manga brows and mouths', () => {
     });
 
     it('the cast keeps to the original brows and mouths', () => {
-        for (const r of castRecipes()) {
+        // (the owner's reference characters are drawn with the manga brow and mouth of their sheets on purpose)
+        for (const r of castRecipes().filter((x) => !x.tags.includes('reference'))) {
             expect(['soft', 'straight', 'thick'], r.id).toContain(r.brow);
             expect(['smile', 'neutral', 'grin'], r.id).toContain(r.mouth);
         }

@@ -12,7 +12,7 @@ const CAST_MOUTHS = MOUTH_STYLES.slice(0, MOUTH_STYLES.indexOf('cat'));
 const CAST_HAIR = new Set<string>(HAIR_STYLES.slice(0, HAIR_STYLES.indexOf('hime')));
 
 /**
- * The 100-person cast (docs/CHARACTER_STUDIO.md phase 3): the 12 hand-made recipes plus a seeded generator for the
+ * The 100-person cast (docs/CHARACTER_STUDIO.md phase 3): the hand-made recipes plus a seeded generator for the
  * rest. Same seed, same people, forever (saved scenes and tests rely on it). The uniqueness rule: no two people share
  * a face, nor the same hair on the same skin in the same top colour.
  */
@@ -227,7 +227,7 @@ function person(rand: Rand, group: AgeGroup, index: number): CharacterRecipe {
     };
 }
 
-/** How many of each age group the generated people are (the hand-made 12 are counted separately). */
+/** How many of each age group the generated people are (the hand-made ones are counted separately). */
 const MIX: [AgeGroup, number][] = [
     ['child', 16],
     ['teen', 16],

@@ -32,6 +32,8 @@ contributor gets the same behaviour.
 | `fate-perf`           | skill | yes (main session)      | New route, dependency, heavy import or images: where to split (lazy route, `await import()`, vendor group), `scripts/bundle-report.mjs` startup + per-chunk gzip with `--save` / `--compare`      |
 | `fate-ship`           | skill | git only (main session) | Branch → add all → Conventional Commit → push, after the gates; `scripts/validate.mjs` checks the branch name, the message and the staged files (docs/CONVENTIONS.md "Git: branches and commits") |
 | `fate-debugger`       | agent | no                      | Root cause of a reported bug: reproduce, trace to the line, propose the failing test + minimal fix                                                                                                |
+| `fate-character`      | skill | yes (main session)      | How a character looks (neck, shoulders, sleeves, bust, hips, garments): reproduce with `scripts/character/render-sheet.mjs` sheets, root cause in the generators, check across garments and angles |
+| `fate-character-inspector` | agent | no                 | Visual QA: renders character sheets, looks at them, reports drawing defects with location and the likely generator                                                                             |
 | `scripts/metrics.mjs` | tool  | no                      | Same size/responsibility numbers for every review                                                                                                                                                 |
 
 Only the main session edits files. Agents are read-only on purpose: their output is advice the main session

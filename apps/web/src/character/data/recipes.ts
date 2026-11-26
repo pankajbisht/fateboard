@@ -2,6 +2,7 @@ import { parseCharacter } from '../schema/parse';
 import { MANGA_IDLE_POSE } from './posesManga';
 import type { MangaVariant } from '../schema/bodyStyles';
 import type {
+    AccessoryKind,
     BottomKind,
     BrowStyle,
     Character,
@@ -11,6 +12,7 @@ import type {
     NoseStyle,
     TopKind,
 } from '../schema/types';
+import { REFERENCE_RECIPES } from './recipesReference';
 
 /**
  * Phase 1 cast: 12 recipes (boys / girls, adults, elders), turned into full characters by `fromRecipe`. Phase 3
@@ -75,6 +77,8 @@ export interface CharacterRecipe {
     top: { kind: TopKind; color: string };
     bottom: { kind: BottomKind; color: string };
     shoes: string;
+    /** worn accessories (the reference characters' bow, clip, socks); none when left out */
+    accessories?: { kind: AccessoryKind; color: string }[];
     role: string;
     tags: string[];
 }
@@ -308,6 +312,8 @@ export const RECIPES: CharacterRecipe[] = [
         role: 'grandparent',
         tags: ['elder', 'caring', 'storyteller'],
     },
+    // the owner's two reference characters (recipesReference.ts)
+    ...REFERENCE_RECIPES,
 ];
 
 export const skinColor = (id: string) =>
@@ -356,7 +362,12 @@ export function fromRecipe(r: CharacterRecipe, id: string): Character {
             lashes: r.gender >= 0.5,
         },
         hair: r.hair,
-        dress: { top: r.top, bottom: r.bottom, shoes: { color: r.shoes } },
+        dress: {
+            top: r.top,
+            bottom: r.bottom,
+            shoes: { color: r.shoes },
+            accessories: r.accessories ?? [],
+        },
         rig: { pose: MANGA_IDLE_POSE },
         style: 'anime',
     })!;

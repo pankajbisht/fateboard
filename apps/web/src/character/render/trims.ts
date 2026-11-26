@@ -5,7 +5,7 @@ import type { JointId } from '../schema/types';
 import { project } from './camera';
 import { on, toScreen, type Ctx } from './parts';
 import { curve3, ellipse, polyline, type P2 } from './shapes';
-import { darken, lighten } from './styles';
+import { darken } from './styles';
 
 type Side = 'L' | 'R';
 
@@ -58,7 +58,8 @@ export function addTrim(ctx: Ctx, skel: Skeleton, trim: Trim | undefined) {
                 at(0, t * -0.03),
                 at(z.shoulderW * 0.36, t * 0.0),
             ),
-            lighten(ctx.fill.top, 0.6),
+            // a printed band in a deeper shade of the cloth (pale, it read as tape stuck on)
+            darken(ctx.fill.top, 0.22),
             ctx.line * 3.4,
         );
     else if (trim === 'pocket') {
@@ -70,22 +71,35 @@ export function addTrim(ctx: Ctx, skel: Skeleton, trim: Trim | undefined) {
         ];
         line('trim-pocket', polyline([a, b, c, d, a]), ink, ctx.line * 0.7);
     } else if (trim === 'border') {
-        line(
-            'trim-border',
-            polyline([at(0, t * 0.22), at(0, t * -0.45)]),
-            lighten(ctx.fill.top, 0.55),
-            ctx.line * 2.4,
-        );
-        line(
-            'trim-yoke',
-            curve3(
-                at(-z.shoulderW * 0.3, t * 0.12),
-                at(0, t * 0.04),
-                at(z.shoulderW * 0.3, t * 0.12),
-            ),
-            lighten(ctx.fill.top, 0.55),
-            ctx.line * 1.6,
-        );
+        // A kurta's placket: a band down from the collar to the chest in a deeper shade of the cloth, edged in its ink,
+        // with three small buttons. (A pale stripe to the hips and a yoke arc across the chest read as tape stuck on,
+        // the arc as a bust line, on any colour.)
+        const w = z.neck * 0.24;
+        const [y0, y1] = [t * 0.27, -t * 0.1];
+        const band = [at(-w, y0), at(w, y0), at(w, y1), at(-w, y1)];
+        ctx.parts.push({
+            key: 'trim-placket',
+            group: 'torso',
+            role: 'feature',
+            d: `${polyline(band)}Z`,
+            fill: darken(ctx.fill.top, 0.16),
+            stroke: ink,
+            strokeWidth: ctx.line * 0.5,
+            depth,
+        });
+        [0.18, 0.06, -0.04].forEach((k, i) => {
+            const [x, y] = at(0, t * k);
+            ctx.parts.push({
+                key: `trim-placket-button${i}`,
+                group: 'torso',
+                role: 'feature',
+                d: ellipse([x, y], ctx.line * 0.9, ctx.line * 0.9),
+                fill: ink,
+                stroke: null,
+                strokeWidth: 0,
+                depth: depth + 0.001,
+            });
+        });
     } else if (trim === 'badge') {
         const [x, y] = at(z.shoulderW * 0.18, t * 0.0);
         ctx.parts.push({
@@ -93,7 +107,7 @@ export function addTrim(ctx: Ctx, skel: Skeleton, trim: Trim | undefined) {
             group: 'torso',
             role: 'feature',
             d: ellipse([x, y], ctx.line * 2.2, ctx.line * 2.2),
-            fill: lighten(ctx.fill.top, 0.5),
+            fill: darken(ctx.fill.top, 0.15),
             stroke: ink,
             strokeWidth: ctx.line * 0.6,
             depth,

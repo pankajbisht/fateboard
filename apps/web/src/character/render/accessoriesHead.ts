@@ -158,6 +158,23 @@ export function addHeadAccessories(ctx: Ctx, c: Character, g: HairGeo) {
                     });
                 break;
             }
+            case 'hair-clip': {
+                // a short bar on the fringe above the left eye, only while that side faces the viewer
+                const a = surf(0.42, 0.62, 1.1);
+                const b = surf(0.78, 0.52, 1.1);
+                if (a.facing > 0.1 && b.facing > 0.1)
+                    ctx.parts.push({
+                        key: 'acc-hair-clip',
+                        group: 'head',
+                        role: 'line',
+                        d: polyline([a.p, b.p]),
+                        fill: 'none',
+                        stroke: ctx.fill.acc,
+                        strokeWidth: ctx.line * 3.2,
+                        depth: depth + 0.7,
+                    });
+                break;
+            }
             case 'earrings':
                 for (const sx of [-1, 1]) {
                     const e = surf(sx * 1.52, -0.28, 1.0);

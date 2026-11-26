@@ -3,6 +3,7 @@ import type { Skeleton } from '../rig/skeleton';
 import type { HandShape, JointId } from '../schema/types';
 import { project } from './camera';
 import { addSurface, on, toScreen, type Ctx } from './parts';
+import { mangaLook } from './mangaVariants';
 import { capsulePoly, curve3, hull, smoothClosed, type P2 } from './shapes';
 
 /**
@@ -63,8 +64,14 @@ interface Piece {
 export function addMangaHand(ctx: Ctx, skel: Skeleton, s: 'L' | 'R', shape: HandShape) {
     const hand = `hand${s}` as JointId;
     const group = hand as 'handL' | 'handR';
-    const spec = SPECS[shape];
-    const L = skel.hand;
+    const look = mangaLook().hand;
+    const base = SPECS[shape];
+    // a relaxed hand curls less, so its fingers read; the drawn hand is scaled round the wrist pivot
+    const spec: Spec =
+        shape === 'relaxed'
+            ? { ...base, curl: base.curl.map((c) => c * look.relax) as Spec['curl'] }
+            : base;
+    const L = skel.hand * look.scale;
     // sized from the hand's length: the palm about 0.85 as wide as it is long (an old limb radius made it wider than
     // long, a mitten with stubby fingers)
     const r = L * 0.215;
@@ -113,7 +120,7 @@ export function addMangaHand(ctx: Ctx, skel: Skeleton, s: 'L' | 'R', shape: Hand
             const d = dir(turn, fan);
             const len = L * f.len * share;
             const q: V3 = [p[0] + d[0] * len, p[1] + d[1] * len, p[2] + d[2] * len];
-            const w = r * f.w;
+            const w = r * f.w * look.finger;
             add(`${hand}-f${i}${'abc'[k]}`, p, q, w * TAPER[k], w * TAPER[k + 1]);
             p = q;
         });

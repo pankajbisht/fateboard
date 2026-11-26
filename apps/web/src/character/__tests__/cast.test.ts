@@ -13,15 +13,17 @@ const face = (r: (typeof cast)[number]) =>
     [r.skin, r.eye, r.eyeColor, r.brow, r.nose, r.mouth, r.hair.style, r.hair.color].join('|');
 
 describe('the cast of 100', () => {
-    it('is 100 people: the 12 hand-made ones first, then 88 generated', () => {
+    it('is 100 people: the hand-made ones first, then generated ones', () => {
         expect(cast).toHaveLength(100);
-        expect(cast.slice(0, 12).map((r) => r.id)).toEqual(RECIPES.map((r) => r.id));
-        expect(cast.slice(12).every((r) => /^cast-\d{3}$/.test(r.id))).toBe(true);
+        expect(cast.slice(0, RECIPES.length).map((r) => r.id)).toEqual(RECIPES.map((r) => r.id));
+        expect(cast.slice(RECIPES.length).every((r) => /^cast-\d{3}$/.test(r.id))).toBe(true);
     });
 
     it('is the same on every run (seeded), and a different seed gives different people', () => {
         expect(generateCast(RECIPES, 100)).toEqual(cast);
-        expect(generateCast(RECIPES, 100, 7).slice(12)).not.toEqual(cast.slice(12));
+        expect(generateCast(RECIPES, 100, 7).slice(RECIPES.length)).not.toEqual(
+            cast.slice(RECIPES.length),
+        );
     });
 
     it('everyone is distinct: id, name, face, and hair-on-skin-in-this-top', () => {
