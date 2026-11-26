@@ -76,8 +76,11 @@ Use `parts` mode to get keys, depths (draw order: higher = nearer), roles and bb
   shoulder must reach up over that ring (`mangaShoulderRing`). This also closed the long-sleeve far-arm gap at 3/4.
 - **Width mismatch where two shapes meet**: a ring or loft wider than the limb under it leaves a step, a corner or a
   line past the limb in 3/4 views (hips vs thighs, coat vs skirt). Use the same helper on both sides
-  (`mangaThighTop`), never "close enough" constants. The hips contour stops before the crotch ring, so it does not
-  draw a second line beside the thigh at 335° (a hairline sliver still shows there; known).
+  (`mangaThighTop`), never "close enough" constants.
+- **A contour stopping above where its fill ends**: the hips contour stopped at the hip-joint ring, the hips fill
+  reached down to the crotch ring and covered the far leg's contour, so at 335° the far thigh had a stretch with no
+  ink and a tick where the line stopped. The hips contour now runs through the crotch ring (its sides are the
+  thighs' circles, so no double line); the near leg is drawn over it (`mangaTorso.ts`, `body-contour-hips`).
 - **Shorts / swim trunks / boxing shorts hips too big**: the trouser thigh top is
   `mangaThighTop * min(1.06, loose)`; looseness beyond that goes toward the hem, not the hip.
 - **Looseness applied at the root**: loose cloth widens toward the hem; at the hip or shoulder joint it puffs the

@@ -238,9 +238,9 @@ export function addMangaTorso(
         'body-contour-hips',
         'torso',
         'bottom',
-        // down to the ring at the hip joints only, where the hips are as wide as the legs: from there the leg's own
-        // contour is the outline (the two ran side by side down the thigh as a double line in a three-quarter view)
-        hips.slice(untucked ? 2 : 1, -1),
+        // down through the crotch ring (its sides are the thighs' circles, so no double line beside the thigh): stopped
+        // at the hip joints, the hips fill covered the far leg's contour below and at 335° that thigh edge had no ink
+        hips.slice(untucked ? 2 : 1),
         depth + 0.0015,
         [false, true],
     );
