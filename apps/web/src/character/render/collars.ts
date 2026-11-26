@@ -75,8 +75,9 @@ export function addCollar(ctx: Ctx, skel: Skeleton, collar: Collar) {
             const a = angle(i);
             const fwd = dip ? Math.max(0, Math.sin(a)) ** 1.5 : 0;
             // the opening's top edge reaches a hair over the shirt's own top edge: on the line a sliver of the shirt's
-            // colour showed across the neck at a large zoom
-            const lift = dip ? 0 : t * 0.012;
+            // colour showed across the neck at a large zoom; at the front only (at the sides the lifted corners stood above
+            // the shoulder line as a tab of skin beside the neck)
+            const lift = dip ? 0 : t * 0.012 * Math.max(0, Math.sin(a)) ** 2;
             return xy(
                 at(Math.cos(a) * nw * 1.08, ny + lift - t * 0.07 * fwd, Math.sin(a) * nf * 1.02),
             );
@@ -95,8 +96,14 @@ export function addCollar(ctx: Ctx, skel: Skeleton, collar: Collar) {
                 depth: depth - 0.001,
                 ...(ctx.tone.skin ? { tone: ctx.tone.skin } : {}),
             });
-            // in the collar's ink (with its fallback: a style without outlines still draws the neckline, as before)
-            const d = inkRibbon([{ pts: edge, taper: [true, true] }], ctx.line * 0.75);
+            // in the collar's ink (with its fallback: a style without outlines still draws the neckline, as before), on
+            // the part that faces forward only: round the side of the neck the ring turns back and, in a three-quarter
+            // view, its end curled up as a hook
+            const inked = run.filter((i) => Math.sin(angle(i)) > 0.3).map((i) => point(i, true));
+            const d = inkRibbon(
+                [{ pts: inked.length >= 2 ? inked : edge, taper: [true, true] }],
+                ctx.line * 0.75,
+            );
             if (d)
                 ctx.parts.push({
                     key: 'collar-crew',
@@ -141,12 +148,15 @@ export function addCollar(ctx: Ctx, skel: Skeleton, collar: Collar) {
         line('neckline-v', polyline([l, tip, r]));
         if (collar !== 'v') {
             // Two flaps (a shirt collar, lapels): flat folded triangles of the cloth in a slightly deeper shade with a thin
-            // ink edge. (A smoothed outlined shell of three points read as two dark sausages beside the neck.)
+            // ink edge. (A smoothed outlined shell of three points read as two dark sausages beside the neck.) Each folds
+            // out from the opening's own edge: its top corner was above the top of the shirt and wider than the neck, so
+            // in a three-quarter view the flaps ran up the neck as a band, and a thin flap beside the V drew three
+            // parallel lines.
             for (const sx of [-1, 1]) {
                 const flap = [
-                    xy(at(sx * nw * 1.12, ny + t * 0.02, nf)),
-                    xy(at(sx * nw * 0.2, ny - t * deep * 0.95, front)),
-                    xy(at(sx * nw * 0.85, ny - t * deep * 0.55, front * 1.02)),
+                    xy(at(sx * nw * 0.95, ny, nf)),
+                    xy(at(sx * nw * 0.12, ny - t * deep * 0.92, front)),
+                    xy(at(sx * nw * 1.45, ny - t * deep * 0.42, front * 1.02)),
                 ];
                 ctx.parts.push({
                     key: `collar-flap${sx}`,

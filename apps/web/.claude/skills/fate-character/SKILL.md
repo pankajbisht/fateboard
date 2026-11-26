@@ -99,6 +99,18 @@ Use `parts` mode to get keys, depths (draw order: higher = nearer), roles and bb
   neckline opening) share one tone. `addJawShadow` removes the neck's own shade layers and adds one `neck-shadow`
   layer; a crew neckline is a skin opening plus a `collar-crew` ink ribbon, so the shirt colour never shows between
   neck and neckline.
+- **Head looks set on the neck**: the jaw shadow (`neck-shadow`) must be the face's own shade tone (`shadeOf(skin,
+  strength × 1.4)`, opacity 0.76 for soft shading, as the stacked head bands), falling to about 0.55 of the neck at the
+  front; a lighter thin band under the chin read as a ring. No neck-muscle lines on the manga body (they read as
+  strings). The crew opening's top lift is front-only (at the sides it stood above the shoulder as a skin tab), and
+  its ink covers only the forward-facing part of the ring (sin > 0.3): round the side of the neck the ring turns back
+  and at 335° the line's end curled up as a hook.
+- **Sleeveless back neckline**: a tank's back is a shallow scoop from strap to strap (`scoopAt(0.6)`); along the neck
+  base ring it stepped up at each strap as a notch of skin.
+- **Lapels / shirt collar flaps up the neck**: a flap starts on the opening's own edge (`nw × 0.95` at `ny`) and folds
+  outward (`nw × 1.45`); a top corner above the shirt's top and wider than the neck made a band round the neck, and a
+  thin flap beside the V three parallel lines. A kurta placket (`trim: 'border'`) is skipped on open collars (lapel,
+  v, open): it started in the bare opening.
 - **Bust flat or wrong in profile**: `bustProfile(a)` (base + two gaussians at π/2 ± `BREAST_OFFSET`) shapes the chest
   rings; `addUnderBust` draws `under-bust0/1` only while the chest faces the camera (facing ≥ 0.45; at 75° they stuck
   out). The old `chest±1` arcs in `joints.ts` are skipped for the manga bust.
@@ -108,10 +120,14 @@ Use `parts` mode to get keys, depths (draw order: higher = nearer), roles and bb
   (`addRingHem`, the crew neckline) or sample surface points and keep those facing the camera.
 
 ### Shoulders and sleeves
-- **Sleeveless and strapless**: a bare shoulder is a short skin cap (`frac 0.12`, to about the armpit) with a curved
-  armhole inked in the cloth's colour (`seamInk 'top'`). A strapless top (`strapless: true` in `TopDef`, e.g. the
-  tube top, no trim) bares neck, shoulders and upper chest as a skin loft with a `strapless-edge`, and its cap has no
-  seam (`seam: false`). Check tank, vest, tube-top, sleeveless-hoodie together.
+- **Sleeveless and strapless**: the upper torso is bare skin (`bare-chest` loft in `mangaTorso.ts`, mode from
+  `body.ts`: `strapless` to above the bust with a `strapless-edge`; a sleeveless top to the armpits). A sleeveless
+  top's cloth is one panel over it (`mangaTank.ts` `tank-panel`): straps, armholes curving in to the side seam
+  (`tank-armhole-l/r`), a scoop (`tank-neckline`) for collar `none`, else up to the neck base. The shoulder cap
+  (`addCapSleeve`, `seam: false`) only rounds the point of the shoulder into the arm (shoulder-ring points with
+  cos > 0.75). Before: the torso was cloth to the neck and a convex-hull skin cap lay over each shoulder; a hull cannot
+  bow inward, so the armhole was a straight cut and the shoulder a flat slab with the cloth shoulder standing above it.
+  Never build a shape that must curve inward from `hull()`. Check tank, vest, tube-top, sleeveless-hoodie together.
 - **Hull edges inked straight**: the fill is smoothed, the ink is not; smooth the chain (`chaikin` in
   `mangaSleeveCap.ts`).
 - **Part key collisions**: a new part with an existing key replaces or confuses it (the hoodie's sleeve head collided

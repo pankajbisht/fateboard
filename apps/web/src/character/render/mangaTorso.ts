@@ -5,6 +5,7 @@ import { project } from './camera';
 import { addRingHem, inkLine } from './clothDetail';
 import type { P2 } from './shapes';
 import { mangaLook } from './mangaVariants';
+import { addTankPanel } from './mangaTank';
 import { on, ring, toScreen, type Ctx } from './parts';
 
 /**
@@ -20,8 +21,9 @@ export function addMangaTorso(
     fit: number,
     bust: boolean,
     untucked = false,
-    /** a strapless top (tube top): neck, shoulders and the chest above the bust are bare skin */
-    strapless = false,
+    /** bare skin from the neck down: a strapless top (to above the bust), or a sleeveless one (to the armpits, with the
+     * cloth as a panel over it: `tank` with a scoop neckline, `covered` up to the neck) */
+    bare: 'strapless' | 'tank' | 'covered' | null = null,
 ) {
     const z = skel.size;
     const t = skel.offset.spine2[1] / 0.26; // torso length
@@ -213,25 +215,22 @@ export function addMangaTorso(
         ...['torso', 'hips'].map((k) => ctx.parts.find((x) => x.key === k)?.depth ?? 0),
     );
     if (bust) addUnderBust(ctx, skel, fit, chestHalf, chestZ, depth + 0.003);
-    if (strapless) {
-        // Bare from the neck down to the top's edge across the upper bust (the ring a little above the armpits): a skin
-        // loft over the cloth, the edge inked in the cloth's colour, and the outline there in the skin's.
-        const edge = 3;
+    if (bare) {
+        // Bare from the neck down to the top's edge across the upper bust (the ring a little above the armpits), or to
+        // the armpits under a sleeveless top's panel (mangaTank.ts): a skin loft over the cloth, the outline there in
+        // the skin's ink.
+        const edge = bare === 'strapless' ? 3 : 4;
         addLoft(ctx, 'bare-chest', 'torso', 'skin', rings.slice(0, edge + 1), depth + 0.001, false);
-        addRingHem(ctx, 'strapless-edge', 'torso', 'top', rings[edge], depth + 0.003);
-        addLoftContour(
-            ctx,
-            'body-contour-bare',
-            'torso',
-            'skin',
-            rings.slice(0, edge + 1),
-            depth + 0.002,
-            [true, false],
-        );
-        addLoftContour(ctx, 'body-contour', 'torso', 'top', rings.slice(edge), depth + 0.002, [
-            false,
+        if (bare === 'strapless')
+            addRingHem(ctx, 'strapless-edge', 'torso', 'top', rings[edge], depth + 0.003);
+        else addTankPanel(ctx, rings.slice(0, edge + 2), depth + 0.003, bare === 'tank');
+        const skin = rings.slice(0, edge + 1);
+        addLoftContour(ctx, 'body-contour-bare', 'torso', 'skin', skin, depth + 0.002, [
+            true,
             false,
         ]);
+        const rest = rings.slice(edge);
+        addLoftContour(ctx, 'body-contour', 'torso', 'top', rest, depth + 0.002, [false, false]);
     } else addLoftContour(ctx, 'body-contour', 'torso', 'top', rings, depth + 0.002, [true, false]);
     addLoftContour(
         ctx,

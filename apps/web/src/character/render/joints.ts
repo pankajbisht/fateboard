@@ -168,20 +168,8 @@ export function addJointDetail(
             }
         }
 
-    // the neck: the two long neck muscles, from behind the ears down to the collar pit (the manga body)
-    if (manga && faces('chest') > 0.25) {
-        const ink = ctx.outline(ctx.fill.skin);
-        for (const sx of [-1, 1]) {
-            const a = xy(
-                on(ctx, 'neck', [sx * z.neck * 0.8, skel.offset.head[1] * 0.85, z.neck * 0.45]),
-            );
-            const m = xy(
-                on(ctx, 'neck', [sx * z.neck * 0.55, skel.offset.head[1] * 0.35, z.neck * 0.95]),
-            );
-            const b = xy(on(ctx, 'chest', [sx * z.neck * 0.22, t * 0.33, z.neck * 1.05]));
-            line(`neck-${sx}`, 'neck', curve3(a, m, b), ink, ctx.line * 0.4, 'neck');
-        }
-    }
+    // (no neck muscle lines on the manga body: at figure size the two long lines read as strings or wrinkles on the neck;
+    // the jaw's shadow, neckShadow.ts, shapes it)
 
     // chest and bust: the lower edge of each pectoral, or of each breast, and a sternum line for a muscular chest
     // a grown man's chest always shows its pectorals a little (male and female bodies read apart)

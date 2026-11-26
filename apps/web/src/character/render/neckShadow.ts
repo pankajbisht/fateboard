@@ -3,7 +3,7 @@ import type { Skeleton } from '../rig/skeleton';
 import { project } from './camera';
 import { on, toScreen, type Ctx } from './parts';
 import { hull, smoothClosed, type P2 } from './shapes';
-import { darken } from './styles';
+import { shadeOf } from './styles';
 
 /**
  * The neck in the same skin as the face (the manga body, as the owner's reference sheets draw it), with only a thin
@@ -25,17 +25,20 @@ export function addJawShadow(ctx: Ctx, skel: Skeleton) {
         const s = toScreen(ctx, on(ctx, 'neck', [x, y, z]));
         return [s[0], s[1]];
     };
-    // a band under the chin only (most of it hidden by the head), its lower edge dipping a little at the front
+    // the jaw's cast shadow over the top of the neck (its upper part hidden by the head), its lower edge dipping at the
+    // front. A thin band right under the chin, lighter than the face's own shade, read as a ring: the head looked like a
+    // separate piece set on the neck.
     const pts: P2[] = [
         xy(-n * 1.02, h * 1.15, n * 0.2),
         xy(n * 1.02, h * 1.15, n * 0.2),
-        xy(-n * 0.98, h * 0.92, n * 0.45),
-        xy(n * 0.98, h * 0.92, n * 0.45),
-        xy(-n * 0.5, h * 0.82, n * 0.9),
-        xy(n * 0.5, h * 0.82, n * 0.9),
-        xy(0, h * 0.78, n * 1.0),
+        xy(-n * 0.99, h * 0.72, n * 0.4),
+        xy(n * 0.99, h * 0.72, n * 0.4),
+        xy(-n * 0.55, h * 0.6, n * 0.9),
+        xy(n * 0.55, h * 0.6, n * 0.9),
+        xy(0, h * 0.55, n * 1.0),
     ];
     const poly = hull(pts);
+    const soft = ctx.pack.shading.kind === 'soft';
     // a shading layer of the neck (not a part of its own: a style without shading keeps the same parts)
     neck.layers = [
         ...(neck.layers ?? []),
@@ -43,7 +46,10 @@ export function addJawShadow(ctx: Ctx, skel: Skeleton) {
             key: 'neck-shadow',
             kind: 'shade',
             d: smoothClosed(poly),
-            fill: darken(ctx.fill.skin, 0.12),
+            // the same tone as the face's shade (parts.ts addSurface: soft shading stacks three bands of 0.38), so the
+            // shaded side of the face runs on into the neck
+            fill: shadeOf(ctx.fill.skin, ctx.pack.shading.strength * (soft ? 1.4 : 1)),
+            ...(soft ? { opacity: 0.76 } : {}),
         },
     ];
 }

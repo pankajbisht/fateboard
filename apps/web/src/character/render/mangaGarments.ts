@@ -26,9 +26,8 @@ export function mangaSleeve(
     const hand = `hand${s}` as const;
     const L = def.sleeve;
     const k = Math.max(1, looseOf(true, def.fit));
-    // a sleeveless top: the point of the shoulder is bare (the torso's shoulder ring is cloth, so without this it stood
-    // out over the arm as a block with the round top of the arm under it); the armhole edge is inked in the cloth's colour
-    // (a strapless top: the round head joins the bare torso's shoulder to the arm, with no armhole line)
+    // a sleeveless or strapless top: the shoulders are bare (mangaTorso.ts; a sleeveless top's straps and armholes are
+    // a panel over them, mangaTank.ts), and this round head joins the point of the shoulder to the arm with no line
     if (L <= 0)
         addCapSleeve(ctx, skel, {
             key: `${upper}-shoulder`,
@@ -45,8 +44,7 @@ export function mangaSleeve(
             frac: 0.12,
             hem: false,
             fit: def.fit,
-            seamInk: 'top',
-            seam: !def.strapless,
+            seam: false,
         });
     // the sleeve's head covers the shoulder joint (mangaSleeveCap.ts); a covered upper arm still gets the head, so
     // a long sleeve has the same shoulder and no joint shows when the arm rises

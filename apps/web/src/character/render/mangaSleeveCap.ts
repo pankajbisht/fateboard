@@ -35,9 +35,6 @@ export interface CapSleeve {
     hem: boolean;
     /** the top's fit (the torso's shoulder ring is as wide as the cloth) */
     fit: number;
-    /** the ink of the seam on the body side when it differs from the fill: a sleeveless top's bare shoulder is skin, its
-     * armhole edge is the cloth's */
-    seamInk?: Material;
     /** false: no seam on the body side (a bare shoulder over bare skin: there is no cloth edge to ink) */
     seam?: boolean;
 }
@@ -62,43 +59,18 @@ export function addCapSleeve(ctx: Ctx, skel: Skeleton, o: CapSleeve) {
         pts.push([s[0], s[1]]);
     }
     const sx = o.side === 'L' ? 1 : -1;
-    const t = skel.offset.spine2[1] / 0.26; // torso length
     // the outer half of the torso's shoulder ring: the joint is below the point of the shoulder, so the head must
     // reach up over it or the torso's shoulder sticks out above the sleeve
-    // (a bare shoulder, under a sleeveless top, covers the same: the strap is the part of the torso inside it)
     mangaShoulderRing(ctx, skel, o.fit).forEach((p, i) => {
-        if (Math.cos((i / 12) * Math.PI * 2) * sx < 0.45) return;
+        // a bare shoulder takes only the point of the shoulder, outside the top's armhole (mangaTank.ts)
+        if (Math.cos((i / 12) * Math.PI * 2) * sx < (o.role === 'skin' ? 0.75 : 0.45)) return;
         const q = toScreen(ctx, p);
         pts.push([q[0], q[1]]);
     });
-    if (o.role === 'skin' && o.seam !== false) {
-        // a bare shoulder's armhole: from the strap down to the armpit, bowing in toward the chest as a tank top's cut
-        // does (the hull alone ran it straight down, a square wedge of skin)
-        const z = skel.size;
-        const outer = z.shoulderW * 0.46 + z.upperArm * 1.12;
-        const armIn = z.shoulderW * 0.46 - z.upperArm * 0.9;
-        const chestZ = z.chestDepth * 0.5;
-        const a = Math.acos(0.62 * sx);
-        const S = on(ctx, 'chest', [
-            Math.cos(a) * outer * 0.88,
-            t * 0.18,
-            Math.sin(a) * chestZ * 0.68 * o.fit,
-        ]);
-        const C = on(ctx, 'chest', [sx * (armIn - z.upperArm * 0.9), t * 0.06, chestZ * 0.85]);
-        const P = on(ctx, 'chest', [sx * armIn, -t * 0.06, chestZ * 0.75]);
-        for (let i = 0; i <= 6; i++) {
-            const k = i / 6;
-            const q = [0, 1, 2].map(
-                (d) => (1 - k) * (1 - k) * S[d] + 2 * k * (1 - k) * C[d] + k * k * P[d],
-            ) as V3;
-            const w = toScreen(ctx, q);
-            pts.push([w[0], w[1]]);
-        }
-    }
     const poly = hull(pts);
     if (poly.length < 3) return;
-    // A bare shoulder lies over the torso's (cloth) shoulder even on the far side, which the torso would otherwise cover
-    // with a cloth pad; not once that shoulder turns well away (then the torso hides it, as it hides the far arm).
+    // A bare shoulder lies over the torso's (bare) shoulder even on the far side, so the round point of the shoulder
+    // joins the arm; not once that shoulder turns well away (then the torso hides it, as it hides the far arm).
     const away = project(ctx.view, apply(ctx.posed.rot.chest, [sx, 0, 0]))[2];
     const torso = ctx.parts.find((x) => x.key === 'torso')?.depth ?? -Infinity;
     const depth =
@@ -123,8 +95,7 @@ export function addCapSleeve(ctx: Ctx, skel: Skeleton, o: CapSleeve) {
     // Each edge of the outline: the end is skipped (a short sleeve's hem is its front arc, addHem; a long sleeve or a
     // bare shoulder carries on into the limb, whose own contour this shape covers, so its sides are inked down to the
     // end), so is the top of a sleeve's head where it lies over the torso's own shoulder line (inked it made a wedge);
-    // the rest of the body side is the thin seam, the outer side the silhouette. On a bare shoulder the body side above
-    // the joint is the armhole: it is inked, in the cloth's colour.
+    // the rest of the body side is the thin seam, the outer side the silhouette.
     const cls = (p: P2, q: P2): Cls | 'skip' => {
         const mid: P2 = [(p[0] + q[0]) / 2, (p[1] + q[1]) / 2];
         const inner = across(mid) > o.ra * 0.15;
@@ -161,7 +132,7 @@ export function addCapSleeve(ctx: Ctx, skel: Skeleton, o: CapSleeve) {
             ctx,
             `${o.key}-${r.k}${i}`,
             o.group,
-            r.k === 'seam' ? (o.seamInk ?? o.role) : o.role,
+            o.role,
             [{ pts: chaikin(r.pts), taper: [true, true] }],
             depth + 0.002,
             r.k === 'seam' ? 0.55 : sil,

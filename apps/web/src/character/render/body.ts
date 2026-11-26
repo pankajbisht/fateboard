@@ -81,7 +81,20 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
             );
     // a top that ends at the waist hangs over the trousers (the reference sheets draw T-shirts untucked)
     if (manga)
-        addMangaTorso(ctx, skel, fit, z.bust > 0.5, topDef.hang === 'waist', !!topDef.strapless);
+        addMangaTorso(
+            ctx,
+            skel,
+            fit,
+            z.bust > 0.5,
+            topDef.hang === 'waist',
+            topDef.strapless
+                ? 'strapless'
+                : topDef.sleeve > 0
+                  ? null
+                  : topDef.collar === 'none'
+                    ? 'tank'
+                    : 'covered',
+        );
     else addShell(ctx, 'torso', 'torso', 'top', torso);
 
     // hips and the top of the legs (trousers / shorts / skirt waistband)
@@ -188,7 +201,15 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
     if (botDef.skirt > 0)
         addHanging(ctx, skel, 'skirt', 'bottom', botDef.skirt, botDef.flare ?? 1.5, manga);
     if (botDef.trim === 'pocket') for (const s of ['L', 'R'] as const) addLegPocket(ctx, skel, s);
-    addTrim(ctx, skel, topDef.trim);
+    // a kurta's placket runs down from a closed collar; an open one (lapels, a V, a wrap) already has its edges, and the
+    // band started in the bare opening, up on the neck
+    addTrim(
+        ctx,
+        skel,
+        topDef.trim === 'border' && ['lapel', 'v', 'open'].includes(topDef.collar)
+            ? undefined
+            : topDef.trim,
+    );
     addTopHang(ctx, skel, topDef, manga, botDef);
     addCollar(ctx, skel, topDef.collar);
     if (manga && c.dress.top.kind.includes('hoodie'))
