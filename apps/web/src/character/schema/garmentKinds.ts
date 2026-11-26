@@ -19,6 +19,8 @@ export const MORE_TOP_KINDS = [
     'army-shirt',
     'camo-jacket',
     'army-tee',
+    'school-blouse',
+    'camp-shirt',
 ] as const;
 
 export const MORE_BOTTOM_KINDS = [

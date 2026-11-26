@@ -3,7 +3,9 @@ import { project } from './camera';
 import type { Skeleton } from '../rig/skeleton';
 import type { Character } from '../schema/types';
 import { useColor } from './accPaint';
-import { addLimb, addShell, on, ring, type Ctx } from './parts';
+import { cover } from './garments';
+import { addLimb, addShell, on, ring, toScreen, type Ctx } from './parts';
+import { polyline, type P2 } from './shapes';
 
 /**
  * Body accessories (docs/CHARACTER_STUDIO.md phase 3): scarf, tie, necklace, watch, bracelet, belt, backpack, shoulder
@@ -49,6 +51,58 @@ export function addBodyAccessories(ctx: Ctx, skel: Skeleton, c: Character) {
                     ],
                     0.7,
                 );
+                break;
+            case 'bow': {
+                // a ribbon bow under the collar: two flat wings and a knot, sharp polygons with a thin edge (smoothed
+                // shells of three points read as sausages, see the lapels)
+                if (!seen) break;
+                const at = (x: number, y: number): P2 => {
+                    const q = toScreen(ctx, on(ctx, 'chest', [x * z.neck, t * y, front * 1.04]));
+                    return [q[0], q[1]];
+                };
+                const ink = ctx.outline(ctx.fill.acc);
+                const piece = (key: string, pts: P2[], k: number) =>
+                    ctx.parts.push({
+                        key,
+                        group: 'torso',
+                        role: 'acc',
+                        d: `${polyline(pts)}Z`,
+                        fill: ctx.fill.acc,
+                        stroke: ink,
+                        strokeWidth: ctx.line * 0.6,
+                        depth: neckDepth + 1 + k,
+                    });
+                for (const sx of [-1, 1])
+                    piece(
+                        `acc-bow${sx}`,
+                        [at(0, 0.235), at(sx * 0.95, 0.27), at(sx * 0.95, 0.17)],
+                        0,
+                    );
+                piece(
+                    'acc-bow-knot',
+                    [at(-0.22, 0.255), at(0.22, 0.255), at(0.22, 0.2), at(-0.22, 0.2)],
+                    0.01,
+                );
+                break;
+            }
+            case 'socks':
+                // ankle to a third up the shin, over bare legs only (under trousers they are hidden)
+                for (const s of ['L', 'R'] as const) {
+                    const shin = ctx.parts.find((x) => x.key === `lowerLeg${s}`);
+                    if (!shin || shin.role !== 'skin') continue;
+                    cover(
+                        ctx,
+                        `acc-sock${s}`,
+                        `lowerLeg${s}`,
+                        'acc',
+                        p[`foot${s}`],
+                        z.ankle,
+                        p[`lowerLeg${s}`],
+                        z.knee,
+                        0.34,
+                        1.06 * (ctx.pack.proportion.limb ?? 1),
+                    );
+                }
                 break;
             case 'tie':
                 if (!seen) break;

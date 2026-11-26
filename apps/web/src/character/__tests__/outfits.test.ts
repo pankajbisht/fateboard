@@ -47,7 +47,8 @@ describe('shoes and accessories', () => {
         for (const k of SHOE_KINDS) expect(SHOE_DEFS[k].name).toBeTruthy();
         for (const k of ACCESSORY_KINDS) expect(ACCESSORY_DEFS[k].name).toBeTruthy();
         expect(SHOE_KINDS).toHaveLength(13);
-        expect(ACCESSORY_KINDS).toHaveLength(22);
+        // + the reference characters' collar bow, hair clip and socks
+        expect(ACCESSORY_KINDS).toHaveLength(25);
     });
 
     it('every accessory draws on its own, from the front and the back', () => {

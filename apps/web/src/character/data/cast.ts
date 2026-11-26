@@ -3,7 +3,7 @@ import { RECIPES, fromRecipe, type CharacterRecipe } from './recipes';
 import type { Character } from '../schema/types';
 
 /**
- * The cast browser's data: the 100 people (12 hand-made + 88 generated), built once on first use, and the pure
+ * The cast browser's data: the 100 people (the hand-made recipes, then generated ones), built once on first use, and the pure
  * filter the Cast tab uses (search + age group + look).
  */
 let cache: CharacterRecipe[] | null = null;

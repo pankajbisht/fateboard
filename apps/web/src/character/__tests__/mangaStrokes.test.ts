@@ -47,12 +47,13 @@ describe('chest lines only where the chest faces the viewer', () => {
     it('bust and collar lines show from the front and three-quarter, not from the side', () => {
         const c = applyEdit(woman, { pose: poseById('stand')! });
         const keys = (yaw: number) => renderCharacter(c, cam(yaw)).parts.map((p) => p.key);
-        expect(keys(0)).toContain('chest-1');
-        expect(keys(30)).toContain('chest-1');
+        // the manga bust draws its lines on the chest's own surface: `under-bust0` and `under-bust1`
+        const bust = (yaw: number) => keys(yaw).filter((k) => k.startsWith('under-bust'));
+        expect(bust(0)).toHaveLength(2);
+        expect(bust(30).length).toBeGreaterThan(0);
         expect(keys(0)).toContain('collar-crew');
         for (const yaw of [75, 90, 270]) {
-            expect(keys(yaw), String(yaw)).not.toContain('chest-1');
-            expect(keys(yaw), String(yaw)).not.toContain('chest--1');
+            expect(bust(yaw), String(yaw)).toEqual([]);
             expect(keys(yaw), String(yaw)).not.toContain('collar-crew');
         }
     });
@@ -61,7 +62,7 @@ describe('chest lines only where the chest faces the viewer', () => {
         const d = renderCharacter(
             applyEdit(woman, { pose: poseById('stand')! }),
             cam(0),
-        ).parts.find((p) => p.key === 'chest-1')!.d;
+        ).parts.find((p) => p.key === 'under-bust1')!.d;
         const n = (d.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number);
         const xs = n.filter((_, i) => i % 2 === 0);
         const ys = n.filter((_, i) => i % 2 === 1);

@@ -246,3 +246,22 @@ export function curve3(a: P2, m: P2, b: P2): string {
     const c: P2 = [2 * m[0] - (a[0] + b[0]) / 2, 2 * m[1] - (a[1] + b[1]) / 2];
     return `M${pt(a)}Q${pt(c)} ${pt(b)}`;
 }
+
+/**
+ * Corner cutting (two passes): a polyline smoothed toward the same quadratic curve `smoothClosed` / `smoothOpen` draw
+ * through it, so ink drawn along the points follows the smoothed fill instead of reaching each corner.
+ */
+export function chaikin(p: P2[], passes = 2): P2[] {
+    let q = p;
+    for (let k = 0; k < passes && q.length > 2; k++) {
+        const r: P2[] = [q[0]];
+        for (let i = 0; i < q.length - 1; i++) {
+            const [a, b] = [q[i], q[i + 1]];
+            r.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25]);
+            r.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+        }
+        r.push(q[q.length - 1]);
+        q = r;
+    }
+    return q;
+}

@@ -7,7 +7,9 @@ import { addBodyAccessories } from './accessoriesBody';
 import { addHand } from './hand';
 import { addJointDetail } from './joints';
 import { PROFILES, addBentLimb } from './bentLimb';
-import { addMangaTorso } from './mangaTorso';
+import { addMangaTorso, mangaThighTop } from './mangaTorso';
+import { addJawShadow } from './neckShadow';
+import { mangaLook } from './mangaVariants';
 import { addHoodieDetail, looseOf } from './clothDetail';
 import { addPocketCovers, pocketHands } from './pockets';
 import { addProps, handShapeFor } from './props';
@@ -78,7 +80,8 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
                 on(ctx, 'chest', [sx * z.shoulderW * 0.17, -t * 0.03, z.chestDepth * 0.5 + z.bust]),
             );
     // a top that ends at the waist hangs over the trousers (the reference sheets draw T-shirts untucked)
-    if (manga) addMangaTorso(ctx, skel, fit, z.bust > 0.5, topDef.hang === 'waist');
+    if (manga)
+        addMangaTorso(ctx, skel, fit, z.bust > 0.5, topDef.hang === 'waist', !!topDef.strapless);
     else addShell(ctx, 'torso', 'torso', 'top', torso);
 
     // hips and the top of the legs (trousers / shorts / skirt waistband)
@@ -104,6 +107,8 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
         -t * 0.02,
     );
 
+    if (manga) addJawShadow(ctx, skel);
+
     for (const s of ['L', 'R'] as const) {
         const upper = `upperArm${s}` as const;
         const lower = `lowerArm${s}` as const;
@@ -117,11 +122,12 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
                     z.foreArm * 1.08 * looseOf(sleeves.upper === 'top', topDef.fit),
                     z.wrist * looseOf(sleeves.lower === 'top', topDef.fit),
                 ],
-                profiles: [PROFILES.upperArm, PROFILES.foreArm],
+                profiles: [mangaLook().arm.upper, mangaLook().arm.fore],
                 keys: [upper, lower],
                 groups: [upper, lower],
                 roles: [sleeves.upper, sleeves.lower],
                 contour: `arm${s}-contour`,
+                hemAtBend: topDef.sleeve <= 1.05,
                 muscle: c.body.muscle,
             });
         else {
@@ -154,7 +160,10 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
             addBentLimb(ctx, {
                 joints: [p[thigh], p[shin], p[foot]],
                 radii: [
-                    z.thigh * looseOf(legs.thigh === 'bottom', botDef.fit),
+                    // loose trousers widen toward the knee and hem, not at the seat: the full looseness at the hip joint
+                    // pushed the leg's round top out over the hips like a balloon
+                    mangaThighTop(skel) *
+                        Math.min(1.06, looseOf(legs.thigh === 'bottom', botDef.fit)),
                     z.knee * 0.98 * looseOf(legs.thigh === 'bottom', botDef.fit),
                     z.ankle * looseOf(legs.shin === 'bottom', botDef.fit),
                 ],
@@ -163,6 +172,9 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
                 groups: [thigh, shin],
                 roles: [legs.thigh, legs.shin],
                 contour: `leg${s}-contour`,
+                // the cloth ends at the knee (shorts), not a capri's that carries on down the shin as a tube
+                hemAtBend: botDef.leg <= 1.05,
+                kneeOverCloth: legs.thigh === 'skin' && botDef.leg > 0 && botDef.skirt <= 0,
                 muscle: c.body.muscle,
             });
         else {
@@ -177,11 +189,19 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
         addHanging(ctx, skel, 'skirt', 'bottom', botDef.skirt, botDef.flare ?? 1.5, manga);
     if (botDef.trim === 'pocket') for (const s of ['L', 'R'] as const) addLegPocket(ctx, skel, s);
     addTrim(ctx, skel, topDef.trim);
-    addTopHang(ctx, skel, topDef, manga);
+    addTopHang(ctx, skel, topDef, manga, botDef);
     addCollar(ctx, skel, topDef.collar);
     if (manga && c.dress.top.kind.includes('hoodie'))
         addHoodieDetail(ctx, skel, project(ctx.view, apply(ctx.posed.rot.chest, [0, 0, 1]))[2]);
-    if (topDef.folds) addFolds(ctx, skel, topDef.hang);
+    if (topDef.folds) {
+        const before = ctx.parts.length;
+        addFolds(ctx, skel, topDef.hang);
+        // on a long top (kurta, coat) the folds lie on its hanging cloth: at body depth it covered them and only their
+        // tips showed above it, as three stray dots at the waist
+        const tunic = ctx.parts.find((x) => x.key === 'tunic');
+        if (manga && tunic)
+            for (const part of ctx.parts.slice(before)) part.depth = tunic.depth + 0.003;
+    }
     addPocketCovers(ctx, skel, c, botDef);
     addJointDetail(ctx, skel, c, topDef, botDef);
     addBodyAccessories(ctx, skel, c);

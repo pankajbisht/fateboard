@@ -116,7 +116,7 @@ tests): selectors, panels, tokens, icons, keys, units, Fabric origins / serializ
 - [Decisions](docs/DECISIONS.md): inferred ADRs + open questions (Q1–Q12)
 - [Production readiness](docs/PRODUCTION_READINESS.md): verdict, scorecard, what is left (P0 / P1 / P2)
 - [Code review](docs/CODE_REVIEW.md): findings R-01…R-09, refactor roadmap, guardrails
-- [Agent workflow](docs/AGENT_WORKFLOW.md): skills `fate-task` / `fate-review` / `fate-refactor` / `fate-readiness` / `fate-new-slice` / `fate-seo` / `fate-perf` / `fate-ship`, agents `fate-reviewer` / `fate-architect` / `fate-verifier` / `fate-debugger`; hooks (guard, format + lint per edit, type-check + related tests at the end of a turn) and path-scoped rules in `.claude/`
+- [Agent workflow](docs/AGENT_WORKFLOW.md): skills `fate-task` / `fate-review` / `fate-refactor` / `fate-readiness` / `fate-new-slice` / `fate-seo` / `fate-perf` / `fate-ship` / `fate-character`, agents `fate-reviewer` / `fate-architect` / `fate-verifier` / `fate-debugger` / `fate-character-inspector`; hooks (guard, format + lint per edit, type-check + related tests at the end of a turn) and path-scoped rules in `.claude/`
 - [Agent guide](docs/AGENT_GUIDE.md): how to use every skill, agent, hook and built-in command, with example prompts
 - [Platforms](docs/PLATFORMS.md): plan for PWA, browser extension (WXT), desktop + mobile (Tauri 2), platform adapters, Claude / MCP; phases + working rules (section 12), owner questions Q14–Q18
 - [Backend](docs/BACKEND.md): local-first backend plan (Supabase + Hono API: accounts, sync, sharing, AI proxy, remote MCP), data model, API, rules (section 12)

@@ -148,7 +148,7 @@ describe('who gets which style', () => {
         const tipped = castRecipes().filter((r) => r.hair.tip);
         expect(tipped.length).toBeGreaterThan(0);
         for (const r of tipped) expect(hasTips(r.hair.style), r.id).toBe(true);
-        for (const r of castRecipes().slice(12)) {
+        for (const r of castRecipes().slice(RECIPES.length)) {
             const female = r.gender >= 0.5;
             expect(
                 female

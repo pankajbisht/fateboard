@@ -1,5 +1,5 @@
 /**
- * The garment library (docs/CHARACTER_STUDIO.md phase 3): 47 tops and 38 bottoms as data, each drawn from every side
+ * The garment library (docs/CHARACTER_STUDIO.md phase 3): 49 tops and 38 bottoms as data, each drawn from every side
  * on every body, each different, collars that hide from behind (a hood shows), who wears what.
  */
 import { describe, expect, it } from 'vitest';
@@ -38,13 +38,18 @@ describe('garment catalogue', () => {
     it('the cast draws only from the first batch, so the 100 people stay the same', () => {
         expect(CAST_TOP_IDS).toHaveLength(28);
         expect(CAST_BOTTOM_IDS).toHaveLength(20);
-        const kinds = new Set<string>(castRecipes().flatMap((r) => [r.top.kind, r.bottom.kind]));
+        // the generated people (the hand-made ones may wear anything: the reference pair wears the new collared tops)
+        const kinds = new Set<string>(
+            castRecipes()
+                .slice(RECIPES.length)
+                .flatMap((r) => [r.top.kind, r.bottom.kind]),
+        );
         for (const k of kinds)
             expect([...CAST_TOP_IDS, ...CAST_BOTTOM_IDS] as string[], k).toContain(k);
     });
 
-    it('has 47 tops and 38 bottoms, each named, with real numbers; the schema lists the same ids', () => {
-        expect(TOP_IDS).toHaveLength(47);
+    it('has 49 tops and 38 bottoms, each named, with real numbers; the schema lists the same ids', () => {
+        expect(TOP_IDS).toHaveLength(49);
         expect(BOTTOM_IDS).toHaveLength(38);
         expect([...TOP_KINDS].sort()).toEqual([...TOP_IDS].sort());
         expect([...BOTTOM_KINDS].sort()).toEqual([...BOTTOM_IDS].sort());
@@ -223,7 +228,7 @@ describe('who wears what', () => {
         expect(suited(BOTTOM_DEFS['long-skirt'].suits, true)).toBe(true);
         expect(suited(BOTTOM_DEFS['long-skirt'].suits, false)).toBe(false);
         expect(suited(TOP_DEFS.hoodie.suits, false)).toBe(true);
-        const generated = castRecipes().slice(12);
+        const generated = castRecipes().slice(RECIPES.length);
         for (const r of generated) {
             const female = r.gender >= 0.5;
             expect(suited(TOP_DEFS[r.top.kind].suits, female), `${r.id} ${r.top.kind}`).toBe(true);

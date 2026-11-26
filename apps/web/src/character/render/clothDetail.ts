@@ -18,7 +18,7 @@ export const looseOf = (covered: boolean, fit: number) =>
     !covered ? 1 : fit > 1 ? Math.min(2, 1 + (fit - 1) * 1.6) : fit;
 
 /** The ring of `radius` round the bone a→b at `t`, in the world, with each point's outward direction. */
-function ringAround(a: V3, b: V3, t: number, radius: number, n = 20) {
+export function ringAround(a: V3, b: V3, t: number, radius: number, n = 20) {
     const axis = normalize(sub(b, a)) as V3;
     const ref: V3 = Math.abs(axis[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
     const u = normalize(cross(axis, ref)) as V3;
@@ -47,7 +47,7 @@ function frontArc(ctx: Ctx, ring: { p: V3; dir: V3 }[]): P2[] {
 }
 
 /** An ink line part (a filled ribbon of the outline colour of `role`). */
-function inkLine(
+export function inkLine(
     ctx: Ctx,
     key: string,
     group: PartGroup,
@@ -72,7 +72,7 @@ function inkLine(
         });
 }
 
-const depthOf = (ctx: Ctx, key: string) => ctx.parts.find((x) => x.key === key)?.depth ?? 0;
+export const depthOf = (ctx: Ctx, key: string) => ctx.parts.find((x) => x.key === key)?.depth ?? 0;
 
 /** A hem: the front half of the ring round the bone a→b at `t`. */
 export function addHem(
@@ -123,6 +123,11 @@ export function addTube(
     ra: number,
     rb: number,
     frac: number,
+    /**
+     * a round head over the joint (a thigh under short shorts): the tube's flat top at the joint left the limb's own
+     * round top showing above it as skin whenever the leg came nearer than the hips (a stride)
+     */
+    head = false,
 ) {
     const f = Math.min(1, Math.max(0.05, frac));
     const re = ra + (rb - ra) * f;
@@ -141,7 +146,18 @@ export function addTube(
         const s = toScreen(ctx, q.p);
         return [s[0], s[1]] as P2;
     });
-    const poly = hull([...top, ...end]);
+    const u: P2 = [dx / l, dy / l];
+    // the half circle on the far side of the joint, from one top corner round to the other
+    const arc: P2[] = head
+        ? Array.from({ length: 9 }, (_, i) => {
+              const phi = (Math.PI * i) / 8;
+              return [
+                  A[0] + n[0] * ra * Math.cos(phi) - u[0] * ra * Math.sin(phi),
+                  A[1] + n[1] * ra * Math.cos(phi) - u[1] * ra * Math.sin(phi),
+              ];
+          })
+        : [];
+    const poly = hull([...top, ...arc, ...end]);
     const depth = depthOf(ctx, group) + 0.02;
     addSurface(ctx, key, group, role, poly, smoothClosed(poly), depth, ra * 2, false, [poly]);
     // the sides: from the top corners to the widest points of the end across the tube
@@ -153,6 +169,7 @@ export function addTube(
         `${key}-side`,
         group,
         role,
+        // (the head is a fill only: inked, it drew two humps over the shorts' seat)
         [
             { pts: [top[0], hi], taper: [true, false] },
             { pts: [top[1], lo], taper: [true, false] },

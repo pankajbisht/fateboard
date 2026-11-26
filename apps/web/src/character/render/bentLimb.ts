@@ -2,8 +2,9 @@ import type { V3 } from '../rig/math';
 import type { PartGroup } from '../schema/types';
 import { addContour, smoothOpen } from './loft';
 import { addSurface, toScreen, type Ctx, type Material } from './parts';
-import { capsulePoly, hull, smoothClosed, smoothPoly, type P2 } from './shapes';
-import { addFolds } from './clothDetail';
+import { hull, smoothClosed, smoothPoly, type P2 } from './shapes';
+import { inkLine } from './clothDetail';
+import { addBareKnee, addCapsuleLimb, limbFolds } from './limbFront';
 
 /**
  * Bent limbs (manga body, docs/CHARACTER_STUDIO.md): an arm or a leg drawn as ONE shape that follows its bent centre
@@ -79,6 +80,10 @@ export interface BentLimb {
     bias?: number;
     /** 0..1: how much muscle the body has; a thin inner line on the shadow side shows it (0 = none) */
     muscle?: number;
+    /** the first bone's cloth ends at the bend (shorts to the knee): its hem is drawn on the colour edge */
+    hemAtBend?: boolean;
+    /** a bare thigh under a partial cloth tube (swim trunks, hot pants): a knee seen from the front is in front of it */
+    kneeOverCloth?: boolean;
 }
 
 /**
@@ -200,15 +205,53 @@ export function addBentLimb(ctx: Ctx, o: BentLimb) {
         ],
         z1 + 0.002,
     );
+    // in the lower bone's own ink: bare shins under shorts were outlined in the cloth's grey
     addContour(
         ctx,
         `${o.contour}-lo`,
         o.groups[1],
-        o.roles[0],
+        o.roles[1],
         [{ pts: [Lj, ...L2, ...endCap, ...[...R2].reverse(), Rj], taper: [false, false] }],
         Math.max(z1, z2) + 0.002,
     );
+    // cloth that ends at the bend (shorts to the knee, a sleeve to the elbow): its hem lies on the edge where the colour
+    // changes, curving a little toward the hand or foot like the front of a ring (a hem a little above the joint left a
+    // band of cloth below it, wider than the limb)
+    if (o.hemAtBend && o.roles[0] !== o.roles[1] && o.roles[1] === 'skin') {
+        const ul = Math.hypot(u1[0] + u2[0], u1[1] + u2[1]) || 1;
+        const M: P2 = [
+            B[0] + ((u1[0] + u2[0]) / ul) * rJ * 0.45,
+            B[1] + ((u1[1] + u2[1]) / ul) * rJ * 0.45,
+        ];
+        const hem = Array.from({ length: 9 }, (_, i): P2 => {
+            const s = i / 8;
+            const a = (1 - s) * (1 - s);
+            const b = 2 * s * (1 - s);
+            const c = s * s;
+            return [a * Lj[0] + b * M[0] + c * Rj[0], a * Lj[1] + b * M[1] + c * Rj[1]];
+        });
+        inkLine(
+            ctx,
+            `${o.contour}-hem`,
+            o.groups[0],
+            o.roles[0],
+            [{ pts: hem, taper: [false, false] }],
+            Math.max(z1, z2) + 0.003,
+            0.8,
+        );
+    }
     limbFolds(ctx, o, B, u1, u2, rJ, Math.max(z1, z2) + 0.003);
+    // a thigh coming toward the viewer under a partial cloth tube (hot pants in a kneel): the bare knee is nearer than
+    // the tube's leg opening, which covered it
+    // (only when it truly points at the viewer: on screen under 0.6 of its length; a knee a little forward in a
+    // standing pose got a disc of skin in the middle of the leg)
+    if (
+        o.kneeOverCloth &&
+        o.groups[0].startsWith('upperLeg') &&
+        S[1][2] > S[0][2] &&
+        len1 < 0.6 * Math.hypot(...o.joints[1].map((v, i) => v - o.joints[0][i]))
+    )
+        addBareKnee(ctx, o, B, u2, rJ, Math.max(z1, z2) + 0.05);
     if ((o.muscle ?? 0) > 0.2) {
         // inner lines: the swell of the upper arm or thigh and of the forearm or calf, on the side away from the light
         const side = (n: P2): 1 | -1 => (dot(n, ctx.light) > 0 ? -1 : 1);
@@ -245,65 +288,4 @@ export function addBentLimb(ctx: Ctx, o: BentLimb) {
         line(`${o.contour}-m1`, A, B, n1, r1, 0.2, 0.62, 0, z1 + 0.003);
         line(`${o.contour}-m2`, B, C, n2, r2, 0.12, 0.55, 1, Math.max(z1, z2) + 0.003);
     }
-}
-
-/** A sharply bent limb as two capsules (see `addBentLimb`): fills without outlines, one outline behind both. */
-function addCapsuleLimb(ctx: Ctx, o: BentLimb, S: V3[], [rA, rJ, rC]: [number, number, number]) {
-    const [A, B, C] = S.map((s): P2 => [s[0], s[1]]);
-    const bias = o.bias ?? 0;
-    const z1 = (S[0][2] + S[1][2]) / 2 + bias;
-    const z2 = (S[1][2] + S[2][2]) / 2 + bias;
-    const upper = capsulePoly(A, rA, B, rJ);
-    const lower = capsulePoly(B, rJ, C, rC);
-    const size = (rA + rC) * 1.2;
-    // each bone at its own depth: a forearm in front of a foreshortened upper arm covers it, and the other way round
-    addSurface(
-        ctx,
-        o.keys[0],
-        o.groups[0],
-        o.roles[0],
-        upper,
-        smoothClosed(upper),
-        z1,
-        size,
-        false,
-        [upper],
-    );
-    addSurface(
-        ctx,
-        o.keys[1],
-        o.groups[1],
-        o.roles[1],
-        lower,
-        smoothClosed(lower),
-        z2,
-        size,
-        false,
-        [lower],
-    );
-    // the outline: both capsules stroked twice as wide, just behind the fills, so only the outer half shows and the
-    // two read as one form with no line where they overlap
-    const u = (p: P2, q: P2): P2 => {
-        const l = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1;
-        return [(q[0] - p[0]) / l, (q[1] - p[1]) / l];
-    };
-    limbFolds(ctx, o, B, u(A, B), u(B, C), rJ, Math.max(z1, z2) + 0.003);
-    const stroke = ctx.outline(ctx.fill[o.roles[0]]);
-    if (stroke)
-        ctx.parts.push({
-            key: `${o.contour}-back`,
-            group: o.groups[0],
-            role: 'line',
-            d: smoothClosed(upper) + smoothClosed(lower),
-            fill: 'none',
-            stroke,
-            strokeWidth: 2 * ctx.line * ctx.pack.line.silhouette,
-            depth: Math.min(z1, z2) - 0.001,
-        });
-}
-
-/** Folds on the inside of the bend when the whole limb is in cloth (clothDetail.ts): `legL-fold0`, `armR-fold1` … */
-function limbFolds(ctx: Ctx, o: BentLimb, B: P2, u1: P2, u2: P2, r: number, depth: number) {
-    if (o.roles[0] === 'skin' || o.roles[1] === 'skin') return;
-    addFolds(ctx, o.contour.replace('-contour', ''), o.groups[1], o.roles[1], B, u1, u2, r, depth);
 }

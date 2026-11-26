@@ -55,8 +55,9 @@ describe('the bust is its own setting', () => {
         const man = applyEdit(adult, { body: { gender: 0, muscle: 0.6 } });
         expect(keys(man)).toContain('chest-1');
         expect(keys(applyEdit(man, { body: { muscle: 0.2 } }))).not.toContain('chest-1');
+        // (the manga bust draws its lines on the chest's surface: mangaTorso.ts addUnderBust)
         const woman = applyEdit(adult, { body: { gender: 1 } });
-        expect(keys(woman)).toContain('chest-1');
+        expect(keys(woman)).toContain('under-bust1');
         // a child has neither
         expect(keys(applyEdit(man, { body: { age: 8 } }))).not.toContain('chest-1');
     });

@@ -108,8 +108,8 @@ describe('pose library', () => {
 });
 
 describe('recipes', () => {
-    it('12 people, no two with the same face + hair + palette', () => {
-        expect(RECIPES).toHaveLength(12);
+    it('14 people (12 + the reference pair), no two with the same face + hair + palette', () => {
+        expect(RECIPES).toHaveLength(14);
         const keys = RECIPES.map((r) =>
             JSON.stringify([
                 r.eye,

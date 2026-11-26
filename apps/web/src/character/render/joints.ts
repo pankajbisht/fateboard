@@ -121,7 +121,14 @@ export function addJointDetail(
             [thigh, shin],
         );
         // the kneecap line: bare knees only on the manga body (the reference draws none on trousers)
-        if (faces(shin) > 0.25 && !(manga && kneeRole !== 'skin')) {
+        // (nor under shorts that end at the knee: the line's ends reached up over the hem onto the cloth)
+        // (nor where the limb drew the knee from the front with its own kneecap, bentLimb.ts: two curves on one knee)
+        const frontKnee = ctx.parts.some((x) => x.key === `leg${shin.slice(-1)}-contour-kneecap`);
+        if (
+            !frontKnee &&
+            faces(shin) > 0.25 &&
+            !(manga && (kneeRole !== 'skin' || legs.thigh !== 'skin'))
+        ) {
             const ink = ctx.outline(ctx.fill[kneeRole]);
             const a = xy(on(ctx, shin, [-z.knee * 0.5, z.knee * 0.35, z.knee * 1.15]));
             const m = xy(on(ctx, shin, [0, -z.knee * 0.15, z.knee * 1.3]));
@@ -186,30 +193,30 @@ export function addJointDetail(
     // arcs read as a bust (the reference sheets draw none)
     const pecs =
         c.body.gender < 0.5 && c.body.age >= 14 && (c.body.muscle > 0.35 || (manChest && !manga));
-    if (faces('chest') > 0.45 && (z.bust > 0.5 || pecs)) {
+    // (the manga bust draws its own lines on the chest's surface: mangaTorso.ts addUnderBust)
+    if (faces('chest') > 0.45 && ((z.bust > 0.5 && !manga) || pecs)) {
         const ink = ctx.outline(ctx.fill.top);
         const front = z.chestDepth * 0.5;
         const bust = z.bust > 0.5;
         // a shallow arc under each breast (or the lower edge of each pectoral), from near the middle out and up toward
         // the side; a deep U in the middle of the chest read as a smile
         const drop = bust ? z.bust * 0.35 : Math.max(c.body.muscle, 0.3) * 0.9;
+        // a bust's arcs stay well inside the chest: out to a third of the shoulders they reached the sleeve in a
+        // three-quarter view
+        const [x0, x1, x2] = bust ? [0.05, 0.15, 0.25] : [0.06, 0.19, 0.33];
         for (const sx of [-1, 1]) {
             const a = xy(
-                on(ctx, 'chest', [sx * z.shoulderW * 0.06, -t * 0.1, front * 1.02 + z.bust * 0.6]),
+                on(ctx, 'chest', [sx * z.shoulderW * x0, -t * 0.1, front * 1.02 + z.bust * 0.6]),
             );
             const m = xy(
                 on(ctx, 'chest', [
-                    sx * z.shoulderW * 0.19,
+                    sx * z.shoulderW * x1,
                     -t * 0.1 - drop * 0.5,
                     front * 1.02 + z.bust,
                 ]),
             );
             const b = xy(
-                on(ctx, 'chest', [
-                    sx * z.shoulderW * 0.33,
-                    -t * 0.065,
-                    front * 0.95 + z.bust * 0.5,
-                ]),
+                on(ctx, 'chest', [sx * z.shoulderW * x2, -t * 0.065, front * 0.95 + z.bust * 0.5]),
             );
             line(
                 `chest-${sx}`,

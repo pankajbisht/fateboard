@@ -27,7 +27,8 @@ describe('cloth on the manga body', () => {
         const sleeve = ps.find((p) => p.key === 'upperArmL-sleeve')!;
         expect(sleeve.stroke).toBeNull();
         expect(ps.some((p) => p.key === 'upperArmL-sleeve-hem')).toBe(true);
-        expect(ps.some((p) => p.key === 'upperArmL-sleeve-side')).toBe(true);
+        // its sides: the outer silhouette and the thinner seam where its head lies on the torso (mangaSleeveCap.ts)
+        expect(ps.some((p) => p.key.startsWith('upperArmL-sleeve-sil'))).toBe(true);
     });
 
     it('a T-shirt hangs over the trousers: drawn over them, with its hem line', () => {
@@ -40,7 +41,8 @@ describe('cloth on the manga body', () => {
 
     it('trousers show a hem at the ankle, shorts above the knee', () => {
         expect(keys(wear('tshirt', 'jeans'))).toContain('lowerLegL-hem');
-        expect(keys(wear('tshirt', 'shorts'))).toContain('upperLegL-hem');
+        // shorts ending at the knee: the hem on the colour edge of the bent leg (bentLimb.ts)
+        expect(keys(wear('tshirt', 'shorts'))).toContain('legL-contour-hem');
         expect(keys(wear('tshirt', 'shorts'))).not.toContain('lowerLegL-hem');
     });
 
