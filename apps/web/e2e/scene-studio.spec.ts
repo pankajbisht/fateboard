@@ -290,32 +290,36 @@ test('export: the layers download as a ZIP with the background, each character a
         expect(text, name).toContain(name);
 });
 
-for (const scheme of ['light', 'dark'] as const) {
-    test(`Scene mode has no axe violations (${scheme})`, async ({ editor, page }) => {
-        await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
-        await editor.openPanel('Characters');
-        await page.getByRole('button', { name: 'New scene' }).click();
-        const studio = page.getByRole('dialog', { name: 'Character Studio' });
-        await expect(studio.getByRole('radio', { name: 'Scene', checked: true })).toBeVisible();
-        await studio.getByRole('radio', { name: 'Cast' }).click();
-        await studio.getByRole('button', { name: 'Add character' }).click();
-        const seen: string[] = [];
-        for (const tab of ['Start', 'Place', 'Cast', 'Camera', 'Frame']) {
+// one test per tab and colour scheme: all five tabs in one test ran five full-page scans and passed the time limit on
+// CI Firefox (the same scans and rules, split)
+for (const scheme of ['light', 'dark'] as const)
+    for (const tab of ['Start', 'Place', 'Cast', 'Camera', 'Frame']) {
+        test(`Scene mode ${tab} tab has no axe violations (${scheme})`, async ({
+            editor,
+            page,
+        }) => {
+            await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
+            await editor.openPanel('Characters');
+            await page.getByRole('button', { name: 'New scene' }).click();
+            const studio = page.getByRole('dialog', { name: 'Character Studio' });
+            await expect(studio.getByRole('radio', { name: 'Scene', checked: true })).toBeVisible();
+            await studio.getByRole('radio', { name: 'Cast' }).click();
+            await studio.getByRole('button', { name: 'Add character' }).click();
             await studio.getByRole('radio', { name: tab }).click();
             const { violations } = await new AxeBuilder({ page })
                 .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'best-practice'])
                 .analyze();
-            for (const v of violations)
-                seen.push(
-                    `${tab}: ${v.id} (${v.impact}): ${v.nodes
-                        .slice(0, 3)
-                        .map((n) => n.target.join(' '))
-                        .join(' | ')}`,
-                );
-        }
-        expect(seen).toEqual([]);
-    });
-}
+            expect(
+                violations.map(
+                    (v) =>
+                        `${tab}: ${v.id} (${v.impact}): ${v.nodes
+                            .slice(0, 3)
+                            .map((n) => n.target.join(' '))
+                            .join(' | ')}`,
+                ),
+            ).toEqual([]);
+        });
+    }
 
 test('Together: a pair pose changes both people so their hands meet', async ({ editor, page }) => {
     await editor.openPanel('Characters');
