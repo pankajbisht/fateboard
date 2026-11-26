@@ -229,9 +229,11 @@ export function addContour(
     const ink = ctx.outline(ctx.fill[role]);
     if (!ink) return;
     // the ink follows the smoothed fill: through the raw points it reached every corner the fill rounds off, and a ring
-    // that stuck out (a seated skirt) left the outline as a hairpin flag past the fill
+    // that stuck out (a seated skirt) left the outline as a hairpin flag past the fill. A dense chain (a loft's side)
+    // takes one corner-cutting pass: two made four times the points and the contours most of the path text, so the
+    // 15° pose sweep in render.test.ts ran past its limit on CI
     const d = inkRibbon(
-        chains.map((c) => ({ ...c, pts: chaikin(c.pts) })),
+        chains.map((c) => ({ ...c, pts: chaikin(c.pts, c.pts.length > 12 ? 1 : 2) })),
         ctx.line * ctx.pack.line.silhouette,
     );
     if (!d) return;

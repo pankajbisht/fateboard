@@ -30,24 +30,30 @@ describe('rendering', () => {
         fromRecipe(RECIPES[10], 'elder'),
     ].map((c) => ({ ...c, style: 'cartoon' as const }));
 
-    // one test per body (the same sweep, split so each stays well inside the time limit on a loaded machine)
+    // one test per body and half turn (the same sweep, split so each stays well inside the time limit on a loaded
+    // machine: whole turns ran past it on CI once the manga redraw added parts)
     for (const c of bodies)
-        it(`every pose on the ${c.id}, from every 15° around: finite, every part drawn`, () => {
-            // failures are collected and asserted once: an expect per part was about 1.5 million calls
-            const bad: string[] = [];
-            for (const pose of POSES)
-                for (let yaw = 0; yaw < 360; yaw += 15) {
-                    const m = renderCharacter({ ...c, rig: { pose } }, cam(yaw));
-                    if (!m.viewBox.every(Number.isFinite)) bad.push(`${pose.id} ${yaw} viewBox`);
-                    for (const p of m.parts)
-                        if (/NaN|Infinity/.test(p.d))
-                            bad.push(`${c.id} ${pose.id} ${yaw} ${p.key}`);
-                    const groups = new Set(m.parts.map((p) => p.group));
-                    for (const g of PART_GROUPS)
-                        if (!groups.has(g)) bad.push(`${pose.id} ${yaw} missing ${g}`);
-                }
-            expect(bad).toEqual([]);
-        }, 30000);
+        for (const [from, to] of [
+            [0, 180],
+            [180, 360],
+        ])
+            it(`every pose on the ${c.id}, every 15° from ${from}° to ${to - 15}°: finite, every part drawn`, () => {
+                // failures are collected and asserted once: an expect per part was about 1.5 million calls
+                const bad: string[] = [];
+                for (const pose of POSES)
+                    for (let yaw = from; yaw < to; yaw += 15) {
+                        const m = renderCharacter({ ...c, rig: { pose } }, cam(yaw));
+                        if (!m.viewBox.every(Number.isFinite))
+                            bad.push(`${pose.id} ${yaw} viewBox`);
+                        for (const p of m.parts)
+                            if (/NaN|Infinity/.test(p.d))
+                                bad.push(`${c.id} ${pose.id} ${yaw} ${p.key}`);
+                        const groups = new Set(m.parts.map((p) => p.group));
+                        for (const g of PART_GROUPS)
+                            if (!groups.has(g)) bad.push(`${pose.id} ${yaw} missing ${g}`);
+                    }
+                expect(bad).toEqual([]);
+            }, 30000);
 
     it('parts are drawn far to near; the face only shows when it faces the camera', () => {
         const c = bodies[1];
