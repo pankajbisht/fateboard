@@ -45,7 +45,7 @@ describe('ExampleSlider', () => {
 
         fireEvent.click(button('Next step'));
         expect(picture()).toHaveAccessibleName('The board at step 2');
-        expect(within(slide()).getByText('Draw › Neon · Smoothing')).toBeInTheDocument();
+        expect(within(slide()).getByText('Brush › Neon · Smoothing')).toBeInTheDocument();
         expect(within(slide()).getByTestId('scene-cursor')).toHaveStyle({
             transform: `translate(${neon!.steps[1]!.at![0]}px, ${neon!.steps[1]!.at![1]}px)`,
         });
@@ -93,9 +93,9 @@ describe('ExampleSlider', () => {
         expect(status()).toHaveTextContent('Result');
         expect(button('Next step')).toHaveAttribute('aria-disabled', 'true');
         expect(within(slide()).getByText(neon!.result)).toBeInTheDocument();
-        expect(within(slide()).getByRole('link', { name: /try it: open draw/i })).toHaveAttribute(
+        expect(within(slide()).getByRole('link', { name: /try it: open brush/i })).toHaveAttribute(
             'href',
-            '/draw?panel=draw',
+            '/draw?panel=brush',
         );
     });
 

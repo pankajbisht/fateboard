@@ -40,7 +40,7 @@ test('each page keeps its size; the canvas is the page; clicks hit the shape und
     expect(first.vpt).toEqual([1, 0, 0, 1, 0, 0]);
 
     // page 2 gets a different size: Settings > Canvas size resizes the page that was open
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await page.getByRole('button', { name: 'Add page' }).click();
     await page.waitForTimeout(1500); // autosave: page 2 is the open page
     await page.goto('/setting');
@@ -59,7 +59,7 @@ test('each page keeps its size; the canvas is the page; clicks hit the shape und
     await expect.poll(async () => (await editor.selection()).length).toBe(1);
 
     // back to page 1: its own size again, still identity viewport
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await page.getByRole('button', { name: /Previous page/ }).click();
     await expect.poll(async () => (await geometry(editor)).page).toEqual(first.page);
     await expect.poll(async () => (await geometry(editor)).backstore).toEqual(first.page);

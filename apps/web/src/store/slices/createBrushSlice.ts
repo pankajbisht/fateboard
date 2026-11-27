@@ -1,5 +1,5 @@
 import * as fabric from 'fabric';
-import { closeIfNearStart } from '@/lib/canvas/autoClose';
+import { finishFreehand } from '../brushes/finishFreehand';
 import { drawingState } from '../pencilStyle';
 import { screenScale } from '@/lib/canvas/screenScale';
 import {
@@ -281,8 +281,8 @@ function styleNewPath(path: any, s: any) {
     }
 
     path.set({ perPixelTargetFind: true, targetFindTolerance: 4, isFreehand: true });
-    if (s.autoClose && path instanceof fabric.Path && s.canvas)
-        closeIfNearStart(path as never, Math.max(12 / screenScale(s.canvas), s.width * 1.5));
+    if (path instanceof fabric.Path && s.canvas)
+        finishFreehand(path, s, Math.max(12 / screenScale(s.canvas), s.width * 1.5));
     if (!usesRgbaColor(s.brush)) path.set('opacity', s.brushOpacity); // textures, spray, dots, pattern
 
     const blend = s.blend && s.blend !== 'source-over' ? s.blend : undefined;

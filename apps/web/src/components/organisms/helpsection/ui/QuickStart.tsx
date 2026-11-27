@@ -14,7 +14,7 @@ const STEPS = [
     { id: 'shape', label: 'Add a shape', href: '/draw?panel=shapes' },
     { id: 'text', label: 'Write something', href: '/draw?panel=text' },
     { id: 'style', label: 'Give it a gradient or shadow', href: '/draw?tab=appearance' },
-    { id: 'page', label: 'Add a second page', href: '/draw?panel=Pages' },
+    { id: 'page', label: 'Add a second page', href: '/draw?tab=pages' },
     { id: 'animate', label: 'Make something move', href: '/draw?tab=animate' },
     { id: 'export', label: 'Export your first image', href: '/draw?tab=export' },
 ];

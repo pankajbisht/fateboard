@@ -1,5 +1,5 @@
 import clsx from 'clsx';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useStore } from '@store';
 import { BRUSH_ORDER, brushCategory, getPreset, type BrushId } from '@/store/brushConfig';
 import { BRUSH_CATEGORIES, STAMP_BRUSH_IDS, type BrushCategory } from '@/store/brushLibrary';
@@ -12,21 +12,25 @@ import { PanelSection } from '../../molecules/PanelSection';
 import { BrushPreview } from './BrushPreview';
 import { StampPreview } from './StampPreview';
 import { BrushSettingsSection } from './BrushSettingsSection';
+import { ClassicBrushSettings } from './ClassicBrushSettings';
+import { useBrushSizeKeys } from './useBrushSizeKeys';
 
 const ALL_BRUSHES: BrushId[] = [...BRUSH_ORDER, ...STAMP_BRUSH_IDS];
 
 /**
  * Left rail "Brush" (B): the brush library by category (sketching, inking, manga, painting, watercolour,
  * airbrush, texture, spray, fire, smoke, sparkle, nature, calligraphy) with a search. Each tile shows a sample
- * stroke drawn by the brush's own engine; a click picks the brush and starts painting (Draw tool). Library
- * brushes show their full settings below; size, colour and effects of the classic brushes stay in the Draw
- * panel.
+ * stroke drawn by the brush's own engine; a click picks the brush and starts painting (Draw tool). Below the
+ * library: every setting of the picked brush (library brushes: BrushSettingsSection; classic brushes and the
+ * eraser: ClassicBrushSettings, the former Draw panel). `[` / `]` change the size while it is open.
  */
 export function BrushPickerPanel() {
     const brush = useStore((s) => s.brush);
     const activeTool = useStore((s) => s.activeTool);
     const setBrush = useStore((s) => s.setBrush);
     const setActiveTool = useStore((s) => s.setActiveTool);
+    const canvas = useStore((s) => s.canvas);
+    const initBrush = useStore((s) => s.initBrush);
     const [category, setCategory] = useState<BrushCategory | 'all'>(() => brushCategory(brush));
     const [query, setQuery] = useState('');
 
@@ -38,6 +42,12 @@ export function BrushPickerPanel() {
                 : category === 'all' || brushCategory(b) === category,
         );
     }, [category, query]);
+
+    // (re)apply the brush whenever the canvas instance changes
+    useEffect(() => {
+        initBrush();
+    }, [canvas, initBrush]);
+    useBrushSizeKeys();
 
     const pick = (b: BrushId) => {
         setBrush({ brush: b });
@@ -124,6 +134,7 @@ export function BrushPickerPanel() {
                 )}
             </PanelSection>
             <BrushSettingsSection />
+            <ClassicBrushSettings />
         </>
     );
 }

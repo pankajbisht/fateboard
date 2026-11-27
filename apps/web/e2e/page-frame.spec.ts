@@ -44,7 +44,7 @@ test('portrait page opens taller than the board (top first); frames, crop marks;
         .toBeGreaterThanOrEqual(v.h - 2 * 16 - 2);
     expect((await pageRect(editor)).height).toBeLessThanOrEqual(v.h);
 
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await page.getByRole('button', { name: /Page setup/ }).click();
     await expect(page.getByRole('switch', { name: /Show guides/ })).toHaveAttribute(
         'aria-checked',

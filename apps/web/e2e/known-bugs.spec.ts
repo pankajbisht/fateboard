@@ -25,9 +25,7 @@ test.fail(
         await page.goto('/setting');
         await page.getByRole('radio', { name: 'Dark' }).click();
         await editor.open();
-        await editor.openPanel('Pages');
-        expect(await contrastOf(page, 'section[aria-label="Pages panel"] .text-danger')).toEqual(
-            [],
-        );
+        await editor.openDockTab('Pages');
+        expect(await contrastOf(page, '[data-testid="dock-panel"] .text-danger')).toEqual([]);
     },
 );

@@ -24,6 +24,8 @@ export type SidebarActionItem = {
     /** Keyboard shortcut shown in the tooltip, e.g. 'V'. */
     shortcut?: string;
     disabled?: boolean;
+    /** Neighbours with the same group form a block; the rail draws a separator around it. */
+    group?: string;
 };
 
 export type SidebarPanelItem = {
@@ -36,6 +38,8 @@ export type SidebarPanelItem = {
     shortcut?: string;
     fullSize?: boolean;
     disabled?: boolean;
+    /** Neighbours with the same group form a block; the rail draws a separator around it. */
+    group?: string;
 };
 
 export type SidebarItem = SidebarActionItem | SidebarPanelItem;

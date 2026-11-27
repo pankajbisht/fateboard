@@ -1,3 +1,4 @@
+import { Fragment } from 'react';
 import { Icon } from '@/components/atoms/Icon';
 import {
     activeButton,
@@ -40,31 +41,42 @@ export function SidebarRail({
             // upright phones: a bar under the board that scrolls sideways
             className={`${sideRail} overflow-y-auto border-r ${phoneRailBar} max-sm:overflow-x-auto max-sm:overflow-y-hidden`}
         >
-            {items.map((item) => {
+            {items.map((item, i) => {
                 const active = isPressed ? isPressed(item) : activeId === item.id;
+                const prev = items[i - 1];
+                // a block of grouped items (Pen / Pencil / Brush) gets a line before and after it
+                const split = !!prev && prev.group !== item.group && !!(prev.group || item.group);
 
                 return (
-                    <button
-                        key={item.id}
-                        type="button"
-                        title={item.shortcut ? `${item.label} (${item.shortcut})` : item.label}
-                        aria-label={item.label}
-                        aria-pressed={active}
-                        disabled={item.disabled}
-                        onClick={() => onSelect(item)}
-                        className={[railButtonBase, active ? activeButton : inactiveButton].join(
-                            ' ',
-                        )}
-                    >
-                        {active && (
-                            <span
-                                aria-hidden="true"
-                                className={`absolute left-0 top-2 h-6 w-[3px] rounded-r bg-primary-600 ${phoneActiveBar}`}
+                    <Fragment key={item.id}>
+                        {split && (
+                            <div
+                                role="separator"
+                                className="mx-auto my-1 h-px w-6 shrink-0 bg-line max-sm:mx-1 max-sm:my-auto max-sm:h-6 max-sm:w-px"
                             />
                         )}
+                        <button
+                            type="button"
+                            title={item.shortcut ? `${item.label} (${item.shortcut})` : item.label}
+                            aria-label={item.label}
+                            aria-pressed={active}
+                            disabled={item.disabled}
+                            onClick={() => onSelect(item)}
+                            className={[
+                                railButtonBase,
+                                active ? activeButton : inactiveButton,
+                            ].join(' ')}
+                        >
+                            {active && (
+                                <span
+                                    aria-hidden="true"
+                                    className={`absolute left-0 top-2 h-6 w-[3px] rounded-r bg-primary-600 ${phoneActiveBar}`}
+                                />
+                            )}
 
-                        <Icon name={item.icon} />
-                    </button>
+                            <Icon name={item.icon} />
+                        </button>
+                    </Fragment>
                 );
             })}
 

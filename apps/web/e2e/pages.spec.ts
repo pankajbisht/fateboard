@@ -3,7 +3,7 @@ import { test, expect } from './fixtures';
 
 test.describe('pages', () => {
     test('add a page and move between pages', async ({ editor, page }) => {
-        await editor.openPanel('Pages');
+        await editor.openDockTab('Pages');
         await expect(page.getByText('1 of 1')).toBeVisible();
         await page.getByRole('button', { name: 'Add page' }).click();
         await expect(page.getByText('2 of 2')).toBeVisible();
@@ -13,7 +13,7 @@ test.describe('pages', () => {
 
     test('each page keeps its own objects', async ({ editor, page }) => {
         await editor.addShape('Rectangle');
-        await editor.openPanel('Pages');
+        await editor.openDockTab('Pages');
         await page.getByRole('button', { name: 'Add page' }).click();
         await expect.poll(async () => (await editor.objects()).length).toBe(0);
         await page.getByRole('button', { name: /Previous page/ }).click();
@@ -22,14 +22,14 @@ test.describe('pages', () => {
 
     test('Clear page asks first, then empties the page', async ({ editor, page }) => {
         await editor.addShape('Rectangle');
-        await editor.openPanel('Pages');
+        await editor.openDockTab('Pages');
         await page.getByRole('button', { name: 'Clear page' }).click();
         await page.getByRole('button', { name: 'Clear page' }).last().click(); // dialog confirm
         await expect.poll(async () => (await editor.objects()).length).toBe(0);
     });
 
     test('rename a page from its card; the open page is marked', async ({ editor, page }) => {
-        await editor.openPanel('Pages');
+        await editor.openDockTab('Pages');
         await page.getByRole('button', { name: 'Add page' }).click();
         const first = page.getByRole('listitem', { name: 'Page 1' });
         await first.hover(); // other pages show their actions on hover / focus
@@ -55,15 +55,15 @@ test.describe('pages', () => {
                 await editor.open();
                 await expect(page.locator('html')).toHaveClass(/\bdark\b/);
             }
-            await editor.openPanel('Pages');
+            await editor.openDockTab('Pages');
             await page.getByRole('button', { name: 'Add page' }).click();
             await expect(page.getByText('2 of 2')).toBeVisible();
             const { violations } = await new AxeBuilder({ page })
-                .include('section[aria-label="Pages panel"]')
+                .include('[data-testid="dock-panel"]')
                 // shared styles, open in every panel: BUG-200 section titles, BUG-201 danger
                 // text in dark mode (expected failures in known-bugs.spec.ts)
-                .exclude('section[aria-label="Pages panel"] .text-label')
-                .exclude('section[aria-label="Pages panel"] .text-danger')
+                .exclude('[data-testid="dock-panel"] .text-label')
+                .exclude('[data-testid="dock-panel"] .text-danger')
                 .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
                 .analyze();
             expect(violations.map((v) => `${v.id}: ${v.nodes[0]?.target.join(' ')}`)).toEqual([]);

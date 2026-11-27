@@ -74,7 +74,7 @@ test.describe('undo / redo', () => {
     }) => {
         await editor.addShape('Rectangle');
         await settle(editor);
-        await editor.openPanel('Pages');
+        await editor.openDockTab('Pages');
         await page.getByRole('button', { name: 'Add page' }).click();
         await expect.poll(() => count(editor)).toBe(0);
         await editor.addShape('Circle');
@@ -86,7 +86,7 @@ test.describe('undo / redo', () => {
         await page.waitForTimeout(400);
         expect(await count(editor)).toBe(0);
 
-        await editor.openPanel('Pages');
+        await editor.openDockTab('Pages');
         await page.getByRole('button', { name: /Previous page/ }).click();
         await expect.poll(() => count(editor)).toBe(1);
         await undoKey(editor); // page 1 history still there

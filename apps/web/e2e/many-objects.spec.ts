@@ -72,7 +72,7 @@ test('Layers panel keeps a long list usable while mounting only part of it', asy
     for (let i = 0; i < COPIES; i++) await page.keyboard.press('ControlOrMeta+d');
     await expect.poll(async () => (await editor.objects()).length).toBe(COPIES + 1);
 
-    await editor.openPanel('Layers');
+    await editor.openDockTab('Layers');
     const list = page.getByRole('listbox', { name: 'Layers' });
     const rows = list.getByRole('option');
     await expect(rows.first()).toBeVisible();

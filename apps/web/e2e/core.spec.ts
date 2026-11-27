@@ -86,7 +86,7 @@ test.describe('core editing', () => {
     });
 
     test('freehand drawing adds a stroke; undo removes it', async ({ editor, page }) => {
-        await editor.openPanel('Draw');
+        await editor.openPanel('Brush');
         const box = await settledBox(editor); // opening the panel animates the layout
         await page.mouse.move(box.x + 60, box.y + 60);
         await page.mouse.down();

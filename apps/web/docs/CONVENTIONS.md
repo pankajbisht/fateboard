@@ -141,7 +141,7 @@ A tool is a value of `activeTool` (Canvas slice) that changes pointer behaviour.
    options.
 4. Keyboard shortcut: add a command `{ id, label, shortcut: shortcut('⌘X', 'Ctrl+x'), handler: ({get}) => get().setActiveTool('<tool>') }`
    to a `components/config/toolbars/ui/*Config.tsx` that is part of `commandRegistry`. Make sure the shortcut is free:
-   check all `*BarConfig.tsx`, the Animation panel (`animation/animation.logic.ts` `keyCommand`), `DrawPanel` (`[`/`]`), `PagePanel` (PageUp/Down),
+   check all `*BarConfig.tsx`, the Animation panel (`animation/animation.logic.ts` `keyCommand`), `useBrushSizeKeys` (Brush panel, `[`/`]`), `PagePanel` (PageUp/Down),
    `ExtraBar` (Ctrl+' / Ctrl+;), `createNodeEditorSlice`.
 5. Tests: a unit test for `setActiveTool('<tool>')` flags and an E2E for the pointer flow.
 6. Update CANVAS.md (events) and COMPONENTS.md.

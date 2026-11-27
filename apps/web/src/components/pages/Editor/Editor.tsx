@@ -57,7 +57,9 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
 
     // a link from Help can name the panel to open: /draw?panel=layers
     const [searchParams] = useSearchParams();
-    const linkedPanel = searchParams.get('panel');
+    // the Draw panel merged into Brush (2026-11-28): old ?panel=draw links open Brush
+    const linkedParam = searchParams.get('panel');
+    const linkedPanel = linkedParam === 'draw' ? 'brush' : linkedParam;
 
     const appliedCanvasRef = useRef<typeof canvas>(null);
     const linkedDrawDone = useRef(false);
@@ -96,10 +98,10 @@ export default function EditorPage({ onToolChange }: EditorPageProps = {}) {
         setActiveTool(activeTool);
     }, [canvas, activeTool, setActiveTool]);
 
-    // /draw?panel=draw arrives ready to draw. Text is left out on purpose: clicking Text adds a text
+    // /draw?panel=brush (or the old ?panel=draw) arrives ready to draw. Text is left out on purpose: clicking Text adds a text
     // box, and following a link must not change the document.
     useEffect(() => {
-        if (!canvas || linkedPanel !== 'draw' || linkedDrawDone.current) return;
+        if (!canvas || linkedPanel !== 'brush' || linkedDrawDone.current) return;
         linkedDrawDone.current = true;
         setActiveTool('draw');
     }, [canvas, linkedPanel, setActiveTool]);

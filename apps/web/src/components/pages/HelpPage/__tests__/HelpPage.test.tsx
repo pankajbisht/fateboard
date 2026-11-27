@@ -83,7 +83,7 @@ describe('HelpPage', () => {
         open('/help?topic=layers');
         expect(screen.getByRole('link', { name: /open layers/i })).toHaveAttribute(
             'href',
-            '/draw?panel=layers',
+            '/draw?tab=layers',
         );
     });
 

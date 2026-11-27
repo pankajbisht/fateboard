@@ -73,7 +73,7 @@ test('hide a layer: its shapes leave the canvas; new shapes go to the active lay
     await place(page, 0, { left: 100, top: 100, w: 200, h: 200 }, '#ff0000');
     await expect.poll(() => pixelAt(page, 200, 200)).toEqual(RED);
 
-    await editor.openPanel('Layers');
+    await editor.openDockTab('Layers');
     const list = page.getByRole('list', { name: 'Page layers' });
     await page.getByRole('button', { name: 'Hide Layer 1' }).click();
     await expect.poll(() => pixelAt(page, 200, 200)).not.toEqual(RED);
@@ -101,14 +101,14 @@ test('hide a layer: its shapes leave the canvas; new shapes go to the active lay
 test('clipping in real pixels, and layers survive a reload', async ({ editor, page }) => {
     await editor.addShape('Rectangle');
     await place(page, 0, { left: 100, top: 100, w: 200, h: 200 }, '#ff0000');
-    await editor.openPanel('Layers');
+    await editor.openDockTab('Layers');
     await page.getByRole('button', { name: 'New layer' }).click();
     await editor.addShape('Rectangle');
     // half over the red square, half outside it
     await place(page, 1, { left: 200, top: 100, w: 300, h: 200 }, '#008000');
     await expect.poll(() => pixelAt(page, 400, 200)).toEqual(GREEN);
 
-    await editor.openPanel('Layers');
+    await editor.openDockTab('Layers');
     await page.getByRole('switch', { name: 'Clip to layer below' }).click();
     await expect.poll(() => pixelAt(page, 250, 200)).toEqual(GREEN); // inside the base: shown
     await expect.poll(() => pixelAt(page, 400, 200)).not.toEqual(GREEN); // outside: clipped away

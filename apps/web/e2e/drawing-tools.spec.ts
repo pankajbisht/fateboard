@@ -268,3 +268,53 @@ test('Laser: a red trail that fades; nothing is added to the board', async ({ ed
     expect(await count(editor)).toBe(0);
     await expect(page.getByRole('button', { name: 'Undo' }).first()).toBeDisabled();
 });
+
+test('Pencil › Mode › Laser switches to the laser; another mode goes back to the Pencil', async ({
+    editor,
+    page,
+}) => {
+    await editor.openPanel('Pencil');
+    await expect.poll(() => tool(editor)).toBe('pencil');
+    const mode = page.getByRole('combobox', { name: 'Pencil mode' });
+    await mode.click();
+    await page.getByRole('option', { name: /Laser/ }).click();
+    await expect.poll(() => tool(editor)).toBe('laser');
+    await expect(page.getByRole('button', { name: 'Pencil', exact: true })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+    );
+    await mode.click();
+    await page.getByRole('option', { name: /Highlighter/ }).click();
+    await expect.poll(() => tool(editor)).toBe('pencil');
+    await expect
+        .poll(() => editor.state<{ mode: string }>('pencilStyle'))
+        .toMatchObject({ mode: 'highlighter' });
+});
+
+test('Pencil › Smart shape: a rough circle becomes one clean circle path, one undo step', async ({
+    editor,
+    page,
+}) => {
+    await editor.openPanel('Pencil');
+    await page.getByRole('combobox', { name: 'Pencil mode' }).click();
+    await page.getByRole('option', { name: /Smart shape/ }).click();
+    const box = await editor.settledCanvasBox();
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    await page.mouse.move(cx + 80, cy);
+    await page.mouse.down();
+    for (let i = 1; i <= 40; i++) {
+        const a = (i / 40) * Math.PI * 2;
+        const r = 80 + (i % 3) * 2;
+        await page.mouse.move(cx + r * Math.cos(a), cy + r * Math.sin(a));
+    }
+    await page.mouse.up();
+    await expect.poll(() => count(editor)).toBe(1);
+    const curves = await page.evaluate(() => {
+        const o = (window.__fateboard!.state('canvas') as any).getObjects()[0];
+        return (o.path as (string | number)[][]).filter((c) => c[0] === 'C').length;
+    });
+    expect(curves).toBe(4);
+    await page.keyboard.press('ControlOrMeta+z');
+    await expect.poll(() => count(editor)).toBe(0);
+});

@@ -103,7 +103,7 @@ Severity: **P1** = breaks a project rule or hides bugs from the compiler; **P2**
 - **Evidence:** `clamp` defined in 14 files (`ColorPickerPopover`, `CanvasBoard`, `ExportCanvas`,
   `GradientTool`, `colorMath`, `brushConfig`, 5 slices, …); `uid`, `typeOf`, `num` 4 times each. Local
   `IconButton` in `LayersPanel.tsx:141` next to `atoms/IconButton.tsx`; local `Section`/`Field` in
-  `DrawPanel.tsx:38`, `Preferences.tsx:61` next to `PanelSection` / `molecules/Field`.
+  `DrawPanel.tsx:38` (file removed 2026-11-28), `Preferences.tsx:61` next to `PanelSection` / `molecules/Field`.
 - **Fix:** `src/lib/utils/math.ts` (`clamp`, `round`, …) and use the atoms; do it inside the refactor of each file,
   not as a repo-wide sweep.
 

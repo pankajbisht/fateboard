@@ -1,5 +1,6 @@
 import { InteractiveFabricObject, type FabricObject } from 'fabric';
 import { BRAND } from '@/lib/theme';
+import { SCALING_DEFAULTS } from '@/lib/canvas/handleSize';
 
 /** Current value of a CSS token on <html>, or the fallback (tests / SSR / before CSS loads). */
 const token = (name: string, fallback: string) => {
@@ -26,7 +27,7 @@ export function selectionChrome() {
 
 /** Fabric's look at app start: defaults for every object created from now on. */
 export function applyFabricChrome(): void {
-    Object.assign(InteractiveFabricObject.ownDefaults, selectionChrome());
+    Object.assign(InteractiveFabricObject.ownDefaults, selectionChrome(), SCALING_DEFAULTS);
 }
 
 /** After a color theme change: new defaults + restyle the objects already on the canvas. */

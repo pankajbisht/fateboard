@@ -171,14 +171,14 @@ const PANEL_KEYS: PanelKey[] = [
         label: 'Smaller brush',
         category: 'Draw',
         code: 'BracketLeft',
-        where: 'While the Draw panel is open',
+        where: 'While the Brush panel is open',
     },
     {
         id: 'brush-bigger',
         label: 'Bigger brush',
         category: 'Draw',
         code: 'BracketRight',
-        where: 'While the Draw panel is open',
+        where: 'While the Brush panel is open',
     },
     {
         id: 'anim-play',

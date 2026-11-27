@@ -15,7 +15,8 @@ const SOURCES = import.meta.glob<string>(
 );
 
 const PANELS = [
-    'organisms/DrawPanel.tsx',
+    'organisms/brush/ClassicBrushSettings.tsx',
+    'organisms/brush/BrushShadowSection.tsx',
     'organisms/ShapePanel.tsx',
     'organisms/TextPanel.tsx',
     'organisms/effects/ui/TemplateGallery.tsx',

@@ -7,7 +7,24 @@
 import { creationScaleOf } from '@/lib/canvas/creationScale';
 import { sprayState } from './sprayStyle';
 
+/**
+ * Pencil modes (the Mode menu of the Pencil bar). Laser is listed there too but is its own tool
+ * (`activeTool: 'laser'`, K): it is never stored here.
+ */
+export type PencilMode = 'pencil' | 'highlighter' | 'dashed' | 'shape' | 'eraser';
+export const PENCIL_MODES: { value: PencilMode | 'laser'; label: string }[] = [
+    { value: 'pencil', label: 'Pencil' },
+    { value: 'highlighter', label: 'Highlighter' },
+    { value: 'dashed', label: 'Dashed' },
+    { value: 'shape', label: 'Smart shape' },
+    { value: 'eraser', label: 'Eraser' },
+    { value: 'laser', label: 'Laser' },
+];
+const STORED_MODES: readonly string[] = ['pencil', 'highlighter', 'dashed', 'shape', 'eraser'];
+
 export type PencilStyle = {
+    /** What a stroke does: a line, a highlight, dashes, a clean shape or an erase. */
+    mode: PencilMode;
     /** Line width at 100 % (screen px on the design board, scene px on the whiteboard). */
     width: number;
     /** 0.05 … 1 */
@@ -21,6 +38,7 @@ export type PencilStyle = {
 };
 
 export const DEFAULT_PENCIL_STYLE: PencilStyle = {
+    mode: 'pencil',
     width: 2,
     opacity: 1,
     smoothing: 4,
@@ -45,6 +63,9 @@ export function sanitizePencilStyle(
 ): PencilStyle {
     const { width, opacity, smoothing } = PENCIL_LIMITS;
     return {
+        mode: STORED_MODES.includes(patch.mode as string)
+            ? (patch.mode as PencilMode)
+            : (base.mode ?? 'pencil'),
         width: clamp(Math.round(finite(patch.width, base.width)), width.min, width.max),
         opacity: clamp(finite(patch.opacity, base.opacity), opacity.min, opacity.max),
         smoothing: clamp(finite(patch.smoothing, base.smoothing), smoothing.min, smoothing.max),
@@ -55,22 +76,24 @@ export function sanitizePencilStyle(
 
 type DrawingSettings = Record<string, unknown> & { activeTool?: unknown; pencilStyle?: unknown };
 
-/** The brush settings of the Pencil: the drawing colour + the Pencil style, no Draw effects. */
+/** The brush settings of the Pencil: the drawing colour + the Pencil style and mode, no Draw effects. */
 export const pencilState = <S extends DrawingSettings>(s: S): S => {
-    const style = (s.pencilStyle as PencilStyle | undefined) ?? DEFAULT_PENCIL_STYLE;
-    return {
+    const style = { ...DEFAULT_PENCIL_STYLE, ...(s.pencilStyle as Partial<PencilStyle>) };
+    const mode = style.mode;
+    const width = Math.max(
+        1,
+        style.width * creationScaleOf(s as Parameters<typeof creationScaleOf>[0]),
+    );
+    const base = {
         ...s,
         // pressure: the variable-width engine, width from the stylus only (not from speed)
-        brush: style.pressure ? 'ink' : 'pencil',
+        brush: style.pressure && mode === 'pencil' ? 'ink' : 'pencil',
         taper: 0,
         speedWidth: false,
-        width: Math.max(
-            1,
-            style.width * creationScaleOf(s as Parameters<typeof creationScaleOf>[0]),
-        ),
+        width,
         brushOpacity: style.opacity,
         smoothing: style.smoothing,
-        autoClose: style.autoClose,
+        autoClose: style.autoClose && mode === 'pencil',
         lineCap: 'round',
         lineJoin: 'round',
         lineStyle: 'solid',
@@ -82,8 +105,20 @@ export const pencilState = <S extends DrawingSettings>(s: S): S => {
         symmetry: 'none',
         fillEnabled: false,
     };
+    if (mode === 'highlighter')
+        return {
+            ...base,
+            width: Math.max(16, width * 6),
+            brushOpacity: Math.min(style.opacity, 0.4),
+            blend: 'multiply',
+            lineCap: 'butt',
+        };
+    if (mode === 'dashed') return { ...base, lineStyle: 'dashed' };
+    if (mode === 'eraser')
+        return { ...base, brush: 'eraser', eraserMode: 'stroke', width: Math.max(12, width * 4) };
+    return base; // pencil, shape (the recognizer runs when the stroke is finished)
 };
 
-/** The settings the canvas draws with: the Draw panel's, or the Pencil's / Spray's while active. */
+/** The settings the canvas draws with: the Brush panel's, or the Pencil's / Spray's while active. */
 export const drawingState = <S extends DrawingSettings>(s: S): S =>
     s.activeTool === 'pencil' ? pencilState(s) : s.activeTool === 'spray' ? sprayState(s) : s;

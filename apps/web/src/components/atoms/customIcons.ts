@@ -62,7 +62,7 @@ export const PathOpenIcon = icon('PathOpen', [
     ['rect', { x: '13.5', y: '4.94', width: '4', height: '4', rx: '0.5', key: 'n2' }],
 ]);
 
-/** Draw panel (brush settings): a stroke above a slider. */
+/** Brush settings (Help 'Draw' topic): a stroke above a slider. */
 export const BrushSettingsIcon = icon('BrushSettings', [
     ['path', { d: 'M3 9c3-5 5 3 8-1s5-5 9 0', key: 'stroke' }],
     ['path', { d: 'M3 17h4', key: 't1' }],
