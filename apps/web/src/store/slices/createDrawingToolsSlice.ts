@@ -4,7 +4,8 @@
  * Pen (Figma / Illustrator): see `drawingTools/penTool.ts`. Changing tool keeps a path that has
  * two points or more.
  *
- * Laser (Excalidraw / FigJam): drag to draw a red trail that fades within `LASER_LIFE_MS`. It is
+ * Laser (Excalidraw / FigJam): drag to draw a smooth red trail (coalesced samples, Chaikin-rounded, one
+ * filled shape per stroke) whose tail tapers away within `LASER_LIFE_MS`. It is
  * painted on the top canvas only: never part of the document, the history or an export.
  *
  * Both preview on `canvas.contextTop` (no helper objects on the canvas). Sizes are SCREEN px
@@ -18,9 +19,11 @@ import type { PenPoint } from '@/lib/canvas/penPath';
 import {
     LASER_LIFE_MS,
     laserAlpha,
+    laserOutline,
     liveLaserStrokes,
     type LaserStroke,
 } from '@/lib/canvas/laserTrail';
+import { coalescedScenePoints } from '@/lib/canvas/penInput';
 import { screenScale } from '@/lib/canvas/screenScale';
 import { createPenTool } from './drawingTools/penTool';
 import {
@@ -108,21 +111,24 @@ export const createDrawingToolsSlice: SliceCreator<DrawingToolsSlice> = (set, ge
     const paintLaser = (canvas: fabric.Canvas, now: number) =>
         withSceneContext(canvas, (ctx) => {
             const z = screenScale(canvas);
-            ctx.lineWidth = LASER_WIDTH / z;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+            const width = LASER_WIDTH / z;
+            ctx.fillStyle = `rgb(${LASER_COLOR})`;
             ctx.shadowColor = `rgba(${LASER_COLOR}, 0.6)`;
             ctx.shadowBlur = 8;
             for (const stroke of strokes) {
-                for (let i = 1; i < stroke.length; i++) {
-                    const a = stroke[i - 1];
-                    const b = stroke[i];
-                    ctx.strokeStyle = `rgba(${LASER_COLOR}, ${laserAlpha(now - b.t)})`;
-                    ctx.beginPath();
-                    ctx.moveTo(a.x, a.y);
-                    ctx.lineTo(b.x, b.y);
-                    ctx.stroke();
-                }
+                // one filled, tapered shape per stroke: no seams or beads where segments meet
+                const { left, right } = laserOutline(stroke, now, width);
+                ctx.beginPath();
+                ctx.moveTo(left[0].x, left[0].y);
+                for (let i = 1; i < left.length; i++) ctx.lineTo(left[i].x, left[i].y);
+                for (let i = right.length - 1; i >= 0; i--) ctx.lineTo(right[i].x, right[i].y);
+                ctx.closePath();
+                ctx.fill();
+                // round head
+                const head = stroke[stroke.length - 1];
+                ctx.beginPath();
+                ctx.arc(head.x, head.y, (width / 2) * laserAlpha(now - head.t), 0, Math.PI * 2);
+                ctx.fill();
             }
         });
 
@@ -157,7 +163,13 @@ export const createDrawingToolsSlice: SliceCreator<DrawingToolsSlice> = (set, ge
         };
         const onMove = (opt: Pointer) => {
             const p = scenePointOf(opt);
-            if (laserDown && p) add(p, false);
+            if (!laserDown || !p) return;
+            // the samples the browser merged into this move: a fast flick stays a curve, not a zigzag
+            const minGap = 0.5 / screenScale(canvas);
+            for (const q of [...coalescedScenePoints(canvas, opt.e), p]) {
+                const last = strokes[strokes.length - 1]?.at(-1);
+                if (!last || Math.hypot(q.x - last.x, q.y - last.y) >= minGap) add(q, false);
+            }
         };
         const onUp = () => {
             laserDown = false;
