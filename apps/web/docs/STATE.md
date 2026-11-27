@@ -503,7 +503,8 @@ target is in a `role="dialog"` (toolbar popovers) are left alone (BUG-202).
 as the node tool). Pen: click = corner, drag = smooth point (`mirrorHandle`), click the first point = closed,
 Enter / Escape / double-click = open, Backspace / Delete = last point off (a capture-phase key listener stops the
 event, so it never deletes the selection). Leaving the Pen keeps a path of two points or more. Laser: drag draws
-strokes with timestamps, a `requestAnimationFrame` loop fades them (`LASER_LIFE_MS` = 1000) and stops when none are
+strokes with timestamps (coalesced pointer samples via `penInput`, sub-pixel repeats skipped), painted as one
+filled shape per stroke (`laserOutline`: Chaikin-smoothed, tapering to nothing as points age), a `requestAnimationFrame` loop fades them (`LASER_LIFE_MS` = 1000) and stops when none are
 left; Escape = Select. Both paint only on `canvas.contextTop` in scene space (sizes in screen px via `screenScale`):
 no helper objects, nothing in history, autosave or exports.
 **Depends on:** Canvas (`canvas`, `activeTool`, `setActiveTool`, `setToolbar`), Page (`boardMode`, `pageWidth`,
