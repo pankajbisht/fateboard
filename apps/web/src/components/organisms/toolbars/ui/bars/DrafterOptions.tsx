@@ -5,7 +5,7 @@ import { Select } from '@/components/atoms/Select';
 import { PaintTargetSwatch } from '@/components/molecules/PaintTargetSwatch';
 import { ANGLE_STEPS, ISO_PEN_WIDTHS_MM, type DrafterMode } from '@/lib/canvas/drafter';
 import type { DrafterStyle } from '@/store/slices/paintTools/paintToolStyles';
-import { Bar, Hint, Key } from './drawToolParts';
+import { Bar, Hint, Key, ALT } from './drawToolParts';
 
 const MODES: { value: DrafterMode; label: string }[] = [
     { value: 'line', label: 'Line' },
@@ -67,7 +67,7 @@ export function DrafterOptions() {
                 options={ISO_PEN_WIDTHS_MM.map((v) => ({ value: v, label: `${v} mm` }))}
             />
             <Hint>
-                <Key>Alt</Key> free angle · starts snap to line ends
+                <Key>{ALT}</Key> free angle · starts snap to line ends
             </Hint>
         </Bar>
     );

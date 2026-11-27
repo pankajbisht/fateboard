@@ -12,7 +12,7 @@ import { BrushOptions } from './BrushOptions';
 
 /**
  * The property bar under the command bar (Illustrator's control bar): the active tool's options while Pen
- * (P), Pencil (Shift + P), Spray (Shift + B), Copy spray (Shift + S), Paint bucket (G), Lasso (L), Drafter (D), a brush or the
+ * (P), Pencil (Shift + P), Spray (Shift + B; Copy mode = CopySprayOptions), Paint bucket (G), Lasso (L), Drafter (D), a brush or the
  * eraser is active, else the selection's X / Y / W / H. Every bar starts with its icon + label. Colors come
  * from the dock palette (`PaintTargetSwatch`); each change applies to the next path / stroke.
  */

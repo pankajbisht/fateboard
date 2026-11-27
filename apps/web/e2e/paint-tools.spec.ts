@@ -251,15 +251,19 @@ test('Deep zoom: 3200 % draws only the visible window, sharp, and clicks still h
         .toBe(false);
 });
 
-test('Copy spray sprays the selection along a drag as one group; one undo removes it', async ({
+test('Spray in Copy mode sprays the selection along a drag as one group; one undo removes it', async ({
     editor,
     page,
 }) => {
     await editor.addShape('Rectangle');
     expect((await editor.selection()).length).toBe(1);
-    await page.keyboard.press('Shift+S');
+    await page.keyboard.press('Shift+B');
+    await expect.poll(() => tool(editor)).toBe('spray');
+    const bar = page.getByRole('toolbar', { name: 'Spray options' });
+    await bar.getByRole('combobox', { name: 'Spray mode' }).click();
+    await page.getByRole('option', { name: /Copy/ }).click();
     await expect.poll(() => tool(editor)).toBe('copySpray');
-    await expect(page.getByRole('toolbar', { name: 'Copy spray options' })).toBeVisible();
+    await expect(bar.getByRole('slider', { name: 'Spread' })).toBeVisible();
     const p = await at(editor);
     await drag(editor, p(0.1, 0.85), p(0.9, 0.85));
     await expect.poll(() => count(editor)).toBe(2);
@@ -269,4 +273,36 @@ test('Copy spray sprays the selection along a drag as one group; one undo remove
     await expect.poll(() => tool(editor)).toBe('select');
     await page.keyboard.press('ControlOrMeta+z');
     await expect.poll(() => count(editor)).toBe(1);
+    // Spray reopens in the mode used last
+    await page.keyboard.press('Shift+B');
+    await expect.poll(() => tool(editor)).toBe('copySpray');
+});
+
+test('Spray in Copy mode without a selection: click a shape to pick it, then drag to spray it', async ({
+    editor,
+    page,
+}) => {
+    await editor.addShape('Rectangle');
+    const box = (await editor.canvas.boundingBox())!;
+    const b = await page.evaluate(() => window.__fateboard!.bounds(0));
+    const k = box.width / b.canvasWidth;
+    await editor.clickEmptyCanvas(); // nothing selected
+    expect((await editor.selection()).length).toBe(0);
+    await page.keyboard.press('Shift+B');
+    const bar = page.getByRole('toolbar', { name: 'Spray options' });
+    await bar.getByRole('combobox', { name: 'Spray mode' }).click();
+    await page.getByRole('option', { name: /Copy/ }).click();
+    await expect(bar.getByRole('status')).toHaveText('Click an object to spray copies of it');
+    await page.mouse.click(box.x + (b.left + b.width / 2) * k, box.y + (b.top + b.height / 2) * k);
+    await expect(bar.getByRole('status')).toContainText('Spraying');
+    expect(await count(editor)).toBe(1); // picking adds nothing
+    const p = await at(editor);
+    const [cx, cy] = p(0.7, 0.8);
+    await page.mouse.click(cx, cy); // a click places one copy, centred under the pointer
+    await expect.poll(() => count(editor)).toBe(2);
+    const c = await page.evaluate(() => window.__fateboard!.bounds(1));
+    expect(Math.abs(box.x + (c.left + c.width / 2) * k - cx)).toBeLessThan(3);
+    expect(Math.abs(box.y + (c.top + c.height / 2) * k - cy)).toBeLessThan(3);
+    await drag(editor, p(0.1, 0.9), p(0.9, 0.9));
+    await expect.poll(() => count(editor)).toBe(3);
 });

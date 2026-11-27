@@ -69,7 +69,7 @@ function setup(objects: fabric.FabricObject[] = []) {
     return { h, canvas, setActiveTool, showToast, choose, added };
 }
 
-describe('Copy spray (Shift + S)', () => {
+describe('Copy spray (Spray › Copy mode)', () => {
     afterEach(() => vi.restoreAllMocks());
 
     it('sanitises its settings', () => {
@@ -194,15 +194,49 @@ describe('Copy spray (Shift + S)', () => {
         error.mockRestore();
     });
 
-    it('without a selection: a toast, nothing added', async () => {
+    it('without a selection: a click on empty board asks for an object, nothing added', async () => {
         const { h, canvas, showToast, choose, added } = setup([rect(0, 0)]);
         await choose();
-        canvas.fire('mouse:down', { e: { button: 0 }, scenePoint: { x: 10, y: 10 } });
-        canvas.fire('mouse:up', { e: {}, scenePoint: { x: 10, y: 10 } });
+        expect(h.get().copySpraySource).toBeNull();
+        canvas.fire('mouse:down', { e: { button: 0 }, scenePoint: { x: 300, y: 300 } });
+        canvas.fire('mouse:up', { e: {}, scenePoint: { x: 300, y: 300 } });
         await tick();
-        expect(showToast).toHaveBeenCalledWith({ message: expect.stringMatching(/select/i) });
+        expect(showToast).toHaveBeenCalledWith({
+            message: expect.stringMatching(/click an object/i),
+        });
         expect(await h.get().sprayCopies([dab(1, 1)])).toBe(0);
         expect(added()).toHaveLength(0);
+    });
+
+    it('without a selection: clicking an object makes it the source, then a drag sprays it', async () => {
+        const a = rect(0, 0, { name: 'Star' });
+        a.setCoords();
+        const { h, canvas, showToast, choose, added } = setup([a]);
+        await choose();
+        canvas.fire('mouse:down', { e: { button: 0 }, scenePoint: { x: 20, y: 20 } });
+        canvas.fire('mouse:up', { e: {}, scenePoint: { x: 20, y: 20 } });
+        expect(h.get().copySpraySource).toBe('Star');
+        expect(showToast).not.toHaveBeenCalled();
+        expect(added()).toHaveLength(0); // the pick click sprays nothing
+        expect(await h.get().sprayCopies([dab(200, 200)])).toBe(1);
+        expect(centre(added()[0])).toEqual({ x: 200, y: 200 });
+    });
+
+    it('Alt + click swaps the source; the bar label follows', async () => {
+        const a = rect(0, 0);
+        const b = rect(100, 0, { fill: '#00ff00' });
+        [a, b].forEach((o) => o.setCoords());
+        const { h, canvas, choose, added } = setup([a, b]);
+        canvas.setActiveObject(a);
+        await choose();
+        expect(h.get().copySpraySource).toBe('Rect');
+        canvas.fire('mouse:down', {
+            e: { button: 0, altKey: true },
+            scenePoint: { x: 120, y: 20 },
+        });
+        canvas.fire('mouse:up', { e: {}, scenePoint: { x: 120, y: 20 } });
+        expect(await h.get().sprayCopies([dab(300, 300)])).toBe(1);
+        expect(added()[0].fill).toBe('#00ff00');
     });
 
     it('adds nothing while the page is switching', async () => {
@@ -277,5 +311,6 @@ describe('Copy spray (Shift + S)', () => {
         await tick();
         expect(added()).toHaveLength(0);
         expect(await h.get().sprayCopies([dab(10, 10)])).toBe(0);
+        expect(h.get().copySpraySource).toBeNull();
     });
 });

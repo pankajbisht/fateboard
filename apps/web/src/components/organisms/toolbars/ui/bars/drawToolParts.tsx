@@ -7,6 +7,7 @@ import { Slider } from '@/components/atoms/Slider';
 import { Icon, type IconName } from '@/components/atoms/Icon';
 import { Select, type SelectOption } from '@/components/atoms/Select';
 import { Tooltip } from '@/components/molecules/Tooltip';
+import { shortcut } from '@/lib/utils/isMac';
 
 export function Bar({
     label,
@@ -39,6 +40,10 @@ export function Bar({
         </div>
     );
 }
+
+/** Modifier names for the tips, the way this platform labels them (⌥ / ⇧ on a Mac). */
+export const ALT = shortcut('⌥', 'Alt');
+export const SHIFT = shortcut('⇧', 'Shift');
 
 export const Key = ({ children }: { children: ReactNode }) => (
     <kbd className="rounded-sm border border-line-strong bg-surface-muted px-1 font-sans text-[10px] font-semibold text-ink">

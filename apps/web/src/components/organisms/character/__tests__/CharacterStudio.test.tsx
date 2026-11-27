@@ -6,6 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useStore } from '@store';
+import { bodyStyleEdit } from '@/character/studio/edit';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { characterStorage } from '@/lib/storage';
 import CharacterStudio from '../CharacterStudio';
@@ -152,6 +153,26 @@ describe('art styles', () => {
         // manga screentone is a pattern in the studio view
         expect(document.querySelector('pattern')).not.toBeNull();
         expect(document.querySelector('path[fill^="url(#"]')).not.toBeNull();
+    });
+});
+
+describe('classic in the art style menu', () => {
+    it('Classic switches to the classic body (stand pose); an art style brings manga back', async () => {
+        await openMeera();
+        const c = () => useStore.getState().studioCharacter!;
+        const style = c().style;
+        const menu = () => screen.getByRole('combobox', { name: 'Art style' });
+        fireEvent.click(menu());
+        fireEvent.click(screen.getByRole('option', { name: 'Classic' }));
+        expect(c().body.bodyStyle).toBe('classic');
+        expect(c().style).toBe(style);
+        expect(c().rig.pose.id).toBe('stand');
+        expect(menu().textContent).toContain('Classic');
+        fireEvent.click(menu());
+        fireEvent.click(screen.getByRole('option', { name: 'Webtoon' }));
+        expect(c().body.bodyStyle).toBe('manga');
+        expect(c().style).toBe('webtoon');
+        expect(c().rig.pose.id).toBe('manga-idle');
     });
 });
 
@@ -420,22 +441,23 @@ describe('wardrobe', () => {
 });
 
 describe('body style', () => {
-    it('new characters are manga; switches to classic and back; the variant shows only for manga; both side by side', async () => {
+    it('new characters are manga; only the variant shows, no classic option', async () => {
         await openMeera();
         const c = () => useStore.getState().studioCharacter!;
         expect(c().body.bodyStyle).toBe('manga');
-        expect(screen.getByRole('combobox', { name: 'Manga variant' })).toBeTruthy();
-        expect(screen.getByRole('group', { name: 'Classic and manga side by side' })).toBeTruthy();
+        expect(screen.queryByRole('radio', { name: 'Classic' })).toBeNull();
         fireEvent.click(screen.getByRole('combobox', { name: 'Manga variant' }));
         fireEvent.click(screen.getByRole('option', { name: /Webtoon/ }));
         expect(c().body.mangaVariant).toBe('webtoon');
-        fireEvent.click(screen.getByRole('radio', { name: 'Classic' }));
+    });
+    it('picking a variant turns an old classic character manga (stand becomes the relaxed idle)', async () => {
+        await openMeera();
+        const c = () => useStore.getState().studioCharacter!;
+        act(() => useStore.getState().editStudioCharacter(bodyStyleEdit(c(), 'classic')));
         expect(c().body.bodyStyle).toBe('classic');
-        expect(screen.queryByRole('combobox', { name: 'Manga variant' })).toBeNull();
-        expect(c().hair.style).toBe('long');
-        // the plain stand becomes the relaxed manga idle when you go back to manga
-        fireEvent.click(screen.getByRole('radio', { name: 'Manga' }));
-        expect(c().body.bodyStyle).toBe('manga');
+        fireEvent.click(screen.getByRole('combobox', { name: 'Manga variant' }));
+        fireEvent.click(screen.getByRole('option', { name: /Webtoon/ }));
+        expect(c().body).toMatchObject({ bodyStyle: 'manga', mangaVariant: 'webtoon' });
         expect(c().rig.pose.id).toBe('manga-idle');
     });
 });

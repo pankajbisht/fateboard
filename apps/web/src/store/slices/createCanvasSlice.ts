@@ -12,7 +12,7 @@ import { projectStorage, type StoredBoard } from '@/lib/storage';
 import { createPersistence, downloadText } from './canvas/persistence';
 import { emptyAnimation } from '@/animation/engine';
 import { applySizeSetting, startBoardPreset } from '../pagePreset';
-import type { CanvasTool } from '../canvasTools';
+import { resolveTool, type CanvasTool } from '../canvasTools';
 
 /**
  * Custom properties saved with every object.
@@ -246,9 +246,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             set({ selectedObject: value });
         },
 
-        setActiveTool: (tool: CanvasTool) => {
+        setActiveTool: (requested: CanvasTool) => {
+            const tool = resolveTool(requested, get()); // Spray's Copy mode runs on copySpray
             const canvas = get().canvas;
-
             if (!canvas) return;
 
             cleanupEditingSession(true);

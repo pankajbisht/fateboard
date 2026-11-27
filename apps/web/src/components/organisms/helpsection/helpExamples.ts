@@ -945,7 +945,7 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
             brief: 'Spray a soft glow behind bold letters, holding still to build up the paint.',
             icon: 'spray-can',
             steps: [
-                s('Press `Shift+B` and set Size to 80 and Softness high', 'Spray (`Shift+B`)'),
+                s('Press `shift+B` and set Size to 80 and Softness high', 'Spray (`shift+B`)'),
                 s(
                     'Hold still behind where the word goes to build a cloud of color',
                     'Hold to build up',
@@ -980,8 +980,8 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
             steps: [
                 s('Draw one star and keep it selected', 'Shapes › Star', [50, 50]),
                 s(
-                    'Press `Shift+S` and set Spread to 150 % and Size jitter to 60 %',
-                    'Copy spray (`Shift+S`)',
+                    'Press `shift+B`, pick Mode › Copy, set Spread to 150 % and Variation › Size jitter to 60 %',
+                    'Spray › Copy (`shift+B`)',
                 ),
                 s('Drag across the sky: stars land along the drag', 'Drag', [170, 70]),
                 s(
@@ -1034,7 +1034,7 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
             icon: 'lasso',
             steps: [
                 s('Press `L` and draw a loop around the notes you want', 'Lasso (`L`)', [90, 80]),
-                s('Hold `Shift` and loop another note to add it', '`Shift` + loop', [210, 120]),
+                s('Hold `shift` and loop another note to add it', '`shift` + loop', [210, 120]),
                 s('Drag the selection to its new place', 'Select (`V`) is back', [160, 100]),
             ],
             result: 'Exactly the notes you circled, moved together.',
