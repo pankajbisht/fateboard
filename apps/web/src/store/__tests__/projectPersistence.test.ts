@@ -14,6 +14,7 @@ import {
     createMemoryBackend,
     projectStorage,
 } from '@/lib/storage';
+import { PERSIST_DELAY_MS } from '@/store/slices/canvas/persistence';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -22,7 +23,7 @@ let backend: ReturnType<typeof createMemoryBackend>;
 let prev: any;
 const state = () => useStore.getState() as any;
 const ids = () => canvas.getObjects().map((o: any) => o.id);
-const settle = () => tick(400); // autosave is debounced (300 ms)
+const settle = () => tick(PERSIST_DELAY_MS + 100); // autosave is debounced
 
 const mount = () => {
     canvas = createFakeCanvas();

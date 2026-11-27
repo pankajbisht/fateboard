@@ -1,5 +1,6 @@
 import type { Canvas } from 'fabric';
-import { applyTracksAt, type Tracks } from './engine';
+import { applyTimelineAt } from './clips';
+import type { Tracks } from './engine';
 import { GIF_DEFAULTS, type GifSettings } from './gif/gifSettings';
 import {
     WEBCODECS_UNSUPPORTED,
@@ -65,7 +66,7 @@ export async function runExport(o: {
         bitrate: settings.bitrate,
         background: settings.background,
         onProgress: o.onProgress,
-        renderFrame: (t: number) => applyTracksAt(canvas, tracks, t, false),
+        renderFrame: (t: number) => applyTimelineAt(canvas, tracks, t, false),
     };
 
     if (settings.mode === 'png') {

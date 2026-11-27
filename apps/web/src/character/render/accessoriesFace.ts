@@ -53,6 +53,17 @@ export function addFaceAccessories(ctx: Ctx, c: Character, s: FaceSpots) {
                     0.2,
                 );
         }
+        // a gum shield shows as a coloured band between the lips
+        if (a.kind === 'mouthguard' && s.shows(0, -0.5, s.eye)) {
+            const m = s.at(0, -0.5, 1.03);
+            part(
+                'acc-mouthguard',
+                ellipse(m.p, s.eye * 1.05, s.eye * 0.26, s.tilt),
+                ctx.fill.acc,
+                s.lineW * 0.6,
+                0.25,
+            );
+        }
         if (a.kind === 'bindi' && s.shows(0, 0.26, 0)) {
             const b = s.at(0, 0.26, 1.02);
             part('acc-bindi', ellipse(b.p, s.eye * 0.32, s.eye * 0.32, 0), ctx.fill.acc, 0, 0.2);

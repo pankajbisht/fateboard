@@ -5,7 +5,7 @@
  * Rig space: y up, z toward the viewer, +x = the character's LEFT, units ≈ cm, ground at y = 0.
  * Joint rotations are Euler degrees applied as R = Ry(y) · Rx(x) · Rz(z) in the parent's frame.
  */
-export const CHARACTER_SCHEMA_VERSION = 8;
+export const CHARACTER_SCHEMA_VERSION = 9;
 
 /** Parents always come before their children (FK walks this order). */
 export const JOINTS = [
@@ -196,8 +196,11 @@ export interface Hair {
 }
 
 import type { BodyStyle, MangaVariant } from './bodyStyles';
+import type { Effects } from './effects';
 import type { Held } from './propKinds';
-import { MORE_BOTTOM_KINDS, MORE_TOP_KINDS } from './garmentKinds';
+import { ACCESSORY_KINDS, MORE_BOTTOM_KINDS, MORE_TOP_KINDS } from './garmentKinds';
+
+export { ACCESSORY_KINDS };
 export { MORE_BOTTOM_KINDS, MORE_TOP_KINDS };
 
 const CORE_TOP_KINDS = [
@@ -269,33 +272,6 @@ export const SHOE_KINDS = [
     'barefoot',
     'combat-boots',
 ] as const;
-export const ACCESSORY_KINDS = [
-    'glasses',
-    'sunglasses',
-    'cap',
-    'hat',
-    'beanie',
-    'headband',
-    'turban',
-    'headscarf',
-    'helmet',
-    'scarf',
-    'tie',
-    'necklace',
-    'earrings',
-    'bindi',
-    'watch',
-    'bracelet',
-    'belt',
-    'backpack',
-    'bag',
-    'apron',
-    'beret',
-    'army-helmet',
-    'bow',
-    'hair-clip',
-    'socks',
-] as const;
 export const MAX_ACCESSORIES = 6;
 export type TopKind = (typeof TOP_KINDS)[number];
 export type BottomKind = (typeof BOTTOM_KINDS)[number];
@@ -343,6 +319,10 @@ export const STYLE_IDS = [
 ] as const;
 export type StyleId = (typeof STYLE_IDS)[number];
 
+/** Who the character is (2026-11-27): which hair and clothes the studio lists (data/audience.ts); optional. */
+export const IDENTITIES = ['male', 'female', 'trans'] as const;
+export type Identity = (typeof IDENTITIES)[number];
+
 export interface Character {
     schemaVersion: number;
     id: string;
@@ -356,6 +336,9 @@ export interface Character {
     emotion: Emotion;
     rig: { pose: Pose };
     style: StyleId;
+    identity?: Identity;
+    /** wind, updraft, twirl, wet on hair and hanging cloth (schema/effects.ts); optional */
+    effects?: Effects;
 }
 
 export const SHOTS = ['full', 'knee', 'waist', 'bust', 'closeup'] as const;

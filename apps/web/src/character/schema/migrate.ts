@@ -10,6 +10,26 @@ import { CHARACTER_SCHEMA_VERSION } from './types';
 type Json = Record<string, unknown>;
 
 export const STEPS: Record<number, (json: Json) => Json> = {
+    // 9 (2026-11-27, combat-sport gear): boxing gloves are worn (an accessory), not held. Held gloves move to the
+    // accessories (unless six are worn already: then they are dropped, the dress rules allow at most six).
+    8: (json) => {
+        const dress = (json.dress && typeof json.dress === 'object' ? json.dress : {}) as Json;
+        const held = Array.isArray(dress.held) ? (dress.held as Json[]) : [];
+        const acc = Array.isArray(dress.accessories) ? (dress.accessories as Json[]) : [];
+        const gloves = held.some((h) => h && h.kind === 'boxing-gloves');
+        return {
+            ...json,
+            schemaVersion: 9,
+            dress: {
+                ...dress,
+                held: held.filter((h) => !h || h.kind !== 'boxing-gloves'),
+                accessories:
+                    gloves && acc.length < 6
+                        ? [...acc, { kind: 'boxing-gloves', color: '#dc2626' }]
+                        : acc,
+            },
+        };
+    },
     // 2 (2026-11-18, face system): the face gains gaze, blink and viseme. Older faces have none, so they get
     // the defaults (looking ahead, eyes open, resting mouth); `parseCharacter` also defaults anything missing.
     // 8 (2026-11-24, gender pass): the body gains `bust`, separate from the frame. Older bodies follow their frame.

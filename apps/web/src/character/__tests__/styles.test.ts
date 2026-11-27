@@ -39,15 +39,16 @@ describe('style packs', () => {
         expect(packFor('pixel').id).toBe('cartoon');
     });
 
-    it('every style draws every pose, from angles spread round the circle, without a broken path or a missing part', () => {
-        // every style × every third pose (the render test draws every pose from every 15°), each from 3 angles of
-        // the twelve 30° steps, a different set for each pair so all twelve are drawn. The full product was 26 000
-        // renders with an expect per part
-        const bad: string[] = [];
-        let i = 0;
-        for (const style of AVAILABLE_STYLES)
-            for (const pose of POSES.filter((_, k) => k % 3 === 0))
-                for (const yaw of anglesFor(i++, 3, 30)) {
+    // every style × every third pose (the render test draws every pose from every 15°), each from 3 angles of
+    // the twelve 30° steps, a different set for each pair so all twelve are drawn. The full product was 26 000
+    // renders with an expect per part. One test per style: all styles in one test passed 90 s on CI under
+    // coverage once the combat poses landed (the same renders and checks, as hair.test.ts's sweep)
+    const sweepPoses = POSES.filter((_, k) => k % 3 === 0);
+    AVAILABLE_STYLES.forEach((style, s) =>
+        it(`${style} draws every pose, from angles spread round the circle, without a broken path or a missing part`, () => {
+            const bad: string[] = [];
+            sweepPoses.forEach((pose, k) => {
+                for (const yaw of anglesFor(s * sweepPoses.length + k, 3, 30)) {
                     const m = renderCharacter({ ...styled(style), rig: { pose } }, cam(yaw));
                     for (const d of drawables(m.parts))
                         if (/NaN|Infinity/.test(d.d))
@@ -56,8 +57,10 @@ describe('style packs', () => {
                     for (const g of PART_GROUPS)
                         if (!groups.has(g)) bad.push(`${style} ${pose.id} ${g}`);
                 }
-        expect(bad).toEqual([]);
-    }, 90000);
+            });
+            expect(bad).toEqual([]);
+        }, 30000),
+    );
 
     it('switching style changes only the style field', () => {
         let c = meera;

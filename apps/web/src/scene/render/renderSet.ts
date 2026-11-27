@@ -34,11 +34,16 @@ interface Ctx {
 const layerOf = (p: SetPiece) => LAYER[p.layer ?? 'mid'];
 
 function haze(ctx: Ctx, color: string, distance: number): string {
-    const fog = ctx.look.weather === 'fog';
+    return hazeColor(ctx.look, color, distance);
+}
+
+/** Far things fade toward the sky (aerial perspective, strong in fog); props use it too. */
+export function hazeColor(look: WorldLook, color: string, distance: number): string {
+    const fog = look.weather === 'fog';
     const t = fog
         ? Math.min(0.85, Math.max(0, (distance - 300) / 2500))
         : Math.min(0.55, Math.max(0, (distance - 2500) / 30000));
-    return t > 0 ? mixColor(color, ctx.look.sky.bottom, t) : color;
+    return t > 0 ? mixColor(color, look.sky.bottom, t) : color;
 }
 
 function lit(ctx: Ctx, color: string, normal: V3, center: V3): string {
@@ -59,7 +64,8 @@ function clip(ctx: Ctx, poly: P2[] | null): P2[] | null {
     return out.length >= 3 ? out : null;
 }
 
-const lineWidth = (s: number) => Math.min(1.4, Math.max(0.3, s));
+/** Set lines in frame units at a scale (frame units per cm); props match it. */
+export const lineWidth = (s: number) => Math.min(1.4, Math.max(0.3, s));
 
 function normalOf(p: V3[]): V3 {
     const a = p[0];

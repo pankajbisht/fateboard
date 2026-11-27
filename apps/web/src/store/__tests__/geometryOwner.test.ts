@@ -15,6 +15,7 @@ import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
 import { createMemoryBackend, projectStorage } from '@/lib/storage';
+import { PERSIST_DELAY_MS } from '@/store/slices/canvas/persistence';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -49,7 +50,7 @@ const TEMPLATE = {
 let canvas: any;
 let prev: any;
 const state = () => useStore.getState() as any;
-const settle = () => tick(400);
+const settle = () => tick(PERSIST_DELAY_MS + 100); // autosave is debounced
 const size = () => ({ w: state().selectedPreset.width, h: state().selectedPreset.height });
 
 const mount = (boardMode: 'design' | 'whiteboard') => {

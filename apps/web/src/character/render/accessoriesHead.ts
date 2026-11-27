@@ -20,7 +20,8 @@ export function hairHidden(c: Character): { front: boolean; back: boolean } {
         cover === 'turban' ||
         cover === 'headscarf' ||
         cover === 'helmet' ||
-        cover === 'army-helmet'
+        cover === 'army-helmet' ||
+        cover === 'head-guard'
     )
         return { front: true, back: true };
     if (cover === 'beanie' || cover === 'beret') return { front: true, back: false };
@@ -135,6 +136,39 @@ export function addHeadAccessories(ctx: Ctx, c: Character, g: HairGeo) {
             case 'helmet':
                 dome('acc-helmet', 1.14, -0.08, 0.02);
                 break;
+            case 'head-guard':
+                // padded crown and brow, cheek pads either side; the face stays open
+                dome('acc-head-guard', 1.16, 0.05, 0.02);
+                for (const sx of [-1, 1])
+                    blob(
+                        `acc-head-guard-cheek${sx < 0 ? 'R' : 'L'}`,
+                        [sx * 0.86, -0.3, 0.2],
+                        [0.26, 0.42, 0.42],
+                        depth + 0.04,
+                    );
+                blob('acc-head-guard-back', [0, -0.1, -0.85], [0.75, 0.5, 0.3], depth - 0.02);
+                break;
+            case 'mongkol': {
+                // a thick ring high on the head, with its tail standing out at the back
+                const pts: P2[] = [];
+                for (let i = 0; i <= 14; i++) {
+                    const sp = surf(-1.35 + (i / 14) * 2.7, 0.5);
+                    if (sp.facing > 0.05) pts.push(sp.p);
+                }
+                if (pts.length > 1)
+                    ctx.parts.push({
+                        key: 'acc-mongkol',
+                        group: 'head',
+                        role: 'line',
+                        d: polyline(pts),
+                        fill: 'none',
+                        stroke: ctx.fill.acc,
+                        strokeWidth: ctx.line * 8,
+                        depth: depth + 0.6,
+                    });
+                blob('acc-mongkol-tail', [0, 0.55, -1.15], [0.1, 0.1, 0.3], depth + 0.1);
+                break;
+            }
             case 'headband': {
                 // the front arc only: the part of the band that faces the viewer
                 const pts: P2[] = [];

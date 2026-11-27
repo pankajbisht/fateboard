@@ -13,6 +13,8 @@ const SIDES = ['L', 'R'] as const;
 
 /** The hand shape while holding something: a grip (a fist for gloves). */
 export function handShapeFor(c: Character, side: 'L' | 'R', shape: HandShape): HandShape {
+    // a boxing glove is a closed fist whatever the pose says (open-finger MMA gloves keep the hand's shape)
+    if (c.dress.accessories.some((a) => a.kind === 'boxing-gloves')) return 'fist';
     const kind = heldIn(c.dress.held, side);
     if (!kind) return shape;
     return kind === 'boxing-gloves' ? 'fist' : 'grip';

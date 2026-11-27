@@ -3,7 +3,6 @@ import type { StateCreator } from 'zustand';
 import {
     MAX_DURATION,
     MIN_DURATION,
-    applyTracksAt,
     buildPreset,
     ensureAnimId,
     getAnimId,
@@ -26,6 +25,7 @@ import {
     type Tracks,
 } from '@/animation/engine';
 import { absoluteProps } from '@/animation/absoluteProps';
+import { applyTimelineAt } from '@/animation/clips';
 import type { ExportSettings } from '@/animation/exportRun';
 
 export type { ExportSettings } from '@/animation/exportRun';
@@ -231,7 +231,7 @@ export const createAnimationSlice: StateCreator<
     const applyAt = (t: number) => {
         const c = getCanvas();
         if (!c) return;
-        applyTracksAt(c, get().tracks, t);
+        applyTimelineAt(c, get().tracks, t);
         c.requestRenderAll();
     };
 

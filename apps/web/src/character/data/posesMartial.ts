@@ -1,4 +1,5 @@
 import type { Pose } from '../schema/types';
+import { mirrorPose } from '../rig/poseOps';
 import { handsTogether } from './poseArms';
 import { pose } from './poseDsl';
 import type { Arm } from './poseDsl';
@@ -17,36 +18,48 @@ const cover: Arm = { raise: 92, spread: 5, twist: -35, bend: 155 };
 /** hands up and apart for Muay Thai blocks */
 const thaiGuard: Arm = { raise: 82, spread: 30, twist: -20, bend: 135 };
 
+/**
+ * Stance convention (docs/COMBAT_PACK.md §2, BUG-279): the fighter faces +z. Orthodox leads with the left foot and
+ * shoulder, so the hips turn right (root yaw < 0: `rotY(+yaw)` moves the left side back); the spine and head turn
+ * back so the eyes stay on the opponent (yaw + twist + turn ≈ 0). The lead foot points at the opponent (twist out),
+ * the rear foot about 45° out. Southpaw is never written by hand: it is the mirror of orthodox.
+ */
+const orthodox = pose(
+    'box-orthodox',
+    'Orthodox stance',
+    'martial',
+    ['boxing', 'stance', 'orthodox', 'guard'],
+    {
+        root: { yaw: -30 },
+        legL: { lift: 18, bend: 18, spread: 6, twist: 25 },
+        legR: { lift: -16, bend: 16, spread: 10, twist: 15 },
+        // the lead fist out at eye level, ready to jab; the rear fist on the cheek
+        armL: { raise: 62, spread: 8, twist: -15, bend: 118 },
+        armR: highGuard,
+        spine: { bend: 10, twist: 8 },
+        head: { nod: 14, turn: 22 },
+        hands: ['fist', 'fist'],
+    },
+);
+
 export const POSES_MARTIAL: Pose[] = [
     // boxing
-    pose('box-orthodox', 'Orthodox stance', 'martial', ['boxing', 'stance', 'orthodox', 'guard'], {
-        root: { yaw: 30 },
-        legL: { lift: 22, bend: 16, spread: 8 },
-        legR: { lift: -18, bend: 14, spread: 10 },
-        armL: guard,
-        armR: highGuard,
-        spine: { bend: 8, twist: -10 },
-        head: { nod: 12, turn: -22 },
-        hands: ['fist', 'fist'],
-    }),
-    pose('box-southpaw', 'Southpaw stance', 'martial', ['boxing', 'stance', 'southpaw', 'guard'], {
-        root: { yaw: -30 },
-        legR: { lift: 22, bend: 16, spread: 8 },
-        legL: { lift: -18, bend: 14, spread: 10 },
-        armR: guard,
-        armL: highGuard,
-        spine: { bend: 8, twist: 10 },
-        head: { nod: 12, turn: 22 },
-        hands: ['fist', 'fist'],
-    }),
+    orthodox,
+    {
+        ...mirrorPose(orthodox),
+        id: 'box-southpaw',
+        name: 'Southpaw stance',
+        tags: ['boxing', 'stance', 'southpaw', 'guard'],
+    },
     pose('peekaboo', 'Peek-a-boo guard', 'martial', ['boxing', 'guard', 'tight', 'defence'], {
-        root: { yaw: 18 },
-        legL: { lift: 14, bend: 22, spread: 6 },
-        legR: { lift: -12, bend: 20, spread: 8 },
-        armL: { raise: 90, spread: 12, twist: -25, bend: 150 },
+        // a crouched, less bladed stance: both fists on the cheeks, the lead one a little out, chin down
+        root: { yaw: -20 },
+        legL: { lift: 14, bend: 24, spread: 6, twist: 20 },
+        legR: { lift: -14, bend: 22, spread: 8, twist: 12 },
+        armL: { raise: 80, spread: 12, twist: -22, bend: 140 },
         armR: { raise: 90, spread: 12, twist: -25, bend: 150 },
-        spine: { bend: 14 },
-        head: { nod: 18 },
+        spine: { bend: 16, twist: 6 },
+        head: { nod: 18, turn: 14 },
         hands: ['fist', 'fist'],
     }),
     pose('overhand', 'Overhand right', 'martial', ['boxing', 'punch', 'overhand', 'power'], {
@@ -142,13 +155,14 @@ export const POSES_MARTIAL: Pose[] = [
         'martial',
         ['muay thai', 'stance', 'guard', 'nak muay'],
         {
-            root: { yaw: 35 },
-            legL: { lift: 26, bend: 10, spread: 6 },
-            legR: { lift: -12, bend: 30, spread: 10 },
-            armL: { raise: 80, spread: 10, twist: -30, bend: 70 },
+            // upright and squarer than boxing, weight on the bent rear leg, the lead leg light and ready to check
+            root: { yaw: -20 },
+            legL: { lift: 24, bend: 10, spread: 6, twist: 18 },
+            legR: { lift: -10, bend: 28, spread: 10, twist: 12 },
+            armL: { raise: 80, spread: 10, twist: -30, bend: 95 },
             armR: thaiGuard,
-            spine: { bend: -4, twist: -6 },
-            head: { nod: 6, turn: -24 },
+            spine: { bend: -4, twist: 4 },
+            head: { nod: 6, turn: 16 },
             hands: ['fist', 'fist'],
         },
     ),

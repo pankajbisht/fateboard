@@ -763,8 +763,8 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Open Characters in the left rail, then Open Character Studio, or pick someone from the cast',
                     'Body style: Classic or Manga (7.5–8 heads tall with long legs; shonen, shojo or webtoon), with a side-by-side preview. It works with every art style. Body: age, gender, height, body fat, muscle, shoulders, hips, arm, leg and neck length, skin tone',
                     'Children get bigger heads for their size; elders stoop a little and their hair greys unless you pick its colour',
-                    'Look: 44 hairstyles (short, medium, long, tied up, curly, older), hair colour and an optional second colour for the tips, eyes, brows, nose, mouth, eye colour, 47 tops (T-shirt, polo, shirt, sweater, hoodie, jacket, kurta, lab coat, raincoat, sherwani and more) and 38 bottoms (trousers, jeans, shorts, leggings, churidar, dhoti, palazzo, skirts and a lehenga) with their colours',
-                    'Wardrobe: 64 outfit presets (everyday, school, work, traditional, sports, weather, party, army and combat), 13 kinds of shoes, and 22 accessories (glasses, caps, hats, berets, army helmet, scarf, tie, jewellery, watch, belt, backpack, apron). Things that do not go together are kept apart and the studio says why',
+                    'Look: 44 hairstyles (short, medium, long, tied up, curly, older), hair colour and an optional second colour for the tips, eyes, brows, nose, mouth, eye colour, 51 tops (T-shirt, polo, shirt, sweater, hoodie, jacket, kurta, lab coat, raincoat, sherwani and more) and 42 bottoms (trousers, jeans, shorts, leggings, churidar, dhoti, palazzo, skirts and a lehenga) with their colours',
+                    'Wardrobe: 76 outfit presets (everyday, school, work, traditional, sports, weather, party, army and combat, combat sports: boxing, Muay Thai, MMA, BJJ gi with belt colours), 13 kinds of shoes, and 34 accessories (glasses, caps, hats, berets, army helmet, scarf, tie, jewellery, watch, belt, backpack, apron, boxing and MMA gloves, hand wraps, mouthguard, head guard, mongkol, prajioud, ankle wraps, gi belt). Things that do not go together are kept apart and the studio says why',
                     'In the hands: a katana, sword, knife, bamboo staff, torch, bat, rifle or boxing gloves, in either hand. They follow the arms in every pose and from every side',
                     'Hands have real fingers and a thumb that bend with the hand shape; joints (shoulders, elbows, knees, ankles), chest or bust and hips show their shape from every side',
                     'Click a part of the character to select it, then change its colour on the right',
@@ -818,6 +818,64 @@ export const HELP_TOPICS: HelpTopic[] = [
             },
         ],
         related: ['comic', 'layers'],
+    },
+    {
+        id: 'scene-objects',
+        group: 'Tools',
+        title: 'Scene Objects',
+        icon: 'scene-objects',
+        summary:
+            'Manga scenery to drop on the page: 18 categories, from nature, buildings and a classroom to manga symbols, animals, fantasy items and full-panel backdrops.',
+        keywords:
+            'scene objects props library scenery background manga anime tree sakura pine bush grass flower rock mountain river pond cloud sun moon star rain snow lightning rainbow birds speed lines car bike bicycle cycle motorbike bus train taxi table chair sofa bed desk cup mug plate bowl ramen bento street light lamp traffic signal vending machine bench sign house village city building apartment skyscraper shop konbini school shrine castle classroom blackboard school desk locker randoseru sweat drop anger vein sparkles blush heart speech bubble thought bubble zzz manpu effects torii lantern daruma maneki neko onigiri kotatsu futon shoji fireworks sakura cat dog bird animal cake parfait bubble tea takoyaki burger sports ball soccer basketball baseball tennis trophy sword shield potion magic slime isekai fantasy phone laptop game console tv headphones snowman christmas halloween tanabata festival yatai station railway crossing road bridge airplane ship backdrop background sky sunset night hallway rooftop beach focus lines speed lines drag drop',
+        open: { panel: 'sceneObjects', label: 'Open Scene Objects' },
+        sections: [
+            {
+                title: 'Add a scene object',
+                items: [
+                    'Open Scene Objects in the left rail and pick a category: Nature, Sky, Vehicles, Furniture, Kitchen, Street, Buildings, Classroom, Effects, Japan, Animals, Food, Sports, Fantasy, Tech, Seasons, Travel or Backdrops',
+                    'Backdrops are whole panel plates (skies, classroom, hallway, rooftop, street, beach, and manga flower, bubble, sparkle, focus-line and speed-line backgrounds): scale one to the panel and send it to the back',
+                    'Effects are the manga symbols drawn next to a character: sweat drop, anger vein, sparkles, blush, tears, gloom lines, Zzz, and empty speech, thought and shout bubbles',
+                    'Click a card to add it in the middle of the view, or drag the card onto the page to drop it where you want',
+                    'Search looks through every category (try “cloud”, “bike”, “chair” or “street light”)',
+                    'Signs and bubbles carry no lettering: add the words with the Text tool',
+                ],
+            },
+            {
+                title: 'Favorites, recent and your own props',
+                items: [
+                    'The star on a card adds it to Favorites; Favorites and Recent (the last 12 you added) come first in the category row',
+                    'My props: Import SVG or PNG adds your own drawings (scripts and outside links are removed; a big PNG is made smaller). Click or drag them like any prop',
+                    'Export pack saves all your props in one file to share; Import pack adds the props from a pack someone sent you',
+                ],
+            },
+            {
+                title: 'Style the selected object',
+                items: [
+                    'Select a scene object to see its settings at the top of the panel: Variant (other shapes, like a tall tree or a chair from the side), a colour for each part, Outline colour and width',
+                    'Screentone turns it black and white like a manga page: light parts become paper, dark parts ink, the middle Dots, Lines or a Gradient; Tone density sets how dark',
+                    'Shadow adds a soft shadow under it; Randomize picks another variant or colour',
+                    'Trees, bushes, grass and flowers have Add wind sway, clouds Add drift: a looping animation on the timeline',
+                ],
+            },
+            {
+                title: 'Scenes, time of day and the ground line',
+                items: [
+                    'Scenes (Classroom, Rooftop, Forest, Street) place a whole set on three new layers: Background, Midground and Foreground',
+                    'Time of day (Day, Sunset, Night) recolours every scene object on the page at once; new ones follow it',
+                    'Snap to ground line: props you drag near the line stand on it; Ground line sets its height on the page',
+                ],
+            },
+            {
+                title: 'Work with it',
+                items: [
+                    'A scene object is one object: move, scale, turn, flip, layer, lock, group and animate it like any other',
+                    'It saves with the page, and Undo removes it in one step (a restyle, a scene or a time-of-day change is one step too)',
+                    'Clean ink outlines and flat colours, drawn as vectors: it stays sharp at any size',
+                ],
+            },
+        ],
+        related: ['comic', 'characters', 'layers'],
     },
     {
         id: 'comic',

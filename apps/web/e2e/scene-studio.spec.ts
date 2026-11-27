@@ -163,7 +163,7 @@ test('crowd: the slider adds people to the picture and the page gets them', asyn
     await editor.openPanel('Characters');
     await page.getByRole('button', { name: 'New scene' }).click();
     const studio = page.getByRole('dialog', { name: 'Character Studio' });
-    await studio.getByRole('button', { name: 'Stadium' }).click();
+    await studio.getByRole('button', { name: 'Stadium', exact: true }).click();
     const paths = () =>
         studio
             .getByRole('img', { name: /Stadium/ })
@@ -290,10 +290,10 @@ test('export: the layers download as a ZIP with the background, each character a
         expect(text, name).toContain(name);
 });
 
-// one test per tab and colour scheme: all five tabs in one test ran five full-page scans and passed the time limit on
+// one test per tab and colour scheme: all six tabs in one test ran five full-page scans and passed the time limit on
 // CI Firefox (the same scans and rules, split)
 for (const scheme of ['light', 'dark'] as const)
-    for (const tab of ['Start', 'Place', 'Cast', 'Camera', 'Frame']) {
+    for (const tab of ['Start', 'Place', 'Props', 'Cast', 'Camera', 'Frame']) {
         test(`Scene mode ${tab} tab has no axe violations (${scheme})`, async ({
             editor,
             page,

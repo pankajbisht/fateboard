@@ -11,6 +11,7 @@ import { serializeCanvas } from '@/lib/serialization';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
 import { createMemoryBackend, projectStorage } from '@/lib/storage';
+import { PERSIST_DELAY_MS } from '@/store/slices/canvas/persistence';
 
 const rect = (props: Record<string, unknown> = {}) =>
     new fabric.Rect({
@@ -78,7 +79,7 @@ describe('serializing an animated canvas (BUG-011)', () => {
 let canvas: any;
 let prev: any;
 const state = () => useStore.getState() as any;
-const settle = () => tick(400);
+const settle = () => tick(PERSIST_DELAY_MS + 100); // autosave is debounced
 
 describe('animation is saved per page (BUG-010, Q12)', () => {
     beforeEach(() => {

@@ -1,4 +1,5 @@
 import type { SliceCreator } from '../types';
+import { timed, timedAsync } from '@/lib/perf/perfMarks';
 import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
 import { createSnapshotAssets } from '@/lib/snapshotAssets';
 
@@ -86,7 +87,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
 
     /** Canvas content + page size, as one string (equal strings = nothing changed). */
     const snapshot = (canvas: HistoryCanvas): string => {
-        const json = serializeCanvas(canvas, SERIALIZE_PROPS);
+        const json = timed('history:snapshot', () => serializeCanvas(canvas, SERIALIZE_PROPS));
         const page = peers().selectedPreset;
         return assets.stringify(page ? { ...json, [PAGE_KEY]: page } : json);
     };
@@ -157,7 +158,7 @@ export const createUndoRedoSlice: SliceCreator<UndoRedoSlice> = (set, get, store
         set({ _isRestoring: true });
         try {
             const { [PAGE_KEY]: page, ...json } = assets.parse(state) as Record<string, unknown>;
-            await canvas.loadFromJSON(json);
+            await timedAsync('history:restore', () => canvas.loadFromJSON(json));
             const current = peers().selectedPreset;
             const saved = page as Peers['selectedPreset'];
             if (

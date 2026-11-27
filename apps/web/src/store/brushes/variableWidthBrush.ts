@@ -4,6 +4,8 @@
  */
 import * as fabric from 'fabric';
 import { clamp } from '../brushConfig';
+import { penSample } from '@/lib/canvas/penInput';
+import { simplifyPolyline } from '@/lib/canvas/simplifyPath';
 
 export type Pt = { x: number; y: number };
 export type Sample = { x: number; y: number; f: number };
@@ -42,25 +44,26 @@ export class VariableWidthBrush extends (fabric.PencilBrush as any) {
     speedWidth = true;
 
     /** Pen pressure when a stylus is used, otherwise drawing speed (fast = thin). */
-    addSample(p: Pt, e?: any): boolean {
+    addSample(p: Pt, e?: unknown): boolean {
         const last = this.samples[this.samples.length - 1];
         const zoom = this.canvas.getZoom?.() ?? 1;
         const now = performance.now();
-        const pen = e && e.pointerType === 'pen' && e.pressure > 0;
+        // Fabric hands a MouseEvent / TouchEvent: the pen's pressure is looked up (BUG-234, P3)
+        const { pen, pressure } = penSample(this.canvas.upperCanvasEl, e);
 
         if (last) {
             const d = Math.hypot(p.x - last.x, p.y - last.y);
             if (d < 1.2 / zoom) return false;
             if (this.mode === 'ink') {
                 const target = pen
-                    ? 0.15 + 0.85 * e.pressure
+                    ? 0.15 + 0.85 * pressure
                     : this.speedWidth
                       ? clamp(1.1 - ((d * zoom) / Math.max(now - this.lastT, 1)) * 0.4, 0.3, 1)
                       : 1;
                 this.factor = this.factor * 0.7 + target * 0.3;
             }
         } else if (this.mode === 'ink') {
-            this.factor = pen ? 0.15 + 0.85 * e.pressure : this.speedWidth ? 0.7 : 1;
+            this.factor = pen ? 0.15 + 0.85 * pressure : this.speedWidth ? 0.7 : 1;
         }
 
         this.lastT = now;
@@ -169,7 +172,8 @@ export class VariableWidthBrush extends (fabric.PencilBrush as any) {
 
     finalizePath() {
         const canvas = this.canvas;
-        const poly = this.outline(true);
+        // input is only exact to one screen pixel: drop what deviates less than a quarter of it (P6)
+        const poly = simplifyPolyline(this.outline(true), 0.25 / (canvas.getZoom?.() || 1));
         if (poly.length < 3) return;
         const d =
             'M ' + poly.map((p) => `${+p.x.toFixed(2)} ${+p.y.toFixed(2)}`).join(' L ') + ' Z';

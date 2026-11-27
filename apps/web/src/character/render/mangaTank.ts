@@ -42,24 +42,69 @@ export function addTankPanel(
         const s = toScreen(ctx, v);
         return [s[0], s[1]];
     };
-    // one side's strap and armhole, from the armpit up to the strap's inner edge (sx: -1 / 1)
-    const side = (sx: number): P2[] => [
-        ...chaikin(
+    // The top of the shoulder straight above a point on the slope ring's front (same screen x): the highest point of
+    // the rings from the neck base to the slope ring there, on the crest of the slope or, nearer the neck, the front of
+    // the neck base. The strap climbs to it, keeping its width. Ending on the slope ring's front, the strap's top was a
+    // flat cut across the shoulder with a band of skin (the trapezius) above it (owner review 2026-11-27)
+    const above = (sx: number, c: number): P2 => {
+        const target = xy(at(1, sx * c));
+        let best = target;
+        for (let k = 0; k <= 1; k += 0.1)
+            for (let cc = 0; cc <= 0.98; cc += 0.07) {
+                const p = xy(at(k, sx * cc));
+                if (Math.abs(p[0] - target[0]) < ctx.line && p[1] < best[1])
+                    best = [target[0], p[1]];
+            }
+        return best;
+    };
+    // one side's armhole from the armpit up to the strap's outer edge (sx: -1 / 1)
+    // The armhole, placed by distance across the body (along the chest's x axis, from the ring's middle) rather than
+    // by a share of each ring's width: rings 2 and 3 take in the deltoids and are far wider than the rest, so a fixed
+    // share ran the curve out over the shoulder, back in and out again to the armpit, a kink under the strap in a 3/4
+    // view (owner review 2026-11-27). From the strap's outer edge it runs straight down, cuts in a little under the
+    // shoulder and sweeps out to the armpit.
+    const X = apply(ctx.posed.rot.chest, [1, 0, 0]);
+    const across = (k: number, c: number, sx: number) => {
+        const m = lerp3(at(k, 1), at(k, -1), 0.5);
+        const d = (v: V3) => (v[0] - m[0]) * X[0] + (v[1] - m[1]) * X[1] + (v[2] - m[2]) * X[2];
+        return d(at(k, sx * c)) * Math.sign(d(at(k, sx)) || 1);
+    };
+    // the point on ring k's near face this far across the body (bisection on the cosine; across grows with it)
+    const atAcross = (k: number, w: number, sx: number): V3 => {
+        let lo = 0;
+        let hi = 0.99;
+        for (let n = 0; n < 12; n++) {
+            const mid = (lo + hi) / 2;
+            if (across(k, mid, sx) < w) lo = mid;
+            else hi = mid;
+        }
+        return at(k, (sx * (lo + hi)) / 2);
+    };
+    const armhole = (sx: number): P2[] => {
+        const top = across(1, 0.66, sx);
+        const pit = across(4.3, 0.98, sx);
+        return chaikin(
             [
-                [4.3, 0.98],
-                [3.9, 0.8],
-                [3.4, 0.62],
-                [2.6, 0.6],
-                [1.6, 0.64],
-                [1, 0.66],
-            ].map(([k, c]) => xy(at(k, sx * c))),
+                [4.3, 1],
+                [3.9, 0.56],
+                [3.4, 0.07],
+                [2.6, -0.04],
+                [1.6, 0],
+                [1, 0],
+            ].map(([k, t]) => xy(atAcross(k, top + (pit - top) * t, sx))),
             2,
-        ),
-        // the strap's inner edge; a covered top runs on to the base of the neck
-        xy(scoop ? at(1, sx * 0.4) : at(0, sx * 0.9)),
+        );
+    };
+    // the armhole, then over the shoulder to the strap's inner edge; a covered top runs on to the base of the neck
+    const side = (sx: number, hole: P2[]): P2[] => [
+        ...hole,
+        above(sx, 0.66),
+        ...(scoop ? [above(sx, 0.53), above(sx, 0.4), xy(at(1, sx * 0.4))] : [xy(at(0, sx * 0.9))]),
     ];
-    const left = side(-1);
-    const right = side(1);
+    const holeL = armhole(-1);
+    const holeR = armhole(1);
+    const left = side(-1, holeL);
+    const right = side(1, holeR);
     // the neckline from the left strap's inner edge to the right one's: a scoop on the front of a tank top, else the
     // base of the neck
     // the neckline from the left strap's inner edge to the right one's: a scoop on a tank top (deep at the front,
@@ -81,9 +126,10 @@ export function addTankPanel(
     const neck: P2[] = scoop
         ? scoopAt(back ? 0.6 : 2)
         : [-0.6, -0.3, 0, 0.3, 0.6].map((c) => xy(at(0, c)));
-    // the bottom: a little under the armpit ring, so it overlaps the torso's cloth (ending on the ring, the edge of the
-    // skin under it showed as a light line across the top)
-    const bottom = [0.99, 0.5, 0, -0.5, -0.99].map((c) => xy(at(4.5, c)));
+    // the bottom: on the ring under the arm, so it overlaps the torso's cloth (ending on the armpit ring, the edge of
+    // the skin under it showed as a light line across the top) and covers the foot of the bare shoulder's cap, which
+    // lies under this cloth (mangaSleeveCap.ts; at 4.5 it stuck out below the armpit as a nub of skin)
+    const bottom = [0.99, 0.5, 0, -0.5, -0.99].map((c) => xy(at(rings.length - 1, c)));
     const outline = [...left, ...neck, ...[...right].reverse(), ...bottom];
     ctx.parts.push({
         key: 'tank-panel',
@@ -113,7 +159,14 @@ export function addTankPanel(
                 depth: depth + 0.001,
             });
     };
-    edge('tank-armhole-l', left.slice(0, -1), [true, false]);
-    edge('tank-armhole-r', right.slice(0, -1), [true, false]);
-    if (scoop) edge('tank-neckline', neck, [false, false]);
+    // the armholes and the scoop run on up the straps' sides to the top of the shoulder (left uninked, the strap read
+    // as a flat block of colour)
+    edge('tank-armhole-l', left.slice(0, holeL.length + 1), [true, true]);
+    edge('tank-armhole-r', right.slice(0, holeR.length + 1), [true, true]);
+    if (scoop)
+        edge(
+            'tank-neckline',
+            [left[left.length - 2], ...neck, right[right.length - 2]],
+            [true, true],
+        );
 }

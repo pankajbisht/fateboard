@@ -362,3 +362,26 @@ test('body style: a manga character with its variant and ahoge is placed, reload
     await expect(studio).toHaveCount(0);
     await expect.poll(() => look(page)).toEqual([{ ...manga, body: 'classic', pose: 'stand' }]);
 });
+
+// 2026-11-27: a close-up was placed as the whole figure (the group fitted its shapes, not the shot's frame)
+test('a close-up goes on the page as a close-up, a bust as a bust', async ({ editor, page }) => {
+    const heights: Record<string, number> = {};
+    for (const shot of ['Full body', 'Bust', 'Close-up']) {
+        await editor.openPanel('Characters');
+        await page.getByRole('button', { name: /^Meera/ }).click();
+        const studio = page.getByRole('dialog', { name: 'Character Studio' });
+        await studio.getByRole('combobox', { name: 'Shot' }).click();
+        await page.getByRole('option', { name: shot, exact: true }).click();
+        await studio.getByRole('button', { name: 'Place on page' }).click();
+        await expect(studio).toHaveCount(0);
+        heights[shot] = await page.evaluate(() => {
+            const c = window.__fateboard!.state('canvas') as {
+                getObjects: () => { characterData?: unknown; height: number }[];
+            };
+            const all = c.getObjects().filter((o) => o.characterData);
+            return all[all.length - 1].height;
+        });
+    }
+    expect(heights['Bust']).toBeLessThan(heights['Full body'] * 0.5);
+    expect(heights['Close-up']).toBeLessThan(heights['Bust']);
+});

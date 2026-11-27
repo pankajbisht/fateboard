@@ -1,4 +1,5 @@
 import * as fabric from 'fabric';
+import { downscaleImageFile } from './downscaleImage';
 import { useStore } from '@/store';
 import { creationScaleOf } from '@/lib/canvas/creationScale';
 
@@ -46,7 +47,8 @@ export async function importImage(canvas: fabric.Canvas, file: File) {
     if (!canvas || !file) return;
 
     try {
-        const url = await readAsDataURL(file);
+        // big photos are capped before they become a data: URL (P1, docs/PERFORMANCE_AUDIT.md)
+        const url = await readAsDataURL(await downscaleImageFile(file));
 
         // Load image (Fabric v6+ returns a Promise)
         const img: fabric.Image = await fabric.Image.fromURL(url);

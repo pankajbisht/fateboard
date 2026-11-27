@@ -91,6 +91,11 @@ export function renderCharacter(
         hair2: c.hair.tip ? shownHairColor(c, c.hair.tip) : shownHairColor(c),
         acc: '#888888',
     };
+    // wet hair and cloth are darker (schema/effects.ts)
+    const wet = c.effects?.wet ?? 0;
+    if (wet > 0)
+        for (const m of ['hair', 'hair2', 'top', 'bottom'] as Material[])
+            colors[m] = darken(colors[m], 0.16 * wet);
     const tint = pack.palette === 'manga' ? tintFor('none') : tintFor(pack.tint);
     const fill = { ...colors };
     for (const m of Object.keys(fill) as Material[]) fill[m] = tint(fill[m]);
@@ -134,6 +139,7 @@ export function renderCharacter(
         light: opts.light ?? DEFAULT_LIGHT,
         points: [],
         parts: [],
+        effects: c.effects,
     };
     addBody(ctx, skel, c);
     addHead(ctx, skel, c);

@@ -2,6 +2,7 @@ import { useEffect, type RefObject } from 'react';
 import type { Canvas } from 'fabric';
 import { useStore } from '@store';
 import { attachTouchGestures } from '@/lib/canvas/touchGestures';
+import { attachPenInput } from '@/lib/canvas/penInput';
 
 /** Tools that draw on a finger drag: after a pen was used, one finger pans with these instead. */
 const DRAW_TOOLS = new Set(['draw', 'pencil', 'pen', 'laser', 'copySpray']);
@@ -26,6 +27,12 @@ function fireMouse(canvas: Canvas, type: 'contextmenu' | 'dblclick', x: number, 
  * pen-only drawing. `rootRef` is the element around the canvas (design: the scrolling board).
  */
 export function useTouchGestures(rootRef: RefObject<HTMLElement | null>, canvas: Canvas | null) {
+    // stylus pressure + coalesced samples for the brushes (BUG-234, P3, lib/canvas/penInput)
+    useEffect(() => {
+        const el = canvas?.upperCanvasEl;
+        if (!el) return undefined;
+        return attachPenInput(el);
+    }, [canvas]);
     useEffect(() => {
         const root = rootRef.current;
         if (!root || !canvas?.upperCanvasEl) return;

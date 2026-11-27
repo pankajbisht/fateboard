@@ -1,4 +1,5 @@
-import type * as fabric from 'fabric';
+import { timed, timedAsync } from '@/lib/perf/perfMarks';
+import { makeThumbnail } from '../pageThumbnail';
 import type { SliceCreator } from '../types';
 import type { Orientation, PageFormat } from '@lib/types/page';
 import {
@@ -18,7 +19,6 @@ import type { CanvasPreset } from '@/components/organisms/board/board.type';
  */
 export const PAGE_SERIALIZE_PROPS: string[] = [...CUSTOM_PROPS];
 
-const THUMB_WIDTH = 160;
 /** Project file / autosave format version (`.fateboard` files and the IndexedDB autosave). */
 export const PROJECT_VERSION = 1;
 const EMPTY_JSON = { objects: [] as unknown[] };
@@ -93,17 +93,6 @@ const nextPageName = (pages: Page[]) => {
         .filter((m): m is RegExpExecArray => !!m)
         .map((m) => Number(m[1]));
     return `Page ${Math.max(0, ...nums) + 1}`;
-};
-
-const makeThumbnail = (canvas: fabric.Canvas): string | undefined => {
-    try {
-        const w = canvas.getWidth();
-        if (!w) return undefined;
-        return canvas.toDataURL({ format: 'png', multiplier: THUMB_WIDTH / w });
-    } catch {
-        // tainted canvas (cross-origin image) etc. A missing thumbnail is not fatal.
-        return undefined;
-    }
 };
 
 /** A page side the editor can show: a file must not ask for a canvas of any size (BUG-157). */
@@ -238,7 +227,9 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
             // FIX: the old code used the v5 callback form and never awaited, so the
             // canvas rendered before objects existed. loadFromJSON also replaces
             // the objects itself, so the extra canvas.clear() is gone.
-            await canvas.loadFromJSON(target.canvasJSON ?? EMPTY_JSON);
+            await timedAsync('page:load', () =>
+                canvas.loadFromJSON(target.canvasJSON ?? EMPTY_JSON),
+            );
         } catch (err) {
             console.error('[pages] failed to load page', err);
             // Fabric switches this off for the load and only switches it back on success
@@ -515,7 +506,7 @@ export const createPagesSlice: SliceCreator<PagesSlice> = (set, get) => {
                 version: PROJECT_VERSION,
                 savedAt: new Date().toISOString(),
                 currentPageId,
-                pages: withCurrentSaved(thumbnail),
+                pages: timed('project:capture', () => withCurrentSaved(thumbnail)),
             };
         },
 

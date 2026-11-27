@@ -82,6 +82,11 @@ export interface EnvironmentDef {
     variants: readonly { id: string; name: string }[];
     /** where the actors stand: centre and how far apart rows / slots may spread (cm) */
     stage: { x: number; z: number; spread: number };
+    /**
+     * Where the scene's crowd of extras may stand (cm; default: behind the stage by category). Arenas put it on
+     * their stands so nobody stands inside the ring.
+     */
+    crowdArea?: { x0: number; z0: number; x1: number; z1: number };
     /** the camera this place opens with (inside the room, at eye level, …) */
     camera: Pick<SceneCamera, 'position' | 'yaw' | 'pitch'>;
     /** false: no sky above (a closed room) */

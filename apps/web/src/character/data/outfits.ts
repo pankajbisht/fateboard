@@ -2,6 +2,7 @@ import type { Dress } from '../schema/types';
 import { OUTFITS_A } from './outfitsA';
 import { OUTFITS_B } from './outfitsB';
 import { OUTFITS_C } from './outfitsC';
+import { OUTFITS_COMBAT } from './outfitsCombat';
 
 /**
  * Outfit presets (docs/CHARACTER_STUDIO.md phase 3): a whole look in one click (top, bottom, shoes and accessories,
@@ -9,7 +10,15 @@ import { OUTFITS_C } from './outfitsC';
  * removes nothing. `suits` keeps a preset off a character it does not go with, like garments do.
  */
 export type OutfitGroup =
-    'everyday' | 'school' | 'work' | 'traditional' | 'sports' | 'weather' | 'party' | 'combat';
+    | 'everyday'
+    | 'school'
+    | 'work'
+    | 'traditional'
+    | 'sports'
+    | 'weather'
+    | 'party'
+    | 'combat'
+    | 'fight';
 
 export interface Outfit {
     id: string;
@@ -28,9 +37,10 @@ export const OUTFIT_GROUPS: Record<OutfitGroup, string> = {
     weather: 'Weather',
     party: 'Party',
     combat: 'Army and combat',
+    fight: 'Combat sports',
 };
 
-export const OUTFITS: Outfit[] = [...OUTFITS_A, ...OUTFITS_B, ...OUTFITS_C];
+export const OUTFITS: Outfit[] = [...OUTFITS_A, ...OUTFITS_B, ...OUTFITS_C, ...OUTFITS_COMBAT];
 
 export const OUTFIT_IDS = OUTFITS.map((o) => o.id);
 export const outfitById = (id: string) => OUTFITS.find((o) => o.id === id);

@@ -75,7 +75,8 @@ describe('Character Studio', () => {
         expect(useStore.getState().studioCharacter!.rig.pose.id).toBe('manga-idle');
         fireEvent.keyDown(studio(), { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true });
         expect(useStore.getState().studioCharacter!.rig.pose.id).toBe('wave');
-    });
+        // ~1 s locally (six full studio renders), past the 5 s default on a loaded CI runner under coverage
+    }, 20000);
 
     it('pressing a part selects it (shown in the Selected part panel)', async () => {
         await openMeera();
@@ -221,6 +222,8 @@ describe('cast browser', () => {
 describe('hair', () => {
     it('picks one of 46 styles; two-tone is offered only where the style has length', async () => {
         await openMeera();
+        // trans lists every item (a male or female identity hides the few gendered ones)
+        useStore.getState().editStudioCharacter({ identity: 'trans' });
         tab('Look');
         const c = () => useStore.getState().studioCharacter!;
         fireEvent.click(screen.getByRole('combobox', { name: 'Hair style' }));
@@ -240,15 +243,15 @@ describe('hair', () => {
     });
 });
 
-describe('body type', () => {
-    it('male, female or in between in one click; the bust follows the frame until set by hand', async () => {
+describe('identity and body type', () => {
+    it('male or female in one click sets the frame; the bust follows the frame until set by hand; trans keeps the body', async () => {
         await openMeera();
         const c = () => useStore.getState().studioCharacter!;
-        const type = screen.getByRole('radiogroup', { name: 'Body type' });
-        fireEvent.click(within(type).getByRole('radio', { name: 'Male' }));
-        expect([c().body.gender, c().body.bust]).toEqual([0, 0]);
-        fireEvent.click(within(type).getByRole('radio', { name: 'Female' }));
-        expect([c().body.gender, c().body.bust]).toEqual([1, 1]);
+        const who = screen.getByRole('radiogroup', { name: 'Identity' });
+        fireEvent.click(within(who).getByRole('radio', { name: 'Male' }));
+        expect([c().identity, c().body.gender, c().body.bust]).toEqual(['male', 0, 0]);
+        fireEvent.click(within(who).getByRole('radio', { name: 'Female' }));
+        expect([c().identity, c().body.gender, c().body.bust]).toEqual(['female', 1, 1]);
         // a female frame with a flat chest: the bust is set by hand and stays when the frame moves
         fireEvent.change(screen.getByRole('slider', { name: 'Bust' }), { target: { value: '0' } });
         expect(c().body.bust).toBe(0);
@@ -256,9 +259,87 @@ describe('body type', () => {
             target: { value: '80' },
         });
         expect([c().body.gender, c().body.bust]).toEqual([0.8, 0]);
-        // a body type puts the bust back in step
-        fireEvent.click(within(type).getByRole('radio', { name: 'In between' }));
-        expect([c().body.gender, c().body.bust]).toEqual([0.5, 0.5]);
+        // trans: the identity changes, the body as it is
+        fireEvent.click(within(who).getByRole('radio', { name: 'Trans' }));
+        expect([c().identity, c().body.gender, c().body.bust]).toEqual(['trans', 0.8, 0]);
+    });
+
+    it('a body type sets the build in its male or female version and shows as chosen', async () => {
+        await openMeera();
+        const c = () => useStore.getState().studioCharacter!;
+        fireEvent.click(
+            within(screen.getByRole('radiogroup', { name: 'Identity' })).getByRole('radio', {
+                name: 'Male',
+            }),
+        );
+        const types = screen.getByRole('group', { name: 'Body type' });
+        fireEvent.click(within(types).getByRole('button', { name: 'Athletic' }));
+        expect(c().body.muscle).toBeCloseTo(0.68);
+        expect(within(types).getByRole('button', { name: 'Athletic' })).toHaveAttribute(
+            'aria-pressed',
+            'true',
+        );
+        fireEvent.click(
+            within(screen.getByRole('radiogroup', { name: 'Identity' })).getByRole('radio', {
+                name: 'Female',
+            }),
+        );
+        fireEvent.click(within(types).getByRole('button', { name: 'Athletic' }));
+        expect(c().body.muscle).toBeCloseTo(0.56);
+    });
+
+    it('the lists show what the identity can wear; trans lists everything; a worn item stays', async () => {
+        await openMeera();
+        const who = (name: string) =>
+            fireEvent.click(
+                within(screen.getByRole('radiogroup', { name: 'Identity' })).getByRole('radio', {
+                    name,
+                }),
+            );
+        const optionsOf = (name: string) => {
+            fireEvent.click(screen.getByRole('combobox', { name }));
+            const list = screen.getAllByRole('option').map((o) => o.textContent);
+            fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+            return list;
+        };
+        who('Male');
+        useStore.getState().editStudioCharacter({ bottom: { kind: 'pants' } });
+        tab('Look');
+        expect(optionsOf('Bottom')).not.toContain('Skirt');
+        expect(optionsOf('Hair style')).toContain('Long: Long');
+        tab('Wardrobe');
+        expect(optionsOf('Shoes')).not.toContain('Heels');
+        expect(screen.queryByRole('switch', { name: /^Bindi/ })).toBeNull();
+        expect(screen.getByRole('switch', { name: /^Earrings/ })).toBeInTheDocument();
+        tab('Body');
+        who('Trans');
+        tab('Look');
+        expect(optionsOf('Bottom')).toContain('Skirt');
+        // a male character already in a skirt: it stays listed
+        tab('Body');
+        who('Male');
+        useStore.getState().editStudioCharacter({ bottom: { kind: 'skirt' } });
+        tab('Look');
+        expect(optionsOf('Bottom')).toContain('Skirt');
+    });
+});
+
+describe('effects', () => {
+    it('wind with a direction, updraft, twirl and wet; clear takes them all off', async () => {
+        await openMeera();
+        tab('Effects');
+        const c = () => useStore.getState().studioCharacter!;
+        fireEvent.change(screen.getByRole('slider', { name: 'Wind' }), { target: { value: '70' } });
+        fireEvent.click(
+            within(screen.getByRole('radiogroup', { name: 'Wind direction' })).getByRole('radio', {
+                name: '← Left',
+            }),
+        );
+        fireEvent.change(screen.getByRole('slider', { name: 'Wet' }), { target: { value: '40' } });
+        expect(c().effects).toMatchObject({ wind: 0.7, windDir: 180, wet: 0.4, twirl: 0 });
+        fireEvent.click(screen.getByRole('button', { name: 'Clear effects' }));
+        expect(c().effects).toBeUndefined();
+        expect(screen.getByRole('button', { name: 'Clear effects' })).toBeDisabled();
     });
 });
 
@@ -284,16 +365,18 @@ describe('manga look', () => {
 });
 
 describe('clothes', () => {
-    it('offers 49 tops and 38 bottoms by name, and the character wears the pick', async () => {
+    it('offers 51 tops and 42 bottoms by name, and the character wears the pick', async () => {
         await openMeera();
+        // trans lists every item (a male or female identity hides the few gendered ones)
+        useStore.getState().editStudioCharacter({ identity: 'trans' });
         tab('Look');
         const c = () => useStore.getState().studioCharacter!;
         fireEvent.click(screen.getByRole('combobox', { name: 'Top' }));
-        expect(screen.getAllByRole('option')).toHaveLength(49);
+        expect(screen.getAllByRole('option')).toHaveLength(51);
         fireEvent.click(screen.getByRole('option', { name: 'Hoodie' }));
         expect(c().dress.top.kind).toBe('hoodie');
         fireEvent.click(screen.getByRole('combobox', { name: 'Bottom' }));
-        expect(screen.getAllByRole('option')).toHaveLength(38);
+        expect(screen.getAllByRole('option')).toHaveLength(42);
         fireEvent.click(screen.getByRole('option', { name: 'Wide trousers' }));
         expect(c().dress.bottom.kind).toBe('wide-pants');
         expect(screen.getByRole('img', { name: /Meera/ })).toBeTruthy();
@@ -331,8 +414,8 @@ describe('wardrobe', () => {
         fireEvent.click(screen.getByRole('option', { name: 'Torch' }));
         expect(c().dress.held).toHaveLength(2);
         fireEvent.click(screen.getByRole('combobox', { name: 'Both hands hold' }));
-        fireEvent.click(screen.getByRole('option', { name: 'Boxing gloves' }));
-        expect(c().dress.held).toEqual([{ kind: 'boxing-gloves', hand: 'both' }]);
+        fireEvent.click(screen.getByRole('option', { name: 'Rifle' }));
+        expect(c().dress.held).toEqual([{ kind: 'rifle', hand: 'both' }]);
     });
 });
 

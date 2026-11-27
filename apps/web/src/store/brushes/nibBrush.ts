@@ -4,15 +4,14 @@
  * finished filled path come from VariableWidthBrush.
  */
 import { nibOutline, nibWidthFactor } from '@/lib/brushes/nibOutline';
+import { penSample } from '@/lib/canvas/penInput';
 import { DEFAULT_NIB_STYLE, type NibStyle } from '../nibStyle';
 import { VariableWidthBrush, smoothSamples, type Pt } from './variableWidthBrush';
-
-type PointerLike = { pointerType?: string; pressure?: number };
 
 export class NibBrush extends VariableWidthBrush {
     nib: NibStyle = DEFAULT_NIB_STYLE;
 
-    addSample(p: Pt, e?: PointerLike): boolean {
+    addSample(p: Pt, e?: unknown): boolean {
         const last = this.samples[this.samples.length - 1];
         const zoom = this.canvas.getZoom?.() ?? 1;
         const now = performance.now();
@@ -22,11 +21,11 @@ export class NibBrush extends VariableWidthBrush {
             if (d < 1.2 / zoom) return false;
             speed = (d * zoom) / Math.max(now - this.lastT, 1); // screen px per ms
         }
-        const pen = e?.pointerType === 'pen' && (e.pressure ?? 0) > 0;
+        const { pen, pressure } = penSample(this.canvas?.upperCanvasEl, e); // BUG-234, P3
         const target = nibWidthFactor({
             speed,
             thinning: this.nib.thinning,
-            pressure: pen ? e?.pressure : undefined,
+            pressure: pen ? pressure : undefined,
         });
         this.factor = last ? this.factor * 0.7 + target * 0.3 : target; // eased, like ink
         this.lastT = now;

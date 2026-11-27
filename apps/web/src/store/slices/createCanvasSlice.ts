@@ -2,12 +2,14 @@ import * as fabric from 'fabric';
 
 import { fateboardCanvasConfig } from '@/components/config/fateboard.config';
 import { canvasPxPerCss } from '@/lib/canvas/deepZoom';
+import { evictImageTextures } from '@/lib/canvas/imageTextures';
 import { MultiStopGradientTool } from '@/lib/utils/GradientTool';
 // import { enterTextEdit } from '@/lib/utils/enterTextEdit';
 import { DEFAULT_CANVAS_PRESET } from '@/components/organisms/board/board.config';
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
 import { projectStorage, type StoredBoard } from '@/lib/storage';
+import { createPersistence, downloadText } from './canvas/persistence';
 import { emptyAnimation } from '@/animation/engine';
 import { applySizeSetting, startBoardPreset } from '../pagePreset';
 import type { CanvasTool } from '../canvasTools';
@@ -18,9 +20,6 @@ import type { CanvasTool } from '../canvasTools';
  * text shapes intact.
  */
 export const SERIALIZE_PROPS: string[] = [...CUSTOM_PROPS];
-
-// Autosave goes through `projectStorage` (IndexedDB, whole project: BUG-004 / Q5).
-const PERSIST_DELAY_MS = 300;
 
 /** Firefox reports some wheels in lines (`deltaMode` 1). */
 const WHEEL_LINE_PX = 16;
@@ -53,22 +52,6 @@ const typeOf = (object: CanvasObject): string => String(object?.type ?? '').toLo
 
 const isGradient = (fill: unknown): boolean => fill instanceof fabric.Gradient;
 
-/** Hands `json` to the browser as a download. */
-const downloadText = (json: string, fileName: string) => {
-    const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-    const link = document.createElement('a');
-
-    link.href = url;
-    link.download = fileName;
-
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    // Give the browser time to start the download.
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-};
-
 export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown) => {
     // Private lifecycle state: these values are not part of Zustand.
     let panCanvas: CanvasInstance | null = null;
@@ -81,129 +64,15 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         defaultCursor: string;
         objects: CanvasObject[];
     } | null = null;
-    let persistTimer: ReturnType<typeof setTimeout> | undefined;
     let eventHandlers: Record<string, EventHandler> | null = null;
     let filteringSelection = false;
 
-    // While > 0, persist() does nothing. Used during restore / import / clear so a
-    // half-loaded or empty canvas can never overwrite the saved data.
-    let persistLock = 0;
-    let persistDropped = false; // persist() was called while locked (BUG-186)
-    let unloadHandler: (() => void) | null = null;
     // tab hidden (switching away, closing on mobile): save NOW; pagehide can be too late for the
     // async IndexedDB write (BUG-138)
     let visibilityHandler: (() => void) | null = null;
-    // The saved project could not be read (BUG-173): nothing writes over it or deletes it until a
-    // later read works, because the editor shows an empty board, not the user's project.
-    let savedProjectUnread = false;
-    // A failed autosave was shown; shown again only after a save works in between (BUG-162).
-    let saveFailureShown = false;
-
-    const cancelPersist = () => {
-        if (persistTimer !== undefined) {
-            clearTimeout(persistTimer);
-            persistTimer = undefined;
-        }
-    };
-
-    /**
-     * Save the whole project (every page; the live canvas goes into the current page).
-     * Nothing is written before pages exist (restore still running) or while a page is loading,
-     * so a half-loaded canvas never lands in the wrong page.
-     */
-    const writeProjectToStorage = () => {
-        if (savedProjectUnread) return;
-        try {
-            const doc = get().captureProject?.({ thumbnail: false });
-
-            if (!doc) return;
-
-            projectStorage
-                .save(doc)
-                .then(() => {
-                    saveFailureShown = false;
-                })
-                .catch((error) => {
-                    console.error('[canvas] failed to save the project:', error);
-                    reportSaveFailure();
-                });
-        } catch (error) {
-            console.error('[canvas] failed to serialize the project:', error);
-        }
-    };
-
-    /** The autosave failed (storage full, blocked, private mode): say so once (BUG-162). */
-    const reportSaveFailure = () => {
-        if (saveFailureShown) return;
-        saveFailureShown = true;
-        void Promise.resolve(
-            get().confirmDialog?.({
-                title: "Your board isn't being saved",
-                message:
-                    'This browser refused to save your board (its storage may be full or blocked). Save a copy so you keep your work. Saving is retried with every change.',
-                confirmLabel: 'Save a copy',
-                cancelLabel: 'Not now',
-            }),
-        ).then((saveCopy) => {
-            if (saveCopy) get().saveBoard();
-        });
-    };
-
-    /**
-     * The saved board could not be opened (BUG-154). The editor starts empty and the next
-     * autosave would replace the only copy, so it is kept under its own key first and the user
-     * is offered the file.
-     */
-    const keepUnreadableBoard = async (saved: StoredBoard) => {
-        const raw = saved.kind === 'project' ? saved.project : saved.canvasJSON;
-        try {
-            await projectStorage.keepUnreadable(raw);
-        } catch (error) {
-            console.error('[canvas] failed to keep the unreadable board:', error);
-        }
-        void Promise.resolve(
-            get().confirmDialog?.({
-                title: "Your saved board couldn't be opened",
-                message:
-                    'A new empty board was started. Your saved board was kept: download it now so you have the file.',
-                confirmLabel: 'Download saved board',
-                cancelLabel: 'Not now',
-            }),
-        ).then((download) => {
-            if (download) downloadText(JSON.stringify(raw), 'unreadable-board.fateboard');
-        });
-    };
-
-    /** Write any pending debounced save immediately (dispose, tab close). */
-    const flushPersist = () => {
-        if (persistTimer === undefined) return;
-
-        cancelPersist();
-
-        if (persistLock > 0 || get().isPageSwitching) return;
-
-        if (!get().canvas) return;
-
-        writeProjectToStorage();
-    };
-
-    const attachUnloadHandler = () => {
-        if (typeof window === 'undefined' || unloadHandler) return;
-
-        unloadHandler = () => flushPersist();
-
-        window.addEventListener('beforeunload', unloadHandler);
-        window.addEventListener('pagehide', unloadHandler);
-    };
-
-    const detachUnloadHandler = () => {
-        if (typeof window === 'undefined' || !unloadHandler) return;
-
-        window.removeEventListener('beforeunload', unloadHandler);
-        window.removeEventListener('pagehide', unloadHandler);
-
-        unloadHandler = null;
-    };
+    // autosave: debounce, one write at a time, lock / unread flags (P2, canvas/persistence.ts)
+    const persistence = createPersistence(get);
+    const ps = persistence.state;
 
     // a new board starts at Settings > Canvas size (+ a manga size's page setup), not an edit (store/pagePreset)
     const applyDefaultPreset = () => startBoardPreset(get, set);
@@ -610,7 +479,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             if (!canvas) return;
 
-            cancelPersist();
+            persistence.cancel();
             cleanupEditingSession(false);
 
             get().clearGradientSession?.();
@@ -619,20 +488,20 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             // canvas.clear() fires object:removed for every object. Lock persistence so
             // those events can't schedule a save of the empty canvas.
-            persistLock++;
+            ps.lock++;
 
             try {
                 canvas.clear();
                 canvas.backgroundColor = fateboardCanvasConfig.bg;
             } finally {
-                persistLock--;
+                ps.lock--;
             }
 
-            cancelPersist();
+            persistence.cancel();
 
             // New board = new project: one empty page, and no saved copy. A project that could not
             // be read is kept: the user never saw it (BUG-173).
-            if (!savedProjectUnread) {
+            if (!ps.unread) {
                 projectStorage.clear().catch((error) => {
                     console.error('[canvas] failed to clear the saved project:', error);
                 });
@@ -682,14 +551,14 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 return;
             }
 
-            cancelPersist();
+            persistence.cancel();
             cleanupEditingSession(false);
 
             if (undoable) get().saveState?.(true); // the page as it was = the step to go back to
             get().pauseHistory?.();
 
             // Loading fires object:added for every object; don't save mid-load.
-            persistLock++;
+            ps.lock++;
 
             try {
                 canvas.discardActiveObject();
@@ -711,7 +580,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 console.error('Failed to import canvas JSON:', error);
                 throw error;
             } finally {
-                persistLock--;
+                ps.lock--;
                 get().resumeHistory?.();
             }
 
@@ -733,19 +602,19 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             if (!canvas) return false;
 
-            persistLock++;
-            persistDropped = false;
+            ps.lock++;
+            ps.dropped = false;
             let saveEditsAfter = false; // edited during the read: saved once unlocked (BUG-186)
 
             try {
                 let saved: StoredBoard | null;
                 try {
                     saved = await projectStorage.load();
-                    savedProjectUnread = false;
+                    ps.unread = false;
                 } catch (error) {
                     // Not "nothing saved": the project may be there. Never write over it (BUG-173).
                     console.error('[canvas] the saved board could not be read:', error);
-                    savedProjectUnread = true;
+                    ps.unread = true;
                     void Promise.resolve(
                         get().alertDialog?.({
                             title: "Your saved board couldn't be read",
@@ -762,7 +631,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 // nothing saved: the first board starts at the default size
                 if (!saved) {
                     if (canvas.getObjects().length === 0) applyDefaultPreset();
-                    saveEditsAfter = persistDropped;
+                    saveEditsAfter = ps.dropped;
                     return false;
                 }
 
@@ -784,7 +653,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 }
                 if (!opened) {
                     applyDefaultPreset(); // an empty new board replaces it
-                    await keepUnreadableBoard(saved);
+                    await persistence.keepUnreadableBoard(saved);
                 }
 
                 return opened;
@@ -792,7 +661,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 console.error('Failed to restore canvas from storage:', error);
                 return false;
             } finally {
-                persistLock--;
+                ps.lock--;
                 if (saveEditsAfter && get().canvas === canvas) get().persist();
             }
         },
@@ -955,7 +824,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 get().bindDocument?.(canvas); // page setup, master pages, page numbers
                 get().bindComic?.(canvas); // comic panel frames keep their areas in step
 
-                attachUnloadHandler();
+                persistence.attachUnload();
 
                 // The synchronous part of this call locks persistence before any event
                 // can schedule a save, then loads the saved board asynchronously.
@@ -972,7 +841,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             } catch (error) {
                 get().unregisterCanvasEvents(canvas);
                 detachPanHandlers(canvas);
-                detachUnloadHandler();
+                persistence.detachUnload();
 
                 void canvas.dispose();
 
@@ -989,9 +858,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             // Save anything still waiting on the debounce BEFORE the store is nulled.
             cleanupEditingSession(true);
-            flushPersist();
+            persistence.flush();
             detachPanHandlers(canvas);
-            detachUnloadHandler();
+            persistence.detachUnload();
 
             get().unregisterCanvasEvents(canvas);
 
@@ -1019,34 +888,9 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
         },
 
         /** Debounced save of the whole canvas. */
-        persist: () => {
-            if (persistLock > 0) {
-                persistDropped = true;
-                return;
-            }
+        persist: () => persistence.schedule(),
 
-            cancelPersist();
-
-            persistTimer = setTimeout(() => {
-                persistTimer = undefined;
-
-                if (persistLock > 0) return;
-
-                if (!get().canvas) return;
-
-                // A page is loading: save once it is done (showPage persists at the end too).
-                if (get().isPageSwitching) {
-                    get().persist();
-                    return;
-                }
-
-                writeProjectToStorage();
-            }, PERSIST_DELAY_MS);
-        },
-
-        flushPersist: () => {
-            flushPersist();
-        },
+        flushPersist: () => persistence.flush(),
 
         /** Settings > Canvas size / Orientation changed: the open page takes it (store/pagePreset). */
         applyCanvasSizeSetting: () => applySizeSetting(get),
@@ -1057,6 +901,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
          */
         handlePersistEvent: (e: CanvasEvent) => {
             const obj = e?.target ?? e?.path;
+            if (e?.target && !e.target.canvas) evictImageTextures(e.target); // removed: free GPU (BUG-236)
 
             // Skip helper objects (node handles, guides, connector handles, etc.).
             if (obj?.excludeFromExport) return;
@@ -1186,7 +1031,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
 
             if (typeof document !== 'undefined' && !visibilityHandler) {
                 visibilityHandler = () => {
-                    if (document.visibilityState === 'hidden') flushPersist();
+                    if (document.visibilityState === 'hidden') persistence.flush();
                 };
                 document.addEventListener('visibilitychange', visibilityHandler);
             }
@@ -1194,12 +1039,11 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             // every content change becomes an undo step (BUG-006)
             get().registerHistoryEvents?.(canvas);
 
-            // edits keep animation rest states current (BUG-011)
+            // edits keep animation rest states current (BUG-011); loaded fight clips are drawn again
             get().registerAnimationEvents?.(canvas);
-
-            // Text-in-shape resizing, connectors, hover outline. Idempotent per canvas,
-            // and installed BEFORE restoreFromStorage() loads the saved board so
-            // reloaded text shapes / connectors are rebuilt correctly.
+            get().registerFightClipEvents?.(canvas);
+            // Text-in-shape resizing, connectors, hover outline. Idempotent per canvas, and installed
+            // BEFORE restoreFromStorage() loads the saved board so reloaded text shapes / connectors are rebuilt.
             get().installShapeBehavior?.(canvas);
         },
 
@@ -1210,6 +1054,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
             }
             get().unregisterHistoryEvents?.(canvas);
             get().unregisterAnimationEvents?.(canvas);
+            get().unregisterFightClipEvents?.(canvas);
             if (!eventHandlers) return;
 
             Object.entries(eventHandlers).forEach(([name, handler]) => {

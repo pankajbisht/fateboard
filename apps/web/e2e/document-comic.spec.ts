@@ -2,7 +2,7 @@
  * Document + comic tools (2026-11-17) in a real browser: a master page drawn under another page with its page
  * number, and comic panels whose Art layer is clipped to the panels (real pixels).
  */
-import { expect, test } from './fixtures';
+import { expect, test, type Editor } from './fixtures';
 import type { Page } from '@playwright/test';
 
 type FCanvas = {
@@ -110,4 +110,90 @@ test('comic panels: art on the Art layer stays inside the panels', async ({ edit
     await expect.poll(() => pixelAt(page, size[0] / 4, midY)).toEqual(RED); // inside the left panel
     await expect.poll(() => pixelAt(page, size[0] / 2, midY)).not.toEqual(RED); // the gutter
     await expect.poll(() => pixelAt(page, 10, midY)).not.toEqual(RED); // the margin
+});
+
+/** page point → screen point (for real mouse drags), like the other specs: the settled canvas box */
+const toScreen = async (editor: Editor, x: number, y: number) => {
+    const box = await editor.settledCanvasBox();
+    const [cx, cy, cw] = await editor.page.evaluate(
+        ([sx, sy]) => {
+            const c = window.__fateboard!.state('canvas') as FCanvas & { getWidth: () => number };
+            const v = c.viewportTransform;
+            return [sx * v[0] + v[4], sy * v[3] + v[5], c.getWidth()];
+        },
+        [x, y],
+    );
+    const k = box.width / cw;
+    return { x: box.x + cx * k, y: box.y + cy * k };
+};
+
+const drag = async (page: Page, from: { x: number; y: number }, dx: number, dy: number) => {
+    await page.mouse.move(from.x, from.y);
+    await page.mouse.down();
+    for (let i = 1; i <= 5; i++)
+        await page.mouse.move(from.x + (dx * i) / 5, from.y + (dy * i) / 5);
+    await page.mouse.up();
+};
+
+test('a scene filled into a panel shows only in that panel, also after a drag; panels stay put', async ({
+    editor,
+    page,
+}) => {
+    await editor.openPanel('Comic');
+    await page.getByRole('button', { name: 'Panel layout 2 columns' }).click();
+    const size = await page.evaluate(() => [
+        window.__fateboard!.state('pageWidth') as number,
+        window.__fateboard!.state('pageHeight') as number,
+    ]);
+    const [w, h] = size;
+    // a big red "scene" over the left panel (and well into the right one)
+    await editor.addShape('Rectangle');
+    await placeSelected(page, { left: 0, top: 0, w: w * 0.7, h }, '#ff0000');
+    await editor.openPanel('Comic');
+    await page.getByRole('button', { name: 'Fill panel' }).click();
+    const midY = h / 2;
+    await expect.poll(() => pixelAt(page, w / 4, midY)).toEqual(RED); // its panel
+    await expect.poll(() => pixelAt(page, (w * 3) / 4, midY)).not.toEqual(RED); // the next panel
+
+    // dragged right inside its panel (the scene moves, not the panel over it): still cut to it
+    const sceneLeft = () =>
+        page.evaluate(() => {
+            const c = window.__fateboard!.state('canvas') as {
+                getObjects: () => { fill?: unknown; left: number }[];
+            };
+            return c.getObjects().find((o) => o.fill === '#ff0000')!.left;
+        });
+    const was = await sceneLeft();
+    await drag(page, await toScreen(editor, w / 4, midY), 40, 0);
+    await expect.poll(sceneLeft).toBeGreaterThan(was + 20);
+    await expect.poll(() => pixelAt(page, w / 4, midY)).toEqual(RED);
+    await expect.poll(() => pixelAt(page, (w * 3) / 4, midY)).not.toEqual(RED);
+
+    // a locked panel frame does not move when dragged by its border
+    const frameLeft = () =>
+        page.evaluate(() => {
+            const c = window.__fateboard!.state('canvas') as {
+                getObjects: () => { comicPanel?: boolean; left: number }[];
+            };
+            return c
+                .getObjects()
+                .filter((o) => o.comicPanel)
+                .map((o) => Math.round(o.left));
+        });
+    const before = await frameLeft();
+    const edge = await page.evaluate(() => {
+        const c = window.__fateboard!.state('canvas') as {
+            getObjects: () => {
+                comicPanel?: boolean;
+                getBoundingRect: () => { left: number; top: number; height: number };
+            }[];
+        };
+        const f = c
+            .getObjects()
+            .filter((o) => o.comicPanel)[1]
+            .getBoundingRect();
+        return { x: f.left + 1, y: f.top + f.height / 2 };
+    });
+    await drag(page, await toScreen(editor, edge.x, edge.y), 60, 30);
+    expect(await frameLeft()).toEqual(before);
 });

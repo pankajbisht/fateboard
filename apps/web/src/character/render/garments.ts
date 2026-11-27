@@ -1,6 +1,7 @@
 import type { BottomDef, TopDef } from '../data/garments';
 import { looseOf } from './clothDetail';
 import { addMangaHanging } from './hangLoft';
+import { withField } from './effects';
 import { mangaLeg, mangaSleeve } from './mangaGarments';
 export { addCollar } from './collars';
 import { apply, lerp3, normalize, type V3 } from '../rig/math';
@@ -177,7 +178,38 @@ export function addHanging(
     manga = false,
     underLoose = 1,
 ) {
-    if (manga) return addMangaHanging(ctx, skel, key, role, t, flare, underLoose);
+    // effects (wind, updraft, twirl, wet) bend the cloth from the waist down (render/effects.ts)
+    const p = ctx.posed.pos;
+    withField(
+        ctx,
+        ctx.effects,
+        () => ({
+            anchor: p.spine1,
+            length: Math.max(1, (p.spine1[1] - (p.lowerLegL[1] + p.lowerLegR[1]) / 2) * 0.9),
+            start: 0,
+            base: 0,
+            cling: 0.18,
+            lift: 0.75,
+            spread: 0.25,
+            group: 'torso',
+            dripsBehind: false,
+        }),
+        () =>
+            manga
+                ? addMangaHanging(ctx, skel, key, role, t, flare, underLoose)
+                : addShellHanging(ctx, skel, key, role, t, flare),
+    );
+}
+
+/** The classic body's hanging shell (see addHanging). */
+function addShellHanging(
+    ctx: Ctx,
+    skel: Skeleton,
+    key: string,
+    role: Material,
+    t: number,
+    flare: number,
+) {
     const z = skel.size;
     const torsoLen = skel.offset.spine2[1] / 0.26;
     const hem: V3[] = [];

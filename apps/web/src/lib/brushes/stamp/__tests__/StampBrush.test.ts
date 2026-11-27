@@ -10,6 +10,7 @@ vi.mock('../renderDabs', () => ({
 import { StampBrush } from '../StampBrush';
 import { StampStroke } from '../StampStroke';
 import { resolveStamp } from '../stampParams';
+import { attachPenInput } from '@/lib/canvas/penInput';
 
 /** A 2D context that accepts any call (jsdom has none). */
 const anyCtx = (canvas: HTMLCanvasElement) =>
@@ -97,5 +98,31 @@ describe('StampBrush', () => {
             expect(d.x).toBeLessThanOrEqual(stroke.width);
             expect(d.y).toBeLessThanOrEqual(stroke.height);
         }
+    });
+
+    // BUG-234 / P3: Fabric gives brushes a MouseEvent (no pressure); the pen's pointer event is looked up
+    it('a pen stroke stores the pressure of the pointer event behind the mouse event', () => {
+        const { brush, canvas } = setup(resolveStamp({}));
+        const el = document.createElement('canvas');
+        document.body.appendChild(el);
+        Object.assign(canvas, { upperCanvasEl: el });
+        const detach = attachPenInput(el);
+        const pe = new Event('pointerdown', { bubbles: true });
+        for (const [k, v] of Object.entries({ isPrimary: true, pointerType: 'pen', pressure: 0.4 }))
+            Object.defineProperty(pe, k, { value: v });
+        el.dispatchEvent(pe);
+        brush.onMouseDown(new Point(10, 10), { e: { timeStamp: pe.timeStamp } } as never);
+        detach();
+        expect((brush as unknown as { points: { p: number }[] }).points[0].p).toBe(0.4);
+    });
+
+    it('merged (coalesced) samples of a move are all stored, with one blit', () => {
+        const { brush, canvas } = setup(resolveStamp({}));
+        Object.assign(canvas, { _getPointerImpl: (s: { x: number }) => ({ x: s.x, y: 0 }) });
+        brush.onMouseDown(new Point(0, 0), { e: {} } as never);
+        const merged = [{ x: 10 }, { x: 20 }, { x: 30 }];
+        brush.onMouseMove(new Point(30, 0), { e: { getCoalescedEvents: () => merged } } as never);
+        const xs = (brush as unknown as { points: { x: number }[] }).points.map((p) => p.x);
+        expect(xs).toEqual([0, 10, 20, 30]);
     });
 });

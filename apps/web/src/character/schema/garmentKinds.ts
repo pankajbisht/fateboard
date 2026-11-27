@@ -21,6 +21,8 @@ export const MORE_TOP_KINDS = [
     'army-tee',
     'school-blouse',
     'camp-shirt',
+    'rashguard',
+    'gi-jacket',
 ] as const;
 
 export const MORE_BOTTOM_KINDS = [
@@ -42,4 +44,47 @@ export const MORE_BOTTOM_KINDS = [
     'swim-trunks',
     'army-pants',
     'muay-thai-shorts',
+    'boxing-trunks',
+    'fight-shorts',
+    'spats',
+    'gi-pants',
+] as const;
+
+/** Worn extras (glasses, hats, bags …, and the combat-sport gear of schema v9). */
+export const ACCESSORY_KINDS = [
+    'glasses',
+    'sunglasses',
+    'cap',
+    'hat',
+    'beanie',
+    'headband',
+    'turban',
+    'headscarf',
+    'helmet',
+    'scarf',
+    'tie',
+    'necklace',
+    'earrings',
+    'bindi',
+    'watch',
+    'bracelet',
+    'belt',
+    'backpack',
+    'bag',
+    'apron',
+    'beret',
+    'army-helmet',
+    'bow',
+    'hair-clip',
+    'socks',
+    // combat-sport gear (docs/COMBAT_PACK.md, schema v9)
+    'boxing-gloves',
+    'mma-gloves',
+    'hand-wraps',
+    'mouthguard',
+    'head-guard',
+    'mongkol',
+    'prajioud',
+    'ankle-wraps',
+    'gi-belt',
 ] as const;

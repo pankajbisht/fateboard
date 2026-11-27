@@ -1,3 +1,4 @@
+import { MOVE_POSES } from '../combat/registry';
 import { mirrorPose } from '../rig/poseOps';
 import type { Pose } from '../schema/types';
 import { pose, type Arm } from './poseDsl';
@@ -354,6 +355,8 @@ export const POSES: Pose[] = [
     ...POSES_MARTIAL,
     ...POSES_MANGA,
     ...POSES_REFERENCE,
+    // Combat Sports Pack: the peak of every move (docs/COMBAT_PACK.md)
+    ...MOVE_POSES,
 ];
 
 export const POSE_CATEGORIES = [

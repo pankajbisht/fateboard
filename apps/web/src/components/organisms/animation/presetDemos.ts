@@ -60,6 +60,8 @@ export const PRESET_DEMOS: Record<PresetId, Keyframe[]> = {
         { transform: 'scale(1)', offset: 1 },
     ],
     float: steps([0, -4, 0, 4, 0], y),
+    windSway: steps([0, 6, 0, -6, 0], (v) => `skewX(${v}deg)`),
+    drift: steps([0, 6, 0, -6, 0], (v) => `translateX(${v}px)`),
 
     fadeOut: exit(ENTER.fade),
     slideOutLeft: exit(ENTER.left),

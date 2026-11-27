@@ -49,6 +49,8 @@ export const CUSTOM_PROPS = [
     'panelId', // links a frame to its twin
     'characterData', // a Character Studio character on the page: { character, camera } (src/character)
     'sceneData', // a Character Studio scene on the page: { scene } (src/scene)
+    'propData', // a Scene Object (props library) on the page: { propId, variant, colors, outline } (src/props)
+    'fightClip', // a fight clip on the page: timing + recipe, saved as a poster (scene/board.ts, animation/clips.ts)
     'backgroundColor',
 ] as const;
 
@@ -60,6 +62,30 @@ const EDITING_PROPS = [
     'hasControls',
     'hoverCursor',
 ];
+
+type Swap = { obj: Record<string, unknown>; live: Record<string, unknown> };
+
+/**
+ * A fight clip that carries its recipe (`scene/board.ts`) is saved as a poster: the place, the first drawing and
+ * the over layer, with the other drawings as empty hidden slots (rebuilt from the recipe after a load). One clip
+ * held every drawing (12k shapes, 16 MB) in each undo step and autosave. Clips without a recipe keep everything.
+ */
+function posterSwaps(group: Record<string, unknown>, swapped: Swap[]) {
+    const clip = group.fightClip as
+        { first?: unknown; count?: unknown; over?: unknown; recipe?: unknown } | undefined;
+    if (!clip?.recipe || typeof clip.first !== 'number' || typeof clip.count !== 'number') return;
+    const kids = group._objects as Record<string, unknown>[];
+    const swap = (kid: Record<string, unknown> | undefined, to: Record<string, unknown>) => {
+        if (!kid) return;
+        const live: Record<string, unknown> = {};
+        for (const k of Object.keys(to)) live[k] = kid[k];
+        Object.assign(kid, to);
+        swapped.push({ obj: kid, live });
+    };
+    for (let i = 0; i < clip.count; i++)
+        swap(kids[clip.first + i], i === 0 ? { visible: true } : { visible: false, _objects: [] });
+    if (typeof clip.over === 'number' && clip.over >= 0) swap(kids[clip.over], { visible: true });
+}
 
 type Serializable = {
     toObject: (props?: string[]) => Record<string, unknown>;
@@ -78,7 +104,7 @@ export function serializeCanvas(
     canvas: Serializable,
     props: readonly string[] = CUSTOM_PROPS,
 ): Record<string, unknown> {
-    const swapped: Array<{ obj: Record<string, unknown>; live: Record<string, unknown> }> = [];
+    const swapped: Swap[] = [];
     const visit = (list: unknown[]) => {
         for (const item of list) {
             const obj = item as Record<string, unknown> & {
@@ -106,7 +132,10 @@ export function serializeCanvas(
                 }
                 swapped.push({ obj, live });
             }
-            if (Array.isArray(obj?._objects)) visit(obj._objects);
+            if (Array.isArray(obj?._objects)) {
+                posterSwaps(obj, swapped);
+                visit(obj._objects);
+            }
         }
     };
     visit(canvas.getObjects());

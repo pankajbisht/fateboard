@@ -12,6 +12,9 @@ import { PanelSection } from '../../molecules/PanelSection';
 import { SegmentedControl } from '../../molecules/SegmentedControl';
 import { BODY_STYLE_LABELS } from '../character/studioLabels';
 import { CharacterThumb } from '../character/CharacterView';
+import { SceneFight } from './SceneFight';
+import { SceneFightCombos } from './SceneFightCombos';
+import { SceneFightFx } from './SceneFightFx';
 import { ScenePairPoses } from './ScenePairPoses';
 
 /** Who is in the scene: pick, add, edit, remove; where the selected one faces and looks; group layouts. */
@@ -134,6 +137,9 @@ export function SceneActorsTab() {
                 </PanelSection>
             )}
             {actors.length > 1 && <ScenePairPoses />}
+            {actors.length > 1 && <SceneFight />}
+            {actors.length > 1 && <SceneFightFx />}
+            {actors.length > 1 && <SceneFightCombos />}
             {actors.length > 1 && (
                 <PanelSection
                     title="Group"

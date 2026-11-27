@@ -17,6 +17,8 @@ import { createOpendbSyncStore } from './adapters/opendbLocal';
 import { createProjectStorage } from './projectStorage';
 import { createSettingsStorage } from './settingsStorage';
 import { createUiPrefsStorage } from './uiPrefs';
+import { createPropStorage } from './propStorage';
+import { createComboStorage } from './comboStorage';
 import { createCharacterStorage } from './characterStorage';
 import { createSceneStorage } from './sceneStorage';
 import type { KeyValueBackend } from './types';
@@ -54,6 +56,10 @@ const projectBackend = () =>
 export const characterStorage = createCharacterStorage(projectBackend);
 /** Scene Studio draft, in the same project database. */
 export const sceneStorage = createSceneStorage(projectBackend);
+/** Scene Objects: the user's own props (imported SVG / PNG), in the same project database. */
+export const propStorage = createPropStorage(projectBackend);
+/** Fight combos: the user's own sequences of exchanges, in the same project database. */
+export const comboStorage = createComboStorage(projectBackend);
 
 export type { KeyValueBackend, LegacySource, SyncKeyValue } from './types';
 export { createMemoryBackend, createMemorySyncStore } from './adapters/memory';
@@ -87,3 +93,4 @@ export {
 } from './sceneStorage';
 export { readLocalList, writeLocalList } from './localList';
 export { readSessionFlag, writeSessionFlag } from './sessionFlags';
+export { createLatestWriter } from './latestWriter';

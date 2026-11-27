@@ -196,13 +196,13 @@ describe('export', () => {
 });
 
 describe('templates tab', () => {
-    it('lists 30 templates a page at a time, searches them, and applies one (then undo brings the scene back)', async () => {
+    it('lists 33 templates a page at a time, searches them, and applies one (then undo brings the scene back)', async () => {
         await newSceneFromPanel();
         sceneTab('Start');
-        expect(screen.getByText('Templates (30)')).toBeTruthy();
+        expect(screen.getByText('Templates (33)')).toBeTruthy();
         const cards = () => screen.getAllByTitle(/^Use the "/);
         expect(cards()).toHaveLength(12);
-        fireEvent.click(screen.getByRole('button', { name: /Show more \(18 left\)/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Show more \(21 left\)/ }));
         expect(cards()).toHaveLength(24);
 
         fireEvent.change(screen.getByRole('textbox', { name: 'Search templates' }), {
@@ -320,6 +320,17 @@ describe('crowd', () => {
         });
         fireEvent.click(screen.getAllByTitle(/^Use the "/)[0]);
         expect(scene().set.crowd).toBe(50);
+    });
+
+    it('the Wind slider and direction blow on every actor (2026-11-27)', async () => {
+        await newSceneFromPanel();
+        fireEvent.change(screen.getByRole('slider', { name: 'Wind' }), { target: { value: '60' } });
+        fireEvent.click(
+            within(screen.getByRole('radiogroup', { name: 'Wind direction' })).getByRole('radio', {
+                name: '← Left',
+            }),
+        );
+        expect(scene().set).toMatchObject({ wind: 0.6, windDir: 180 });
     });
 });
 

@@ -116,6 +116,32 @@ export function SceneSetTab() {
                     onChange={(season) => edit({ kind: 'set', patch: { season } })}
                     options={options(SEASON_LABELS)}
                 />
+                <SliderField
+                    label="Wind"
+                    hint="Blows every actor's hair and hanging cloth the same way (each one's own wind, if stronger, stays)"
+                    min={0}
+                    max={100}
+                    step={1}
+                    unit="%"
+                    value={Math.round((set.wind ?? 0) * 100)}
+                    onChange={(v) =>
+                        edit({
+                            kind: 'set',
+                            patch: { wind: v / 100, windDir: set.windDir ?? 0 },
+                        })
+                    }
+                />
+                <SegmentedControl<string>
+                    aria-label="Wind direction"
+                    value={String(set.windDir ?? 0)}
+                    onChange={(d) => edit({ kind: 'set', patch: { windDir: Number(d) } })}
+                    options={[
+                        { value: '0', label: '→ Right' },
+                        { value: '180', label: '← Left' },
+                        { value: '90', label: 'Toward' },
+                        { value: '270', label: 'Away' },
+                    ]}
+                />
             </PanelSection>
         </div>
     );

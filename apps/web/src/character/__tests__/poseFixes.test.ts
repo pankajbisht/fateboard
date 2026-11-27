@@ -94,7 +94,8 @@ describe('sharply bent manga limbs', () => {
 
 describe('lying poses', () => {
     it('lie across the view of the default front camera (pelvis to head runs sideways), not toward the viewer', () => {
-        for (const p of POSES.filter((x) => x.ground === 'floor')) {
+        // seated on the floor (BJJ back control, a knockdown's fall) rests the hips, not the back: not lying
+        for (const p of POSES.filter((x) => x.ground === 'floor' && !x.tags.includes('seated'))) {
             const sk = buildSkeleton(fromRecipe(RECIPES[4], 'x').body);
             const f = solveFK(sk, p);
             const axis = [0, 1, 2].map((i) => f.pos.head[i] - f.pos.pelvis[i]);

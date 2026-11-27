@@ -1,6 +1,9 @@
 import { useStore } from '@store';
 import { SKIN_TONES } from '@/character/data/recipes';
-import type { Body } from '@/character/schema/types';
+import { identityOf } from '@/character/data/audience';
+import { BODY_TYPES, BODY_TYPE_LABELS, bodyTypeEdit, bodyTypeOf } from '@/character/data/bodyTypes';
+import type { Body, Identity } from '@/character/schema/types';
+import { Button } from '../../atoms/Button';
 import { SliderField } from '../../molecules/LabeledSlider';
 import LabeledToggle from '../../molecules/LabeledToggle';
 import { PanelSection } from '../../molecules/PanelSection';
@@ -33,20 +36,20 @@ const SHAPE: [Shape, string][] = [
 
 const genderText = (v: number) => (v < 34 ? 'Male' : v > 66 ? 'Female' : 'Blend');
 
-type BodyType = 'male' | 'female' | 'between';
-const BODY_TYPES: { value: BodyType; label: string; gender: number }[] = [
+/** Male and female also set the frame (as the old Male / Female switch did); trans keeps the body as it is. */
+const IDENTITY_OPTIONS: { value: Identity; label: string; gender?: number }[] = [
     { value: 'male', label: 'Male', gender: 0 },
     { value: 'female', label: 'Female', gender: 1 },
-    { value: 'between', label: 'In between', gender: 0.5 },
+    { value: 'trans', label: 'Trans' },
 ];
-const typeOf = (gender: number): BodyType =>
-    gender < 0.34 ? 'male' : gender > 0.66 ? 'female' : 'between';
 
-/** Body type, frame and bust; body sliders (0–100 on screen, 0–1 stored), age and skin. */
+/** Identity, frame and bust, body type presets; body sliders (0–100 on screen, 0–1 stored), age and skin. */
 export function StudioBodyTab() {
-    const body = useStore((s) => s.studioCharacter?.body);
+    const c = useStore((s) => s.studioCharacter);
     const edit = useStore((s) => s.editStudioCharacter);
-    if (!body) return null;
+    if (!c) return null;
+    const body = c.body;
+    const current = bodyTypeOf(c);
     const set = (key: keyof Body, value: number) => edit({ body: { [key]: value } }, `body-${key}`);
 
     return (
@@ -54,18 +57,20 @@ export function StudioBodyTab() {
             <StudioBodyStyle />
             <PanelSection
                 title="Body"
-                description="Male: broad shoulders, narrow hips, a flat chest. Female: an hourglass, hips as wide as the shoulders, a bust. The frame and the bust are separate, so any body can be made (trans and nonbinary bodies too)."
+                description="Identity decides which hair and clothes are listed (Trans lists everything). Male and Female also set the frame; the frame and the bust are separate, so any body can be made."
             >
-                <SegmentedControl<BodyType>
-                    aria-label="Body type"
-                    value={typeOf(body.gender)}
-                    onChange={(type) =>
-                        edit({
-                            body: { gender: BODY_TYPES.find((t) => t.value === type)!.gender },
-                            resetBust: true,
-                        })
-                    }
-                    options={BODY_TYPES.map(({ value, label }) => ({ value, label }))}
+                <SegmentedControl<Identity>
+                    aria-label="Identity"
+                    value={identityOf(c)}
+                    onChange={(identity) => {
+                        const gender = IDENTITY_OPTIONS.find((o) => o.value === identity)!.gender;
+                        edit(
+                            gender === undefined
+                                ? { identity }
+                                : { identity, body: { gender }, resetBust: true },
+                        );
+                    }}
+                    options={IDENTITY_OPTIONS.map(({ value, label }) => ({ value, label }))}
                 />
                 <SliderField
                     label="Frame"
@@ -91,6 +96,24 @@ export function StudioBodyTab() {
                     value={Math.round(body.bust * 100)}
                     onChange={(v) => set('bust', v / 100)}
                 />
+            </PanelSection>
+            <PanelSection
+                title="Body type"
+                description="A build in one click, in the male or female version (by identity; for Trans, by the frame). Fine-tune with the sliders below."
+            >
+                <div role="group" aria-label="Body type" className="grid grid-cols-3 gap-1.5">
+                    {BODY_TYPES.map((t) => (
+                        <Button
+                            key={t}
+                            size="sm"
+                            variant={current === t ? 'primary' : 'secondary'}
+                            aria-pressed={current === t}
+                            onClick={() => edit(bodyTypeEdit(c, t))}
+                        >
+                            {BODY_TYPE_LABELS[t]}
+                        </Button>
+                    ))}
+                </div>
             </PanelSection>
             <PanelSection title="Age and build">
                 <SliderField

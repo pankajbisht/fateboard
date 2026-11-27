@@ -6,6 +6,8 @@
  * symmetry copies) and history records it like any other stroke.
  */
 import { BaseBrush, Shadow, type Canvas, type Point, type TBrushEventData } from 'fabric';
+import { timed } from '@/lib/perf/perfMarks';
+import { coalescedScenePoints, penSample } from '@/lib/canvas/penInput';
 import { DabWalker, dabBounds, strokeDabs, type StrokePoint } from './dabs';
 import { newSeed } from './rng';
 import { applyStrokeTexture, renderDabs } from './renderDabs';
@@ -23,7 +25,6 @@ export type StampBrushOptions = {
     smoothing: number;
 };
 
-type PointerLike = { pointerType?: string; pressure?: number } | undefined;
 type M = { a: number; b: number; c: number; d: number; e: number; f: number };
 
 /** Scene → device pixels of a context: its base transform (retina, deep zoom window) × the viewport. */
@@ -61,8 +62,9 @@ export class StampBrush extends BaseBrush {
         Object.assign(this, options);
     }
 
-    private pressureOf(e: PointerLike) {
-        return e && e.pointerType === 'pen' && (e.pressure ?? 0) > 0 ? (e.pressure as number) : 1;
+    /** Pen pressure behind Fabric's mouse / touch event (BUG-234, lib/canvas/penInput); 1 otherwise. */
+    private pressureOf(e: unknown) {
+        return penSample(this.canvas.upperCanvasEl, e).pressure;
     }
 
     /** Layer in the top canvas's device pixels; its transform maps scene units like the canvas. */
@@ -98,19 +100,31 @@ export class StampBrush extends BaseBrush {
             ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
             ctx.restore();
         }
-        this.add(pointer, ev?.e as PointerLike);
+        if (this.add(pointer, this.pressureOf(ev?.e))) this._render();
         if (this.params.spray) this.raf = requestAnimationFrame(this.keepSpraying);
     }
 
     onMouseMove(pointer: Point, ev: TBrushEventData): void {
-        if (this.down) this.add(pointer, ev?.e as PointerLike);
+        if (!this.down) return;
+        // the samples the browser merged into this move (a fast pen sends 120-240 Hz, P3)
+        const extra = coalescedScenePoints(this.canvas, ev?.e);
+        const prevT = this.points[this.points.length - 1]?.t ?? 0;
+        const now = Math.round(performance.now() - this.start);
+        let drew = false;
+        extra.forEach((c, i) => {
+            // one clock for every sample: spread the merged samples between the last one and now
+            const t = Math.round(prevT + ((now - prevT) * (i + 1)) / (extra.length + 1));
+            drew = this.add(c, c.pressure, t) || drew;
+        });
+        drew = this.add(pointer, this.pressureOf(ev?.e), now) || drew;
+        if (drew) this._render(); // one blit per move, not one per sample
     }
 
     onMouseUp(): boolean {
         this.down = false;
         if (this.raf) cancelAnimationFrame(this.raf);
         this.raf = 0;
-        this.finish();
+        timed('brush:commit', () => this.finish());
         return false;
     }
 
@@ -122,33 +136,51 @@ export class StampBrush extends BaseBrush {
         if (!this.down) return;
         const last = this.points[this.points.length - 1];
         const now = performance.now() - this.start;
-        if (last && now - last.t >= 16) this.push({ ...last, t: Math.round(now) });
+        if (last && now - last.t >= 16 && this.push({ ...last, t: Math.round(now) }))
+            this._render();
         this.raf = requestAnimationFrame(this.keepSpraying);
     };
 
-    private add(pointer: Point, e: PointerLike) {
+    /** Adds one smoothed sample; true when it painted dabs. */
+    private add(
+        pointer: { x: number; y: number },
+        pressure: number,
+        t = Math.round(performance.now() - this.start),
+    ): boolean {
         const k = 1 - Math.min(10, Math.max(0, this.smoothing)) / 12;
         const s = this.smoothed;
-        this.smoothed = s
+        const next = s
             ? { x: s.x + (pointer.x - s.x) * k, y: s.y + (pointer.y - s.y) * k }
             : { x: pointer.x, y: pointer.y };
-        this.pressure = this.pressureOf(e);
+        // P6: a sample closer than half a screen pixel with the same pressure adds nothing but bytes
+        const last = this.points[this.points.length - 1];
+        const near = (0.5 / (this.canvas.getZoom() || 1)) ** 2;
+        if (
+            last &&
+            !this.params.spray &&
+            (next.x - last.x) ** 2 + (next.y - last.y) ** 2 < near &&
+            Math.abs(pressure - last.p) < 0.02
+        )
+            return false;
+        this.smoothed = next;
+        this.pressure = pressure;
         // stored precision (packPoints) from the start, so the saved stroke redraws the dabs of the preview
-        this.push({
-            x: Math.round(this.smoothed.x * 100) / 100,
-            y: Math.round(this.smoothed.y * 100) / 100,
-            p: Math.round(this.pressure * 1000) / 1000,
-            t: Math.round(performance.now() - this.start),
+        return this.push({
+            x: Math.round(next.x * 100) / 100,
+            y: Math.round(next.y * 100) / 100,
+            p: Math.round(pressure * 1000) / 1000,
+            t,
         });
     }
 
-    private push(pt: StrokePoint) {
+    /** Store a sample and paint its dabs into the layer; true when there were dabs. */
+    private push(pt: StrokePoint): boolean {
         this.points.push(pt);
         const dabs = this.walker?.push(pt) ?? [];
         const ctx = this.layerContext();
-        if (!ctx || !dabs.length) return;
+        if (!ctx || !dabs.length) return false;
         renderDabs(ctx, dabs, this.params, this.canvas.getRetinaScaling() * this.canvas.getZoom());
-        this._render();
+        return true;
     }
 
     /** Show the layer on the top canvas with the stroke opacity and textures. */

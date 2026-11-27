@@ -10,6 +10,7 @@ import { createFakeCanvas } from '@/test/fakeCanvas';
 import { tick } from '@/test/sliceHarness';
 import { createMemoryBackend, projectStorage } from '@/lib/storage';
 import { CANVAS_PRESETS } from '@/components/organisms/board/board.config';
+import { PERSIST_DELAY_MS } from '@/store/slices/canvas/persistence';
 
 let canvas: any;
 let prev: any;
@@ -95,7 +96,7 @@ describe('default canvas size', () => {
     it('without a change in Settings, a saved board keeps its own size', async () => {
         state().initPages();
         state().setSelectedPreset(preset('youtube-thumbnail')); // e.g. from a template
-        await tick(400); // autosave
+        await tick(PERSIST_DELAY_MS + 100); // autosave
 
         await reload();
 
@@ -105,7 +106,7 @@ describe('default canvas size', () => {
     it('a size chosen in Settings resizes the open page when the editor loads, as one undo step', async () => {
         state().initPages();
         canvas.add({ type: 'rect', id: 'r1' });
-        await tick(400); // autosave: Presentation 16:9
+        await tick(PERSIST_DELAY_MS + 100); // autosave: Presentation 16:9
 
         state().setDefaultCanvasPreset('instagram-post');
         await reload();
@@ -113,7 +114,7 @@ describe('default canvas size', () => {
 
         expect(state().selectedPreset).toEqual(preset('instagram-post'));
         expect(state().canUndo).toBe(true);
-        await tick(400);
+        await tick(PERSIST_DELAY_MS + 100);
         const saved = state().captureProject();
         expect(saved.pages[0].preset.id).toBe('instagram-post');
 
@@ -122,7 +123,7 @@ describe('default canvas size', () => {
 
         // applied once: the next load leaves the page alone
         state().setSelectedPreset(preset('youtube-thumbnail'));
-        await tick(400);
+        await tick(PERSIST_DELAY_MS + 100);
         await reload();
         expect(state().selectedPreset.id).toBe('youtube-thumbnail');
     });
@@ -148,7 +149,7 @@ describe('default canvas size', () => {
     it('a custom size from Settings resizes the open page and starts new boards', async () => {
         state().initPages();
         canvas.add({ type: 'rect', id: 'r1' });
-        await tick(400);
+        await tick(PERSIST_DELAY_MS + 100);
 
         state().setCustomCanvasSize(800, 600);
         await reload();

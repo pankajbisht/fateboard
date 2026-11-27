@@ -33,5 +33,5 @@ Highest impact, check every time:
 - **Serialization**: a runtime flag that must survive undo / reload goes in `CUSTOM_PROPS` (P9). Keep Fabric's
   `includeDefaultValues` true (files must not depend on library defaults); shrink custom data instead (P7).
 - **Bundle**: a dock panel or rare feature is `lazy()` (P5); measure with skill `fate-perf`.
-- **Measure, don't guess**: wrap heavy work in `timed()` / `timedAsync()` (P11, `lib/perf/perfMarks`) and
-  compare before / after on the 500-object stress board (`e2e/perf-budget.spec.ts`).
+- **Measure, don't guess**: wrap heavy work in `timed()` / `timedAsync()` (P11, `lib/perf/perfMarks`; on in dev
+  and with `?perf`) and compare before / after on the 500-object stress board (`e2e/perf-budget.spec.ts`).

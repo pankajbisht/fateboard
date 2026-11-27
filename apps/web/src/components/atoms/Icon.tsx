@@ -81,6 +81,7 @@ import {
     Save,
     Scissors,
     Search,
+    TreePine,
     Settings,
     Shapes,
     Snowflake,
@@ -357,6 +358,8 @@ export const ICONS = {
 
     // character studio
     character: PersonStanding,
+    // scene objects (props library)
+    'scene-objects': TreePine,
     shuffle: Shuffle,
 
     // generators (right dock)
