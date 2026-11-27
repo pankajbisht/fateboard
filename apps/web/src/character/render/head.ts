@@ -6,6 +6,7 @@ import { addFace } from './face';
 import { addHeadAccessories } from './accessoriesHead';
 import { addCrown, addHair } from './hair';
 import { addAhoge } from './hairAhoge';
+import { withField } from './effects';
 import { addShell, ellipsoid, on, toScreen, type Ctx } from './parts';
 import { ellipse, hull, smoothPoly, type P2 } from './shapes';
 import { drawnHeadScale } from './styles';
@@ -57,8 +58,27 @@ export function addHead(ctx: Ctx, skel: Skeleton, c: Character) {
     }
 
     const hair = { rx, ry, rz, hc, headDepth, facing, R };
-    addHair(ctx, c, hair);
-    addAhoge(ctx, c, hair);
+    // effects (wind, updraft, twirl, wet) bend the hair from the crown down (render/effects.ts): about five head
+    // radii is the length of long hair, so shoulder-length hair moves less than hair to the waist
+    withField(
+        ctx,
+        c.effects,
+        () => ({
+            anchor: on(ctx, 'head', [hc[0], hc[1] + ry, hc[2]]),
+            length: ry * 5,
+            start: ry * 2,
+            base: 0.1,
+            cling: 0.28,
+            lift: 1.6,
+            spread: 1.1,
+            group: 'hair',
+            dripsBehind: true,
+        }),
+        () => {
+            addHair(ctx, c, hair);
+            addAhoge(ctx, c, hair);
+        },
+    );
     addCrown(ctx, c, hair);
     addHeadAccessories(ctx, c, hair);
 

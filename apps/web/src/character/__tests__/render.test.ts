@@ -104,7 +104,7 @@ describe('rendering', () => {
 
 describe('pose library', () => {
     it('has 278 poses with unique ids, all valid data and inside the joint limits', () => {
-        expect(POSES.length).toBeGreaterThanOrEqual(304);
+        expect(POSES.length).toBeGreaterThanOrEqual(355);
         expect(new Set(POSES.map((p) => p.id)).size).toBe(POSES.length);
         for (const p of POSES) {
             expect(parsePose(p), p.id).toEqual(p);

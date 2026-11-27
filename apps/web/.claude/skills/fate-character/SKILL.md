@@ -63,6 +63,7 @@ Use `parts` mode to get keys, depths (draw order: higher = nearer), roles and bb
 | Knee / chest / joint landmark lines | `render/joints.ts` `addJointDetail` |
 | Hands | `render/handManga.ts` |
 | Body accessories (bow, socks, …) / head accessories (hair clip, …) | `render/accessoriesBody.ts` / `render/accessoriesHead.ts` |
+| Effects (wind, updraft, twirl, wet) on hair and hanging cloth: the field, its `Field` per generator, wet drops | `render/effects.ts`; fields set in `head.ts` (hair) and `garments.ts` `addHanging` (cloth); render with `--effects wind=0.8,windDir=0` |
 | Loft outline, bottom cap, side contours, despike, corner cutting | `render/loft.ts` `loftChains`, `addContour`; `chaikin` in `render/shapes.ts` |
 | Ink ribbons (tapered strokes) | `render/ink.ts` `inkRibbon` |
 
@@ -128,6 +129,21 @@ Use `parts` mode to get keys, depths (draw order: higher = nearer), roles and bb
   cos > 0.75). Before: the torso was cloth to the neck and a convex-hull skin cap lay over each shoulder; a hull cannot
   bow inward, so the armhole was a straight cut and the shoulder a flat slab with the cloth shoulder standing above it.
   Never build a shape that must curve inward from `hull()`. Check tank, vest, tube-top, sleeveless-hoodie together.
+- **Tank strap cut flat below the shoulder top** (2026-11-27): the strap ended on the slope ring's front, so its top
+  was a flat cut with a band of skin (trapezius) above it; seen nearly level, the ring's far face projects onto the
+  same line, so lerping front→back does nothing. Fix: `above()` in `mangaTank.ts` lifts each strap edge to the
+  highest point of rings 0–1 at the same screen x (crest of the slope, or the neck base's front nearer the neck), and
+  the armhole / scoop ink runs on up the strap's sides.
+- **Bare-shoulder cap over the sleeveless cloth** (2026-11-27): with the arm behind the torso the skin cap was raised to
+  torso + 0.02, above the panel (+0.003), so in a 3/4 view its hull cut a hard skin wedge down the far strap (vest,
+  tank), and its foot showed as a skin square / nub below the armpit (sleeveless-hoodie at 25°). Fix: that cap sits at
+  torso + 0.0025 whether the arm is behind or in front (`mangaSleeveCap.ts`: over the bare chest and its contour, under
+  the cloth; an arm in front covers the cloth with its own limb and contour) and the panel's bottom is the ring under
+  the arm (`mangaTank.ts`), covering the cap's foot.
+- **Armhole kink under the strap in 3/4** (2026-11-27): the armhole was a fixed share (cosine) of each ring, but rings
+  2–3 take in the deltoids, so across the body it ran out, in and out again (8.6 → 10 → 9.6 → 14). Fix: `atAcross()` in
+  `mangaTank.ts` places it by distance along the chest's x axis: straight down from the strap, a small cut-in, out to
+  the armpit. Place a cloth edge by body distance, not ring share, wherever rings change width sharply.
 - **Hull edges inked straight**: the fill is smoothed, the ink is not; smooth the chain (`chaikin` in
   `mangaSleeveCap.ts`).
 - **Part key collisions**: a new part with an existing key replaces or confuses it (the hoodie's sleeve head collided
@@ -159,6 +175,16 @@ Use `parts` mode to get keys, depths (draw order: higher = nearer), roles and bb
   corners. Contours are Chaikin-smoothed; keep new ink on the same smoothed path as its fill.
 - **Depth**: a part shows through when its depth is higher than the cloth over it (a shin through a long skirt).
   A cover's depth is based on everything it must cover, and on its limb's depth, not its own spot's.
+
+### Effects (wind, updraft, twirl, wet; 2026-11-27)
+- **Lift moved the whole hair off the head**: the field moved every hair point by how far it hung below the crown, so
+  the cap and fringe (below the crown too) lifted and left a bald skull. Fix: `Field.start` (hair: two head radii, the
+  chin): updraft / twirl / wet act only below it; wind alone bends from the crown, with a small `base` stir.
+- **Lifted long hair read as a bob**: straight-up hair hides behind the head in front views. Fix: `Field.spread`
+  fans it out (hair 1.1, cloth 0.25).
+- **Drops in the wrong place**: drops under the lowest hair point fell from short hair at the jaw (tears) and from back
+  hair over the chest. Fix: drip only when the hair hangs past `start` (`hung()`); hair drops at the far parts' depth
+  (`dripsBehind`), hem drops in front.
 
 ### Render cost
 - **The 15° pose sweep timed out on CI** (`render.test.ts`, 30 s): path text is the cost (`fmt` runs for every number,

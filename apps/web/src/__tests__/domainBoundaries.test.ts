@@ -6,7 +6,13 @@
 import { describe, expect, it } from 'vitest';
 
 const SRC = import.meta.glob<string>(
-    ['/src/character/**/*.ts', '/src/scene/**/*.ts', '!/src/**/__tests__/**', '!/src/**/*.test.ts'],
+    [
+        '/src/character/**/*.ts',
+        '/src/scene/**/*.ts',
+        '/src/props/**/*.ts',
+        '!/src/**/__tests__/**',
+        '!/src/**/*.test.ts',
+    ],
     { query: '?raw', import: 'default', eager: true },
 );
 
@@ -21,7 +27,7 @@ const pure = Object.entries(SRC).filter(([file]) => !/\/board\.ts$/.test(file));
 const offenders = (pattern: RegExp, files = pure) =>
     files.filter(([, text]) => pattern.test(code(text))).map(([file]) => file);
 
-describe('domain boundaries (src/character, src/scene)', () => {
+describe('domain boundaries (src/character, src/scene, src/props)', () => {
     it('has files to check', () => {
         expect(pure.length).toBeGreaterThan(30);
     });
@@ -34,11 +40,11 @@ describe('domain boundaries (src/character, src/scene)', () => {
         ).toEqual([]);
     });
 
-    it('the scene never uses Math.random (scenes are seeded: same JSON, same picture)', () => {
+    it('scenes and props never use Math.random (seeded: same JSON, same picture)', () => {
         expect(
             offenders(
                 /Math\.random/,
-                pure.filter(([f]) => f.startsWith('/src/scene/')),
+                pure.filter(([f]) => f.startsWith('/src/scene/') || f.startsWith('/src/props/')),
             ),
         ).toEqual([]);
     });

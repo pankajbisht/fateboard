@@ -18,10 +18,10 @@ incomplete), **PARTIAL** (part done), **N/A** (does not apply, with the reason).
 | --- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- | --------------- |
 | 1   | Flyweight presets             | WRONGLY USED                                                                                                                                       | Medium               | P7              |
 | 2   | Typed arrays for points       | USED (JSON form)                                                                                                                                   | Low                  | none            |
-| 3   | Path simplification           | PARTIAL                                                                                                                                            | **High**             | P6              |
+| 3   | Path simplification           | USED (2026-11-27, P6: RDP on commit + Stamp distance filter)                                                                                       | **High**             | P6              |
 | 4   | Object pooling                | USED                                                                                                                                               | Low                  | none            |
 | 5   | Serialization size            | WRONGLY USED                                                                                                                                       | Medium               | P7, §5 E18      |
-| 6   | Image memory                  | NOT USED                                                                                                                                           | **Massive**          | P1              |
+| 6   | Image memory                  | USED (2026-11-27, P1: imports capped at 4096 px)                                                                                                   | **Massive**          | P1              |
 | 7   | Undo as commands              | NOT USED                                                                                                                                           | High                 | design §4.1     |
 | 8   | History limits / coalescing   | USED                                                                                                                                               | Low                  | none            |
 | 9   | Store writes mid-gesture      | USED (by design, mitigated)                                                                                                                        | Low                  | none            |
@@ -29,22 +29,22 @@ incomplete), **PARTIAL** (part done), **N/A** (does not apply, with the reason).
 | 11  | Live stroke on the top canvas | PARTIAL                                                                                                                                            | Medium               | P6              |
 | 12  | Object caching                | WRONGLY USED (BUG-149)                                                                                                                             | Medium               | BUG-149         |
 | 13  | Offscreen culling + DPR cap   | WRONGLY USED (area)                                                                                                                                | UNKNOWN              | P12             |
-| 14  | Coalesced pointer events      | NOT USED                                                                                                                                           | High                 | P3              |
+| 14  | Coalesced pointer events      | USED (2026-11-27, P3: Stamp brush)                                                                                                                 | High                 | P3              |
 | 15  | Brush textures cached         | USED                                                                                                                                               | Low                  | none            |
 | 16  | Layer raster caching          | PARTIAL                                                                                                                                            | High                 | design §4.3     |
 | 17  | Hit-testing cost              | WRONGLY USED (minor)                                                                                                                               | Medium               | P9              |
 | 18  | Storage format                | NOT USED (binary)                                                                                                                                  | **Massive**          | P1, design §4.2 |
-| 19  | Save debouncing               | USED (too eager)                                                                                                                                   | High                 | P2              |
-| 20  | Autosave safety               | PARTIAL                                                                                                                                            | High                 | P2              |
+| 19  | Save debouncing               | USED (2026-11-27, P2: 1 s idle, 5 s max)                                                                                                           | High                 | P2              |
+| 20  | Autosave safety               | USED (2026-11-27, P2: one write at a time)                                                                                                         | High                 | P2              |
 | 21  | Schema versioning             | WRONGLY USED                                                                                                                                       | Medium               | P10             |
 | 22  | Chunked loading               | NOT USED                                                                                                                                           | Low now              | design §4.4     |
 | 23  | Only the active page loaded   | USED                                                                                                                                               | Low                  | none            |
 | 24  | Workers / OffscreenCanvas     | PARTIAL (2026-11-17: GIF export encodes in a Web Worker, `animation/gif/gif.worker.ts`, ≤ 4 frames queued)                                         | Medium               | §4.5 (BUG-150)  |
-| 25  | Filters (WebGL, throttled)    | PARTIAL                                                                                                                                            | High (leak)          | P4              |
+| 25  | Filters (WebGL, throttled)    | PARTIAL (2026-11-27: textures freed on removal, P4)                                                                                                | High (leak)          | P4              |
 | 26  | Code splitting of panels      | PARTIAL (2026-11-17: the animation UI is lazy, `TimelineDock` loads `AnimationPanel` on first open, own 44 kB chunk; other dock tabs still static) | Medium               | P5              |
 | 27  | Leaks / cleanup               | PARTIAL                                                                                                                                            | High                 | P4, P8          |
-| 28  | Profiling + budgets           | NOT USED                                                                                                                                           | Medium (enables all) | P11             |
-| 29  | Touch + stylus                | WRONGLY USED (pressure dead)                                                                                                                       | **High**             | P3              |
+| 28  | Profiling + budgets           | USED (2026-11-27, P11 done: `lib/perf/perfMarks`, `e2e/perf-budget.spec.ts`)                                                                       | Medium (enables all) | P11             |
+| 29  | Touch + stylus                | USED (2026-11-27, P3: pressure via penInput)                                                                                                       | **High**             | P3              |
 | 30  | Fonts before measuring        | WRONGLY USED                                                                                                                                       | Medium               | P8              |
 
 **Order of work:** P11 first (so every other fix has a before / after number), then P1, P2, P3, P4, P6, then
@@ -218,7 +218,7 @@ without a second store (forbidden), N/A. Fix P5.
 
 ### G. Cleanup and quality
 
-**27. Memory leaks: PARTIAL.** Good: `dispose()` nulls the store first, then `await canvas.dispose()`;
+**27. Memory leaks: PARTIAL.** (2026-11-27, BUG-282: animation export freed none of its per-frame bitmaps, several GB on a long export; fixed in `makeCompositor`.) Good: `dispose()` nulls the store first, then `await canvas.dispose()`;
 `visibilitychange` / `beforeunload` / `pagehide` removed; touch gestures return a detach; `createObjectURL` 6 ×,
 `revokeObjectURL` 7 ×; StrictMode double mount is safe (`init` returns when a canvas exists). Gaps: WebGL textures
 (BUG-236, P4); `installShapeTextFonts` removes its `document.fonts` `loadingdone` listener only on the next font
@@ -248,7 +248,10 @@ None of this code has been run. Each fix follows docs/AGENT_WORKFLOW.md: write t
 then the change, then `npm run check`, `npm run test:run`, the touched E2E specs. Budget notes: `createCanvasSlice.ts`
 is at 1254 / 1257 lines and `createPagesSlice.ts` at 548 / 549 (`fileBudget.test.ts`).
 
-### P1. Cap imported photos at 4096 px (item 6, 18) — massive
+### P1. Cap imported photos at 4096 px (item 6, 18) — DONE 2026-11-27
+
+Built as proposed (`feature/import/downscaleImage.ts`, wired in `importImage`; unit test as below, E2E
+`e2e/photo-memory.spec.ts`: a 6000 × 4000 PNG is stored at 4096 × 2731). Cap logged in docs/DECISIONS.md.
 
 Not breaking for saved files; it changes new imports (a photo larger than 4096 px is stored smaller).
 **Owner decision:** the cap. 4096 matches Fabric's WebGL `textureSize`, so filters always fit one texture.
@@ -357,7 +360,15 @@ describe('downscaleImageFile', () => {
 E2E (`e2e/file.spec.ts` or a new import spec): import a 6000 × 4000 PNG, then check
 `window.__fateboard.objects()[0]`'s natural size is ≤ 4096 (add a `naturalWidth` field to the e2e hook).
 
-### P2. Autosave: one write at a time, 1 s idle, 5 s max wait (items 19, 20) — high
+### P2. Autosave: one write at a time, 1 s idle, 5 s max wait (items 19, 20) — DONE 2026-11-27
+
+Built as proposed. Step 0 done: the autosave left `createCanvasSlice.ts` (1222 → 1066 lines) for
+`store/slices/canvas/persistence.ts` (`createPersistence`; the slice keeps `persist` / `flushPersist`, public API
+unchanged). `lib/storage/latestWriter.ts` adds `flush(value)` (tab closing: writes at once even while a write
+runs, instead of queueing a write that may never start) and counts writes in flight. Tests:
+`latestWriter.test.ts`, `slices/__tests__/persistence.test.ts` (burst = one save; saves every 250 ms still save
+within 5 s; lock; flush); store tests wait `PERSIST_DELAY_MS + 100`. E2E reload specs still wait a fixed 1500 ms
+(margin 500 ms on a loaded CI machine: UNKNOWN - verify on CI).
 
 Not breaking (same storage format). **Step 0:** `createCanvasSlice.ts` has 3 spare lines; first move the
 persistence closure (lines ~97-220: `persistTimer`, `persistLock`, `writeProjectToStorage`, `reportSaveFailure`,
@@ -457,7 +468,11 @@ page switch and save the wrong page. Tests: `latestWriter.test.ts` (3 calls whil
 writes, values 1 and 3; a rejected write calls `onError` and still runs the waiting one); slice test with fake
 timers: 10 `persist()` calls 400 ms apart → one save at ≤ 5000 ms. E2E reload specs already wait 1500 ms.
 
-### P3. Stylus pressure + coalesced samples (items 14, 29, BUG-234) — high
+### P3. Stylus pressure + coalesced samples (items 14, 29, BUG-234) — DONE 2026-11-27
+
+Built as proposed, except the listener is attached inside `hooks/useTouchGestures.ts` (its own effect), not
+by a new hook call in `CanvasBoard.tsx` (that file is at its size ceiling). E2E `e2e/pen-pressure.spec.ts`
+drives a real pen through CDP `Input.dispatchMouseEvent` (`pointerType: 'pen'`, `force`).
 
 Not breaking. Fabric keeps its mouse + touch listeners; a capture listener records pointer events (which fire
 before the matching mouse / touch event) and brushes read them.
@@ -700,7 +715,10 @@ pointer (> 40 ms) → mouse; nothing recorded → mouse). Brush test: `StampBrus
 after recording a pen event stores `p: 0.4` (today: 1). Real-device check: docs/TESTING.md device checklist
 (iPad + Apple Pencil, Windows pen in Chrome).
 
-### P4. Free WebGL filter textures when an image leaves the canvas (items 25, 27, BUG-236) — high
+### P4. Free WebGL filter textures when an image leaves the canvas (items 25, 27, BUG-236) — DONE 2026-11-27
+
+Built as proposed; verified first in Fabric 7.4 (`removeTexture` → `WebGLFilterBackend.evictCachesForKey`;
+`StaticCanvas.clear()` removes every object, so `loadFromJSON` fires `object:removed` for each).
 
 Not breaking. Evicting is always safe: a cache miss uploads the texture again on the next `applyFilters`.
 
@@ -794,7 +812,11 @@ If a panel is also imported statically elsewhere (for example a top-bar Export b
 for it: the bundle report shows it. Optional: start the import on tab hover. E2E: open each tab once
 (`editor.openDockTab`), no `pageerror`.
 
-### P6. Simplify ink strokes on commit (item 3, 11) — high at scale
+### P6. Simplify ink strokes on commit (item 3, 11) — DONE 2026-11-27 (item 11's O(n²) preview: not changed, measure first)
+
+Built as proposed (`lib/canvas/simplifyPath.ts`, `finalizePath` of the Pencil ink and Calligraphy brushes;
+the Stamp brush's half-pixel filter came with P3). A 2000-sample straight ink stroke: 4015 vertices before,
+under 50 now (`variableWidthBrush.test.ts`).
 
 Not breaking (new strokes only). New file `src/lib/canvas/simplifyPath.ts`:
 
@@ -981,7 +1003,13 @@ const data = upgradeProject(json, PROJECT_VERSION);
 (The next line's `!Array.isArray(raw)` check already returns false for `null`.) Tests: version 99 → `null` and
 `importProject` resolves false (today: true); a bare array → `{ pages }`; a registered step 1 → 2 runs once.
 
-### P11. Timing marks + a 500-object budget spec (item 28) — do this first
+### P11. Timing marks + a 500-object budget spec (item 28) — DONE 2026-11-27
+
+Built as proposed below, with two changes: measures are capped at 500 (the browser keeps them until
+cleared), and the autosave mark is `project:capture` on `captureProject` (used by autosave and Save Board), not in
+the canvas slice (size ceiling). `makeThumbnail` moved to `store/pageThumbnail.ts`. Baseline at 500 objects
+(headless Chromium, 2026-11-27): open 432 ms, p95 frame 17 ms, undo 334 ms, `page:load` 35 ms,
+`history:snapshot` 9 ms, `history:restore` 31 ms, `project:capture` 4 ms.
 
 New file `src/lib/perf/perfMarks.ts`:
 

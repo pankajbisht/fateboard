@@ -92,6 +92,21 @@ function behind(c: ViewCtx, pov: boolean): SceneCamera {
 }
 
 /**
+ * A portrait shot of the subject (close-up: the face; bust: head and chest), face on from the way the actor faces, at
+ * eye level with a portrait lens (2026-11-27: the character studio's shots, now in scenes too). Not passed through
+ * `fitActors`, which would pull back until every actor's feet are in.
+ */
+function portrait(c: ViewCtx, shot: 'closeup' | 'bust'): SceneCamera {
+    const a = actorById(c, c.subject);
+    if (!a) return orbit([c.target[0], 140, c.target[2]], 0, 0, 60, 60, 85);
+    const h = buildSkeleton(a.character.body).height;
+    // the share of the height in the frame, and the height it is centred on
+    const [span, mid] = shot === 'closeup' ? [0.22, 0.93] : [0.38, 0.86];
+    const cam = orbit([a.x, h * mid, a.z], a.facing, 2, span * h * 0.8, span * h, 85);
+    return { ...cam, position: [cam.position[0], h * mid + 2, cam.position[2]] };
+}
+
+/**
  * Moves a framing camera back (or widens an orthographic one) until every actor's feet and head are inside the
  * frame with a margin: a formula cannot know every formation's depth from every side.
  */
@@ -258,6 +273,18 @@ export const VIEWS = createRegistry<ViewDef>(
                     },
                 };
             }),
+        },
+        {
+            id: 'closeup',
+            name: 'Close-up',
+            tags: ['face', 'shot', 'portrait'],
+            make: (c) => portrait(c, 'closeup'),
+        },
+        {
+            id: 'bust',
+            name: 'Bust',
+            tags: ['chest up', 'shot', 'portrait'],
+            make: (c) => portrait(c, 'bust'),
         },
         {
             id: 'over-shoulder',

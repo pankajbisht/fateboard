@@ -2,6 +2,7 @@ import { useStore } from '@store';
 import { Button } from '@/components/atoms/Button';
 import { PanelSection } from '@/components/molecules/PanelSection';
 import { SliderField } from '@/components/molecules/LabeledSlider';
+import LabeledToggle from '@/components/molecules/LabeledToggle';
 import { PANEL_PRESETS, layoutPanels, type PanelPreset } from '@/lib/comic/panelLayouts';
 import { SHAPES, shapeIconPath } from '@hooks/shape/shapeCatalog';
 import { ComicToneEffects } from './ComicToneEffects';
@@ -90,6 +91,12 @@ export default function ComicPanel() {
                     value={style.border}
                     onChange={(border) => setStyle({ border })}
                 />
+                <LabeledToggle
+                    label="Lock panels"
+                    hint="Panels stay put; turn off to move or resize them."
+                    checked={style.panelsLocked}
+                    onChange={(panelsLocked) => setStyle({ panelsLocked })}
+                />
                 <div className="grid grid-cols-2 gap-2">
                     <Button
                         variant="secondary"
@@ -112,7 +119,7 @@ export default function ComicPanel() {
 
             <PanelSection
                 title="Scene in a panel"
-                description="Select a scene or picture, then fit it to the panel it sits on. Fill covers the panel and the panel's edge crops it; zoom to frame the shot."
+                description="Select a scene or picture, then fit it to the panel it sits on. Fill covers the panel and its edge crops it, so nothing shows in the next panel; drag or zoom to frame the shot."
             >
                 <div className="grid grid-cols-2 gap-2">
                     <Button

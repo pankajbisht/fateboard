@@ -196,6 +196,25 @@ export const MORE_TOPS: Record<T, TopDef> = {
         collar: 'crew',
         suits: 'any',
     },
+    // combat sports (docs/COMBAT_PACK.md): a tight long-sleeve rashguard and the heavy, wrapped gi jacket
+    rashguard: {
+        name: 'Rashguard',
+        sleeve: 2,
+        fit: 0.96,
+        hang: 'waist',
+        collar: 'crew',
+        trim: 'stripe',
+        suits: 'any',
+    },
+    'gi-jacket': {
+        name: 'Gi jacket (kimono)',
+        sleeve: 1.8,
+        fit: 1.16,
+        hang: 'hip',
+        collar: 'lapel',
+        folds: true,
+        suits: 'any',
+    },
     hawaiian: {
         name: 'Hawaiian shirt',
         sleeve: 0.6,
@@ -283,12 +302,31 @@ export const MORE_BOTTOMS: Record<B, BottomDef> = {
         suits: 'any',
     },
     'muay-thai-shorts': {
-        name: 'Boxing shorts',
+        name: 'Muay Thai shorts',
         leg: 0.85,
         fit: 1.22,
         skirt: 0,
         trim: 'stripe',
         suits: 'any',
     },
+    // boxing trunks sit high on the waist (a wide band) and reach just above the knee
+    'boxing-trunks': {
+        name: 'Boxing trunks',
+        leg: 0.95,
+        fit: 1.3,
+        skirt: 0,
+        trim: 'stripe',
+        suits: 'any',
+    },
+    'fight-shorts': {
+        name: 'Fight shorts',
+        leg: 1,
+        fit: 1.18,
+        skirt: 0,
+        trim: 'stripe',
+        suits: 'any',
+    },
+    spats: { name: 'Spats', leg: 1.55, fit: 0.94, skirt: 0, trim: 'stripe', suits: 'any' },
+    'gi-pants': { name: 'Gi pants', leg: 1.9, fit: 1.2, skirt: 0, suits: 'any' },
     'swim-trunks': { name: 'Swim trunks', leg: 0.7, fit: 1.1, skirt: 0, suits: 'masculine' },
 };

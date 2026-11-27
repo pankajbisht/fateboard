@@ -47,7 +47,9 @@ export type Slot =
     | 'hand'
     | 'torso'
     | 'hair'
-    | 'legs';
+    | 'legs'
+    | 'arm'
+    | 'mouth';
 
 export interface AccessoryDef {
     name: string;
@@ -144,6 +146,21 @@ export const ACCESSORY_DEFS: Record<AccessoryKind, AccessoryDef> = {
     },
     'hair-clip': { name: 'Hair clip', slot: 'hair', color: '#f2b632', suits: 'any' },
     socks: { name: 'Socks', slot: 'legs', color: '#f5f7fb', suits: 'any' },
+    // combat-sport gear (docs/COMBAT_PACK.md): gloves cover the hands, so nothing is held with them on
+    'boxing-gloves': { name: 'Boxing gloves', slot: 'hand', color: '#dc2626', suits: 'any' },
+    'mma-gloves': {
+        name: 'MMA gloves (open finger)',
+        slot: 'hand',
+        color: '#111827',
+        suits: 'any',
+    },
+    'hand-wraps': { name: 'Hand wraps', slot: 'wrist', color: '#f8fafc', suits: 'any' },
+    mouthguard: { name: 'Mouthguard', slot: 'mouth', color: '#2563eb', suits: 'any' },
+    'head-guard': { name: 'Head guard', slot: 'head', color: '#b91c1c', suits: 'any' },
+    mongkol: { name: 'Mongkol (headband)', slot: 'head', color: '#dc2626', suits: 'any' },
+    prajioud: { name: 'Prajioud (armbands)', slot: 'arm', color: '#dc2626', suits: 'any' },
+    'ankle-wraps': { name: 'Ankle wraps', slot: 'legs', color: '#f8fafc', suits: 'any' },
+    'gi-belt': { name: 'Gi belt', slot: 'waist', color: '#f8fafc', suits: 'any' },
 };
 
 export const SHOE_IDS = Object.keys(SHOE_DEFS) as ShoeKind[];

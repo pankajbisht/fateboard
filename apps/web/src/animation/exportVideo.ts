@@ -91,8 +91,17 @@ export function makeCompositor(
         }
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(frame, (width - frame.width) / 2, (height - frame.height) / 2);
+        // free the frame's bitmap now: it is native memory the GC does not weigh, so 300 unfreed
+        // full-size frames grew an export to several GB
+        frame.width = 0;
+        frame.height = 0;
     };
-    return { out, ctx, draw };
+    /** Frees the output bitmap once the export no longer reads it. */
+    const release = () => {
+        out.width = 0;
+        out.height = 0;
+    };
+    return { out, ctx, draw, release };
 }
 
 /* ───────────────────────── 1. MP4, offline (WebCodecs) ───────────────────────── */
@@ -145,7 +154,7 @@ export async function renderMp4Fast(opts: BaseOptions): Promise<Blob> {
     });
     encoder.configure({ codec, width, height, bitrate, framerate: fps });
 
-    const { out, draw } = makeCompositor(canvas, width, height, background);
+    const { out, draw, release } = makeCompositor(canvas, width, height, background);
     const span = Math.max(1, to - from);
     const total = Math.max(1, Math.floor((span / 1000) * fps) + 1);
     const frameUs = 1_000_000 / fps;
@@ -178,6 +187,7 @@ export async function renderMp4Fast(opts: BaseOptions): Promise<Blob> {
         return new Blob([target.buffer], { type: 'video/mp4' });
     } finally {
         if (encoder.state !== 'closed') encoder.close();
+        release();
     }
 }
 
@@ -203,7 +213,7 @@ export async function renderRealtime(
 
     const width = even(opts.width);
     const height = even(opts.height);
-    const { out, draw } = makeCompositor(canvas, width, height, background);
+    const { out, draw, release } = makeCompositor(canvas, width, height, background);
 
     let stream = out.captureStream(0);
     let track = stream.getVideoTracks()[0] as MediaStreamTrack & { requestFrame?: () => void };
@@ -250,12 +260,14 @@ export async function renderRealtime(
     } catch (err) {
         if (recorder.state !== 'inactive') recorder.stop();
         stream.getTracks().forEach((t) => t.stop());
+        release();
         throw err;
     }
 
     if (recorder.state !== 'inactive') recorder.stop();
     const blob = await finished;
     stream.getTracks().forEach((t) => t.stop());
+    release();
     return { blob, ext: picked.ext };
 }
 
@@ -267,13 +279,14 @@ export async function renderStill(
     const { canvas, background } = opts;
     const width = Math.round(opts.width);
     const height = Math.round(opts.height);
-    const { out, draw } = makeCompositor(canvas, width, height, background);
+    const { out, draw, release } = makeCompositor(canvas, width, height, background);
     draw();
     return new Promise<Blob>((resolve, reject) =>
-        out.toBlob(
-            (b) => (b ? resolve(b) : reject(new Error('Could not encode PNG.'))),
-            'image/png',
-        ),
+        out.toBlob((b) => {
+            release();
+            if (b) resolve(b);
+            else reject(new Error('Could not encode PNG.'));
+        }, 'image/png'),
     );
 }
 

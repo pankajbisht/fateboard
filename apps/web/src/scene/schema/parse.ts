@@ -4,15 +4,20 @@ import {
     ASPECTS,
     FRAME_SHAPES,
     MAX_ACTORS,
+    MAX_SCENE_PROPS,
+    SCENE_PROP_HEIGHT,
     SCENE_SCHEMA_VERSION,
     SEASONS,
     TIMES,
     WEATHERS,
+    FIGHT_FX_KEYS,
     type Lens,
+    type SceneFight,
     type Scene,
     type SceneActor,
     type SceneCamera,
     type SceneFrame,
+    type SceneProp,
     type SceneSet,
     type V3,
 } from './types';
@@ -85,6 +90,13 @@ export function parseSceneSet(raw: unknown): SceneSet {
         time: pick(o.time, TIMES, DEFAULT_SET.time),
         weather: pick(o.weather, WEATHERS, DEFAULT_SET.weather),
         season: pick(o.season, SEASONS, DEFAULT_SET.season),
+        // wind (2026-11-27): only when it blows, so scenes without it keep the same JSON
+        ...(num(o.wind, 0, 0, 1) > 0
+            ? {
+                  wind: num(o.wind, 0, 0, 1),
+                  windDir: ((num(o.windDir, 0, -720, 720) % 360) + 360) % 360,
+              }
+            : {}),
     };
 }
 
@@ -112,6 +124,22 @@ function parseActor(raw: unknown): SceneActor | null {
     };
 }
 
+const PROP_ID = /^[a-z0-9][a-z0-9-]{0,59}$/;
+
+/** A scene prop; null when it names no prop id at all (whether the catalogue knows it is the renderer's call). */
+export function parseSceneProp(raw: unknown): SceneProp | null {
+    const o = obj(raw);
+    if (typeof o.propId !== 'string' || !PROP_ID.test(o.propId)) return null;
+    return {
+        id: str(o.id, newId(), 60),
+        propId: o.propId,
+        variant: Math.round(num(o.variant, 0, 0, 20)),
+        x: num(o.x, 0, -WORLD, WORLD),
+        z: num(o.z, 0, -WORLD, WORLD),
+        height: num(o.height, 100, SCENE_PROP_HEIGHT.min, SCENE_PROP_HEIGHT.max),
+    };
+}
+
 export function parseScene(raw: unknown): Scene | null {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
     const o = obj(raw);
@@ -126,17 +154,72 @@ export function parseScene(raw: unknown): Scene | null {
         seen.add(actor.id);
         actors.push(actor);
     }
+    // v1 had no props (migration: none); ids stay unique across actors and props (one selection)
+    const props: SceneProp[] = [];
+    for (const p of Array.isArray(o.props) ? o.props : []) {
+        const prop = parseSceneProp(p);
+        if (!prop || props.length >= MAX_SCENE_PROPS) continue;
+        if (seen.has(prop.id)) prop.id = newId();
+        seen.add(prop.id);
+        props.push(prop);
+    }
     // a look-at target that is gone (or the actor itself) means "look ahead"
-    for (const a of actors) if (a.lookAt === a.id || !seen.has(a.lookAt ?? '')) a.lookAt = null;
+    const actorIds = new Set(actors.map((a) => a.id));
+    for (const a of actors) if (a.lookAt === a.id || !actorIds.has(a.lookAt ?? '')) a.lookAt = null;
     return {
         schemaVersion: SCENE_SCHEMA_VERSION,
         id: str(o.id, newId(), 60),
         name: str(o.name, 'Scene'),
         actors,
+        props,
         set: parseSceneSet(o.set),
         camera: parseSceneCamera(o.camera),
         frame: parseSceneFrame(o.frame),
         styleLock: o.styleLock === true,
+        ...withFight(o.fight, actorIds),
+    };
+}
+
+const point = (v: unknown): V3 | null =>
+    Array.isArray(v) &&
+    v.length === 3 &&
+    v.every((n) => typeof n === 'number' && Number.isFinite(n))
+        ? [num(v[0], 0, -1e4, 1e4), num(v[1], 0, -1e4, 1e4), num(v[2], 0, -1e4, 1e4)]
+        : null;
+
+/** The optional fight effects: dropped when an actor is gone or the points are not numbers. */
+function withFight(raw: unknown, actors: Set<string>): { fight?: SceneFight } {
+    if (!raw || typeof raw !== 'object') return {};
+    const f = obj(raw);
+    const attacker = str(f.attacker, '');
+    const defender = str(f.defender, '');
+    const impact = point(f.impact);
+    if (!actors.has(attacker) || !actors.has(defender) || attacker === defender || !impact)
+        return {};
+    const fx = obj(f.effects);
+    const effects = Object.fromEntries(
+        FIGHT_FX_KEYS.map((k) => [k, fx[k] !== false]),
+    ) as SceneFight['effects'];
+    const trail = (Array.isArray(f.trail) ? f.trail : [])
+        .slice(0, 6)
+        .map(point)
+        .filter((p): p is V3 => p !== null);
+    return {
+        fight: {
+            attacker,
+            defender,
+            exchange: str(f.exchange, '', 40),
+            contact: pick(f.contact, ['hit', 'block', 'miss'] as const, 'hit'),
+            key: pick(f.key, ['start', 'peak', 'recover'] as const, 'peak'),
+            intensity: pick(
+                f.intensity,
+                ['off', 'subtle', 'normal', 'dramatic'] as const,
+                'normal',
+            ),
+            effects,
+            impact,
+            trail,
+        },
     };
 }
 
@@ -145,6 +228,7 @@ export const newScene = (name = 'Scene'): Scene => ({
     id: newId(),
     name,
     actors: [],
+    props: [],
     set: { ...DEFAULT_SET },
     camera: structuredClone(DEFAULT_SCENE_CAMERA),
     frame: { ...DEFAULT_FRAME },

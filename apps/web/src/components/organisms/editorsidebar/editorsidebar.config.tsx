@@ -11,6 +11,7 @@ import { shortcut } from '@/lib/utils/isMac';
 const ComicPanel = lazy(() => import('../comic/ComicPanel'));
 const NotesPanel = lazy(() => import('../notes/NotesPanel'));
 const CharactersPanel = lazy(() => import('../character/CharactersPanel'));
+const SceneObjectsPanel = lazy(() => import('../props/SceneObjectsPanel'));
 
 const editorsidebarconfig = [
     {
@@ -157,6 +158,17 @@ const editorsidebarconfig = [
         panel: (
             <Suspense fallback={null}>
                 <CharactersPanel />
+            </Suspense>
+        ),
+    },
+    {
+        id: 'sceneObjects',
+        label: 'Scene Objects',
+        icon: 'scene-objects',
+        kind: 'panel',
+        panel: (
+            <Suspense fallback={null}>
+                <SceneObjectsPanel />
             </Suspense>
         ),
     },

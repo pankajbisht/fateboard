@@ -1,6 +1,7 @@
 import { createRegistry } from '../registry';
 import { city } from './environments/city';
 import { classroom } from './environments/classroom';
+import { boxingRing, cage, thaiRing } from './environments/fightArenas';
 import { jungle } from './environments/jungle';
 import { market } from './environments/market';
 import { park } from './environments/park';
@@ -33,6 +34,9 @@ export const ENVIRONMENTS = createRegistry<EnvironmentDef>(
         jungle,
         temple,
         stadium,
+        boxingRing,
+        thaiRing,
+        cage,
     ],
     'studio',
 );

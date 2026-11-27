@@ -1,5 +1,6 @@
 import { useStore } from '@store';
 import { HAIR_COLORS } from '@/character/data/recipes';
+import { identityOf, listIds } from '@/character/data/audience';
 import { BOTTOM_DEFS, BOTTOM_IDS, TOP_DEFS, TOP_IDS } from '@/character/data/garments';
 import { HAIR_DEFS, hasTips } from '@/character/data/hairStyles';
 import { HAIR_STYLES, type HairStyle } from '@/character/schema/types';
@@ -29,6 +30,8 @@ export function StudioLookTab() {
     const c = useStore((s) => s.studioCharacter);
     const edit = useStore((s) => s.editStudioCharacter);
     if (!c) return null;
+    // what this identity can wear (data/audience.ts); the worn item is always listed
+    const who = identityOf(c);
 
     return (
         <>
@@ -37,7 +40,7 @@ export function StudioLookTab() {
                     aria-label="Hair style"
                     value={c.hair.style}
                     onChange={(style) => edit({ hair: { style } })}
-                    options={HAIR_STYLES.map((id) => ({
+                    options={listIds(who, 'hair', HAIR_STYLES, c.hair.style).map((id) => ({
                         value: id,
                         label: `${HAIR_DEFS[id].group}: ${HAIR_DEFS[id].name}`,
                     }))}
@@ -127,14 +130,17 @@ export function StudioLookTab() {
 
             <PanelSection
                 title="Clothes"
-                description="47 tops and 38 bottoms. Shoes, accessories and outfits are in Wardrobe."
+                description="51 tops and 42 bottoms. Shoes, accessories and outfits are in Wardrobe."
             >
                 <Field wrap label="Top">
                     <Select
                         aria-label="Top"
                         value={c.dress.top.kind}
                         onChange={(kind) => edit({ top: { kind } })}
-                        options={TOP_IDS.map((id) => ({ value: id, label: TOP_DEFS[id].name }))}
+                        options={listIds(who, 'top', TOP_IDS, c.dress.top.kind).map((id) => ({
+                            value: id,
+                            label: TOP_DEFS[id].name,
+                        }))}
                     />
                 </Field>
                 <ColorChoices
@@ -149,10 +155,12 @@ export function StudioLookTab() {
                         aria-label="Bottom"
                         value={c.dress.bottom.kind}
                         onChange={(kind) => edit({ bottom: { kind } })}
-                        options={BOTTOM_IDS.map((id) => ({
-                            value: id,
-                            label: BOTTOM_DEFS[id].name,
-                        }))}
+                        options={listIds(who, 'bottom', BOTTOM_IDS, c.dress.bottom.kind).map(
+                            (id) => ({
+                                value: id,
+                                label: BOTTOM_DEFS[id].name,
+                            }),
+                        )}
                     />
                 </Field>
                 <ColorChoices

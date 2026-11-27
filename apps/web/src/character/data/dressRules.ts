@@ -52,11 +52,14 @@ export function resolveDress(dress: Dress): { dress: Dress; removed: Removed[] }
         }
         return true;
     });
+    const worn = removed.length ? final : dress.accessories;
+    // gloves cover the hands: nothing can be held with them on
+    const gloved = worn.some((a) => a.kind === 'boxing-gloves' || a.kind === 'mma-gloves');
     return {
         dress: {
             ...dress,
-            accessories: removed.length ? final : dress.accessories,
-            held: normalizeHeld(dress.held ?? []),
+            accessories: worn,
+            held: gloved ? [] : normalizeHeld(dress.held ?? []),
         },
         removed,
     };

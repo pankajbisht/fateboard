@@ -121,7 +121,7 @@ Every request carries CLAUDE.md, and every subagent starts cold, so cost grows w
 | Storage only through `@/lib/storage`                             | `storageBoundary.test.ts`                                                               |
 | File size budget (may shrink, never grow)                        | `fileBudget.test.ts`                                                                    |
 | Strict TypeScript island                                         | `tsconfig.strict.json` via `npm run type-check`                                         |
-| No new `any`                                                     | `eslint --max-warnings 246` (ratchet)                                                   |
+| No new `any`                                                     | `eslint --max-warnings 245` (ratchet)                                                   |
 | Coverage does not drop                                           | `vitest.config.ts` thresholds                                                           |
 | Definition of done on every PR                                   | `.github/pull_request_template.md`                                                      |
 | The Claude setup itself (hooks, settings, rules, skills, agents) | `claudeSetup.test.ts`                                                                   |

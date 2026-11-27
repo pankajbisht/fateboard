@@ -15,6 +15,8 @@ export interface SceneDrawable {
     evenOdd?: boolean;
     /** pressing it selects this actor */
     actor?: string;
+    /** pressing it selects this scene prop */
+    prop?: string;
 }
 
 /** Draw order: sky, ground, room shell, the sorted middle, front pieces, weather, the frame. */
@@ -52,5 +54,7 @@ export interface SceneModel {
     height: number;
     items: SceneDrawable[];
     actors: ActorBox[];
+    /** scene props on screen (the same box shape: id, label, base, bounds, scale) */
+    props: ActorBox[];
     horizon: [P2, P2] | null;
 }

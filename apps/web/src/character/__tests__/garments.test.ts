@@ -1,5 +1,5 @@
 /**
- * The garment library (docs/CHARACTER_STUDIO.md phase 3): 49 tops and 38 bottoms as data, each drawn from every side
+ * The garment library (docs/CHARACTER_STUDIO.md phase 3): 51 tops and 42 bottoms as data, each drawn from every side
  * on every body, each different, collars that hide from behind (a hood shows), who wears what.
  */
 import { describe, expect, it } from 'vitest';
@@ -48,9 +48,9 @@ describe('garment catalogue', () => {
             expect([...CAST_TOP_IDS, ...CAST_BOTTOM_IDS] as string[], k).toContain(k);
     });
 
-    it('has 49 tops and 38 bottoms, each named, with real numbers; the schema lists the same ids', () => {
-        expect(TOP_IDS).toHaveLength(49);
-        expect(BOTTOM_IDS).toHaveLength(38);
+    it('has 51 tops and 42 bottoms, each named, with real numbers; the schema lists the same ids', () => {
+        expect(TOP_IDS).toHaveLength(51);
+        expect(BOTTOM_IDS).toHaveLength(42);
         expect([...TOP_KINDS].sort()).toEqual([...TOP_IDS].sort());
         expect([...BOTTOM_KINDS].sort()).toEqual([...BOTTOM_IDS].sort());
         for (const id of TOP_IDS) {

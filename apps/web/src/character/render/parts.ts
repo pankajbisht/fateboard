@@ -1,3 +1,4 @@
+import type { Effects } from '../schema/effects';
 import type { JointId, PartGroup } from '../schema/types';
 import { pointOn, type Posed } from '../rig/fk';
 import type { M3, V3 } from '../rig/math';
@@ -72,10 +73,14 @@ export interface Ctx {
     /** every projected sample point (framing) */
     points: P2[];
     parts: Part[];
+    /** an effect field moving the points of the generator that runs now (wind on hair, render/effects.ts) */
+    warp?: (p: V3) => V3;
+    /** the character's effects (wind, updraft, twirl, wet; schema/effects.ts) */
+    effects?: Effects;
 }
 
 export const toScreen = (ctx: Ctx, p: V3): V3 => {
-    const s = project(ctx.view, p);
+    const s = project(ctx.view, ctx.warp ? ctx.warp(p) : p);
     ctx.points.push([s[0], s[1]]);
     return s;
 };

@@ -40,6 +40,8 @@ export default defineConfig({
                           ...devices['Desktop Firefox'],
                           viewport: { width: 1440, height: 900 },
                       },
+                      // drives a pen through the Chrome DevTools Protocol, which Firefox lacks
+                      testIgnore: /pen-pressure\.spec\.ts/,
                   },
               ]
             : []),

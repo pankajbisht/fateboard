@@ -18,6 +18,7 @@
  *   --pose <id>      a pose from data/poses (default: the character's own)
  *   --height <px>    figure height (default 640; wardrobe 1000 with a crop)
  *   --offset t,l     wardrobe: move the crop window (px), for close-ups of a large --height render
+ *   --effects k=v,…  wind, windDir, updraft, twirl, wet (0..1; windDir in degrees) on every figure
  *   --clip x,y,w,h   also save that region of the sheet (repeat with ';' between regions) as <out>-<i>.png
  * Run from apps/web. Writes <out>.html next to the PNG.
  */
@@ -65,7 +66,20 @@ const person = (id, edit = {}) => {
     const r = castRecipes().find((x) => x.id === id);
     if (!r) throw new Error(`no cast member "${id}"`);
     const p = opt.pose ? poseById(opt.pose) : undefined;
-    return applyEdit(castCharacter(r, r.id), { ...(p ? { pose: p } : {}), ...edit });
+    // --effects wind=0.8,windDir=0,updraft=0,twirl=0,wet=0 (schema/effects.ts)
+    const effects = opt.effects
+        ? Object.fromEntries(
+              list(opt.effects).map((kv) => {
+                  const [k, v] = kv.split('=');
+                  return [k, Number(v)];
+              }),
+          )
+        : undefined;
+    return applyEdit(castCharacter(r, r.id), {
+        ...(p ? { pose: p } : {}),
+        ...(effects ? { effects } : {}),
+        ...edit,
+    });
 };
 const svgOf = (c, yaw, h) =>
     characterSvg(renderCharacter(c, { yaw: Number(yaw), pitch: 0, roll: 0, shot: 'full' }), h);

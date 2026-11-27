@@ -231,6 +231,32 @@ export const CARD_SHAPES: Record<string, Shape> = {
         { pts: rect(0.36, 0, 0.42, 0.6), fill: c(1, '#5b5b5b') },
         { pts: rect(-0.5, 0.55, 0.5, 1), fill: c(0, '#2f6f4e') },
     ],
+    // crowd reactions (fight arenas): the person card with both arms up, or hands together in front
+    'person-cheer': (c, look) => [
+        ...CARD_SHAPES.person(c, look),
+        { pts: rect(-0.34, 0.66, -0.24, 1), fill: c(0, '#5b6b8c') },
+        { pts: rect(0.24, 0.66, 0.34, 1), fill: c(0, '#5b6b8c') },
+        { pts: ring(-0.29, 1, 0.07, 0.04, 8), fill: c(1, '#e0b896'), smooth: true },
+        { pts: ring(0.29, 1, 0.07, 0.04, 8), fill: c(1, '#e0b896'), smooth: true },
+    ],
+    'person-clap': (c, look) => [
+        ...CARD_SHAPES.person(c, look),
+        { pts: ring(0, 0.66, 0.09, 0.05, 8), fill: c(1, '#e0b896'), smooth: true },
+    ],
+    // a soft cone of light from a ceiling lamp (spotlit arenas)
+    'light-cone': (c) => [
+        {
+            pts: [
+                [-0.08, 1],
+                [0.08, 1],
+                [0.5, 0],
+                [-0.5, 0],
+            ],
+            fill: c(0, '#fff7d6'),
+            bare: true,
+            opacity: 0.16,
+        },
+    ],
 };
 
 export const CARD_SHAPE_IDS = Object.keys(CARD_SHAPES);

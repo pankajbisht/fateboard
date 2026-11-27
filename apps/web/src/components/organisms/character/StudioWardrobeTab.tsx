@@ -2,7 +2,7 @@ import { useStore } from '@store';
 import { resolveDress, takeOff, wear } from '@/character/data/dressRules';
 import { OUTFITS, OUTFIT_GROUPS, type Outfit } from '@/character/data/outfits';
 import { ACCESSORY_DEFS, ACCESSORY_IDS, SHOE_DEFS, SHOE_IDS } from '@/character/data/wardrobe';
-import { suited } from '@/character/data/garments';
+import { identityOf, listIds, outfitListed } from '@/character/data/audience';
 import { Select } from '../../atoms/Select';
 import { Field } from '../../molecules/Field';
 import LabeledToggle from '../../molecules/LabeledToggle';
@@ -28,7 +28,8 @@ export function StudioWardrobeTab() {
     const c = useStore((s) => s.studioCharacter);
     const edit = useStore((s) => s.editStudioCharacter);
     if (!c) return null;
-    const female = c.body.gender >= 0.5;
+    // what this identity can wear (data/audience.ts); the worn items are always listed
+    const who = identityOf(c);
     const worn = new Map(c.dress.accessories.map((a) => [a.kind, a]));
     const wearOutfit = (o: Outfit) =>
         edit({
@@ -56,7 +57,7 @@ export function StudioWardrobeTab() {
                             options={[
                                 { value: '', label: 'Choose…' },
                                 ...OUTFITS.filter(
-                                    (o) => o.group === g && suited(o.suits, female),
+                                    (o) => o.group === g && outfitListed(who, o.dress),
                                 ).map((o) => ({ value: o.id, label: o.name })),
                             ]}
                         />
@@ -70,9 +71,10 @@ export function StudioWardrobeTab() {
                         aria-label="Shoes"
                         value={c.dress.shoes.kind}
                         onChange={(kind) => edit({ shoes: { kind } })}
-                        options={SHOE_IDS.filter((k) => suited(SHOE_DEFS[k].suits, female)).map(
-                            (k) => ({ value: k, label: SHOE_DEFS[k].name }),
-                        )}
+                        options={listIds(who, 'shoes', SHOE_IDS, c.dress.shoes.kind).map((k) => ({
+                            value: k,
+                            label: SHOE_DEFS[k].name,
+                        }))}
                     />
                 </Field>
                 <ColorChoices
@@ -88,7 +90,9 @@ export function StudioWardrobeTab() {
                 title="Accessories"
                 description="One per place (a cap or a beanie, not both). Some do not go together; the studio says why."
             >
-                {ACCESSORY_IDS.filter((k) => suited(ACCESSORY_DEFS[k].suits, female)).map((k) => {
+                {ACCESSORY_IDS.filter(
+                    (k) => worn.has(k) || listIds(who, 'accessory', [k]).length,
+                ).map((k) => {
                     const a = worn.get(k);
                     const why = a
                         ? []

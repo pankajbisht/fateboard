@@ -9,8 +9,10 @@
  * Geometry: lib/comic (panelLayouts, mangaEffects, screentone). Saved props: `comicPanel`, `comicPanelArea`,
  * `panelId`, `toneParams`, `fillBeforeTone` (CUSTOM_PROPS).
  */
-import { ActiveSelection, Path, Pattern, Rect, util, type Canvas, type FabricObject } from 'fabric';
+import { Path, Pattern, Rect, type Canvas, type FabricObject } from 'fabric';
 import { boxOf, fitObjectToPanel, zoomObject } from '../comicFit';
+import { bindComicCanvas, framesOf, syncTwin } from '../comicBind';
+import { clipToPanel, isInPanel, lockFrame, reclip } from '../comicClip';
 import type { FitMode } from '@/lib/comic/fitToPanel';
 import type { SliceCreator } from '../types';
 import { isLayerHelper, makeLayer, normalizeLayers, type DocLayer } from '@/lib/canvas/docLayers';
@@ -31,12 +33,14 @@ export interface ComicStyle {
     gutter: number;
     /** Frame line width, px. */
     border: number;
+    /** Frames can be selected (to fill or split) but not moved, scaled or turned; off to edit the layout. */
+    panelsLocked: boolean;
 }
 
 export interface ComicSlice {
     comicStyle: ComicStyle;
     setComicStyle: (patch: Partial<ComicStyle>) => void;
-    /** Keep each panel area in step with its frame; returns the uninstaller. */
+    /** Keep each panel area in step with its frame, content cut to its panel, frames locked; returns the uninstaller. */
     bindComic: (canvas: Canvas) => () => void;
     /** Replace the page's panels with a preset layout (inside the margins). Returns the panel count. */
     addPanelLayout: (presetId: string) => number;
@@ -147,31 +151,6 @@ export const createComicSlice: SliceCreator<ComicSlice> = (set, get) => {
         return [area, frame];
     };
 
-    const twinOf = (c: ComicCanvas, frame: Obj) =>
-        content(c).find((o) => o !== frame && o.comicPanelArea && o.panelId === frame.panelId);
-
-    const syncTwin = (c: ComicCanvas, frame: Obj) => {
-        const twin = twinOf(c, frame);
-        if (!twin) return;
-        const d = util.qrDecompose(frame.calcTransformMatrix());
-        twin.set({
-            originX: 'center',
-            originY: 'center',
-            left: d.translateX,
-            top: d.translateY,
-            angle: d.angle,
-            scaleX: d.scaleX,
-            scaleY: d.scaleY,
-            skewX: d.skewX,
-            skewY: 0,
-            flipX: false,
-            flipY: false,
-            width: frame.width,
-            height: frame.height,
-        });
-        twin.setCoords();
-    };
-
     const run = <T>(name: string, fallback: T, fn: (c: ComicCanvas) => T): T => {
         const c = peers().canvas;
         if (!c) return fallback;
@@ -184,7 +163,7 @@ export const createComicSlice: SliceCreator<ComicSlice> = (set, get) => {
     };
 
     return {
-        comicStyle: { gutter: 14, border: 3 },
+        comicStyle: { gutter: 14, border: 3, panelsLocked: true },
 
         setComicStyle: (patch) => {
             const clamp = (v: unknown, lo: number, hi: number, d: number) =>
@@ -195,30 +174,29 @@ export const createComicSlice: SliceCreator<ComicSlice> = (set, get) => {
                     comicStyle: {
                         gutter: clamp(patch.gutter ?? now.gutter, 0, 400, now.gutter),
                         border: clamp(patch.border ?? now.border, 0, 60, now.border),
+                        panelsLocked:
+                            typeof patch.panelsLocked === 'boolean'
+                                ? patch.panelsLocked
+                                : now.panelsLocked,
                     },
                 },
                 false,
                 'comic/style',
             );
+            const locked = get().comicStyle.panelsLocked;
+            const c = peers().canvas;
+            if (c && locked !== now.panelsLocked) {
+                for (const f of framesOf(c)) lockFrame(f, locked);
+                if (locked) c.discardActiveObject();
+                c.requestRenderAll();
+            }
         },
 
-        bindComic: (canvas) => {
-            const c = canvas as ComicCanvas;
-            const busy = () => !!(peers()._isRestoring || peers().isPageSwitching);
-            const onModified = ({ target }: { target: FabricObject }) => {
-                if (busy() || !target) return;
-                const list = target instanceof ActiveSelection ? target.getObjects() : [target];
-                for (const o of list as Obj[]) if (o.comicPanel) syncTwin(c, o);
-            };
-            const onRemoved = ({ target }: { target: FabricObject }) => {
-                const o = target as Obj;
-                if (busy() || !o?.comicPanel) return;
-                const twin = twinOf(c, o);
-                if (twin) c.remove(twin);
-            };
-            const offs = [c.on('object:modified', onModified), c.on('object:removed', onRemoved)];
-            return () => offs.forEach((off) => off());
-        },
+        bindComic: (canvas) =>
+            bindComicCanvas(canvas, {
+                busy: () => !!(peers()._isRestoring || peers().isPageSwitching),
+                locked: () => get().comicStyle.panelsLocked,
+            }),
 
         addPanelLayout: (presetId) =>
             run('addPanelLayout', 0, (c) => {
@@ -273,7 +251,10 @@ export const createComicSlice: SliceCreator<ComicSlice> = (set, get) => {
                     peers().showToast?.({ message: 'Add panels first: pick a layout in Comic.' });
                     return false;
                 }
-                if (!fitObjectToPanel(sel, panels, mode, panel)) return false;
+                const frame = fitObjectToPanel(sel, panels, mode, panel);
+                if (!frame) return false;
+                // cut to that panel only (the Art layer cuts to all of them together)
+                clipToPanel(sel, frame);
                 // on the Art layer, so the panel's edge cuts it
                 sel.layerId = comicLayers(c).art;
                 c.requestRenderAll();
@@ -288,6 +269,7 @@ export const createComicSlice: SliceCreator<ComicSlice> = (set, get) => {
                     return false;
                 if (!Number.isFinite(factor) || factor <= 0) return false;
                 zoomObject(sel, factor);
+                if (isInPanel(sel)) reclip(sel, framesOf(c));
                 c.requestRenderAll();
                 peers().saveState?.();
                 return true;

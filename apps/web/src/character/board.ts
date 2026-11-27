@@ -6,6 +6,7 @@ import {
     toneTile,
     type ToneParams,
 } from '@/lib/comic/screentone';
+import { frameGroup, swapFrameDrawing } from '@/lib/canvas/frameGroup';
 import { drawables } from './render/parts';
 import { renderCharacter } from './render/renderCharacter';
 import { characterSvg } from './render/toSvg';
@@ -32,7 +33,8 @@ export const PX_PER_CM = 2.2;
 
 export async function buildCharacterObject(data: CharacterData): Promise<fabric.Group | null> {
     const model = renderCharacter(data.character, data.camera);
-    const svg = characterSvg(model, Math.max(1, Math.round(model.viewBox[3] * PX_PER_CM)));
+    const h = Math.max(1, Math.round(model.viewBox[3] * PX_PER_CM));
+    const svg = characterSvg(model, h);
     const loaded = await fabric.loadSVGFromString(svg);
     const objects = (loaded?.objects ?? []).filter(Boolean) as fabric.FabricObject[];
     if (!objects.length) return null;
@@ -50,7 +52,9 @@ export async function buildCharacterObject(data: CharacterData): Promise<fabric.
                 '[character] screentone left grey: the drawing did not load shape for shape',
             );
     }
-    const group = new fabric.Group(objects, { originX: 'center', originY: 'center' });
+    // the shot's frame (lib/canvas/frameGroup): fitted to its shapes, a close-up put the whole figure on the page
+    const w = Math.round((h * model.viewBox[2]) / model.viewBox[3]);
+    const group = frameGroup(objects, w, h);
     // a plain JSON copy: the page stores it as it is
     (group as WithData).characterData = JSON.parse(JSON.stringify(data));
     group.set({ name: data.character.name } as Partial<fabric.FabricObject>);
@@ -98,31 +102,15 @@ export function applyTone(
 
 /**
  * "Update on page": puts a freshly built drawing into the SAME group, so the object keeps its identity (id,
- * animation track, pinned notes, connectors, locks, layer, shadow). The fresh drawing first takes the group's
- * transform, so moving its shapes in keeps them where they appear (the centre stays put); the old shapes go.
+ * animation track, pinned notes, connectors, locks, layer, shadow); it takes the fresh shot's frame
+ * (lib/canvas/frameGroup `swapFrameDrawing`).
  */
 export function swapCharacterDrawing(
     target: fabric.Group,
     fresh: fabric.Group,
     data: CharacterData,
 ) {
-    fresh.set({
-        originX: target.originX,
-        originY: target.originY,
-        left: target.left,
-        top: target.top,
-        scaleX: target.scaleX,
-        scaleY: target.scaleY,
-        angle: target.angle,
-        flipX: target.flipX,
-        flipY: target.flipY,
-        skewX: target.skewX,
-        skewY: target.skewY,
-    });
-    fresh.setCoords();
-    const old = [...target.getObjects()];
-    target.add(...fresh.getObjects());
-    target.remove(...old);
+    swapFrameDrawing(target, fresh);
     (target as WithData).characterData = JSON.parse(JSON.stringify(data));
     target.set({ name: data.character.name, dirty: true } as Partial<fabric.Group>);
     target.setCoords();

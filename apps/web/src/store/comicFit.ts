@@ -18,16 +18,16 @@ export function boxOf(o: FabricObject): Box {
 
 /**
  * Scale `obj` to `mode` and centre it on its panel: `panel` when given, else the panel it overlaps most. Turns it
- * upright (a rotated picture would not fill a rectangle). Returns false when there is no panel.
+ * upright (a rotated picture would not fill a rectangle). Returns that panel, or null when there is none.
  */
 export function fitObjectToPanel(
     obj: FabricObject,
     panels: FabricObject[],
     mode: FitMode,
     panel?: FabricObject,
-): boolean {
+): FabricObject | null {
     const target = panel ?? panels[bestPanel(boxOf(obj), panels.map(boxOf))];
-    if (!target) return false;
+    if (!target) return null;
     const { scale, cx, cy } = fitInto(
         { width: obj.width ?? 0, height: obj.height ?? 0 },
         boxOf(target),
@@ -36,7 +36,7 @@ export function fitObjectToPanel(
     obj.set({ angle: 0, skewX: 0, skewY: 0, scaleX: scale, scaleY: scale });
     obj.setPositionByOrigin(new Point(cx, cy), 'center', 'center');
     obj.setCoords();
-    return true;
+    return target;
 }
 
 /** Zoom `obj` by `factor` about its own centre (a picture in a panel: look closer or further out). */

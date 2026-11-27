@@ -2,6 +2,7 @@ import { resolveDress } from '../data/dressRules';
 import { EMOTION_IDS, VISEME_IDS } from '../data/emotions';
 import { color, num, obj, pick, str, unit, type Raw } from './coerce';
 import { migrateCharacter } from './migrate';
+import { parseEffects } from './effects';
 import { BODY_STYLES, MANGA_VARIANTS } from './bodyStyles';
 import { MANGA_IDLE_POSE } from '../data/posesManga';
 import { PROP_KINDS, type Held } from './propKinds';
@@ -18,6 +19,8 @@ import {
     SHOE_KINDS,
     SHOTS,
     STYLE_IDS,
+    IDENTITIES,
+    type Identity,
     TOP_KINDS,
     ACCESSORY_KINDS,
     MAX_ACCESSORIES,
@@ -230,6 +233,10 @@ export function parseCharacter(raw: unknown): Character | null {
         },
         rig: { pose: rig.pose ? parsePose(rig.pose) : STAND_POSE },
         style: pick(o.style, STYLE_IDS, 'cartoon'),
+        ...((IDENTITIES as readonly unknown[]).includes(o.identity)
+            ? { identity: o.identity as Identity }
+            : {}),
+        ...(parseEffects(o.effects) ? { effects: parseEffects(o.effects) } : {}),
     };
 }
 

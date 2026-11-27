@@ -7,12 +7,17 @@ import type { Character } from '@/character/schema/types';
  * World space = the character rig's space: cm, y up, ground at y = 0, +x = right of the default view, +z toward
  * the default camera.
  */
-export const SCENE_SCHEMA_VERSION = 1;
+export const SCENE_SCHEMA_VERSION = 2;
 
 export type V3 = [number, number, number];
 
 /** Group pictures: 2–5 characters (crowds of simple extras come in phase 10). */
 export const MAX_ACTORS = 5;
+
+/** Catalogue props standing in a scene (schema v2): enough for a set, few enough to stay fast. */
+export const MAX_SCENE_PROPS = 40;
+/** A scene prop's height range in cm (a cup to a skyscraper). */
+export const SCENE_PROP_HEIGHT = { min: 5, max: 6000 } as const;
 
 export type Lens =
     | { kind: 'perspective'; /** on a 36 mm wide sensor */ focalMm: number }
@@ -60,6 +65,10 @@ export interface SceneSet {
     time: TimeOfDay;
     weather: Weather;
     season: Season;
+    /** wind on every actor's hair and hanging cloth, 0..1 (character schema/effects.ts); absent = none */
+    wind?: number;
+    /** where it blows to in the world, degrees round the vertical: 0 = +x, 90 = +z (toward the default camera) */
+    windDir?: number;
 }
 
 export interface SceneActor {
@@ -74,14 +83,57 @@ export interface SceneActor {
     lookAt: string | null;
 }
 
+/**
+ * A Scene Objects prop (src/props, docs/PROPS.md §9) standing in the world: a card that always faces the camera,
+ * its base on the ground at (x, 0, z), `height` cm tall (its width follows the drawing). Schema v2.
+ */
+export interface SceneProp {
+    id: string;
+    /** catalogue id; an unknown one is kept and not drawn (a newer catalogue may know it) */
+    propId: string;
+    variant: number;
+    x: number;
+    z: number;
+    height: number;
+}
+
+/** Fight effects on a placed exchange (docs/COMBAT_PACK.md): optional, additive (no schema bump). */
+export const FIGHT_FX_KEYS = [
+    'flash',
+    'speedLines',
+    'smear',
+    'shockwave',
+    'sweat',
+    // clips only (they play in time): camera shake and the freeze on impact
+    'shake',
+    'hitStop',
+] as const;
+export type FightFxKey = (typeof FIGHT_FX_KEYS)[number];
+export interface SceneFight {
+    attacker: string;
+    defender: string;
+    exchange: string;
+    contact: 'hit' | 'block' | 'miss';
+    key: 'start' | 'peak' | 'recover';
+    intensity: 'off' | 'subtle' | 'normal' | 'dramatic';
+    effects: Record<FightFxKey, boolean>;
+    /** where the strike lands and the limb's path to it, in the attacker's own frame (cm): it follows a drag */
+    impact: V3;
+    trail: V3[];
+}
+
 export interface Scene {
     schemaVersion: number;
     id: string;
     name: string;
     actors: SceneActor[];
+    /** props in the place, drawn far to near with the actors (v1 scenes read as none) */
+    props: SceneProp[];
     set: SceneSet;
     camera: SceneCamera;
     frame: SceneFrame;
     /** one art style for everyone: new actors and edited characters follow the scene's style */
     styleLock: boolean;
+    /** the last fight exchange placed, for its effects (drawn while the attacker keeps that pose) */
+    fight?: SceneFight;
 }

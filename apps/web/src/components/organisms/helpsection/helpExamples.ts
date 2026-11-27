@@ -1685,6 +1685,63 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
         },
     ],
 
+    'scene-objects': [
+        {
+            id: 'park-backdrop',
+            title: 'A park backdrop for a manga panel',
+            brief: 'Build a quiet park behind your characters from ready scenery, in under a minute.',
+            icon: 'scene-objects',
+            steps: [
+                s('Open Scene Objects; in Sky, click Puffy cloud', 'Scene Objects › Sky', [90, 40]),
+                s(
+                    'In Nature, drag Mountain range to the back',
+                    'Scene Objects › Nature',
+                    [160, 96],
+                ),
+                s('Drag a Sakura tree onto the left side', 'drag onto the page', [80, 100]),
+                s(
+                    'Search “grass” and drop Tall grass in front',
+                    'Search scene objects',
+                    [220, 150],
+                ),
+            ],
+            result: 'A layered park scene made of separate objects you can still move and scale.',
+            scene: [
+                ...at(0, rect(20, 14, 280, 152, { fill: 'page', stroke: 'line', w: 1 })),
+                ...at(
+                    0,
+                    path(
+                        'M60 46 a12 12 0 0 1 22 -8 a14 14 0 0 1 26 4 a10 10 0 0 1 2 16 h-52 a8 8 0 0 1 2 -12Z',
+                        {
+                            fill: '#ffffff',
+                            stroke: 'ink',
+                            w: 1,
+                        },
+                    ),
+                ),
+                ...at(
+                    1,
+                    path('M20 124 L70 80 L100 104 L160 58 L220 110 L250 92 L300 124Z', {
+                        fill: '#7f93ad',
+                        stroke: 'ink',
+                        w: 1,
+                    }),
+                ),
+                ...at(2, rect(76, 110, 8, 40, { fill: '#5e3b32', stroke: 'ink', w: 1 })),
+                ...at(2, circle(80, 96, 26, { fill: '#f6c1d1', stroke: 'ink', w: 1 })),
+                ...at(
+                    3,
+                    path('M190 150 l4 -22 l3 22 l5 -26 l3 26 l6 -20 l2 20 l6 -24 l3 24Z', {
+                        fill: '#7cc35a',
+                        stroke: 'ink',
+                        w: 1,
+                    }),
+                ),
+            ],
+            uses: ['layers'],
+        },
+    ],
+
     characters: [
         {
             id: 'webtoon-hero',

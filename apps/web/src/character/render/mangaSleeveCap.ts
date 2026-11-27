@@ -73,10 +73,11 @@ export function addCapSleeve(ctx: Ctx, skel: Skeleton, o: CapSleeve) {
     // joins the arm; not once that shoulder turns well away (then the torso hides it, as it hides the far arm).
     const away = project(ctx.view, apply(ctx.posed.rot.chest, [sx, 0, 0]))[2];
     const torso = ctx.parts.find((x) => x.key === 'torso')?.depth ?? -Infinity;
-    const depth =
-        o.role === 'skin' && away > -0.6
-            ? Math.max(depthOf(ctx, o.group), torso) + 0.02
-            : depthOf(ctx, o.group) + 0.02;
+    // It lies over the bare chest and its contour (+0.001, +0.002) but under the sleeveless panel's cloth (+0.003,
+    // mangaTank.ts), with the arm behind the torso or in front of it (where the arm really covers the cloth, the limb
+    // does, with its own contour). Over the cloth, its uninked inner side cut the cloth: a hard wedge down the far strap
+    // in a 3/4 view, or a bite out of the near armhole (owner review 2026-11-27)
+    const depth = o.role === 'skin' && away > -0.6 ? torso + 0.0025 : depthOf(ctx, o.group) + 0.02;
     addSurface(ctx, o.key, o.group, o.role, poly, smoothClosed(poly), depth, o.ra * 2, false, [
         poly,
     ]);

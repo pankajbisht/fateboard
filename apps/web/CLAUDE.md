@@ -19,7 +19,7 @@ holds `apps/`, `packages/`, `.github/` (one separate CI/CD pipeline per app; the
 | Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build`. Needs `VITE_SITE_URL` in `.env` (see `.env.example`); fails without it |
 | Build (no type-check) | `npm run build:no-check` | `vite build` only; CI uses `npm run build` |
 | Preview | `npm run preview` | serves `dist/` on 0.0.0.0 |
-| Lint | `npm run lint` | ESLint flat config; `--max-warnings 246` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
+| Lint | `npm run lint` | ESLint flat config; `--max-warnings 245` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
 | Format | `npm run format` / `npm run format:check` | Prettier, `src/**` |
 | Typecheck | `npm run type-check` | app + strict island (`tsconfig.strict.json`) + node + e2e configs, must be 0 errors |
 | All checks | `npm run check` | lint + type-check + format:check |
@@ -37,6 +37,7 @@ src/
   store/brushConfig.ts                    brush presets/engines
   animation/                              keyframe engine + video export (WebCodecs / MediaRecorder)
   character/, scene/                      Character Studio + scenes: pure domains (no React/Fabric/store; board.ts = Fabric edge), docs/CHARACTER_STUDIO.md
+  props/                                  Scene Objects (manga props library): pure domain, same rules, docs/PROPS.md
   components/{atoms,molecules,organisms,templates,pages}   atomic design
   components/organisms/board/ui/CanvasBoard.tsx            mounts the Fabric canvas (design/whiteboard)
   components/organisms/editorsidebar/editorsidebar.config.tsx  left panels
@@ -122,6 +123,8 @@ tests): selectors, panels, tokens, icons, keys, units, Fabric origins / serializ
 - [Backend](docs/BACKEND.md): local-first backend plan (Supabase + Hono API: accounts, sync, sharing, AI proxy, remote MCP), data model, API, rules (section 12)
 - [Limitations](docs/LIMITATIONS.md): browser version vs a native C++ editor (canvas size, zoom, memory, colour, input, files), with this app's real limits
 - [Design](docs/DESIGN.md): brand tokens (colors from the logo), text styles, radius, contrast rules, dark mode, panel rules
+- [Scene Objects](docs/PROPS.md): manga props library: decisions, contracts, phases and their status (§9: props in the Scene Studio)
+- [Library and clipboard](docs/LIBRARY.md): owner plan for props in scenes (L1 done), the automatic clipboard and the Library panel (L2–L4)
 - [Performance audit](docs/PERFORMANCE_AUDIT.md): runtime checklist (30 items: memory, undo, rendering, layers, storage, workers, cleanup), status per item, ranked fixes P1–P12; rule `.claude/rules/runtime-performance.md`
 
 ## How we work

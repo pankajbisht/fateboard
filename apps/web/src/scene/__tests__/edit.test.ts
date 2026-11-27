@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { RECIPES, fromRecipe } from '@/character/data/recipes';
 import { buildSkeleton } from '@/character/rig/skeleton';
+import { makeView, project } from '../camera/projection';
 import { VIEWS } from '../camera/views';
 import { FORMATIONS } from '../layout/formations';
 import { renderScene } from '../render/renderScene';
@@ -168,5 +169,38 @@ describe('Style Lock (phase 9)', () => {
         expect(s.actors.map(styleOf)).toEqual(['anime', 'sketch', 'flat']);
         s = applySceneEdit(s, { kind: 'styleLock', on: true });
         expect(s.actors.map(styleOf)).toEqual(['anime', 'anime', 'anime']);
+    });
+});
+
+describe('close-up and bust views (2026-11-27: shots on the page)', () => {
+    /** the subject's head and the actors' feet, in the frame (0..1 of its width / height) */
+    const framing = (view: string, subject: string) => {
+        const s = { ...newScene(), actors: [actor('a', 2, -60, 0), actor('b', 3, 60, 0)] };
+        const t = applySceneEdit(s, { kind: 'view', view, subject });
+        const v = makeView(t.camera, t.frame.aspect);
+        const at = (a: SceneActor, y: number) => {
+            const p = project(v, [a.x, y, a.z])!;
+            return p && { x: p[0] / v.width, y: p[1] / v.height };
+        };
+        const a = t.actors.find((x) => x.id === subject)!;
+        return { head: at(a, height(a) * 0.93), feet: at(a, 0), chest: at(a, height(a) * 0.72) };
+    };
+
+    it.each(['a', 'b'])('a close-up fills the frame with the face of actor %s', (id) => {
+        const f = framing('closeup', id);
+        expect(f.head.x).toBeGreaterThan(0.3);
+        expect(f.head.x).toBeLessThan(0.7);
+        expect(f.head.y).toBeGreaterThan(0.2);
+        expect(f.head.y).toBeLessThan(0.65);
+        // the chest and the feet are below the frame
+        expect(f.chest.y).toBeGreaterThan(1);
+        expect(!f.feet || f.feet.y > 1).toBe(true);
+    });
+
+    it('a bust shows head and chest, not the feet', () => {
+        const f = framing('bust', 'b');
+        expect(f.head.y).toBeGreaterThan(0.05);
+        expect(f.chest.y).toBeLessThan(1);
+        expect(!f.feet || f.feet.y > 1).toBe(true);
     });
 });

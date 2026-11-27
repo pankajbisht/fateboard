@@ -66,16 +66,16 @@ export const OUTFITS_C: Outfit[] = [
         ['muay-thai-shorts', '#dc2626'],
         ['barefoot', '#e0ac69'],
         [
-            ['headband', '#dc2626'],
-            ['bracelet', '#dc2626'],
+            ['mongkol', '#dc2626'],
+            ['prajioud', '#dc2626'],
         ],
     ),
     make(
         'combat',
         'Boxer',
         ['tank', '#2563eb'],
-        ['muay-thai-shorts', '#2563eb'],
+        ['boxing-trunks', '#2563eb'],
         ['sports-shoes', W],
-        [['headband', W]],
+        [['boxing-gloves', '#2563eb']],
     ),
 ];

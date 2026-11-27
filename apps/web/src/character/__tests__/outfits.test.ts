@@ -4,6 +4,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { resolveDress, takeOff, wear } from '../data/dressRules';
+import { BOTTOM_DEFS } from '../data/garments';
 import { OUTFITS, OUTFIT_GROUPS } from '../data/outfits';
 import { RECIPES, fromRecipe } from '../data/recipes';
 import { ACCESSORY_DEFS, SHOE_DEFS } from '../data/wardrobe';
@@ -48,7 +49,7 @@ describe('shoes and accessories', () => {
         for (const k of ACCESSORY_KINDS) expect(ACCESSORY_DEFS[k].name).toBeTruthy();
         expect(SHOE_KINDS).toHaveLength(13);
         // + the reference characters' collar bow, hair clip and socks
-        expect(ACCESSORY_KINDS).toHaveLength(25);
+        expect(ACCESSORY_KINDS).toHaveLength(34);
     });
 
     it('every accessory draws on its own, from the front and the back', () => {
@@ -125,5 +126,16 @@ describe('dress rules', () => {
         expect(c?.dress.shoes.kind).toBe('sneakers');
         expect(c?.dress.shoes.color).toBe(aarav.dress.shoes.color);
         expect(c?.dress.accessories).toEqual([]);
+    });
+});
+
+describe('combat-sport kit (BUG-280)', () => {
+    it('Muay Thai shorts are named for what they are, and a boxer wears boxing trunks', () => {
+        expect(BOTTOM_DEFS['muay-thai-shorts'].name).toBe('Muay Thai shorts');
+        expect(BOTTOM_DEFS['boxing-trunks'].name).toBe('Boxing trunks');
+        const boxer = OUTFITS.find((o) => o.name === 'Boxer')!;
+        expect(boxer.dress.bottom.kind).toBe('boxing-trunks');
+        // a headband is Muay Thai / training wear, not a boxer's kit
+        expect(boxer.dress.accessories.map((a) => a.kind)).not.toContain('headband');
     });
 });

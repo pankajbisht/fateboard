@@ -6,7 +6,8 @@ import { Field } from '../../molecules/Field';
 import { PanelSection } from '../../molecules/PanelSection';
 
 const ONE = PROP_KINDS.filter((k) => PROP_DEFS[k].hands === 'one');
-const TWO = PROP_KINDS.filter((k) => PROP_DEFS[k].hands === 'two');
+// boxing gloves are worn now (Wardrobe accessories, schema v9); the held kind stays only so old data reads
+const TWO = PROP_KINDS.filter((k) => PROP_DEFS[k].hands === 'two' && k !== 'boxing-gloves');
 const NONE = '';
 
 /** What the hands hold: an item per hand, or an item that takes both (rifle, boxing gloves). */

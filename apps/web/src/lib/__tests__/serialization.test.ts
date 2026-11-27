@@ -82,4 +82,42 @@ describe('round trip (undo dedupe)', () => {
         expect(second).toBe(first);
         await canvas.dispose();
     });
+
+    // 2026-11-27: "Play on page" put every drawing of a fight clip (12k shapes, 16 MB) into each undo step and
+    // autosave, and the editor slowed down. A clip that carries its recipe is saved as a poster: the place, the
+    // first drawing and the over layer; the other drawings are empty slots rebuilt from the recipe after a load.
+    describe('fight clips', () => {
+        const box = (n: number) =>
+            new fabric.Group(
+                Array.from({ length: n }, () => new fabric.Rect({ width: 4, height: 4 })),
+            );
+        const clip = (recipe?: unknown) => {
+            const kids = [box(2), box(3), box(3), box(3), box(1)]; // place, 3 drawings, over
+            kids[2].visible = true; // the playhead shows drawing 2
+            kids[1].visible = false;
+            kids[3].visible = false;
+            const g = new fabric.Group(kids);
+            Object.assign(g, {
+                fightClip: { name: 'c', start: 0, fps: 24, count: 3, first: 1, over: 4, recipe },
+            });
+            return g;
+        };
+        const kidsOf = (json: any) => json.objects[0].objects as any[];
+
+        it('with a recipe: saved as a poster, drawing 1 shown, the others empty and hidden', () => {
+            const g = clip({ combo: 'x' });
+            const kids = kidsOf(serializeCanvas(createFakeCanvas([g]) as any));
+            expect(kids.map((k) => k.objects.length)).toEqual([2, 3, 0, 0, 1]);
+            expect(kids.map((k) => k.visible)).toEqual([true, true, false, false, true]);
+            // the live clip keeps its drawings and what it shows
+            const live = g.getObjects() as fabric.Group[];
+            expect(live.map((k) => k.getObjects().length)).toEqual([2, 3, 3, 3, 1]);
+            expect(live.map((k) => k.visible)).toEqual([true, false, true, false, true]);
+        });
+
+        it('without a recipe (saved before 2026-11-27): every drawing is kept', () => {
+            const kids = kidsOf(serializeCanvas(createFakeCanvas([clip()]) as any));
+            expect(kids.map((k) => k.objects.length)).toEqual([2, 3, 3, 3, 1]);
+        });
+    });
 });

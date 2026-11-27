@@ -19,7 +19,7 @@ const a = {
 describe('ComicPanel', () => {
     beforeEach(() => {
         useStore.setState({
-            comicStyle: { gutter: 14, border: 3 },
+            comicStyle: { gutter: 14, border: 3, panelsLocked: true },
             hasSelection: true,
             ...a,
         } as never);
@@ -36,6 +36,14 @@ describe('ComicPanel', () => {
             target: { value: '20' },
         });
         expect(a.setComicStyle).toHaveBeenCalledWith({ gutter: 20 });
+    });
+
+    it('the Lock panels switch shows the lock and turns it off to edit the layout', () => {
+        render(<ComicPanel />);
+        const lock = screen.getByRole('switch', { name: 'Lock panels' });
+        expect(lock).toBeChecked();
+        fireEvent.click(lock);
+        expect(a.setComicStyle).toHaveBeenCalledWith({ panelsLocked: false });
     });
 
     it('a scene or picture is filled or fitted into its panel and zoomed there; the buttons wait for a selection', () => {

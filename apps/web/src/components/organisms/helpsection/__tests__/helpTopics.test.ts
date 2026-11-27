@@ -45,6 +45,7 @@ describe('help topics', () => {
             'layers',
             'notes',
             'characters',
+            'sceneObjects',
             'comic',
         ]);
         expect(tabIds).toEqual([

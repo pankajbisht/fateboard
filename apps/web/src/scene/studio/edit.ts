@@ -1,16 +1,22 @@
+import type { KeyName, Stance } from '@/character/combat/types';
 import type { Character, StyleId } from '@/character/schema/types';
 import { VIEWS, viewCtx } from '../camera/views';
 import { align, applyFormation, distribute } from '../layout/arrange';
 import {
     MAX_ACTORS,
+    MAX_SCENE_PROPS,
+    SCENE_PROP_HEIGHT,
     type Scene,
     type SceneActor,
     type SceneCamera,
     type SceneFrame,
+    type SceneFight,
+    type SceneProp,
     type SceneSet,
 } from '../schema/types';
 import { ENVIRONMENTS } from '../sets/registry';
 import { applyPairPose } from '../layout/pairPoses';
+import { placeExchange } from '../combat/fight';
 import { applyTemplate } from '../templates/apply';
 
 /**
@@ -41,7 +47,36 @@ export type SceneEdit =
     /** replace the scene with a saved one (the library): it keeps its own id, so saving again updates it */
     | { kind: 'load'; scene: Scene }
     /** two actors in contact (hug, handshake …): placed, posed and their hands solved (layout/pairPoses.ts) */
-    | { kind: 'pairPose'; a: string; b: string; pair: string };
+    | { kind: 'pairPose'; a: string; b: string; pair: string }
+    /** a fight exchange (jab → slip …): spaced, faced and the strike aimed at the defender (combat/fight.ts) */
+    | {
+          kind: 'fight';
+          a: string;
+          b: string;
+          exchange: string;
+          stanceA?: Stance;
+          stanceB?: Stance;
+          key?: KeyName;
+      }
+    /** the fight effects' strength and which ones show (scene.fight) */
+    | {
+          kind: 'fightFx';
+          intensity?: SceneFight['intensity'];
+          effects?: Partial<SceneFight['effects']>;
+      }
+    /** Scene Objects props standing in the place (schema v2) */
+    | { kind: 'addProp'; prop: SceneProp }
+    | { kind: 'removeProp'; id: string }
+    | { kind: 'moveProp'; id: string; x: number; z: number }
+    | { kind: 'updateProp'; id: string; patch: Partial<Pick<SceneProp, 'variant' | 'height'>> };
+
+const clampHeight = (h: number) =>
+    Math.round(Math.min(SCENE_PROP_HEIGHT.max, Math.max(SCENE_PROP_HEIGHT.min, h)));
+
+const mapProp = (s: Scene, id: string, fn: (p: SceneProp) => SceneProp): Scene => ({
+    ...s,
+    props: s.props.map((p) => (p.id === id ? fn(p) : p)),
+});
 
 const mapActor = (s: Scene, id: string, fn: (a: SceneActor) => SceneActor): Scene => ({
     ...s,
@@ -88,6 +123,7 @@ export function applySceneEdit(s: Scene, e: SceneEdit): Scene {
                     roll: 0,
                 },
                 actors: s.actors.map((a) => ({ ...a, x: a.x + dx, z: a.z + dz })),
+                props: s.props.map((p) => ({ ...p, x: p.x + dx, z: p.z + dz })),
             };
         }
         case 'frame':
@@ -129,12 +165,48 @@ export function applySceneEdit(s: Scene, e: SceneEdit): Scene {
             return { ...s, actors: distribute(s.actors, e.ids) };
         case 'style':
             return withStyle(s, e.style);
-        case 'template':
-            return applyTemplate(s, e.id);
+        case 'template': {
+            // a ready scene brings its own place: props from the old one would stand anywhere (undo keeps them)
+            const next = applyTemplate(s, e.id);
+            return next === s ? s : { ...next, props: [] };
+        }
         case 'load':
             return e.scene;
         case 'pairPose':
             return applyPairPose(s, e.a, e.b, e.pair).scene;
+        case 'fight':
+            return placeExchange(s, e.a, e.b, e.exchange, e).scene;
+        case 'fightFx':
+            return s.fight
+                ? {
+                      ...s,
+                      fight: {
+                          ...s.fight,
+                          intensity: e.intensity ?? s.fight.intensity,
+                          effects: { ...s.fight.effects, ...e.effects },
+                      },
+                  }
+                : s;
+        case 'addProp': {
+            const taken =
+                s.props.some((p) => p.id === e.prop.id) || s.actors.some((a) => a.id === e.prop.id);
+            if (s.props.length >= MAX_SCENE_PROPS || taken) return s;
+            return { ...s, props: [...s.props, { ...e.prop, height: clampHeight(e.prop.height) }] };
+        }
+        case 'removeProp':
+            return s.props.some((p) => p.id === e.id)
+                ? { ...s, props: s.props.filter((p) => p.id !== e.id) }
+                : s;
+        case 'moveProp':
+            return mapProp(s, e.id, (p) => ({ ...p, x: e.x, z: e.z }));
+        case 'updateProp':
+            return mapProp(s, e.id, (p) => ({
+                ...p,
+                ...(e.patch.variant !== undefined
+                    ? { variant: Math.max(0, Math.round(e.patch.variant)) }
+                    : {}),
+                ...(e.patch.height !== undefined ? { height: clampHeight(e.patch.height) } : {}),
+            }));
         case 'styleLock':
             return {
                 ...s,

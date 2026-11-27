@@ -1,4 +1,5 @@
 import { importImage } from './imageImporter';
+import { timedAsync } from '@/lib/perf/perfMarks';
 import { importSVG } from './svgImporter';
 import * as fabric from 'fabric';
 import { importFabricJSON } from './importFabricJSON';
@@ -74,7 +75,7 @@ export async function importFile(canvas: fabric.Canvas, file: File) {
 
     switch (type) {
         case 'image':
-            return importImage(canvas, file);
+            return timedAsync('import:image', () => importImage(canvas, file));
 
         case 'svg':
             return importSVG(canvas, file);

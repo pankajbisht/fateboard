@@ -11,12 +11,13 @@ import { StudioLookTab } from './StudioLookTab';
 import { StudioWardrobeTab } from './StudioWardrobeTab';
 import { StudioPartPanel } from './StudioPartPanel';
 import { StudioPosesTab } from './StudioPosesTab';
+import { StudioEffectsTab } from './StudioEffectsTab';
 import { StudioTopBar } from './StudioTopBar';
 import { STUDIO_ROOT, focusStudio } from './studioFocus';
 import { SceneStage } from '../scene/SceneStage';
 import { SceneTabs } from '../scene/SceneTabs';
 
-type Tab = 'cast' | 'body' | 'look' | 'wardrobe' | 'face' | 'poses';
+type Tab = 'cast' | 'body' | 'look' | 'wardrobe' | 'face' | 'poses' | 'effects';
 const TABS = [
     { value: 'cast', label: 'Cast' },
     { value: 'body', label: 'Body' },
@@ -24,6 +25,7 @@ const TABS = [
     { value: 'wardrobe', label: 'Wardrobe' },
     { value: 'face', label: 'Face' },
     { value: 'poses', label: 'Poses' },
+    { value: 'effects', label: 'Effects' },
 ] as const;
 
 /**
@@ -116,6 +118,7 @@ export default function CharacterStudio() {
                                 {tab === 'wardrobe' && <StudioWardrobeTab />}
                                 {tab === 'face' && <StudioFaceTab />}
                                 {tab === 'poses' && <StudioPosesTab />}
+                                {tab === 'effects' && <StudioEffectsTab />}
                             </div>
                         </>
                     )}

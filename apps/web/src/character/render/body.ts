@@ -4,6 +4,7 @@ import { project } from './camera';
 import type { Skeleton } from '../rig/skeleton';
 import { BOTTOM_DEFS, TOP_DEFS } from '../data/garments';
 import { addBodyAccessories } from './accessoriesBody';
+import { addCombatGear } from './combatGear';
 import { addHand } from './hand';
 import { addJointDetail } from './joints';
 import { PROFILES, addBentLimb } from './bentLimb';
@@ -226,5 +227,6 @@ export function addBody(ctx: Ctx, skel: Skeleton, c: Character) {
     addPocketCovers(ctx, skel, c, botDef);
     addJointDetail(ctx, skel, c, topDef, botDef);
     addBodyAccessories(ctx, skel, c);
+    addCombatGear(ctx, skel, c);
     addProps(ctx, skel, c);
 }

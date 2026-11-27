@@ -60,8 +60,9 @@ handlers, selection → toolbar state, JSON import/export and debounced autosave
 (unused), `activePanel` (unused), `selectedObject` (**overloaded**: a Fabric object for textboxes, the string
 `'shape'`, or `null`), `showTextToolbar`, `isEditingText`, `hasActiveShape`, `geditor` (MultiStopGradientTool),
 `cw`/`ch` (container size, only set when `settings.freehand`), `selectedPreset` (CanvasPreset: the open page's size; a new board takes Settings > Canvas size).
-Private closure state (not in zustand): `panCanvas`, `persistTimer`, `eventHandlers`, `persistLock` (counter that
-blocks saves during load/clear), `unloadHandler`.
+Private closure state (not in zustand): `panCanvas`, `eventHandlers`, and the autosave from
+`slices/canvas/persistence.ts` (`createPersistence`: debounce timer, `state.lock` counter that blocks saves during
+load/clear, `state.dropped`, `state.unread`, the one-at-a-time writer, unload handlers; P2).
 
 **Actions:** `create`, `mount`, `init(el, container)`, `dispose()` (nulls `canvas` synchronously, then awaits
 `canvas.dispose()`), `registerCanvasEvents`, `unregisterCanvasEvents`, `setActiveTool`, `enablePan`, `disablePan`, `beginTemporaryPan`, `endTemporaryPan`,
@@ -605,13 +606,20 @@ Canvas `persist`. **Used by:** PageLayers (compositor `underlay` / `paintOverlay
 
 **Purpose (2026-11-17, Clip Studio style):** panel layouts, panel split, screentones, effect lines (focus, speed,
 burst). Balloons are catalog text shapes (`hooks/shape/comicBalloons.ts`, category `balloons`).
-**State:** `comicStyle` { `gutter`, `border` }.
+**State:** `comicStyle` { `gutter`, `border`, `panelsLocked` (default true: frames selectable but not moved, scaled or
+turned, hit only on their border line so a click inside reaches the scene under it) }.
 **Actions:** `setComicStyle`, `bindComic(canvas)` (a frame's `object:modified` / `object:removed` moves / deletes its
 area twin; ignored while restoring or switching pages), `addPanelLayout(presetId)` (replaces the page's panels;
 makes the folder "Comic panels" with "Panel borders" (frames), "Art" (clip to layer below, made active) and
 "Panel area" (locked white twins = the clip base)), `splitComicPanel(dir)`, `applyTone(params)` / `removeTone()`
 (Fabric `Pattern` fill from a tone tile; `toneParams`, `fillBeforeTone` saved), `addMangaEffect(kind)` (a filled
-`Path` in the selected frame's box, put on the Art layer, else in the page margins).
+`Path` in the selected frame's box, put on the Art layer, else in the page margins), `fitToPanel(mode, panel?)` /
+`zoomInPanel(factor)`. **Content in a panel (2026-11-27):** fitting binds the object to that panel (`panelId`) and cuts
+it to that panel only (`clipPath` = the panel outline in its own plane, intersected with a scene's or character's own
+frame; `lib/comic/panelClip.ts`, `store/comicClip.ts`): the Art layer cuts to all panels together, so a filled scene
+showed in its neighbours. The listeners (`store/comicBind.ts`) redo the cut while it is dragged, scaled or turned,
+move it into the panel its centre is dropped in, follow an unlocked panel that moves, release it when its panel is
+deleted (or a new layout replaces the panels), and lock frames as they are added (layout, split, loaded page).
 **Depends on:** PageLayers (`docLayers`, `setActiveLayer`), Document (`currentPageNumber`, `pageSetup`), Page size,
 UndoRedo.
 
@@ -741,6 +749,65 @@ layout + a frame clip).
 **Depends on:** Character (`characterStudioOpen`, `studioCharacter`, `openCharacterStudio`, `loadStudioCharacter`),
 Canvas (`canvas`), UndoRedo (`saveState`, `pauseHistory`, `resumeHistory`), Page (`boardMode`, `pageWidth`,
 `pageHeight` for `creationScaleOf`), Dialog (`showToast`).
+
+## 37. Props: `createPropsSlice.ts` (+ `src/props/`, `organisms/props/`, docs/PROPS.md)
+
+**Purpose (2026-11-26):** Scene Objects, the manga props library: place a prop from the left rail by click (view
+centre) or drag and drop (drop point). The prop code (`@/props/board`, the catalogue) loads on first use. Spread after
+Scene, before Animation.
+**State:** `propFavorites` (starred prop ids), `propRecent` (last 12 added, newest first); both read at start and
+saved on change through `uiPrefsStorage` section `props` (per browser, ids validated as kebab-case; the panel skips
+ids the catalogue no longer has). The panel keeps its category and search locally.
+**Phase 6 (my own props):** `propUserLibrary`, `propUserLibraryStatus`, `loadPropLibrary`, `importPropFile(file)`,
+`removeUserProp(id)`, `propPackJson()`, `importPropPack(text)` (in `slices/props/propLibrary.ts`; storage
+`propStorage`, key `propLibrary`); `addProp` also places `user-…` ids.
+**Phase 4:** `applyPropScene(id)` / `setPropTimeOfDay(light)` (in `slices/props/propActions.ts`, one undo step each;
+Depends on PageLayers `addPageLayer`, `updatePageLayer`, `setActiveLayer`), `propGroundSnap`, `propGroundLine`,
+`setPropGroundSnap`, `setPropGroundLine` (saved with the favourites); page helpers in `slices/props/propPage.ts`.
+**Actions:** `updateSelectedProp(patch)` (colours / outline / tone / variant of the selected prop, rebuilt in the
+same object, one undo step via `pauseHistory` / `resumeHistory` / `saveState(true)`), `randomizeSelectedProp()`,
+`togglePropFavorite(id)`, `notePropUsed(id)` (front of the recent list; `addProp` calls it on success),
+`addProp(propId, { at? })` (builds the group, scales it with `creationScaleOf`, adds and selects it;
+`false` without a canvas, for an unknown prop, or when the board changed while loading; failure = toast),
+`bindProps(canvas)` (cancels `dragover` and handles `drop` for `PROP_DRAG_TYPE` only, ignored while
+`isPageSwitching` / `_isRestoring`; returns the disposer). The slice subscribes to the store and binds each new
+canvas itself, disposing the old binding.
+**Reads:** `canvas`, `boardMode`, `pageWidth`, `pageHeight`, `isPageSwitching`, `_isRestoring`, `showToast`,
+`saveState`, `pauseHistory`, `resumeHistory`.
+**Persistence:** none of its own; `propData` on the object (CUSTOM_PROPS) saves with the page.
+
+## 38. Scene props: `createScenePropsSlice.ts` (+ `scene/render/renderProps.ts`, docs/PROPS.md §9)
+
+**Purpose (2026-11-26):** Scene Objects props standing in a Scene Studio scene (docs/LIBRARY.md L1). The props
+live in `studioScene.props` (Scene schema v2) and change only through `editStudioScene` (`addProp`, `removeProp`,
+`moveProp`, `updateProp`), so undo, draft, save and "Update on page" cover them. Spread after Props, before
+Animation.
+**State:** `sceneSelectedProp` (a prop id; it counts only while `sceneSelectedActor` is null, and an id no longer in
+the scene after an undo or a template matches nothing).
+**Actions:** `selectSceneProp(id)` (an id also clears `sceneSelectedActor`), `addSceneProp(propId, at?)` (async: loads
+the catalogue, `sceneSize` and the projection; refuses unknown and non-scene-ready props; spot = `at`, else the
+ground under the frame at 72 % height, else the stage; moved aside from props within 40 cm; real height; selected;
+`false` without a scene or on error), `duplicateSceneProp(id)` (60 cm to the right, selected).
+**Reads:** `studioScene`, `sceneSelectedActor`, `editStudioScene`. **Persistence:** none (the scene's).
+
+## 39. Fight: `createFightSlice.ts` (+ `src/scene/combat/`, `animation/clips.ts`, docs/COMBAT_PACK.md)
+
+Purpose: the user's saved fight combos and placing a combo on the page as a fight clip. Added 2026-11-27, before
+`createAnimationSlice`.
+
+| Key | Type | Notes |
+|---|---|---|
+| `fightCombos` | `FightCombo[]` | saved combos (parsed with `parseCombo`; unreadable entries stay in storage) |
+| `fightComboStatus` | `'idle' \| 'loading' \| 'ready' \| 'error'` | library load state |
+| `loadFightCombos()` | action | reads `comboStorage` (`@/lib/storage`, key `fightCombos`) |
+| `saveFightCombo(combo)` | action → `Promise<boolean>` | upsert by id, toast |
+| `deleteFightCombo(id)` | action → `Promise<boolean>` | the UI asks first (`confirmDialog`, danger) |
+| `placeFightClip(comboId)` | action → `Promise<boolean>` | bakes the combo for the Scene Studio's two fighters (`studioScene.fight`'s pair, else the first two), builds the clip group (`scene/board.ts` `buildFightClipObject`, `fightClip` in CUSTOM_PROPS), adds it at the view centre at the page's creation scale, starts it at `currentTime` and stretches `animDuration` to fit. The clip carries its recipe and is saved as a poster (BUG-283) |
+| `registerFightClipEvents(canvas)` / `unregisterFightClipEvents(canvas)` | actions | called by the Canvas slice's `registerCanvasEvents` / `unregisterCanvasEvents`: on `object:added`, a clip with a recipe gets its drawings back (`restoreFightClipFrames`, cached per recipe), then the frame for `currentTime` (`applyClipsAt`) and one render. No history step (the saved poster is the same) |
+
+Cross-slice: reads `canvas`, `studioScene`, `currentTime`, `animDuration`, `showToast`, `pageWidth` / `boardMode`
+(creation scale); calls `setAnimDuration`. Registered by the Canvas slice (`registerFightClipEvents`). Scene code loads with a dynamic `import()` (BUG-048 rule). Playback:
+`createAnimationSlice` and `exportRun` apply the timeline through `applyTimelineAt` (tracks, then clip frames).
 
 ## 34. Timeline: `createTimelineSlice.ts` (+ `src/animation/overlay/`, `organisms/animation/TimelineDock.tsx`)
 

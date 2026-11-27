@@ -136,7 +136,7 @@ flowchart LR
   FC -- "object:moving/scaling, after:render" --> OT
   FC -- "selection:*, object:modified (autoKey)" --> AN
   CS -- set selectedObject / showTextToolbar / fillMode --> UI
-  CS -- debounced 300 ms toObject --> DB
+  CS -- debounced 1 s (max 5 s) toObject --> DB
   PG -. pages[] kept in memory only .-> Store
   OT -- custom shapes / patterns --> LS
   UR -. snapshots on saveState only .-> Store
@@ -147,7 +147,7 @@ Event flow, step by step:
 1. **User input on canvas** → Fabric fires events → `registerCanvasEvents` handlers in the Canvas slice:
    `selection:created/updated` → `handleSelectionChange` (toolbar state, `updateFromFabric`, `saveState`);
    `selection:cleared` → `handleSelectionClear`; `object:modified` → `handleObjectChange` (linked clones + `persist`);
-   `object:added/removed`, `path:created`, `text:changed` → `handlePersistEvent` → `persist()` (300 ms debounce →
+   `object:added/removed`, `path:created`, `text:changed` → `handlePersistEvent` → `persist()` (1 s quiet, at most 5 s after the first change; one write at a time, newest wins, P2 →
    Pages `captureProject()` → `projectStorage.save(project)` in IndexedDB; page-only changes and track edits call
    `persist()` too).
 2. Other listeners added by slices/panels: Layers `bindLayerEvents` (resync layers on rAF), Shape

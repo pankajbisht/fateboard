@@ -31,13 +31,17 @@ const DATA_FILES = new Set([
     '/src/components/organisms/fonts/fontTemplates.config.ts',
     '/src/components/atoms/Icon.tsx',
     '/src/store/brushLibrary.ts', // the brush library: ~60 brush definitions
+    // Combat Sports Pack move tables (docs/COMBAT_PACK.md): three keyed poses per move
+    '/src/character/combat/data/boxing.ts',
+    '/src/character/combat/data/muayThai.ts',
+    '/src/character/combat/data/mma.ts',
 ]);
 
 /** Over budget on 2026-11-11: current size = ceiling. Split them (skill `fate-refactor`), never grow them. */
 const LEGACY_CEILINGS: Record<string, number> = {
     '/src/store/slices/createNodeEditorSlice.ts': 1710, // -8: screenScale moved to lib/canvas
     '/src/lib/utils/GradientTool.ts': 1319,
-    '/src/store/slices/createCanvasSlice.ts': 1223, // was 1257: CanvasTool type → store/canvasTools.ts, size setting → store/pagePreset.ts (2026-11-17); 1224 → 1223: empty select case folded (notes, 2026-11-17)
+    '/src/store/slices/createCanvasSlice.ts': 1068, // was 1223: autosave → slices/canvas/persistence.ts (P2, 2026-11-27); was 1257: CanvasTool type → store/canvasTools.ts, size setting → store/pagePreset.ts (2026-11-17); 1224 → 1223: empty select case folded (notes, 2026-11-17)
     '/src/components/organisms/effects/ui/ExportCanvas.tsx': 1150, // was 1183: export bounds moved to lib/export/exportBounds.ts (2026-11-17)
     '/src/store/slices/createLayersSlice.ts': 1024,
     '/src/store/slices/templateSlice.ts': 933,
@@ -48,13 +52,13 @@ const LEGACY_CEILINGS: Record<string, number> = {
     '/src/store/slices/createNotebookSlice.ts': 756,
     '/src/store/slices/createBrushSlice.ts': 458, // was 502: symmetry copies moved to store/brushes/symmetryCopies.ts, preset key table replaced by isBrushId (2026-11-16)
     '/src/store/slices/advanceOperationSlice.ts': 726,
-    '/src/animation/engine.ts': 725,
+    '/src/animation/engine.ts': 647, // was 725: preset catalogue → animation/presets.ts, ambient presets → ambientPresets.ts (2026-11-26)
     '/src/store/slices/createShapeSlice.ts': 699,
     '/src/components/organisms/board/ui/CanvasBoard.tsx': 625, // was 645: fit maths moved to lib/canvas/pageFit.ts (2026-11-17); 634 → 625: float anchor maths → deepZoom sceneToClient (notes)
     '/src/components/pages/web/WhiteboardMarketingSite.tsx': 558, // -2: gallery nav map (2026-11-12)
     '/src/components/organisms/effects/ui/RepeatAlongPath.tsx': 572,
     '/src/components/organisms/DrawPanel.tsx': 526, // was 549: symmetry moved to SymmetryControls (2026-11-16)
-    '/src/store/slices/createPagesSlice.ts': 549,
+    '/src/store/slices/createPagesSlice.ts': 540, // was 549: makeThumbnail → store/pageThumbnail.ts (P11, 2026-11-27)
     '/src/components/organisms/ShapePanel.tsx': 534,
     '/src/components/organisms/FillShadowPanel.tsx': 437, // was 458: opacity moved to LayerEffectsSection (2026-11-16)
     '/src/components/organisms/effects/ui/PathEffects.tsx': 512,

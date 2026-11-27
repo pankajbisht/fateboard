@@ -1,5 +1,6 @@
 import { MANGA_IDLE_POSE } from '../data/posesManga';
 import type { BodyStyle } from '../schema/bodyStyles';
+import { NO_EFFECTS, type Effects } from '../schema/effects';
 import { STAND_POSE, parseCharacter } from '../schema/parse';
 import type {
     Body,
@@ -33,6 +34,10 @@ export interface StudioEdit {
     posture?: boolean;
     /** the bust follows the frame again (choosing a body type) */
     resetBust?: boolean;
+    /** who the character is (decides the listed hair and clothes, data/audience.ts) */
+    identity?: Character['identity'];
+    /** effects on hair and hanging cloth (merged into the current ones; schema/effects.ts) */
+    effects?: Partial<Effects>;
 }
 
 export type StudioPart = PartGroup | 'hair';
@@ -67,6 +72,8 @@ export function applyEdit(c: Character, e: StudioEdit): Character {
         },
         rig: e.pose ? { pose: e.pose } : c.rig,
         style: e.style ?? c.style,
+        identity: e.identity ?? c.identity,
+        effects: e.effects ? { ...NO_EFFECTS, ...c.effects, ...e.effects } : c.effects,
     })!;
     // the name as typed (spaces, empty while editing); it is cleaned when placed or saved
     next.name = (e.name ?? c.name).slice(0, 80);

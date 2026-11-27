@@ -31,6 +31,7 @@ const TROUSERS = ['#1f2937', '#374151', '#1d4ed8', '#78350f', '#0f172a', '#4b556
 
 /** Where extras may stand (behind the characters, whatever the place allows), and how close they may stand. */
 function areaOf(env: EnvironmentDef) {
+    if (env.crowdArea) return { area: env.crowdArea, gap: 55 };
     if (env.category === 'indoor')
         return { area: { x0: -460, z0: -420, x1: 460, z1: -170 }, gap: 55 };
     if (env.category === 'studio')
