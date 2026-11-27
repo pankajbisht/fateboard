@@ -75,7 +75,8 @@ describe('Character Studio', () => {
         expect(useStore.getState().studioCharacter!.rig.pose.id).toBe('manga-idle');
         fireEvent.keyDown(studio(), { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true });
         expect(useStore.getState().studioCharacter!.rig.pose.id).toBe('wave');
-    });
+        // ~1 s locally (six full studio renders), past the 5 s default on a loaded CI runner under coverage
+    }, 20000);
 
     it('pressing a part selects it (shown in the Selected part panel)', async () => {
         await openMeera();
