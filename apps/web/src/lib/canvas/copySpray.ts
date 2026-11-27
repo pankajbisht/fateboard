@@ -29,7 +29,7 @@ export type CopySprayStyle = {
 export const DEFAULT_COPY_SPRAY_STYLE: CopySprayStyle = {
     scale: 1,
     spacing: 1.2,
-    spread: 1,
+    spread: 0, // copies follow the pointer; raise it to scatter
     sizeJitter: 0.3,
     rotateJitter: 20,
     opacityJitter: 0,
@@ -108,9 +108,10 @@ export function createDabEmitter(
     let carry = 0; // distance dragged since the last copy
     let heading = 0; // degrees, the drag direction
 
-    const emit = (p: Pt, out: SprayDab[]) => {
+    /** `exact`: the drag's first copy lands on the pointer itself (Spread scatters the rest). */
+    const emit = (p: Pt, out: SprayDab[], exact = false) => {
         if (dabs.length >= maxDabs) return;
-        const r = style.spread * unit * Math.sqrt(rnd()); // even over the disc
+        const r = (exact ? 0 : style.spread) * unit * Math.sqrt(rnd()); // even over the disc
         const t = 2 * Math.PI * rnd();
         const scale = style.scale * (1 + style.sizeJitter * (2 * rnd() - 1));
         const angle = (style.align ? heading : 0) + style.rotateJitter * (2 * rnd() - 1);
@@ -133,7 +134,7 @@ export function createDabEmitter(
             carry = 0;
             heading = 0;
             const out: SprayDab[] = [];
-            emit(p, out);
+            emit(p, out, true);
             return out;
         },
         move: (p) => {

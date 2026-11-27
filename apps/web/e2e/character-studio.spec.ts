@@ -286,7 +286,7 @@ test('Wardrobe: an outfit, shoes and an accessory change the character; a confli
 });
 
 // manga look (2026-11-24): a new character is manga-friendly (anime style, relaxed idle); body style, variant,
-// eyelashes and an ahoge reach the page, survive a reload, and switching to classic updates it in place
+// eyelashes and an ahoge reach the page, survive a reload, and Classic in the Art style menu updates it in place
 const look = (page: import('@playwright/test').Page) =>
     page.evaluate(() =>
         (
@@ -327,7 +327,7 @@ test('body style: a manga character with its variant and ahoge is placed, reload
     await expect(studio.getByRole('img', { name: 'Meera, relaxed idle' })).toBeVisible();
 
     await studio.getByRole('radio', { name: 'Body' }).click();
-    await expect(studio.getByRole('radio', { name: 'Manga' })).toBeChecked();
+    await expect(studio.getByRole('radio', { name: 'Classic' })).toHaveCount(0);
     await studio.getByRole('combobox', { name: 'Manga variant' }).click();
     await page.getByRole('option', { name: /Webtoon/ }).click();
     await studio.getByRole('radio', { name: 'Look' }).click();
@@ -349,15 +349,15 @@ test('body style: a manga character with its variant and ahoge is placed, reload
     await page.waitForFunction(() => !!window.__fateboard?.ready());
     await expect.poll(() => look(page)).toEqual([manga]);
 
-    // edit it again and switch the body to classic: the relaxed idle becomes the plain stand
+    // edit it again and pick Classic in the Art style menu: the relaxed idle becomes the plain stand
     const b = await page.evaluate(() => window.__fateboard!.bounds(0));
     const box = (await editor.settledCanvasBox())!;
     const k = box.width / b.canvasWidth;
     await page.mouse.click(box.x + (b.left + b.width / 2) * k, box.y + (b.top + b.height / 2) * k);
     await editor.openPanel('Characters');
     await page.getByRole('button', { name: 'Edit Meera' }).click();
-    await studio.getByRole('radio', { name: 'Body' }).click();
-    await studio.getByRole('radio', { name: 'Classic' }).click();
+    await studio.getByRole('combobox', { name: 'Art style' }).click();
+    await page.getByRole('option', { name: 'Classic', exact: true }).click();
     await studio.getByRole('button', { name: 'Update on page' }).click();
     await expect(studio).toHaveCount(0);
     await expect.poll(() => look(page)).toEqual([{ ...manga, body: 'classic', pose: 'stand' }]);

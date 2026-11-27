@@ -384,16 +384,19 @@ export const HELP_TOPICS: HelpTopic[] = [
         group: 'Tools',
         title: 'Spray',
         icon: 'spray-can',
-        summary: 'A spray can: paint builds up while you hold still.',
-        keywords: 'spray can airbrush graffiti paint mist particles flow nozzle',
+        summary:
+            'A spray can with modes: Paint, Mist, Splatter and Copy (sprays copies of the selection).',
+        keywords: 'spray can airbrush graffiti paint mist splatter particles flow nozzle mode copy',
         sections: [
             {
                 title: 'Spray',
                 items: [
-                    'Press `Shift+B` or pick Spray in the left rail and drag on the board',
+                    'Press `shift+B` or pick Spray in the left rail and drag on the board',
                     'Hold the pointer still to build up paint, like a real can',
-                    'Size is the nozzle; Flow how much paint per second; Particle the size of each drop',
+                    'Size is the nozzle; Flow how much paint per second. Texture (in the bar) holds Particle, the size of each drop, Softness and Opacity',
                     'Softness makes the spray denser in the middle and fainter at the edge',
+                    'Mode (first in the bar): Paint is an even spray, Mist a fine dense airbrush, Splatter big uneven drops, Copy sprays copies of the selection',
+                    'Spray opens in the mode you used last',
                     'More spray brushes (fine mist, coarse spray, glitter, dust) are in Brush > Spray',
                 ],
             },
@@ -406,17 +409,18 @@ export const HELP_TOPICS: HelpTopic[] = [
         title: 'Copy spray',
         icon: 'copy-spray',
         summary:
-            'Spray copies of the selected objects along a drag: leaves, stars, confetti, crowds.',
+            'Spray › Copy mode: spray copies of the selected objects along a drag: leaves, stars, confetti, crowds.',
         keywords:
             'copy spray symbol sprayer scatter duplicate clone stamp repeat confetti pattern random',
         sections: [
             {
                 title: 'Spray copies',
                 items: [
-                    'Select one or more objects, then press `Shift+S` (or pick Copy spray in the left rail)',
+                    'Press `shift+B` (or pick Spray in the left rail) and choose Mode › Copy, then click the object to spray. The bar shows what you are spraying',
+                    'Objects selected before you choose Copy are used as the source straight away',
                     'Drag on the board: copies of the selection land along the drag; a click places one copy',
                     'Each drag becomes one group named "Copy spray": one row in Layers and one undo step. Ungroup it to edit single copies',
-                    'It keeps spraying what was selected when you chose the tool. To spray something else, press `V`, select it and press `Shift+S` again',
+                    'To spray something else, `alt`+click it',
                     '`Esc` goes back to the Select tool',
                 ],
             },
@@ -424,7 +428,8 @@ export const HELP_TOPICS: HelpTopic[] = [
                 title: 'Settings',
                 items: [
                     'Size is the copy size (100 % = the selection); Spacing the gap between copies along the drag',
-                    'Spread scatters copies around the pointer (0 % = exactly on the drag)',
+                    'Spread scatters copies around the pointer (0 %, the default, = exactly on the drag). The first copy always lands where you press',
+                    'Variation (in the bar) holds Spacing, the jitters and Align to stroke',
                     'Size, Rotation and Opacity jitter make every copy a little different',
                     'Align to stroke turns the copies to follow the direction you drag',
                     'One drag adds at most 400 objects (copies × the objects in the selection, counting those inside groups) and 30 photos',
@@ -446,7 +451,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 items: [
                     'Press `L` or pick Lasso in the left rail and draw a loop',
                     'Touching picks everything the loop touches; Inside only picks objects fully inside',
-                    'Hold `Shift` to add to the selection and `Alt` to remove from it',
+                    'Hold `shift` to add to the selection and `alt` to remove from it',
                     'After the loop the Select tool is back, so you can move the selection right away',
                 ],
             },
@@ -471,7 +476,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 title: 'Draw lines',
                 items: [
                     'Press `D` or pick Drafter in the left rail and drag from a point',
-                    'The line snaps to the protractor steps (1° to 90°); hold `Alt` for any angle',
+                    'The line snaps to the protractor steps (1° to 90°); hold `alt` for any angle',
                     'Head turns the drafting head: steps count from that angle',
                     'The head shows the length in your units (Settings > Units) and the angle like a protractor',
                     'Starts snap to the ends of lines nearby; Pen width uses ISO technical pen sizes',
@@ -761,7 +766,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                 title: 'Make a character',
                 items: [
                     'Open Characters in the left rail, then Open Character Studio, or pick someone from the cast',
-                    'Body style: Classic or Manga (7.5–8 heads tall with long legs; shonen, shojo or webtoon), with a side-by-side preview. It works with every art style. Body: age, gender, height, body fat, muscle, shoulders, hips, arm, leg and neck length, skin tone',
+                    'Body style: Manga (7.5–8 heads tall with long legs), pick the variant: shonen, shojo, webtoon, seinen or josei. It works with every art style. The original doll body is Classic, at the end of the Art style menu at the top. Body: age, gender, height, body fat, muscle, shoulders, hips, arm, leg and neck length, skin tone',
                     'Children get bigger heads for their size; elders stoop a little and their hair greys unless you pick its colour',
                     'Look: 44 hairstyles (short, medium, long, tied up, curly, older), hair colour and an optional second colour for the tips, eyes, brows, nose, mouth, eye colour, 51 tops (T-shirt, polo, shirt, sweater, hoodie, jacket, kurta, lab coat, raincoat, sherwani and more) and 42 bottoms (trousers, jeans, shorts, leggings, churidar, dhoti, palazzo, skirts and a lehenga) with their colours',
                     'Wardrobe: 76 outfit presets (everyday, school, work, traditional, sports, weather, party, army and combat, combat sports: boxing, Muay Thai, MMA, BJJ gi with belt colours), 13 kinds of shoes, and 34 accessories (glasses, caps, hats, berets, army helmet, scarf, tie, jewellery, watch, belt, backpack, apron, boxing and MMA gloves, hand wraps, mouthguard, head guard, mongkol, prajioud, ankle wraps, gi belt). Things that do not go together are kept apart and the studio says why',

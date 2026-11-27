@@ -8,7 +8,7 @@ import type { PenStyle } from '@/store/slices/drawingTools/penStyle';
 import { SwitchField } from '@/components/molecules/LabeledToggle';
 import { SliderField } from '@/components/molecules/LabeledSlider';
 import type { PenShape } from '@/lib/canvas/penShape';
-import { Bar, BarSelect, Hint, Key } from './drawToolParts';
+import { Bar, BarSelect, Hint, Key, ALT, SHIFT } from './drawToolParts';
 
 /** Live preview of the stroke style on the popover button (dash, line ends, arrowheads). */
 function StrokePreview({ style }: { style: PenStyle }) {
@@ -109,8 +109,8 @@ function PenHint() {
                     </>
                 ) : (
                     <>
-                        Click to add points: the curve bends through them · <Key>Alt</Key> + click =
-                        sharp corner
+                        Click to add points: the curve bends through them · <Key>{ALT}</Key> + click
+                        = sharp corner
                     </>
                 )}
             </Hint>
@@ -122,7 +122,7 @@ function PenHint() {
                 {points} {points === 1 ? 'point' : 'points'}
             </span>
             <Hint>
-                <Key>Shift</Key> 45° · <Key>Alt</Key>{' '}
+                <Key>{SHIFT}</Key> 45° · <Key>{ALT}</Key>{' '}
                 {mode === 'pen' ? 'drag = sharp curve' : 'click = corner'} · <Key>Enter</Key> finish
                 · click the first point to close
             </Hint>

@@ -525,7 +525,7 @@ partial settings only).
 `resetStampOverride(id)`, `bucketFillAt(point)` → `'shape' | 'region' | 'open' | 'none'`, `lassoSelect(loop, mode)`,
 `lassoFill(loop)`, `drafterLine(a, b)`, `reflectSelection({ mode, angle, count, around })` → copies added,
 `setCopySprayStyle`, `sprayCopies(dabs)` → objects added.
-**Copy spray (Shift + S, 2026-11-17, `paintTools/copySpray{Actions,Tool}.ts`):** when `activeTool` becomes
+**Copy spray (Spray › Copy mode since 2026-11-27, was Shift + S; `paintTools/copySpray{Actions,Tool}.ts`):** `sprayStyle.mode` (Paint / Mist / Splatter / Copy) picks what Spray (Shift + B) does; `setActiveTool('spray')` opens `copySpray` in Copy mode (`resolveTool`, `store/canvasTools.ts`) and `setSprayStyle({ mode })` swaps the tool while Spray is open. Source: the selection when Copy opens, else a click on an object (`sourceObjectAt`); Alt + click swaps it; `copySpraySource` (label or null) drives the bar. Mist / Splatter tune `sprayState` (rate, ink, drop size jitter). when `activeTool` becomes
 `'copySpray'` the selection is snapshotted (clones in scene coordinates; `setActiveTool` sets the store before it
 clears the selection), so undo, page switches or editing the original do not change what is sprayed; the snapshot is
 dropped when the tool closes. A drag places dabs (`lib/canvas/copySpray.ts`, seeded) previewed on the top canvas (the

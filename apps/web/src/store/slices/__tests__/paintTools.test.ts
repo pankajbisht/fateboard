@@ -3,7 +3,8 @@ import * as fabric from 'fabric';
 import { createHarness } from '@/test/sliceHarness';
 import { createFakeCanvas } from '@/test/fakeCanvas';
 import { createPaintToolsSlice } from '../createPaintToolsSlice';
-import { DEFAULT_SPRAY_STYLE } from '@/store/sprayStyle';
+import { DEFAULT_SPRAY_STYLE, sprayState, sprayToolFor, type SprayMode } from '@/store/sprayStyle';
+import { SPRAY_TOOL_BRUSH } from '@/store/brushLibrary';
 
 const rect = (left: number, top: number, extra: Record<string, unknown> = {}) =>
     new fabric.Rect({
@@ -62,6 +63,44 @@ describe('Paint tools slice: settings', () => {
         h.get().setSprayStyle({ size: 9999, flow: 0 });
         expect(h.get().sprayStyle).toMatchObject({ size: 400, flow: 0.05 });
         expect(DEFAULT_SPRAY_STYLE.size).toBe(60);
+    });
+
+    it('Spray modes: unknown modes are dropped; Copy swaps the tool, paint modes rebuild the brush', () => {
+        const { h, setActiveTool } = setup();
+        const updateBrush = vi.fn();
+        h.set({ activeTool: 'spray', updateBrush });
+        h.get().setSprayStyle({ mode: 'nope' as never });
+        expect(h.get().sprayStyle.mode).toBe('paint');
+
+        h.get().setSprayStyle({ mode: 'mist' }); // paint → paint: same tool, new brush
+        expect(setActiveTool).not.toHaveBeenCalled();
+        expect(updateBrush).toHaveBeenCalled();
+
+        h.get().setSprayStyle({ mode: 'copy' }); // the copy-spray tool takes over
+        expect(setActiveTool).toHaveBeenLastCalledWith('spray');
+        h.set({ activeTool: 'copySpray' });
+        h.get().setSprayStyle({ mode: 'splatter' }); // and hands back
+        expect(setActiveTool).toHaveBeenCalledTimes(2);
+
+        setActiveTool.mockClear();
+        h.set({ activeTool: 'select' });
+        h.get().setSprayStyle({ mode: 'copy' }); // not open: only remembered for next time
+        expect(setActiveTool).not.toHaveBeenCalled();
+    });
+
+    it('Spray modes tune the spray brush: Mist is denser, Splatter jitters drop size', () => {
+        const brushOf = (mode: SprayMode) =>
+            sprayState({
+                sprayStyle: { ...DEFAULT_SPRAY_STYLE, mode },
+                boardMode: 'whiteboard',
+                stampOverrides: {},
+            }).stampOverrides[SPRAY_TOOL_BRUSH] as { sprayRate: number; sizeJitter: number };
+        expect(brushOf('mist').sprayRate).toBeGreaterThan(brushOf('paint').sprayRate);
+        expect(brushOf('splatter').sprayRate).toBeLessThan(brushOf('paint').sprayRate);
+        expect(brushOf('splatter').sizeJitter).toBeGreaterThan(0);
+        expect(brushOf('paint').sizeJitter).toBe(0);
+        expect(sprayToolFor('copy')).toBe('copySpray');
+        expect(sprayToolFor('mist')).toBe('spray');
     });
 
     it('stores per-brush overrides (valid values only) and rebuilds the open brush', () => {

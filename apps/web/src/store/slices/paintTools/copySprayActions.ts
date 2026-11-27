@@ -1,5 +1,5 @@
 /**
- * Copy spray (Shift + S): the Paint tools slice's settings + action for it. Kept here so the slice stays
+ * Copy spray (the Spray tool's Copy mode, Shift + B): the Paint tools slice's settings + action for it. Kept here so the slice stays
  * small; the slice spreads `state` into itself and calls `attach` when the tool becomes active.
  * The source (snapshot of the selection) lives in this closure while the tool is active, never in the store.
  */
@@ -12,15 +12,19 @@ import {
 } from '@/lib/canvas/copySpray';
 import {
     attachCopySpray,
+    sourceLabel,
+    sourceObjectAt,
     sprayCopyObject,
     takeSpraySource,
     type SpraySource,
 } from './copySprayTool';
 
 export interface CopySprayActions {
-    /** Copy spray (Shift + S) settings: size, spacing, spread, jitter, align. Session only. */
+    /** Copy spray (Spray tool, Copy mode) settings: size, spacing, spread, jitter, align. Session only. */
     copySprayStyle: CopySprayStyle;
     setCopySprayStyle: (patch: Partial<CopySprayStyle>) => void;
+    /** What Copy mode sprays, for the bar ("Star", "3 objects"); null = nothing yet (click an object). */
+    copySpraySource: string | null;
     /**
      * Copy spray: copies of the selection made when the tool was chosen, one per dab, added as one group (one
      * undo step). Returns how many objects the copies hold (0 = nothing added).
@@ -45,6 +49,7 @@ export function createCopySpray(set: SetFn, get: () => unknown) {
 
     const state: CopySprayActions = {
         copySprayStyle: DEFAULT_COPY_SPRAY_STYLE,
+        copySpraySource: null,
         setCopySprayStyle: (patch) =>
             set(
                 { copySprayStyle: sanitizeCopySprayStyle(peers().copySprayStyle, patch) },
@@ -77,8 +82,9 @@ export function createCopySpray(set: SetFn, get: () => unknown) {
      * The tool is active: snapshot the selection and listen. `setActiveTool` switches the store before it
      * clears the selection, so the selection is still there now.
      */
-    const attach = (canvas: fabric.Canvas, screen: () => number): (() => void) => {
-        const mine = takeSpraySource(canvas);
+    /** Make `objects` the source (snapshot now: clones serialise synchronously). */
+    const use = (canvas: fabric.Canvas, objects?: fabric.FabricObject[]) => {
+        const mine = takeSpraySource(canvas, objects);
         pending = mine;
         ready = null;
         mine?.then(
@@ -87,27 +93,41 @@ export function createCopySpray(set: SetFn, get: () => unknown) {
             },
             (err) => {
                 console.error('[paintTools] copy spray source failed', err);
-                if (pending === mine) pending = null;
+                if (pending === mine) setSource(null);
             },
         );
+        const label = mine ? sourceLabel(objects ?? canvas.getActiveObjects()) : null;
+        set({ copySpraySource: label }, false, 'paint/copy-spray-source');
+        return mine;
+    };
+    const setSource = (to: null) => {
+        pending = to;
+        ready = to;
+        set({ copySpraySource: to }, false, 'paint/copy-spray-source');
+    };
+
+    /**
+     * The tool is active: the selection (if any) is the source, and a click on an object picks one (Alt + click
+     * swaps it). `setActiveTool` switches the store before it clears the selection, so it is still there now.
+     */
+    const attach = (canvas: fabric.Canvas, screen: () => number): (() => void) => {
+        use(canvas);
         const off = attachCopySpray(canvas, {
             style: () => peers().copySprayStyle,
             source: () => ready ?? (pending ? 'loading' : null),
             onSpray: (dabs) => peers().sprayCopies(dabs),
-            onNoSource: () =>
-                peers().showToast?.({
-                    message:
-                        'Select the objects to spray first, then choose Copy spray (Shift + S).',
-                }),
+            onPick: (p) => {
+                const hit = sourceObjectAt(canvas, p);
+                if (hit) use(canvas, [hit]);
+                else if (!pending)
+                    peers().showToast?.({ message: 'Click an object to spray copies of it.' });
+            },
             onEscape: () => peers().setActiveTool?.('select'),
             screen,
         });
         return () => {
             off();
-            if (pending === mine) {
-                pending = null; // drop the snapshot (its clones, images) with the tool
-                ready = null;
-            }
+            setSource(null); // drop the snapshot (its clones, images) with the tool
         };
     };
 

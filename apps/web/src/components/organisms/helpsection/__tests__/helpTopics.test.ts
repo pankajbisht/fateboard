@@ -130,3 +130,21 @@ describe('help topics', () => {
         expect(topic('laser')).toMatch(/`K`/);
     });
 });
+
+describe('Help keys follow the platform', () => {
+    it('no topic writes a modifier as a fixed word (`Shift`, `Alt`…): use `shift` / `alt` / `mod`', () => {
+        const fixed = HELP_TOPICS.filter((t) =>
+            /`(Shift|Alt|Ctrl|Cmd|Option)\b/.test(topicText(t)),
+        );
+        expect(fixed.map((t) => t.id)).toEqual([]);
+    });
+
+    // lowercase marks (`shift+B`, `alt`) are drawn as ⇧ / ⌥ on a Mac and Shift / Alt elsewhere (keyCaps)
+    it.each(['spray', 'copySpray'])('%s names Spray as `shift+B`', (id) => {
+        expect(topicText(HELP_TOPICS.find((t) => t.id === id)!)).toMatch(/`shift\+B`/);
+    });
+
+    it('copy spray tells how to pick another source with the platform Alt key', () => {
+        expect(topicText(HELP_TOPICS.find((t) => t.id === 'copySpray')!)).toMatch(/`alt`\+click/);
+    });
+});

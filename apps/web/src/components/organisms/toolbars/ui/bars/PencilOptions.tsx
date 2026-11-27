@@ -5,7 +5,7 @@ import { GlowDivider } from '@/components/atoms/GlowDivider';
 import { PaintTargetSwatch } from '@/components/molecules/PaintTargetSwatch';
 import { PENCIL_LIMITS } from '@/store/pencilStyle';
 import { SwitchField } from '@/components/molecules/LabeledToggle';
-import { Bar, Hint, Key } from './drawToolParts';
+import { Bar, Hint, Key, SHIFT } from './drawToolParts';
 
 /** Pencil (Shift + P) options: drawing color, size, opacity, smoothing, pressure, auto-close. */
 export function PencilOptions() {
@@ -76,7 +76,7 @@ export function PencilOptions() {
                 onChange={(autoClose) => setPencilStyle({ autoClose })}
             />
             <Hint>
-                <Key>Shift</Key> straight line ·{' '}
+                <Key>{SHIFT}</Key> straight line ·{' '}
                 {style.pressure
                     ? 'Auto-close works with Pressure off'
                     : 'end near the start to close a shape'}

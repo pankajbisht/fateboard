@@ -72,6 +72,12 @@ describe('copy spray: where the copies land', () => {
         expect(e.move({ x: 50, y: 0 }).map((d) => d.x)).toEqual([10, 20, 30, 40, 50]);
     });
 
+    it('the first copy lands on the clicked point, even with Spread; the default does not scatter', () => {
+        const e = createDabEmitter({ ...exact, spread: 5 }, 10, rnd(), 100);
+        expect(e.start({ x: 40, y: 70 })[0]).toMatchObject({ x: 40, y: 70 });
+        expect(DEFAULT_COPY_SPRAY_STYLE.spread).toBe(0);
+    });
+
     it('spread scatters copies within spread × copy size of the drag', () => {
         const e = createDabEmitter({ ...exact, spread: 2 }, 10, rnd(), 500);
         e.start({ x: 0, y: 0 });

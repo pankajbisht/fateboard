@@ -78,13 +78,6 @@ const editorsidebarconfig = [
         kind: 'action',
     },
     {
-        id: 'copySpray',
-        shortcut: shortcut('⇧S', 'Shift+S'),
-        label: 'Copy spray',
-        icon: 'copy-spray',
-        kind: 'action',
-    },
-    {
         id: 'drafter',
         shortcut: 'D',
         label: 'Drafter',

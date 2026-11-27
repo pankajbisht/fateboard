@@ -110,10 +110,10 @@ painting, watercolor, airbrush, texture, spray, fire, smoke, sparkle, nature, ca
 Spray (Shift + B), Paint bucket (G), Lasso (L), Drafter (D); symmetry modes (any axis, radial, point, kaleidoscope) and
 Reflect selection; layer blur (BUG-220); colour wheel; zoom to 6400 % with sharp deep zoom (BUG-221); icon audit
 (BUG-208). **2026-11-17:** Copy spray (Shift + S, Illustrator's Symbol Sprayer): spray copies of the selection along a
-drag, one group per drag. Limits vs native editors: docs/LIMITATIONS.md.
+drag, one group per drag. **2026-11-27:** one Spray tool with modes (Paint, Mist, Splatter, Copy); Copy spray
+is its Copy mode (Shift + S removed). Limits vs native editors: docs/LIMITATIONS.md.
 **Next:** paint mixing / smudge (needs a raster layer type), tilt and barrel rotation for brushes, saving brush
-settings (BUG-222), per-action undo for tools (BUG-223); Copy spray: symmetry while spraying, Alt-click a new source,
-shared photos in saved files (BUG-239).
+settings (BUG-222), per-action undo for tools (BUG-223); Copy spray: symmetry while spraying, shared photos in saved files (BUG-239).
 **Blocking bugs:** none open.
 
 ### F9. Manga kit _(owner request 2026-11-17, phase 2)_

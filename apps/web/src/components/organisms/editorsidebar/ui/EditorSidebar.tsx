@@ -107,7 +107,9 @@ export function EditorSidebar({
                         ? undefined
                         : (item) =>
                               item.kind === 'action'
-                                  ? item.id === activeTool
+                                  ? item.id === activeTool ||
+                                    // Copy is a mode of Spray (its own tool underneath)
+                                    (item.id === 'spray' && activeTool === 'copySpray')
                                   : (item.id === activeId && expanded) ||
                                     (!!item.activateTool &&
                                         item.activateTool === activeTool &&

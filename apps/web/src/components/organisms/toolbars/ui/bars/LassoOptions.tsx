@@ -1,6 +1,6 @@
 import { useStore } from '@store';
 import { GlowDivider } from '@/components/atoms/GlowDivider';
-import { Bar, BarSelect, Hint, Key } from './drawToolParts';
+import { Bar, BarSelect, Hint, Key, ALT, SHIFT } from './drawToolParts';
 
 /** Lasso (L) options: select or fill, touch or contain. */
 export function LassoOptions() {
@@ -32,7 +32,7 @@ export function LassoOptions() {
             <Hint>
                 {style.action === 'select' ? (
                     <>
-                        <Key>Shift</Key> add · <Key>Alt</Key> remove
+                        <Key>{SHIFT}</Key> add · <Key>{ALT}</Key> remove
                     </>
                 ) : (
                     'The loop becomes a shape in the drawing colour'

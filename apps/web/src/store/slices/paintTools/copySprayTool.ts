@@ -65,10 +65,12 @@ export function imageCount(objects: fabric.FabricObject[]): number {
  * Snapshot of the canvas selection, or null when nothing (but helpers) is selected. The objects' data is read
  * now (clone serialises synchronously): call it before the selection is cleared.
  */
-export function takeSpraySource(canvas: fabric.Canvas): Promise<SpraySource> | null {
+export function takeSpraySource(
+    canvas: fabric.Canvas,
+    objects: fabric.FabricObject[] = canvas.getActiveObjects(),
+): Promise<SpraySource> | null {
     const order = canvas.getObjects();
-    const picked = canvas
-        .getActiveObjects()
+    const picked = objects
         .filter((o) => !isHelperObject(o as fabric.FabricObject & Record<string, unknown>))
         .sort((a, b) => order.indexOf(a) - order.indexOf(b));
     if (!picked.length) return null;
@@ -102,6 +104,28 @@ export function takeSpraySource(canvas: fabric.Canvas): Promise<SpraySource> | n
             images: imageCount(objects),
         };
     });
+}
+
+/** The topmost object under a scene point that can be a spray source (not a helper, locked-out or hidden). */
+export function sourceObjectAt(canvas: fabric.Canvas, p: { x: number; y: number }) {
+    const at = new fabric.Point(p.x, p.y);
+    return [...canvas.getObjects()]
+        .reverse()
+        .find(
+            (o) =>
+                o.visible !== false &&
+                o.selectable !== false &&
+                !isHelperObject(o as fabric.FabricObject & Record<string, unknown>) &&
+                o.containsPoint(at),
+        );
+}
+
+/** What the bar calls a source: the object's name / type, or how many objects. */
+export function sourceLabel(objects: fabric.FabricObject[]): string {
+    if (objects.length !== 1) return `${objects.length} objects`;
+    const o = objects[0] as fabric.FabricObject & { name?: unknown };
+    const name = typeof o.name === 'string' && o.name.trim() ? o.name.trim() : o.type;
+    return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 /**
@@ -158,7 +182,8 @@ export type CopySprayDeps = {
     source: () => SpraySource | 'loading' | null;
     /** Adds the copies (async: clones load); the preview stays until it resolves. */
     onSpray: (dabs: SprayDab[]) => Promise<unknown>;
-    onNoSource: () => void;
+    /** Click with no source, or Alt + click: make what is under the pointer the source. */
+    onPick: (p: { x: number; y: number }) => void;
     onEscape: () => void;
     /** Screen px per scene unit (preview sharpness). */
     screen: () => number;
@@ -205,8 +230,8 @@ export function attachCopySpray(canvas: fabric.Canvas, deps: CopySprayDeps): () 
         const p = scenePointOf(opt);
         if (!isPrimary(opt) || !p) return;
         const s = deps.source();
+        if (!s || opt.e?.altKey) return deps.onPick(p);
         if (s === 'loading') return; // the snapshot's images are still loading: a moment
-        if (!s) return deps.onNoSource();
         const style = deps.style();
         src = s;
         stroke += 1;

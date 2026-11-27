@@ -4,7 +4,7 @@ import { Slider } from '@/components/atoms/Slider';
 import { GlowDivider } from '@/components/atoms/GlowDivider';
 import { PaintTargetSwatch } from '@/components/molecules/PaintTargetSwatch';
 import { getPreset } from '@/store/brushConfig';
-import { Bar, Hint, Key } from './drawToolParts';
+import { Bar, Hint, Key, SHIFT } from './drawToolParts';
 
 /** One labelled slider of the bar; `percent` shows 0-1 values as %. */
 function NibSlider({
@@ -109,7 +109,7 @@ export function NibOptions() {
             />
             <Hint>
                 Fast strokes get thinner with Thinning · Fixation 100% keeps the nib angle ·{' '}
-                <Key>Shift</Key> straight line
+                <Key>{SHIFT}</Key> straight line
             </Hint>
         </Bar>
     );

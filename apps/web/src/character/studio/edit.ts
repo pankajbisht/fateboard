@@ -93,6 +93,24 @@ export function bodyStyleEdit(c: Character, bodyStyle: BodyStyle): StudioEdit {
     return { body: { bodyStyle } };
 }
 
+/** The studio's Art style menu lists the classic body as one more entry ("Classic") beside the art styles. */
+export const CLASSIC_CHOICE = 'classic' as const;
+export type ArtStyleChoice = StyleId | typeof CLASSIC_CHOICE;
+
+/** What the Art style menu shows: "Classic" for the classic body, otherwise the art style. */
+export const artStyleChoiceOf = (c: Character): ArtStyleChoice =>
+    c.body.bodyStyle === 'classic' ? CLASSIC_CHOICE : c.style;
+
+/**
+ * The edit for an Art style menu pick: "Classic" switches to the classic body (keeping the art style); an art style
+ * restyles the character and, if the body was classic, switches it to manga.
+ */
+export function artStyleEdit(c: Character, choice: ArtStyleChoice): StudioEdit {
+    if (choice === CLASSIC_CHOICE) return bodyStyleEdit(c, 'classic');
+    if (c.body.bodyStyle === 'classic') return { ...bodyStyleEdit(c, 'manga'), style: choice };
+    return { style: choice };
+}
+
 /** The name to show on the page / in the library. */
 export const cleanName = (c: Character): Character => ({
     ...c,

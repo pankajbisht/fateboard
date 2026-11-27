@@ -8,6 +8,12 @@ import { Input } from '../../atoms/Input';
 import { Select } from '../../atoms/Select';
 import { AVAILABLE_STYLES, STYLE_PACKS } from '@/character/render/styles';
 import type { StyleId } from '@/character/schema/types';
+import {
+    CLASSIC_CHOICE,
+    artStyleChoiceOf,
+    artStyleEdit,
+    type ArtStyleChoice,
+} from '@/character/studio/edit';
 import type { StudioMode } from '@/store/slices/createSceneSlice';
 import { SegmentedControl } from '../../molecules/SegmentedControl';
 
@@ -26,6 +32,7 @@ export function StudioTopBar() {
                 (st.studioMode === 'scene'
                     ? st.studioScene?.actors[0]?.character.style
                     : st.studioCharacter?.style) ?? 'cartoon',
+            character: st.studioCharacter,
             canUndo: (st.studioMode === 'scene' ? st.scenePast : st.studioPast).length > 0,
             canRedo: (st.studioMode === 'scene' ? st.sceneFuture : st.studioFuture).length > 0,
             placed: st.studioMode === 'scene' ? st.sceneEditingPlaced : st.studioEditingPlaced,
@@ -98,16 +105,36 @@ export function StudioTopBar() {
                 disabled={!s.canRedo}
                 onClick={scene ? a.sceneRedo : a.redo}
             />
-            <Select<StyleId>
-                aria-label="Art style"
-                size="sm"
-                block={false}
-                value={s.style}
-                onChange={(style) =>
-                    scene ? a.editScene({ kind: 'style', style }) : a.edit({ style })
-                }
-                options={AVAILABLE_STYLES.map((id) => ({ value: id, label: STYLE_PACKS[id].name }))}
-            />
+            {scene ? (
+                <Select<StyleId>
+                    aria-label="Art style"
+                    size="sm"
+                    block={false}
+                    value={s.style}
+                    onChange={(style) => a.editScene({ kind: 'style', style })}
+                    options={AVAILABLE_STYLES.map((id) => ({
+                        value: id,
+                        label: STYLE_PACKS[id].name,
+                    }))}
+                />
+            ) : (
+                s.character && (
+                    <Select<ArtStyleChoice>
+                        aria-label="Art style"
+                        size="sm"
+                        block={false}
+                        value={artStyleChoiceOf(s.character)}
+                        onChange={(choice) => a.edit(artStyleEdit(s.character!, choice))}
+                        options={[
+                            ...AVAILABLE_STYLES.map((id) => ({
+                                value: id as ArtStyleChoice,
+                                label: STYLE_PACKS[id].name,
+                            })),
+                            { value: CLASSIC_CHOICE, label: 'Classic' },
+                        ]}
+                    />
+                )
+            )}
             {!scene && (
                 <>
                     <Button

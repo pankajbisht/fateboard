@@ -126,3 +126,10 @@ describe('help examples', () => {
         expect(allText).not.toMatch(claim);
     });
 });
+
+describe('Examples use platform key marks', () => {
+    it('no example writes a modifier as a fixed word (`Shift`, `Alt`…)', () => {
+        const fixed = all.filter((e) => /`(Shift|Alt|Ctrl|Cmd|Option)\b/.test(exampleText(e)));
+        expect(fixed.map((e) => e.id)).toEqual([]);
+    });
+});

@@ -1,5 +1,5 @@
 /**
- * Paint tools: Paint bucket (G), Spray (Shift + B), Copy spray (Shift + S, ./paintTools/copySpray*), Lasso (L),
+ * Paint tools: Paint bucket (G), Spray (Shift + B; its Copy mode is ./paintTools/copySpray*), Lasso (L),
  * Drafter (D), "Reflect selection" and the Brush
  * settings overrides of the stamp brushes. Settings live here; the tools listen on the canvas only while
  * active (attached / detached by the store subscription below, like the Pen and the Laser). The geometry is in
@@ -16,7 +16,12 @@ import { symmetryGuides, symmetryMatrices, type SymmetryMode } from '@/lib/canva
 import { resolveStamp, type StampParams } from '@/lib/brushes/stamp/stampParams';
 import type { Pt } from '@/lib/canvas/lasso';
 import type { Unit } from '@/lib/units';
-import { DEFAULT_SPRAY_STYLE, sanitizeSprayStyle, type SprayStyle } from '../sprayStyle';
+import {
+    DEFAULT_SPRAY_STYLE,
+    sanitizeSprayStyle,
+    sprayToolFor,
+    type SprayStyle,
+} from '../sprayStyle';
 import { symmetryClones } from '../brushes/symmetryCopies';
 import { bucketFill, isHelperObject, type BucketResult } from './paintTools/bucketFill';
 import { attachLasso, lassoTargets, selectObjects } from './paintTools/lassoTool';
@@ -241,12 +246,14 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
             ),
         sprayStyle: DEFAULT_SPRAY_STYLE,
         setSprayStyle: (patch) => {
+            const prevMode = get().sprayStyle.mode;
             set({ sprayStyle: sanitizeSprayStyle(get().sprayStyle, patch) }, false, 'paint/spray');
-            const s = get() as unknown as {
-                activeTool?: string;
-                updateBrush?: (p: object) => void;
-            };
-            if (s.activeTool === 'spray') s.updateBrush?.({}); // the open Spray draws with it now
+            const s = get() as unknown as Peers & { updateBrush?: (p: object) => void };
+            const open = s.activeTool === 'spray' || s.activeTool === 'copySpray';
+            // to or from Copy swaps the tool underneath (Copy snapshots the selection now)
+            if (open && sprayToolFor(s.sprayStyle.mode) !== sprayToolFor(prevMode))
+                s.setActiveTool?.('spray');
+            else if (s.activeTool === 'spray') s.updateBrush?.({}); // the open Spray draws with it now
         },
 
         stampOverrides: {},
