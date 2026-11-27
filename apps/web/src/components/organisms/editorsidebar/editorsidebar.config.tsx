@@ -1,9 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { DrawPanel } from '../DrawPanel';
 import { BrushPickerPanel } from '../brush/BrushPickerPanel';
 import { TextPanel } from '../TextPanel';
-import LayersTab from '../layer/LayersTab';
-import PagePanel from '../page/PagePanel';
 import { ShapePanel } from '../ShapePanel';
 import { shortcut } from '@/lib/utils/isMac';
 
@@ -13,6 +10,10 @@ const NotesPanel = lazy(() => import('../notes/NotesPanel'));
 const CharactersPanel = lazy(() => import('../character/CharactersPanel'));
 const SceneObjectsPanel = lazy(() => import('../props/SceneObjectsPanel'));
 
+/**
+ * Left rail. Pen, Pencil and Brush are one block (`group: 'draw'`, separators around it); the Laser is
+ * Pencil › Mode › Laser (K); Pages and Layers are right-dock tabs (owner, 2026-11-28).
+ */
 const editorsidebarconfig = [
     {
         id: 'select',
@@ -41,6 +42,7 @@ const editorsidebarconfig = [
         label: 'Pen',
         icon: 'pen-tool',
         kind: 'action',
+        group: 'draw',
     },
     {
         id: 'pencil',
@@ -48,13 +50,17 @@ const editorsidebarconfig = [
         label: 'Pencil',
         icon: 'pencil-line',
         kind: 'action',
+        group: 'draw',
     },
     {
-        id: 'laser',
-        shortcut: 'K',
-        label: 'Laser pointer',
-        icon: 'laser-pointer',
-        kind: 'action',
+        id: 'brush',
+        shortcut: 'B',
+        label: 'Brush',
+        icon: 'brush-tool',
+        kind: 'panel',
+        group: 'draw',
+        activateTool: 'draw',
+        panel: <BrushPickerPanel />,
     },
     {
         id: 'lasso',
@@ -85,23 +91,6 @@ const editorsidebarconfig = [
         kind: 'action',
     },
     {
-        id: 'brush',
-        shortcut: 'B',
-        label: 'Brush',
-        icon: 'brush-tool',
-        kind: 'panel',
-        activateTool: 'draw',
-        panel: <BrushPickerPanel />,
-    },
-    {
-        id: 'draw',
-        label: 'Draw',
-        icon: 'brush-settings',
-        kind: 'panel',
-        activateTool: 'draw',
-        panel: <DrawPanel />,
-    },
-    {
         id: 'shapes',
         label: 'Shapes',
         icon: 'shapes',
@@ -115,22 +104,6 @@ const editorsidebarconfig = [
         kind: 'panel',
         activateTool: 'text',
         panel: <TextPanel />,
-    },
-    {
-        id: 'Pages',
-        label: 'Pages',
-        icon: 'file-lines',
-        kind: 'panel',
-        fullSize: true,
-        panel: <PagePanel />,
-    },
-    {
-        id: 'layers',
-        label: 'Layers',
-        icon: 'layer-group',
-        kind: 'panel',
-        fullSize: true,
-        panel: <LayersTab />,
     },
     {
         id: 'notes',

@@ -109,11 +109,13 @@ export function EditorSidebar({
                               item.kind === 'action'
                                   ? item.id === activeTool ||
                                     // Copy is a mode of Spray (its own tool underneath)
-                                    (item.id === 'spray' && activeTool === 'copySpray')
+                                    (item.id === 'spray' && activeTool === 'copySpray') ||
+                                    // Laser is a mode of the Pencil (its own tool underneath)
+                                    (item.id === 'pencil' && activeTool === 'laser')
                                   : (item.id === activeId && expanded) ||
                                     (!!item.activateTool &&
                                         item.activateTool === activeTool &&
-                                        // Brush and Draw share the Draw tool: only the one in use lights up
+                                        // panels sharing a tool: only the one in use lights up
                                         (activePanel?.activateTool !== activeTool ||
                                             item.id === activeId))
                 }

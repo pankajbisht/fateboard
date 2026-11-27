@@ -22,7 +22,7 @@ export const usesAngle = (m: Symmetry) => m === 'angle' || m === 'kaleido';
 export const usesCount = (m: Symmetry) => m === 'radial' || m === 'kaleido';
 
 /**
- * Drawing symmetry (Draw panel, Symmetry tab): mirror left-right / top-bottom / 4-way, a mirror at any angle,
+ * Drawing symmetry (Brush panel, Symmetry tab): mirror left-right / top-bottom / 4-way, a mirror at any angle,
  * radial (N turns), point (a half turn) and kaleidoscope. Every finished stroke is copied around the centre;
  * the axes show on the board while a drawing tool is active.
  */

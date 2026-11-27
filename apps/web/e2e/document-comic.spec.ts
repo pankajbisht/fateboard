@@ -63,13 +63,14 @@ test('a master page is drawn under the pages that use it, with their page number
     editor,
     page,
 }) => {
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await page.getByRole('button', { name: /Page setup/ }).click();
     await page.getByRole('switch', { name: /This page is a master page/ }).click();
     await editor.addShape('Rectangle');
     await placeSelected(page, { left: 100, top: 100, w: 200, h: 120 }, '#ff0000');
-    await editor.openPanel('Pages');
-    await page.getByRole('button', { name: /Page setup/ }).click(); // the panel was closed: open again
+    await editor.openDockTab('Pages'); // the dock tab stays open while you draw: setup may still be open
+    const setup = page.getByRole('button', { name: /Page setup/ });
+    if ((await setup.getAttribute('aria-expanded')) !== 'true') await setup.click();
     await page.getByRole('button', { name: 'Insert page number' }).click();
 
     await page.getByRole('button', { name: 'Add page' }).click();

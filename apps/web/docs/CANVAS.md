@@ -57,6 +57,7 @@ Registered by `createCanvasSlice.registerCanvasEvents`:
 | `mouse:dblclick`                                                 | `handleDBLClick`        | `editShapeText` for text shapes                                                                                                  |
 | `object:modified`                                                | `handleObjectChange`    | `updateMaster` (linked clones) + `persist()`                                                                                     |
 | `object:added`, `object:removed`, `path:created`, `text:changed` | `handlePersistEvent`    | `persist()` unless helper (`excludeFromExport`) or node handle                                                                   |
+| `object:scaling`, `before:render`                                | `handleSizeEvents` (`lib/canvas/handleSize`) | scaling floor of `MIN_OBJECT_CSS` screen px per axis (24 mouse / 40 touch; a thinner axis can't shrink further), anchor kept, no flip past the anchor (`lockScalingFlip` default via `applyFabricChrome`, not serialized), then `handleTransformSync`; active object's corners sized in CSS px (`CORNER_CSS` 8 / 12, touch hit 44 stays invisible) via `canvasPxPerCss`, since the design page is CSS-scaled and Fabric sizes corners in canvas px |
 
 Other listeners (by owner): Pan (`mouse:wheel/down/move/up`, only while `activeTool==='pan'`); Shape
 (`object:added` rehydrate, `object:scaling`, `object:modified`, `selection:cleared/updated` bake text shapes +

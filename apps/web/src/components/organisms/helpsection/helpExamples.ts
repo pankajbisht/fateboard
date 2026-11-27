@@ -1153,11 +1153,11 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
             steps: [
                 s('Set a dark Page background in Pages', 'Pages › Page background'),
                 s(
-                    'Open Draw, pick the Neon brush and raise Smoothing so your handwriting comes out clean',
-                    'Draw › Neon · Smoothing',
+                    'Open Brush, pick the Neon brush and raise Smoothing so your handwriting comes out clean',
+                    'Brush › Neon · Smoothing',
                     [270, 150],
                 ),
-                s('Turn on Use brush color in Shadow and glow', 'Draw › Shadow and glow'),
+                s('Turn on Use brush color in Shadow and glow', 'Brush › Shadow and glow'),
                 s('Write "open late" in one go', 'Drag on the board', [250, 96]),
                 s('Pick another color and draw a heart next to it', 'Palette', [265, 70]),
             ],
@@ -1209,8 +1209,8 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
             icon: 'pencil',
             steps: [
                 s(
-                    'Open Draw, pick a pen and set Mirror drawing to 4-way',
-                    'Draw › Mirror drawing › 4-way',
+                    'Open Brush, pick a pen and set Mirror drawing to 4-way',
+                    'Brush › Mirror drawing › 4-way',
                 ),
                 s(
                     'Start near the middle of the page and draw petals outward',
@@ -1219,10 +1219,10 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
                 ),
                 s(
                     'Turn on Fill the drawn shape and draw closed loops for solid petals',
-                    'Draw › Fill the drawn shape',
+                    'Brush › Fill the drawn shape',
                     [160, 40],
                 ),
-                s('Switch to the Chalk brush for a softer outer ring', 'Draw › Chalk', [230, 90]),
+                s('Switch to the Chalk brush for a softer outer ring', 'Brush › Chalk', [230, 90]),
             ],
             result: 'A balanced mandala that would take ages to draw by hand.',
             scene: [

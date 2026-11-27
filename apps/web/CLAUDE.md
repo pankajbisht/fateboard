@@ -19,7 +19,7 @@ holds `apps/`, `packages/`, `.github/` (one separate CI/CD pipeline per app; the
 | Build | `npm run build` | `prebuild` runs type-check, then `tsc -b && vite build`. Needs `VITE_SITE_URL` in `.env` (see `.env.example`); fails without it |
 | Build (no type-check) | `npm run build:no-check` | `vite build` only; CI uses `npm run build` |
 | Preview | `npm run preview` | serves `dist/` on 0.0.0.0 |
-| Lint | `npm run lint` | ESLint flat config; `--max-warnings 245` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
+| Lint | `npm run lint` | ESLint flat config; `--max-warnings 243` ratchet (only `any` warnings left, Q10): never raise it, lower it when you remove `any`s |
 | Format | `npm run format` / `npm run format:check` | Prettier, `src/**` |
 | Typecheck | `npm run type-check` | app + strict island (`tsconfig.strict.json`) + node + e2e configs, must be 0 errors |
 | All checks | `npm run check` | lint + type-check + format:check |

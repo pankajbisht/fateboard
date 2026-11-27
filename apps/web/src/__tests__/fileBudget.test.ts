@@ -57,7 +57,6 @@ const LEGACY_CEILINGS: Record<string, number> = {
     '/src/components/organisms/board/ui/CanvasBoard.tsx': 625, // was 645: fit maths moved to lib/canvas/pageFit.ts (2026-11-17); 634 → 625: float anchor maths → deepZoom sceneToClient (notes)
     '/src/components/pages/web/WhiteboardMarketingSite.tsx': 558, // -2: gallery nav map (2026-11-12)
     '/src/components/organisms/effects/ui/RepeatAlongPath.tsx': 572,
-    '/src/components/organisms/DrawPanel.tsx': 526, // was 549: symmetry moved to SymmetryControls (2026-11-16)
     '/src/store/slices/createPagesSlice.ts': 540, // was 549: makeThumbnail → store/pageThumbnail.ts (P11, 2026-11-27)
     '/src/components/organisms/ShapePanel.tsx': 534,
     '/src/components/organisms/FillShadowPanel.tsx': 437, // was 458: opacity moved to LayerEffectsSection (2026-11-16)

@@ -13,7 +13,7 @@ test('a keyframe survives a reload and stays on its page', async ({ editor, page
     await expect.poll(() => trackCount(page)).toBe(1);
 
     // a new page has its own (empty) timeline
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await page.getByRole('button', { name: 'Add page' }).click();
     await expect.poll(() => trackCount(page)).toBe(0);
     await page.getByRole('button', { name: /Previous page/ }).click();

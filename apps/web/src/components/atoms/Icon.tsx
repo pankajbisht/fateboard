@@ -407,7 +407,7 @@ export const ICONS = {
     tiling: TilingIcon, // Tiling tab (was the Settings gear, BUG-208)
     'along-path': AlongPathIcon, // Along Path tab (was the Settings gear, BUG-208)
     templates: LayoutTemplate, // Templates tab (was a plain grid, same as the grid toggle)
-    'brush-settings': BrushSettingsIcon, // Draw panel (was a pencil, same as the Pencil tool)
+    'brush-settings': BrushSettingsIcon, // brush settings (Help 'Draw' topic; was the Draw panel's rail icon)
     'brush-tool': BrushToolIcon, // Brush tool + rail (2026-11-16 (2))
     'canvas-grid': CanvasGridIcon, // header grid options (2026-11-16 (2))
     'fill-on': FillOnIcon, // footer fill / stroke toggles (2026-11-16 (2))

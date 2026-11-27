@@ -13,9 +13,10 @@ afterEach(() => {
 });
 
 describe('Brush (left rail)', () => {
-    it('is its own rail item next to Draw, with the B shortcut', () => {
+    it('is the one rail item for brushes (no separate Draw panel), with the B shortcut', () => {
         const ids = (editorsidebarconfig as any[]).map((i) => i.id);
-        expect(ids).toEqual(expect.arrayContaining(['brush', 'draw']));
+        expect(ids).toContain('brush');
+        expect(ids).not.toContain('draw');
         const brush = (editorsidebarconfig as any[]).find((i) => i.id === 'brush');
         expect(brush).toMatchObject({ label: 'Brush', shortcut: 'B', activateTool: 'draw' });
     });
@@ -77,10 +78,36 @@ describe('Brush (left rail)', () => {
         expect(useStore.getState().stampOverrides['fire-flame']).toBeUndefined();
     });
 
-    it('classic brushes keep their settings in the Draw panel (no engine settings here)', () => {
+    it('classic brushes show every Draw setting here: size, opacity, blend, color, stroke, fill, shadow, aids', () => {
         act(() => useStore.setState({ brush: 'marker', activeTool: 'draw' } as any));
         render(<BrushPickerPanel />);
-        expect(screen.queryByText(/settings$/)).toBeNull();
+        expect(screen.queryByText('Fire settings')).toBeNull();
+        for (const title of [
+            'Size and opacity',
+            'Color',
+            'Stroke',
+            'Fill',
+            'Shadow and glow',
+            'Drawing aids',
+        ])
+            expect(screen.getByText(title)).toBeTruthy();
+        expect(screen.getByRole('button', { name: /Reset brush/ })).toBeTruthy();
+        fireEvent.change(screen.getByRole('slider', { name: 'Size' }), { target: { value: '30' } });
+        expect(useStore.getState().width).toBe(30);
+    });
+
+    it('the eraser shows its size and eraser type, not color or shadow', () => {
+        act(() => useStore.setState({ brush: 'eraser', activeTool: 'draw' } as any));
+        render(<BrushPickerPanel />);
+        expect(screen.getByText('Eraser type')).toBeTruthy();
+        expect(screen.queryByText('Shadow and glow')).toBeNull();
+    });
+
+    it('[ and ] change the brush size while the Brush panel is open', () => {
+        act(() => useStore.setState({ brush: 'marker', width: 10, activeTool: 'draw' } as any));
+        render(<BrushPickerPanel />);
+        fireEvent.keyDown(window, { key: ']' });
+        expect(useStore.getState().width).toBe(12);
     });
 
     it('the top bar shows the Calligraphy options while painting with it', () => {

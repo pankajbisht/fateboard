@@ -15,6 +15,7 @@ const setPenStyle = vi.fn();
 const setPenMode = vi.fn();
 const setPencilStyle = vi.fn();
 const updateBrush = vi.fn();
+const setActiveTool = vi.fn();
 
 const commitNumber = (name: string, value: string) => {
     const field = screen.getByRole('spinbutton', { name });
@@ -36,6 +37,7 @@ describe('ToolContextBar', () => {
             setPenStyle,
             setPencilStyle,
             updateBrush,
+            setActiveTool,
         } as never);
     });
     afterEach(() => {
@@ -178,5 +180,42 @@ describe('ToolContextBar', () => {
         rerender(<ToolContextBar />);
         expect(screen.getByRole('switch', { name: 'Auto-close' })).toBeDisabled();
         expect(screen.getByText(/Auto-close works with Pressure off/)).toBeInTheDocument();
+    });
+
+    it('Pencil › Mode: picking a mode stores it; Laser switches to the laser tool', () => {
+        useStore.setState({ activeTool: 'pencil' } as never);
+        render(<ToolContextBar />);
+        const bar = screen.getByRole('toolbar', { name: 'Pencil options' });
+        fireEvent.click(within(bar).getByRole('combobox', { name: 'Pencil mode' }));
+        fireEvent.click(screen.getByRole('option', { name: /Highlighter/ }));
+        expect(setPencilStyle).toHaveBeenLastCalledWith({ mode: 'highlighter' });
+        expect(setActiveTool).not.toHaveBeenCalled();
+
+        fireEvent.click(within(bar).getByRole('combobox', { name: 'Pencil mode' }));
+        fireEvent.click(screen.getByRole('option', { name: /Laser/ }));
+        expect(setActiveTool).toHaveBeenLastCalledWith('laser');
+    });
+
+    it('Laser shows the Pencil bar with Mode = Laser; picking a pencil mode goes back to the Pencil', () => {
+        useStore.setState({ activeTool: 'laser' } as never);
+        render(<ToolContextBar />);
+        const bar = screen.getByRole('toolbar', { name: 'Pencil options' });
+        const mode = within(bar).getByRole('combobox', { name: 'Pencil mode' });
+        expect(mode).toHaveTextContent('Laser');
+        expect(within(bar).queryByRole('spinbutton', { name: 'Pencil size' })).toBeNull();
+        fireEvent.click(mode);
+        fireEvent.click(screen.getByRole('option', { name: /Dashed/ }));
+        expect(setPencilStyle).toHaveBeenLastCalledWith({ mode: 'dashed' });
+        expect(setActiveTool).toHaveBeenLastCalledWith('pencil');
+    });
+
+    it('Pressure and Auto-close only show for the plain Pencil', () => {
+        useStore.setState({
+            activeTool: 'pencil',
+            pencilStyle: { ...DEFAULT_PENCIL_STYLE, mode: 'eraser' },
+        } as never);
+        render(<ToolContextBar />);
+        expect(screen.queryByRole('switch', { name: 'Pressure' })).toBeNull();
+        expect(screen.queryByRole('switch', { name: 'Auto-close' })).toBeNull();
     });
 });

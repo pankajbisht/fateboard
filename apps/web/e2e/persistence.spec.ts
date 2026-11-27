@@ -13,7 +13,7 @@ test('the board is autosaved: objects survive a reload', async ({ editor, page }
 
 test('all pages and the open page survive a reload (BUG-004)', async ({ editor, page }) => {
     await editor.addShape('Rectangle');
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await page.getByRole('button', { name: 'Add page' }).click();
     await editor.addShape('Circle');
     await page.waitForTimeout(1500); // autosave debounce
@@ -24,7 +24,7 @@ test('all pages and the open page survive a reload (BUG-004)', async ({ editor, 
         .toBe(2);
     // the page that was open (Page 2, the circle) is shown again
     await expect.poll(async () => (await editor.objects()).map((o) => o.type)).toEqual(['circle']);
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await page.getByRole('button', { name: /Previous page/ }).click();
     await expect.poll(async () => (await editor.objects()).map((o) => o.type)).toEqual(['rect']);
 });
@@ -100,7 +100,7 @@ test('changes with no object event are autosaved too: opacity, page setup (BUG-2
     await page.evaluate(() =>
         (window.__fateboard!.state('setOpacity') as (o: number) => void)(0.3),
     );
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await page.getByRole('button', { name: /Page setup/ }).click();
     const bleed = page.getByRole('spinbutton', { name: 'Bleed' });
     await bleed.fill('20');

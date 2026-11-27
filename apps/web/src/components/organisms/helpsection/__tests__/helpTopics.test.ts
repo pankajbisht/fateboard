@@ -38,17 +38,16 @@ describe('help topics', () => {
     it('reads the panel and tab lists from the editor configs', () => {
         expect(panelIds).toEqual([
             'brush',
-            'draw',
             'shapes',
             'text',
-            'Pages',
-            'layers',
             'notes',
             'characters',
             'sceneObjects',
             'comic',
         ]);
         expect(tabIds).toEqual([
+            'pages',
+            'layers',
             'appearance',
             'templates',
             'fonttemplates',

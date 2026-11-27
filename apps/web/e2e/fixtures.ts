@@ -106,10 +106,14 @@ export class Editor {
     /** Right dock: open a tab (Fill & Shadow, Export, …). */
     async openDockTab(label: string) {
         await this.showPhoneTray();
-        await this.page
+        const tab = this.page
             .getByRole('toolbar', { name: 'Dock panels' })
-            .getByRole('button', { name: label, exact: true })
-            .click();
+            .getByRole('button', { name: label, exact: true });
+        // the dock toggles: clicking the open tab would close it (Pages / Layers moved here 2026-11-28)
+        if ((await tab.getAttribute('aria-pressed')) !== 'true') {
+            await tab.click();
+            await this.settledCanvasBox();
+        }
     }
 
     /** The animation timeline under the board (footer button); resolves once its panel has loaded. */

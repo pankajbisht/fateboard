@@ -5,7 +5,7 @@ test.describe('Save / Open (top bar, whole project)', () => {
     test('Save downloads all pages; Open restores them', async ({ editor, page }) => {
         // two pages: a rectangle on page 1, a circle on page 2
         await editor.addShape('Rectangle');
-        await editor.openPanel('Pages');
+        await editor.openDockTab('Pages');
         await page.getByRole('button', { name: 'Add page' }).click();
         await editor.addShape('Circle');
 

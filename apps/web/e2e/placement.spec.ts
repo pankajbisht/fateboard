@@ -10,7 +10,7 @@ test('zoom only in the footer', async ({ editor, page }) => {
 });
 
 test('Pages panel: no size, zoom, export or save / open copies', async ({ editor, page }) => {
-    await editor.openPanel('Pages');
+    await editor.openDockTab('Pages');
     await expect(page.getByRole('button', { name: 'Clear page' })).toBeVisible();
     for (const name of [
         'Export PNG',

@@ -9,11 +9,15 @@ import { PanelLayout } from '../templates/PanelLayout';
 /** Section headings of the phone "More" sheet (hidden on wider screens). */
 const PHONE_HEADING = 'hidden px-4 pt-2 text-xs font-medium text-ink-muted max-sm:block';
 
+const LEGACY_PANEL_TABS: Record<string, string> = { Pages: 'pages', layers: 'layers' };
+
 export const DockRoot = () => {
     const [tabs, setTabs] = useState<TabConfig[]>([...TABS_CONFIG]);
     // a link from Help can name the tab to open (/draw?tab=export): read once, when the dock mounts
     const [linkedTab] = useState(() => {
-        const id = new URLSearchParams(window.location.search).get('tab');
+        const params = new URLSearchParams(window.location.search);
+        // Pages and Layers were left-rail panels until 2026-11-28: old ?panel= links open the tab
+        const id = params.get('tab') ?? LEGACY_PANEL_TABS[params.get('panel') ?? ''];
         return TABS_CONFIG.find((t) => t.id === id)?.id;
     });
     const [active, setActive] = useState<string>(linkedTab ?? 'effects');

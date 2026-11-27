@@ -10,8 +10,27 @@ import FontTemplatePanel from '../organisms/fonts';
 import { AutomataPanel } from '../organisms/generators/AutomataPanel';
 import { FractalPanel } from '../organisms/generators/FractalPanel';
 import { MacroPanel } from '../organisms/generators/MacroPanel';
+import LayersTab from '../organisms/layer/LayersTab';
+import PagePanel from '../organisms/page/PagePanel';
 
 export const TABS_CONFIG = [
+    // Pages and Layers moved here from the left rail (owner, 2026-11-28)
+    {
+        id: 'pages',
+        label: 'Pages',
+        icon: 'file-lines',
+        closable: false,
+        fullSize: true,
+        content: () => <PagePanel />,
+    },
+    {
+        id: 'layers',
+        label: 'Layers',
+        icon: 'layer-group',
+        closable: false,
+        fullSize: true,
+        content: () => <LayersTab />,
+    },
     {
         id: 'appearance',
         label: 'Fill & Shadow',

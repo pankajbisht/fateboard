@@ -59,11 +59,11 @@ test('the node demo moves a handle by keyboard', async ({ page }) => {
     expect(await handle.getAttribute('cx')).not.toBe(before);
 });
 
-test('Open Layers lands in the editor with that panel open', async ({ page }) => {
+test('Open Layers lands in the editor with that dock tab open', async ({ page }) => {
     await page.goto('/help?topic=layers');
     await page.getByRole('link', { name: 'Open Layers' }).click();
 
-    await expect(page).toHaveURL(/\/draw\?panel=layers/);
+    await expect(page).toHaveURL(/\/draw\?tab=layers/);
     await expect(page.locator('canvas.upper-canvas')).toBeVisible();
     await expect(page.getByRole('listbox', { name: 'Layers' })).toBeVisible();
 });
@@ -92,11 +92,26 @@ editorTest(
     },
 );
 
-editorTest('the Draw link arrives ready to draw', async ({ editor, page }) => {
-    await page.goto('/draw?panel=draw');
-    await page.waitForFunction(() => !!window.__fateboard?.ready());
-    await expect.poll(() => editor.state('activeTool')).toBe('draw');
-});
+for (const panel of ['Pages', 'layers']) {
+    editorTest(`the old ?panel=${panel} link opens the dock tab`, async ({ editor, page }) => {
+        await page.goto(`/draw?panel=${panel}`);
+        await page.waitForFunction(() => !!window.__fateboard?.ready());
+        const tab = page
+            .getByRole('toolbar', { name: 'Dock panels' })
+            .getByRole('button', { name: panel === 'Pages' ? 'Pages' : 'Layers', exact: true });
+        await expect(tab).toHaveAttribute('aria-pressed', 'true');
+        expect(editor).toBeTruthy();
+    });
+}
+
+for (const panel of ['brush', 'draw']) {
+    editorTest(`the ?panel=${panel} link opens Brush ready to draw`, async ({ editor, page }) => {
+        await page.goto(`/draw?panel=${panel}`);
+        await page.waitForFunction(() => !!window.__fateboard?.ready());
+        await expect.poll(() => editor.state('activeTool')).toBe('draw');
+        await expect(page.getByText('Size and opacity')).toBeVisible();
+    });
+}
 
 test('search opens a real-world example, and Play builds its picture step by step', async ({
     page,
@@ -125,5 +140,5 @@ test('search opens a real-world example, and Play builds its picture step by ste
     await mandala.getByRole('group', { name: /^Steps:/ }).press('End');
     await expect(status).toHaveText('Result');
     await expect(mandala.getByRole('img', { name: 'The finished board' })).toBeVisible();
-    await expect(mandala.getByRole('link', { name: /try it: open draw/i })).toBeVisible();
+    await expect(mandala.getByRole('link', { name: /try it: open brush/i })).toBeVisible();
 });

@@ -302,7 +302,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         group: 'Tools',
         title: 'Pencil',
         icon: 'pencil-line',
-        summary: 'Sketch freehand lines quickly, without opening the Draw panel.',
+        summary: 'Sketch freehand lines quickly, without opening the Brush panel.',
         keywords: 'pencil freehand sketch line draw scribble pressure stylus straight close',
         sections: [
             {
@@ -323,11 +323,23 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Size, Opacity and Smoothing (higher = steadier line)',
                     'Pressure: a stylus (Apple Pencil, Wacom) makes the line thinner or thicker; a mouse keeps one width',
                     'Auto-close: turn it off to keep loops open',
-                    "These settings are the Pencil's own; brushes and effects stay in Draw",
+                    "These settings are the Pencil's own; brushes and effects stay in Brush",
+                ],
+            },
+            {
+                title: 'Modes',
+                text: 'Mode is the first menu in the Pencil bar.',
+                items: [
+                    'Pencil: a plain line (Pressure and Auto-close apply here)',
+                    'Highlighter: a wide, see-through marker that keeps what is under it readable',
+                    'Dashed: a dashed freehand line',
+                    'Smart shape: draw a rough line, circle, oval, box or triangle and it snaps to a clean shape you can still edit with the Node tool',
+                    'Eraser: removes every hand-drawn stroke it touches',
+                    'Laser: a red trail that fades, for presenting (also `K`); nothing is added to the board',
                 ],
             },
         ],
-        related: ['draw', 'pen', 'node'],
+        related: ['draw', 'pen', 'node', 'laser'],
     },
     {
         id: 'laser',
@@ -341,7 +353,8 @@ export const HELP_TOPICS: HelpTopic[] = [
             {
                 title: 'Point',
                 items: [
-                    'Pick the Laser pointer in the left rail (shortcut `K`)',
+                    'Press `K`, or pick Pencil in the left rail and set Mode › Laser',
+                    'Pick another Mode (Pencil, Highlighter, …) to draw again',
                     'Drag on the board: a red trail follows and fades away after a second',
                     'The trail is never saved, never exported and never added to undo',
                     'Press `Escape` or `V` to go back to Select',
@@ -545,13 +558,13 @@ export const HELP_TOPICS: HelpTopic[] = [
         icon: 'brush-settings',
         summary: 'Freehand brushes, from a clean pen to chalk, neon and spray.',
         keywords: 'pencil brush pen marker sketch freehand eraser highlighter mirror symmetry',
-        open: { panel: 'draw', label: 'Open Draw' },
+        open: { panel: 'brush', label: 'Open Brush' },
         demo: 'brushes',
         sections: [
             {
                 title: 'Draw',
                 items: [
-                    'Pick Draw in the left rail, choose a brush and drag on the board',
+                    'Pick Brush in the left rail (`B`), choose a brush and drag on the board. Its settings are under the brush list',
                     '`[` and `]` change the brush size',
                     'Hold `shift` while drawing for a straight line',
                     'Press `V` to go back to Select. Strokes are normal objects you can move, resize and reshape',
@@ -714,7 +727,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         summary: 'Many pages in one project, each with its own background and history.',
         keywords:
             'slides multi page thumbnail duplicate background margin bleed slug crop marks trim page edge column facing spread master page number fit width',
-        open: { panel: 'Pages', label: 'Open Pages' },
+        open: { tab: 'pages', label: 'Open Pages' },
         sections: [
             {
                 title: 'Page setup (bottom of the panel)',
@@ -952,7 +965,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         summary: 'See everything on the page, in stacking order, and control each piece.',
         keywords:
             'z-order stack visibility hide rename blend mode opacity tree page layers folder clip clipping reference merge flatten',
-        open: { panel: 'layers', label: 'Open Layers' },
+        open: { tab: 'layers', label: 'Open Layers' },
         sections: [
             {
                 title: 'Page layers (top of the panel)',

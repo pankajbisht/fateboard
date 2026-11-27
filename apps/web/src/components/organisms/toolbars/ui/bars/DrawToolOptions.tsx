@@ -20,7 +20,7 @@ export function ToolContextBar() {
     const tool = useStore((s) => s.activeTool);
     const brush = useStore((s) => s.brush);
     if (tool === 'pen') return <PenOptions />;
-    if (tool === 'pencil') return <PencilOptions />;
+    if (tool === 'pencil' || tool === 'laser') return <PencilOptions />; // Laser = Pencil › Mode › Laser
     if (tool === 'bucket') return <BucketOptions />;
     if (tool === 'spray') return <SprayOptions />;
     if (tool === 'copySpray') return <CopySprayOptions />;

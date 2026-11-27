@@ -3,8 +3,8 @@ import * as fabric from 'fabric';
 import { fateboardCanvasConfig } from '@/components/config/fateboard.config';
 import { canvasPxPerCss } from '@/lib/canvas/deepZoom';
 import { evictImageTextures } from '@/lib/canvas/imageTextures';
+import { handleSizeEvents } from '@/lib/canvas/handleSize';
 import { MultiStopGradientTool } from '@/lib/utils/GradientTool';
-// import { enterTextEdit } from '@/lib/utils/enterTextEdit';
 import { DEFAULT_CANVAS_PRESET } from '@/components/organisms/board/board.config';
 import type { CanvasPreset } from '@/components/organisms/board/board.type';
 import { CUSTOM_PROPS, serializeCanvas } from '@/lib/serialization';
@@ -1013,7 +1013,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 'object:modified': get().handleObjectChange,
                 // live transform panel while dragging handles
                 'object:moving': get().handleTransformSync,
-                'object:scaling': get().handleTransformSync,
+                ...handleSizeEvents(canvas, get().handleTransformSync), // min size + handle size
                 'object:rotating': get().handleTransformSync,
                 'object:skewing': get().handleTransformSync,
                 'object:resizing': get().handleTransformSync,

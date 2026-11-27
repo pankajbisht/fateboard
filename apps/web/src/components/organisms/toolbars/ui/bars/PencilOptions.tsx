@@ -6,19 +6,45 @@ import { PaintTargetSwatch } from '@/components/molecules/PaintTargetSwatch';
 import { PENCIL_LIMITS } from '@/store/pencilStyle';
 import { SwitchField } from '@/components/molecules/LabeledToggle';
 import { Bar, Hint, Key, SHIFT } from './drawToolParts';
+import { PencilModeSelect } from './PencilModeSelect';
 
-/** Pencil (Shift + P) options: drawing color, size, opacity, smoothing, pressure, auto-close. */
+/** One-line hint per mode. */
+const MODE_HINT: Record<string, string> = {
+    highlighter: 'a wide see-through marker that keeps what is under it readable',
+    dashed: 'draws a dashed line',
+    shape: 'draw a rough line, circle, box or triangle: it snaps to a clean shape',
+    eraser: 'removes every hand-drawn stroke it touches',
+};
+
+/**
+ * Pencil (Shift + P) options: mode, drawing color, size, opacity, smoothing; pressure and auto-close for
+ * the plain Pencil. With the laser on (Mode › Laser, or K) only the mode and a hint show.
+ */
 export function PencilOptions() {
+    const tool = useStore((s) => s.activeTool);
     const style = useStore((s) => s.pencilStyle);
     const setPencilStyle = useStore((s) => s.setPencilStyle);
     const color = useStore((s) => s.color);
     const updateBrush = useStore((s) => s.updateBrush);
     const { width, opacity, smoothing } = PENCIL_LIMITS;
     const percent = Math.round(style.opacity * 100);
+    const plain = style.mode === 'pencil';
+
+    if (tool === 'laser')
+        return (
+            <Bar label="Pencil" icon="pencil-line">
+                <GlowDivider />
+                <PencilModeSelect />
+                <Hint>
+                    <Key>K</Key> laser: drag to point, the red trail fades and adds nothing
+                </Hint>
+            </Bar>
+        );
 
     return (
         <Bar label="Pencil" icon="pencil-line">
             <GlowDivider />
+            <PencilModeSelect />
             <PaintTargetSwatch
                 id="pencil-color"
                 label="Drawing color"
@@ -61,25 +87,35 @@ export function PencilOptions() {
                     className="w-20"
                 />
             </span>
-            <GlowDivider />
-            <SwitchField
-                label="Pressure"
-                className="[&>div]:min-h-0"
-                checked={style.pressure}
-                onChange={(pressure) => setPencilStyle({ pressure })}
-            />
-            <SwitchField
-                label="Auto-close"
-                disabled={style.pressure}
-                className="[&>div]:min-h-0"
-                checked={style.autoClose}
-                onChange={(autoClose) => setPencilStyle({ autoClose })}
-            />
+            {plain && (
+                <>
+                    <GlowDivider />
+                    <SwitchField
+                        label="Pressure"
+                        className="[&>div]:min-h-0"
+                        checked={style.pressure}
+                        onChange={(pressure) => setPencilStyle({ pressure })}
+                    />
+                    <SwitchField
+                        label="Auto-close"
+                        disabled={style.pressure}
+                        className="[&>div]:min-h-0"
+                        checked={style.autoClose}
+                        onChange={(autoClose) => setPencilStyle({ autoClose })}
+                    />
+                </>
+            )}
             <Hint>
-                <Key>{SHIFT}</Key> straight line ·{' '}
-                {style.pressure
-                    ? 'Auto-close works with Pressure off'
-                    : 'end near the start to close a shape'}
+                {plain ? (
+                    <>
+                        <Key>{SHIFT}</Key> straight line ·{' '}
+                        {style.pressure
+                            ? 'Auto-close works with Pressure off'
+                            : 'end near the start to close a shape'}
+                    </>
+                ) : (
+                    MODE_HINT[style.mode]
+                )}
             </Hint>
         </Bar>
     );

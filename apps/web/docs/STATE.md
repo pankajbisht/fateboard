@@ -481,7 +481,7 @@ Promise<void>`, `resolveDialog(result)` (used by `DialogHost`), `showToast({ mes
 before Animation. The Pen lives in `drawingTools/penTool.ts` (+ `penStyle.ts`, `penContinue.ts`, `shared.ts`).
 **State:** `penPointCount` (points of the Pen path being drawn), `laserStrokeCount` (laser strokes still fading),
 `penMode` (`'pen' | 'curvature' | 'freeform'`), `penStyle` (`stroke, strokeWidth, fill, fillEnabled, lineCap,
-lineJoin, dash, arrow, shape, shapeWidth`), `pencilStyle` (`width, opacity, smoothing, pressure, autoClose`; read by the
+lineJoin, dash, arrow, shape, shapeWidth`), `pencilStyle` (`mode` (pencil / highlighter / dashed / shape / eraser; Laser is the `laser` tool, not a mode value), `width, opacity, smoothing, pressure, autoClose`; read by the
 Brush slice), `nibStyle` (`thinning, angle, fixation, caps`: the Calligraphy pen brush, read by the Brush slice).
 **Pen shape (2026-11-13, Inkscape Pen "Shape"):** with `penStyle.shape` = `triangle-in | triangle-out | ellipse` a NEW
 open path is built as one closed filled outline (`lib/canvas/penShape.ts` `shapedOutline`, full thickness
