@@ -31,6 +31,7 @@ export const CUSTOM_PROPS = [
     'connectorData',
     // features
     'linkId', // linked clones (lib/linkedClones)
+    'symmetryLink', // linked symmetry copies (store/slices/symmetry/symmetryLinks)
     'filterState', // image filters panel
     'animId', // animation tracks
     'isFreehand', // brush strokes

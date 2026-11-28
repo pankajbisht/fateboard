@@ -107,7 +107,7 @@ decide Share (Q6). **Blocking bugs:** none open (all fixed by 2026-11-09, see BU
 Single writer for `freeDrawingBrush`; brush state separated from text/style state.
 **Done 2026-11-16:** stamp brush engine (`lib/brushes/stamp`) with 66 library brushes (sketching, inking, manga,
 painting, watercolor, airbrush, texture, spray, fire, smoke, sparkle, nature, calligraphy) and per-brush settings;
-Spray (Shift + B), Paint bucket (G), Lasso (L), Geometry (D: Drafter, Scale, Set square, Protractor, Compass; 2026-11-28); symmetry modes (any axis, radial, point, kaleidoscope) and
+Spray (Shift + B), Paint bucket (G), Lasso (L), Geometry (D: Drafter, Scale, Set square, Protractor, Compass; 2026-11-28); symmetry modes (any axis, radial, point, kaleidoscope; 2026-11-28 Symmetry Pro: glide, spiral, wallpaper, Mirror Chain, sources page / selection / object / pins, ghosts, variation, presets, dice) and
 Reflect selection; layer blur (BUG-220); colour wheel; zoom to 6400 % with sharp deep zoom (BUG-221); icon audit
 (BUG-208). **2026-11-17:** Copy spray (Shift + S, Illustrator's Symbol Sprayer): spray copies of the selection along a
 drag, one group per drag. **2026-11-27:** one Spray tool with modes (Paint, Mist, Splatter, Copy); Copy spray

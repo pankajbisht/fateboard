@@ -1,3 +1,4 @@
+import type { SymmetryMode } from '@/lib/canvas/symmetry';
 import * as fabric from 'fabric';
 import { BRUSH_PRESETS } from './brushPresets';
 import { CLASSIC_CATEGORY, STAMP_BRUSHES, type BrushCategory } from './brushLibrary';
@@ -45,7 +46,7 @@ export type LineStyle = 'solid' | 'dashed' | 'dotted' | 'dashdot';
  * angle = mirror across an axis at `symmetryAngle`, radial = `symmetryCount` turns, point = a half turn,
  * kaleido = turns + mirrors.
  */
-export type Symmetry = 'none' | 'x' | 'y' | 'both' | 'angle' | 'radial' | 'point' | 'kaleido';
+export type Symmetry = SymmetryMode;
 export type EraserMode = 'pixel' | 'stroke';
 export type BlendMode = 'source-over' | 'multiply' | 'screen' | 'overlay' | 'darken' | 'lighten';
 

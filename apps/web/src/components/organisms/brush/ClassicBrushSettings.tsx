@@ -276,7 +276,7 @@ export function ClassicBrushSettings() {
                     )}
                     <div className="flex flex-col gap-1.5">
                         <span className="text-xs font-medium text-ink">Symmetry</span>
-                        <SymmetryControls />
+                        <SymmetryControls compact />
                     </div>
                 </PanelSection>
             )}

@@ -29,7 +29,7 @@ test('the phone editor gives the board most of the screen; "More" unfolds the re
     const docks = page.getByRole('toolbar', { name: 'Dock panels' });
     await expect(docks).toBeHidden();
     await expect(page.getByTestId('footer-view')).toBeHidden();
-    await expect(page.getByTestId('property-bar')).toBeHidden(); // nothing selected
+    await expect(page.getByTestId('property-bar')).toBeVisible(); // kept with nothing selected: no board resize
     const board = (await page
         .getByRole('region', { name: 'Editor canvas workspace' })
         .boundingBox())!;
