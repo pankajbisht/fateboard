@@ -98,7 +98,9 @@ test.describe('colour palette (right dock)', () => {
         const sv = (await wheel
             .getByRole('slider', { name: 'Saturation and brightness' })
             .boundingBox())!;
-        await page.mouse.click(sv.x + sv.width - 1, sv.y + 1);
+        // 3 px in from the corner, not 1: the square has rounded corners and Firefox hit-tests the curve exactly
+        // (1 px in lands outside it, on the ring behind), where Chromium accepts the whole box
+        await page.mouse.click(sv.x + sv.width - 3, sv.y + 3);
         const box = (await ring.boundingBox())!;
         const cx = box.x + box.width / 2;
         const cy = box.y + box.height / 2;
@@ -113,7 +115,7 @@ test.describe('colour palette (right dock)', () => {
         // the ring stayed where it was during the drag (the panel did not move under the pointer)
         expect((await ring.boundingBox())!.y).toBeCloseTo(box.y, 0);
         await expect.poll(async () => (await editor.objects())[0].fill).toMatch(/^#[0-9a-f]{6}$/);
-        // green (the corner click lands within a step or two of 100 % / 100 %)
+        // green (the click near the corner lands at about 98 % / 98 %)
         await expect
             .poll(async () => (await editor.objects())[0].fill)
             .toMatch(/^#0[0-9a-f]f[0-9a-f]0[0-9a-f]$/);
