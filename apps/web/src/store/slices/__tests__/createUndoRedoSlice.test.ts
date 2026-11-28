@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import { createUndoRedoSlice } from '../createUndoRedoSlice';
 import { createHarness, tick } from '@/test/sliceHarness';

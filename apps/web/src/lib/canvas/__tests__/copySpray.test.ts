@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { mulberry32 } from '@/lib/brushes/stamp/rng';
 import { applyToPoint } from '../symmetry';

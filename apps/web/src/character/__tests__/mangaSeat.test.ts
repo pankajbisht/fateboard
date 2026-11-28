@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The seat of the manga body (docs/CHARACTER_STUDIO.md, manga cloth): the bottom of the hips follows the thighs, so a
  * sitting, crouching or kneeling figure has a seat that bends with the legs, not a block hanging under the pelvis.

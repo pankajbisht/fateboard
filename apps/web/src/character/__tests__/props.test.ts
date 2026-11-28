@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Held objects (docs/CHARACTER_STUDIO.md phase 3): the rules for what the hands hold, saved characters from before
  * (schema 4) load with empty hands, and every item draws from every side in sword, fist and rifle poses.

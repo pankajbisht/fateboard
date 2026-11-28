@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Timeline overlays (owner request 2026-11-17, from the "Anime Studio" timeline brief): onion skin ghosts
  * before (red) / after (green) the playhead, and the motion path of animated objects. Real Fabric objects;

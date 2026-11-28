@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The 100-person cast (docs/CHARACTER_STUDIO.md phase 3): seeded and stable, every person distinct, a fair spread
  * of ages and looks, every one a valid character that renders, and the cast browser's filter.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * New objects follow the page (design) or the zoom (whiteboard), like Canva / FigJam / Miro, so a
  * new shape or text never looks tiny on a big page or when zoomed out.

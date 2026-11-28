@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { projectStorage, type ProjectDoc } from '@/lib/storage';
 import { PERSIST_DELAY_MS, PERSIST_MAX_WAIT_MS, createPersistence } from '../canvas/persistence';

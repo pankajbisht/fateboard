@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Real-world examples must describe the editor that ships, like the topics they belong to.
  */

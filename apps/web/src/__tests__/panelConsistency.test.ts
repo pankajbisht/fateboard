@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Panels are built from the shared atoms / molecules (docs/DESIGN.md "Panels"):
  * one header from PanelLayout, Select instead of <select>, Slider instead of <input type=range>,

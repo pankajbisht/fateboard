@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Export region and crop marks (2026-11-17): content, page + bleed, or page + bleed / slug / crop marks. */
 import { describe, expect, it, vi } from 'vitest';
 import * as fabric from 'fabric';

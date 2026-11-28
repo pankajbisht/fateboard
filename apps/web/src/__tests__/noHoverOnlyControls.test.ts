@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-214: a control that only appears on hover cannot be reached on a phone or tablet (touch has
  * no hover). A class string that hides something (`opacity-0` / `hidden`) and shows it on

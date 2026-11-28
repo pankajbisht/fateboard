@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Guardrails (docs/AGENT_WORKFLOW.md "Guardrails"): the suite cannot be made green by hiding failures.
  * No focused or skipped tests, no @ts-ignore / @ts-nocheck, @ts-expect-error needs a reason, and eslint-disable

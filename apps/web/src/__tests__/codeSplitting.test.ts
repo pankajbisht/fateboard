@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Performance (production readiness P1): every page is its own chunk, so the landing page does not
  * download the editor (panels, animation, export, templates). The router may only `lazy()`-import

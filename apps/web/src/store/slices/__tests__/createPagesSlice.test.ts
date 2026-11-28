@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { createPagesSlice } from '../createPagesSlice';
 import { createPageSlice } from '../createPageSlice';

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** BUG-029: components subscribe with a selector; `useStore()` re-rendered on every store change (60 fps in playback). */
 import { describe, expect, it } from 'vitest';
 

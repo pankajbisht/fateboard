@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-092 (DECISIONS: number fields commit on finish): the Animation panel's numbers use `NumberField`.
  * Raw `<Input type="number">` applied every keystroke, and an emptied field became 0.

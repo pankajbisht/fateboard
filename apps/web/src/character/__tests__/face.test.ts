@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The face system (docs/CHARACTER_STUDIO.md phase 2): 20 emotions as parameter vectors, lip-sync shapes, gaze,
  * blink, the schema step that added them, and the face never leaving the head's drawn outline (BUG-253).

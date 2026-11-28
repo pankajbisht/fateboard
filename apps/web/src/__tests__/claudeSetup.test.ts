@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The Claude Code setup in `.claude/` (docs/AGENT_WORKFLOW.md) is code: the guard hook blocks what CLAUDE.md
  * "Never do" forbids, the settings point at hooks that exist, rules are scoped to paths that exist, and every

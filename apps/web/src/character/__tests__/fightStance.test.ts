@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Fight stances are bladed the right way (BUG-279, docs/COMBAT_PACK.md §2): along the direction the fighter looks,
  * the lead foot, lead shoulder and lead fist are ahead of the rear ones. Orthodox leads with the left side, southpaw

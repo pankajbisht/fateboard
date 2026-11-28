@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * One place per feature (owner decision, 2026-11-07). Each capability has exactly one home:
  *   canvas size          -> Settings > Canvas (size + orientation; no left-rail panel)

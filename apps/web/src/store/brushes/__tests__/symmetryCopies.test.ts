@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import * as fabric from 'fabric';
 import { reflection, rotation } from '@/lib/canvas/symmetry';

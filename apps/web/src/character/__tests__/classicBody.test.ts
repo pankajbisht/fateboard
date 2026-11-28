@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The classic body (docs/CHARACTER_STUDIO.md, manga look). New characters are manga, so the tests that start from a
  * recipe draw the manga body; saved characters still open as classic. This file keeps the classic body covered:

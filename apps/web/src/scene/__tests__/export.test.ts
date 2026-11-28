@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Layered scene export (docs/CHARACTER_STUDIO.md phase 10): the composite, the aligned layers, the scene file and
  * the manifest, packed in a ZIP that reads back.

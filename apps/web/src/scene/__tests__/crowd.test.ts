@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Crowds (docs/CHARACTER_STUDIO.md phase 10): simple extras filling the place behind the characters: the count asked
  * for, always the same people for the same seed, never on the stage, and every place still renders with one.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Line art (docs/CHARACTER_STUDIO.md, reference pass phase 2): the contours of the manga body are ink lines (filled
  * ribbons that taper where a line ends, full width where two pieces join), and the "Line art" style draws the figure

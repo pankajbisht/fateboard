@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The GIF encoder worker as the page sees it (fate-reviewer 2026-11-17: these paths had no tests): the
  * ready handshake, back-pressure, a failure in the middle, and a worker that cannot start (the export then

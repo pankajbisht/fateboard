@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { createHarness } from '@/test/sliceHarness';
 import { newScene } from '@/scene/schema/parse';

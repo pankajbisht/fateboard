@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The transform panel (X Y W H R + anchor) must follow the canvas: after dragging / scaling /
  * rotating with the mouse, the next panel edit or flip must start from where the object IS

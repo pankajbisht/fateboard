@@ -75,11 +75,48 @@ test.describe('colour palette (right dock)', () => {
 
         await editor.openDockTab('Fill & Shadow');
         const harmony = page.getByRole('group', { name: 'Color harmony' });
-        await harmony.getByRole('button', { name: 'Triadic color #00ff00' }).click();
-        await expect.poll(async () => (await editor.objects())[0].fill).toBe('#00ff00');
+        await harmony.getByRole('button', { name: 'Triad color #00ff00' }).click();
+        // green (the corner click lands within a step or two of 100 % / 100 %)
+        await expect
+            .poll(async () => (await editor.objects())[0].fill)
+            .toMatch(/^#0[0-9a-f]f[0-9a-f]0[0-9a-f]$/);
 
         await harmony.getByRole('button', { name: 'Gradient from Complementary' }).click();
         // the bridge reports gradients as 'gradient'; the stops are checked in FillShadowPanel.test
         await expect.poll(async () => (await editor.objects())[0].fill).toBe('gradient');
+    });
+
+    test('Fill & Shadow color wheel: dragging the ring repaints the shape, no flicker', async ({
+        editor,
+        page,
+    }) => {
+        await editor.addShape('Rectangle');
+        await editor.openDockTab('Fill & Shadow');
+        const wheel = page.getByRole('group', { name: 'Fill color wheel' });
+        const ring = wheel.getByRole('slider', { name: 'Hue wheel' });
+        // full saturation and brightness first (the new shape's fill may be a gray)
+        const sv = (await wheel
+            .getByRole('slider', { name: 'Saturation and brightness' })
+            .boundingBox())!;
+        await page.mouse.click(sv.x + sv.width - 1, sv.y + 1);
+        const box = (await ring.boundingBox())!;
+        const cx = box.x + box.width / 2;
+        const cy = box.y + box.height / 2;
+        const r = box.width / 2 - 8; // on the ring
+        // press at 12 o'clock (red), drag round to 4 o'clock (~120°, green) and off the ring into the hole
+        await page.mouse.move(cx, cy - r);
+        await page.mouse.down();
+        await page.mouse.move(cx + r * 0.87, cy + r * 0.5, { steps: 8 });
+        await page.mouse.move(cx + 20, cy + 11.5, { steps: 4 }); // same angle, inside the ring
+        await page.mouse.up();
+        await expect(ring).toHaveAttribute('aria-valuenow', '120');
+        // the ring stayed where it was during the drag (the panel did not move under the pointer)
+        expect((await ring.boundingBox())!.y).toBeCloseTo(box.y, 0);
+        await expect.poll(async () => (await editor.objects())[0].fill).toMatch(/^#[0-9a-f]{6}$/);
+        // green (the corner click lands within a step or two of 100 % / 100 %)
+        await expect
+            .poll(async () => (await editor.objects())[0].fill)
+            .toMatch(/^#0[0-9a-f]f[0-9a-f]0[0-9a-f]$/);
+        await page.screenshot({ path: process.env.SHOT ?? 'test-results/wheel.png' });
     });
 });

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-101: opening a single-board .fateboard / .json goes through the store (persist lock, autosave,
  * history): the board replaces the page as ONE undo step, and a broken file says so.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { poseById } from '@/character/data/poses';
 import { RECIPES } from '@/character/data/recipes';

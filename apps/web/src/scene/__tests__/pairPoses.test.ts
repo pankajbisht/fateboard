@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Pair poses (docs/CHARACTER_STUDIO.md §7.4 acceptance check): the hands land on their spots on the other person,
  * for heights from 111 to 189 cm; both people stay inside their joint limits; the picture renders.

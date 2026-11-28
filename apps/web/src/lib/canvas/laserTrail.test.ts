@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Laser pointer trail: points fade out and are dropped after LASER_LIFE_MS. */
 import { describe, expect, it } from 'vitest';
 import {

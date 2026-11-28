@@ -83,7 +83,31 @@ gestures), so these stay `UNKNOWN - verify` until someone runs them on hardware.
 9. Swipe from the screen edge (iOS back gesture) in the middle of a stroke: the stroke ends cleanly (BUG-213).
 10. Android: pulling down on the toolbar does not reload the page.
 
-## Keeping the unit run fast (2026-11-24)
+## Speed (2026-11-24, parallel runs 2026-11-28)
+
+Both suites run in parallel at three levels: files across worker processes on one machine, shards across CI jobs, and
+a merge step that checks the whole result once.
+
+| Level            | Unit (Vitest)                                                                                          | E2E (Playwright)                                                                                 |
+| ---------------- | ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| One machine      | files in parallel (`forks` pool, one worker per core); tests inside a file run in order                | `fullyParallel`: every test on its own worker (local: half the cores; CI: 2)                     |
+| CI shards        | `Quality / Unit tests (shard n/3)`: `npm run test:shard -- --shard=n/3` (coverage + blob report)       | `Test / E2E (<browser>, shard n/3)`: blob report per shard                                       |
+| Merge            | `Quality / Unit tests (coverage)`: `npm run test:merge` fails on any shard's failed test and checks the coverage ratchet over all shards (a shard skips it: `vitest.config.ts`) | `Test / E2E report`: `playwright merge-reports` into one HTML report (artifact `playwright-report`) |
+| Local shortcuts  | `npm run test:changed` (only tests touched by uncommitted changes); `npx vitest run <path>`            | `npx playwright test <spec>`; `--workers=2` on a loaded machine                                  |
+
+To rebalance, change `shard` and `shard-total` together in `_web-quality.yml` / `_web-e2e.yml`. The E2E bundle is
+built in each shard: `build:e2e` takes about a second, less than an artifact round trip.
+
+- **Environment per file.** jsdom is the default. A test file of pure logic (no `document`, `window`, React render,
+  Fabric canvas) starts with `// @vitest-environment node`: it skips the jsdom start-up and the Fabric import in
+  `setupTests.ts` (which guards its DOM mocks with `typeof window`). 2026-11-28: the 176 files that pass in node were
+  marked (CPU for the whole run 358 s → 308 s). New pure-logic tests (`character/`, `scene/`, `props/`, most of
+  `lib/`) should start with the line too.
+- **No file over ~15 s.** A file's tests run one after another on one worker, so the slowest file is the floor of the
+  whole run. Split a slow sweep into its own files: `character/__tests__/render.sweep.<body>.test.ts` (one per body,
+  shared code in `poseSweep.ts`; was one 38 s file) and `styles.shading.test.ts` (16 s, out of `styles.test.ts`).
+- Measured 2026-11-28 on a 10-core Mac: unit 52 s → 44 s (all 355 files, without coverage), 100 s with coverage;
+  E2E 190 s (265 tests, 5 workers).
 
 The CI coverage job has a 10-minute limit on a 2-vCPU runner, and v8 coverage slows every test. A sweep over styles ×
 poses × angles with an `expect` per part or per number reached tens of thousands of renders and millions of assertions
@@ -92,7 +116,7 @@ and got the job cancelled. Rules for a sweep:
 - Collect failures in an array and `expect(bad).toEqual([])` once. Never an `expect` per part, number or point.
 - Do not cross every dimension. Give each combination a few angles spread round the circle (`anglesFor` in
   `src/character/__tests__/sweep.ts`), a different set for each, so every style, pose and angle is still drawn.
-  `render.test.ts` keeps the full pose × 15° geometry sweep on both bodies.
+  `render.sweep.<body>.test.ts` keep the full pose × 15° geometry sweep on three bodies.
 - A deterministic solver (pair poses) is solved once per input for the whole file (a `Map`), not once per test.
 - Find the slow files with `npx vitest run --reporter=json --outputFile=<file>` and sort `testResults` by
   `endTime - startTime`.
@@ -123,7 +147,7 @@ base (`scripts/guardrails/check-ratchets.mjs`). Details and approval labels: doc
 - `npm run type-check` now really checks (`tsc -p tsconfig.app.json` + `tsconfig.node.json`) and passes with 0 errors.
 - Helpers: `createHarness([...sliceCreators], extraState)` runs slices without zustand/React;
   `createFakeCanvas(objects)` implements the canvas API slices use (events, JSON round-trip, z-order, size/VPT).
-- CI: `ci.yml` is the only entry point and wires reusable workflows (`workflow_call`, `_`-prefixed, one file per stage); shared setup in `.github/actions/setup-node-deps`. Check names read `<Stage> / <Job>`. In parallel: `Quality / Static analysis` and `Quality / Unit tests (coverage)` (`_quality.yml`: guardrails, signatures + prod `npm audit`, format, lint, type-check; unit + coverage ratchet), `Test / E2E (<browser>, shard n/2)` (`_e2e.yml`: matrix chromium/firefox × 2 shards, each job installs and caches only its browser; the chromium shards also run `laptop-chromium`), `Build / Web bundle` (`_build-web.yml`) and `Build / Container image` (`_build-image.yml`, Buildx with GitHub Actions layer cache) → one `CI passed` check (keep this name: branch protection requires it) → `Deploy / GitHub Pages` (`_deploy.yml`, push to `main` only, `actions/deploy-pages`, `github-pages` environment). A `Detect changes` job skips E2E and the container image on docs-only PRs (every file under `docs/`, `.claude/` or `*.md`); `CI passed` accepts `skipped`. Rebalance E2E by changing `shard` + `shard-total` in `_e2e.yml`. Actions pinned by SHA; Dependabot weekly (`.github/dependabot.yml`).
+- CI: `ci.yml` is the only entry point and wires reusable workflows (`workflow_call`, `_`-prefixed, one file per stage); shared setup in `.github/actions/setup-node-deps`. Check names read `<Stage> / <Job>`. In parallel: `Quality / Static analysis` and `Quality / Unit tests (shard n/3)` + `Quality / Unit tests (coverage)` (`_quality.yml`: guardrails, signatures + prod `npm audit`, format, lint, type-check; unit shards, then the merge checks the coverage ratchet; see "Speed"), `Test / E2E (<browser>, shard n/3)` + `Test / E2E report` (`_e2e.yml`: matrix chromium/firefox × 3 shards, one merged HTML report, each job installs and caches only its browser; the chromium shards also run `laptop-chromium`), `Build / Web bundle` (`_build-web.yml`) and `Build / Container image` (`_build-image.yml`, Buildx with GitHub Actions layer cache) → one `CI passed` check (keep this name: branch protection requires it) → `Deploy / GitHub Pages` (`_deploy.yml`, push to `main` only, `actions/deploy-pages`, `github-pages` environment). A `Detect changes` job skips E2E and the container image on docs-only PRs (every file under `docs/`, `.claude/` or `*.md`); `CI passed` accepts `skipped`. Rebalance E2E by changing `shard` + `shard-total` in `_e2e.yml`. Actions pinned by SHA; Dependabot weekly (`.github/dependabot.yml`).
 
 ## Original state (before batch 1)
 

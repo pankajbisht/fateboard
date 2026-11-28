@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** A scene's wind blows on every actor the same way on the page, whichever way each one faces (2026-11-27). */
 import { describe, expect, it } from 'vitest';
 import { defaultCharacter } from '@/character/schema/parse';

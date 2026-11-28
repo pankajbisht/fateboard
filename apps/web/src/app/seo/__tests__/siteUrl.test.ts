@@ -1,3 +1,4 @@
+// @vitest-environment node
 /// <reference types="node" />
 /**
  * The site URL is configuration, not code: it comes from `VITE_SITE_URL` (.env locally, a GitHub

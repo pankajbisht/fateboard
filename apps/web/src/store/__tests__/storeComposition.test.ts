@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Store integrity. Slices are object-spread into one store, so a key defined by two slices is silently
  * overwritten by the later one (docs/STATE.md#key-collisions, BUG-002).

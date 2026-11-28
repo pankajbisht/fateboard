@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { CANVAS_PRESETS, DEFAULT_CANVAS_PRESET, findPreset } from '../board.config';
 

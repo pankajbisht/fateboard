@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The landing page stays light (docs/ARCHITECTURE.md "Bundles and assets"): its static imports must
  * not reach the command registry (toolbars, panels) or the Help shortcut list that reads it. Lazy

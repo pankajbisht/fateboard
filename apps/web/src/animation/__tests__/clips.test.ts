@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Fight clips on the timeline (docs/COMBAT_PACK.md, owner decision Q1): at time t only the drawing for t shows,
  * held on the first frame before the start and on the last after the end; the over layer hides for zoom frames.

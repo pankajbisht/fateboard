@@ -1,5 +1,5 @@
 import { useHarmonyBase } from '@hooks/useHarmonyBase';
-import { HARMONIES, harmonyColors, hasHue } from '@/lib/colorHarmony';
+import { HARMONIES, harmonyColors, hasHue, isToneHarmony } from '@/lib/colorHarmony';
 import { Swatch } from '../atoms/Swatch';
 
 type Props = {
@@ -17,7 +17,7 @@ type Props = {
 export function ColorHarmonies({ color, onPick }: Props) {
     const [base, markPicked] = useHarmonyBase(color);
     const gray = !base || !hasHue(base);
-    const rows = gray ? HARMONIES.filter((h) => h.id === 'monochromatic') : HARMONIES;
+    const rows = gray ? HARMONIES.filter((h) => isToneHarmony(h.id)) : HARMONIES;
 
     return (
         <div role="group" aria-label="Color harmonies" className="mt-3 border-t border-line pt-2">

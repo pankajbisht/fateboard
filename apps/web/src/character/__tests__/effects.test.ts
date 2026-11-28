@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Effects on hair and hanging cloth (2026-11-27, owner: wind on hair and dress, and others like it): wind, updraft,
  * twirl, wet. A field in the world moves the points of hair and hanging cloth by how far they hang (render/effects).

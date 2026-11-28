@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The manga body, step 1 (docs/CHARACTER_STUDIO.md): a head-unit proportion table, a body style that is separate from
  * the art style, classic unchanged, old characters load as classic, and the same character renders in both bodies

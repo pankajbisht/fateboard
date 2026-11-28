@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Pen tool geometry: anchors with optional bezier handles -> SVG path data. */
 import { describe, expect, it } from 'vitest';
 import {

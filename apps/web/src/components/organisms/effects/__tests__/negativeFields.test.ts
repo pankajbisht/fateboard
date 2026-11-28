@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-093: `LabeledInput` defaults `min` to 0. Angles, offsets and the radial gap / scale step must
  * accept negative values, so they declare their own (negative) min.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { rulerTicks, PX_PER_UNIT } from '../Ruler';
 

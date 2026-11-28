@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-003: every document write goes through `serializeCanvas` (one CUSTOM_PROPS list, animated
  * objects written at rest). A canvas-level `toObject(...)` / `toJSON()` anywhere else is a second

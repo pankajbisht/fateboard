@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The route registry is the one list of app routes (docs/ARCHITECTURE.md "Routing"): every named path
  * is routed once, every page is lazy, and the catch-all comes last.

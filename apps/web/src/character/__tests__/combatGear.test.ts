@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Combat-sport gear (docs/COMBAT_PACK.md, schema v9): held gloves migrate to worn ones, gloves empty the hands and
  * close the fist, every gear item is drawn, and the "Combat sports" outfits pass the dress rules unchanged.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Effect brush sets (2026-11-17): lightning & electric, water & liquid, ice & frost, more smoke & fog. */
 import { describe, expect, it } from 'vitest';
 import { BRUSH_CATEGORIES, STAMP_BRUSHES } from '../brushLibrary';

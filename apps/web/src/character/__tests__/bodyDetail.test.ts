@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Body detail (docs/CHARACTER_STUDIO.md phase 3): a real hand for every hand shape (fingers, a thumb, a folded fist),
  * and joints (shoulder caps, elbows, wrists, knees with a kneecap, ankles), chest or bust lines and the hip crease on

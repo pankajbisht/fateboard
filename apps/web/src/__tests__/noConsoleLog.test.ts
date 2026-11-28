@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-104 / CLAUDE.md never-do: no `console.log` in shipped code (it leaked selection data on every
  * context-menu open). Errors use `console.error('[slice] …')`, warnings `console.warn`.

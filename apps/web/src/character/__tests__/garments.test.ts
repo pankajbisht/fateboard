@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The garment library (docs/CHARACTER_STUDIO.md phase 3): 51 tops and 42 bottoms as data, each drawn from every side
  * on every body, each different, collars that hide from behind (a hood shows), who wears what.

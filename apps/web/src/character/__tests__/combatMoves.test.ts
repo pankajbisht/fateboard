@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Combat Sports Pack moves (docs/COMBAT_PACK.md §2): data shape, joint limits, the stance mirror, the per-body
  * solve (strike on target, knee on the mat), timing and the bake cache. Child (124 cm), adult (174) and tall (189).

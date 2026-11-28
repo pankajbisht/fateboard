@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** BUG-082: one unit converter for rulers and size fields (Settings > Units); documents stay in px. */
 import { describe, expect, it } from 'vitest';
 import { PX_PER_UNIT, formatSize, fromUnit, toUnit, unitPrecision } from './units';

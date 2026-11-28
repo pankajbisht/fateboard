@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { FRACTAL_LIMITS, fractalPath, type FractalKind } from '../fractals';
 

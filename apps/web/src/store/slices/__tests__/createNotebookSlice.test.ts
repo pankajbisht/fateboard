@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Grid and snap start OFF (like Figma / Canva / Illustrator): a new board is a clean page and
  * objects move freely until the user turns them on (top bar or Ctrl/⌘ + ' / ;).

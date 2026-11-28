@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The manga look (docs/CHARACTER_STUDIO.md, manga look pass): a manga-body character keeps its measured head size in
  * every art style but chibi, new characters start in a manga-friendly art style and pose, and the face and hair have

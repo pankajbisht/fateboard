@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The character and scene domains are pure TypeScript (docs/CHARACTER_STUDIO.md §9.1): no React, no Fabric, no
  * store, no components. Their `board.ts` is the only file that talks to Fabric. Pure code is testable without a

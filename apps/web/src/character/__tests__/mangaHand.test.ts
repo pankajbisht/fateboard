@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The manga hand (docs/CHARACTER_STUDIO.md, reference pass phase 3): a palm, four fingers of three bones and a thumb,
  * drawn as fills without outlines inside ONE outline round the whole hand, so the fingers read as one hand and not as

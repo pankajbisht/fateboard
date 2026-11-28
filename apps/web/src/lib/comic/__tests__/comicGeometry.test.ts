@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Comic tools geometry (2026-11-17): panel layouts, split, speed / focus lines, bursts, screentone tiles. */
 import { describe, expect, it, vi } from 'vitest';
 import { PANEL_PRESETS, layoutPanels, splitRect } from '../panelLayouts';

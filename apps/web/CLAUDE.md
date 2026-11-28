@@ -23,7 +23,7 @@ holds `apps/`, `packages/`, `.github/` (one separate CI/CD pipeline per app; the
 | Format | `npm run format` / `npm run format:check` | Prettier, `src/**` |
 | Typecheck | `npm run type-check` | app + strict island (`tsconfig.strict.json`) + node + e2e configs, must be 0 errors |
 | All checks | `npm run check` | lint + type-check + format:check |
-| Unit tests | `npm run test:run` (CI) · `npm test` (watch) | Vitest + jsdom |
+| Unit tests | `npm run test:run` · `npm test` (watch) · `npm run test:changed` (only what uncommitted changes touch) | Vitest, files in parallel; jsdom by default, `// @vitest-environment node` for pure logic; CI shards it (docs/TESTING.md "Speed") |
 | Coverage | `npm run test:coverage` | HTML at `coverage/index.html`; `npm run report` = coverage + E2E (docs/TESTING.md "Health report") |
 | E2E | `npm run e2e` (report: `npm run e2e:report`) | Playwright 1.64.1, Chromium (+ Firefox in CI or with `E2E_FIREFOX=1`); builds `--mode e2e` and runs `e2e/` against `vite preview`. First time: `npx playwright install chromium` |
 

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-002: the store is ONE object spread from every slice; a key defined by two slices silently
  * belongs to whichever is spread last. Every key must be unique, and every slice spread once.

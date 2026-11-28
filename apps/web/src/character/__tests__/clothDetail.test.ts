@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Clothes as cloth on the manga body (docs/CHARACTER_STUDIO.md, reference pass phase 4): a short sleeve is a tube on
  * the arm, open at a hem line (not a puffy capsule); a T-shirt hangs over the trousers with its hem showing; trousers

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Shape catalog: every entry builds a real Fabric object inside its 100 × 100 box, and the 3D
  * shapes are plain closed paths (one object: undo, save, export, snap and animation treat them

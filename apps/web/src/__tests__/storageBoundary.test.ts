@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * One storage layer: only `src/lib/storage/**` talks to the storage library (opendb-store) or the
  * browser storage APIs, and the rest of the app imports it through `@/lib/storage` only. Swapping

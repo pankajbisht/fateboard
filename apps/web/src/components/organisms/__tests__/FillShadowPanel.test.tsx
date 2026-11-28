@@ -149,7 +149,7 @@ describe('footer', () => {
         // opacity moved to the Fill & Shadow tab; the footer "− 100% +" looked like a second zoom
         expect(src).not.toMatch(/OpacityControl/);
     });
-    it('Color harmony: all five schemes with their hints; a swatch fills the selection', () => {
+    it('Color harmony: all eight schemes with their hints; a swatch fills the selection', () => {
         render(<FillShadowPanel />);
         select();
         const group = screen.getByRole('group', { name: 'Color harmony' });
@@ -158,10 +158,16 @@ describe('footer', () => {
             'High contrast',
             'Analogous',
             'Calm, harmonious',
-            'Triadic',
+            'Triad',
             'Colorful but balanced',
-            'Split-complementary',
+            'Split complementary',
             'Contrast, less harsh',
+            'Square',
+            'Rich, four even hues',
+            'Compound',
+            'Two close pairs, opposite',
+            'Shades',
+            'One hue, darker steps',
             'Monochromatic',
             'Always safe',
         ]) {
@@ -172,13 +178,13 @@ describe('footer', () => {
         // still the harmonies of red, the picked one marked
         const picked = within(group).getByRole('button', { name: 'Complementary color #00ffff' });
         expect(picked.getAttribute('aria-pressed')).toBe('true');
-        expect(within(group).getByRole('button', { name: 'Triadic color #00ff00' })).toBeTruthy();
+        expect(within(group).getByRole('button', { name: 'Triad color #00ff00' })).toBeTruthy();
     });
 
     it('Color harmony: Gradient turns a scheme into the fill gradient', () => {
         render(<FillShadowPanel />);
         select();
-        fireEvent.click(screen.getByRole('button', { name: 'Gradient from Triadic' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Gradient from Triad' }));
         const fill = readFill(rect);
         expect(fill.kind).toBe('linear');
         expect(fill.gradient!.stops.map((s) => [s.offset, s.color])).toEqual([
@@ -196,9 +202,33 @@ describe('footer', () => {
         render(<FillShadowPanel />);
         select();
         await act(async () => {
-            fireEvent.click(screen.getByRole('button', { name: 'Copy Triadic colors' }));
+            fireEvent.click(screen.getByRole('button', { name: 'Copy Triad colors' }));
         });
         expect(writeText).toHaveBeenLastCalledWith('#FF0000, #00FF00, #0000FF');
+    });
+
+    it('Color harmony: a solid fill gets the colour wheel; it paints the selection', () => {
+        render(<FillShadowPanel />);
+        select();
+        const wheel = screen.getByRole('group', { name: 'Fill color wheel' });
+        const ring = within(wheel).getByRole('slider', { name: 'Hue wheel' });
+        expect(ring.getAttribute('aria-valuenow')).toBe('0'); // red
+        fireEvent.keyDown(ring, { key: 'ArrowRight', shiftKey: true });
+        expect(readFill(rect).color).toBe('#ff2a00');
+        // a harmony point on the ring fills with that colour
+        const dot = within(wheel).getByRole('button', { name: /Use harmony color/ });
+        const target = dot.getAttribute('aria-label')!.slice(-7);
+        fireEvent.click(dot);
+        expect(readFill(rect).color).toBe(target);
+        // the wheel follows the selection's new colour (hue 190)
+        expect(ring.getAttribute('aria-valuenow')).toBe('190');
+    });
+
+    it('Color harmony: no wheel for a gradient fill', () => {
+        render(<FillShadowPanel />);
+        select();
+        fireEvent.click(screen.getByRole('radio', { name: 'Linear' }));
+        expect(screen.queryByRole('group', { name: 'Fill color wheel' })).toBeNull();
     });
 
     it('Color harmony: no fill or a gray says what to do', () => {
@@ -215,5 +245,6 @@ describe('footer', () => {
         select();
         expect(screen.getByText(/grays have no hue/i)).toBeTruthy();
         expect(screen.getByRole('button', { name: 'Gradient from Monochromatic' })).toBeTruthy();
+        expect(screen.getByRole('button', { name: 'Gradient from Shades' })).toBeTruthy();
     });
 });

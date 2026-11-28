@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { isMac, replaceToShortcut } from '../isMac';
 import { commandRegistry } from '@/components/config/commandConfig';

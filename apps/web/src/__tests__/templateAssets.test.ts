@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Performance (production readiness P1): template images were 2–7 MB camera originals (dist 39 MB).
  * Gallery cards use small thumbnails; every referenced file exists and stays within budget.

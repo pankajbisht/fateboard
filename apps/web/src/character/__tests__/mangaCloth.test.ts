@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Hanging cloth on the manga body (docs/CHARACTER_STUDIO.md, manga cloth): long tops (coats, kurtas, tunics) and skirts
  * hang from the waist as one lofted shape that follows the hips and flares toward the hem, instead of a round convex
