@@ -84,10 +84,10 @@ const editorsidebarconfig = [
         kind: 'action',
     },
     {
-        id: 'drafter',
+        id: 'geometry',
         shortcut: 'D',
-        label: 'Drafter',
-        icon: 'drafter',
+        label: 'Geometry',
+        icon: 'geometry',
         kind: 'action',
     },
     {

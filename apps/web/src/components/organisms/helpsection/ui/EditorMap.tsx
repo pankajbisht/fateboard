@@ -42,7 +42,7 @@ const REGIONS: Region[] = [
             'bucket',
             'spray',
             'copySpray',
-            'drafter',
+            'geometry',
             'shapes',
             'text',
         ],

@@ -1,9 +1,9 @@
 /**
  * Paint tools: Paint bucket (G), Spray (Shift + B; its Copy mode is ./paintTools/copySpray*), Lasso (L),
- * Drafter (D), "Reflect selection" and the Brush
+ * Geometry (D: Drafter, Scale, Set square, Protractor, Compass), "Reflect selection" and the Brush
  * settings overrides of the stamp brushes. Settings live here; the tools listen on the canvas only while
  * active (attached / detached by the store subscription below, like the Pen and the Laser). The geometry is in
- * lib/canvas (floodFill, traceContours, lasso, drafter, symmetry); the canvas work in ./paintTools.
+ * lib/canvas (floodFill, traceContours, lasso, drafter, geometry, symmetry); the canvas work in ./paintTools.
  *
  * Every document change is a normal canvas add / set: history records it from `object:added` (one step per
  * action; `saveState()` where no event fires). Drawing guides (the symmetry axes) are helper objects:
@@ -25,17 +25,18 @@ import {
 import { symmetryClones } from '../brushes/symmetryCopies';
 import { bucketFill, isHelperObject, type BucketResult } from './paintTools/bucketFill';
 import { attachLasso, lassoTargets, selectObjects } from './paintTools/lassoTool';
-import { attachDrafter, drafterObject } from './paintTools/drafterTool';
+import { attachGeometry } from './paintTools/geometryTool';
+import { geometryObject } from './paintTools/geometryObjects';
 import { createCopySpray, type CopySprayActions } from './paintTools/copySprayActions';
 import {
     DEFAULT_BUCKET_STYLE,
-    DEFAULT_DRAFTER_STYLE,
+    DEFAULT_GEOMETRY_STYLE,
     DEFAULT_LASSO_STYLE,
     sanitizeBucketStyle,
-    sanitizeDrafterStyle,
+    sanitizeGeometryStyle,
     sanitizeLassoStyle,
     type BucketStyle,
-    type DrafterStyle,
+    type GeometryStyle,
     type LassoStyle,
 } from './paintTools/paintToolStyles';
 
@@ -54,8 +55,8 @@ export interface PaintToolsSlice extends CopySprayActions {
     setBucketStyle: (patch: Partial<BucketStyle>) => void;
     lassoStyle: LassoStyle;
     setLassoStyle: (patch: Partial<LassoStyle>) => void;
-    drafterStyle: DrafterStyle;
-    setDrafterStyle: (patch: Partial<DrafterStyle>) => void;
+    geometryStyle: GeometryStyle;
+    setGeometryStyle: (patch: Partial<GeometryStyle>) => void;
     sprayStyle: SprayStyle;
     setSprayStyle: (patch: Partial<SprayStyle>) => void;
     /** Brush settings panel: per stamp brush, the settings changed from the library's. */
@@ -68,8 +69,8 @@ export interface PaintToolsSlice extends CopySprayActions {
     lassoSelect: (loop: Pt[], mode?: 'replace' | 'add' | 'subtract') => number;
     /** Lasso fill: the loop becomes a filled shape in the drawing colour. */
     lassoFill: (loop: Pt[]) => boolean;
-    /** Drafter: draw a line / dimension / construction line from a to b (scene). */
-    drafterLine: (a: Pt, b: Pt) => boolean;
+    /** Geometry tool: add what the instrument makes from its points (scene); see geometryObject. */
+    geometryDraw: (points: Pt[], sweep?: number) => boolean;
     /** Symmetry copies of the selection (one undo step). Returns how many copies were added. */
     reflectSelection: (options: ReflectOptions) => Promise<number>;
 }
@@ -123,13 +124,13 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
                 onEscape: () => peers().setActiveTool?.('select'),
                 screen,
             });
-        else if (tool === 'drafter')
-            detach = attachDrafter(canvas, {
-                style: () => get().drafterStyle,
+        else if (tool === 'geometry')
+            detach = attachGeometry(canvas, {
+                style: () => get().geometryStyle,
                 color: () => peers().color ?? '#000000',
                 unit: () => peers().unit ?? 'px',
                 screen,
-                onLine: (a, b) => get().drafterLine(a, b),
+                onDraw: (points, sweep) => get().geometryDraw(points, sweep),
                 onEscape: () => peers().setActiveTool?.('select'),
             });
         else if (tool === 'copySpray') detach = copySpray.attach(canvas, screen);
@@ -237,12 +238,12 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
         lassoStyle: DEFAULT_LASSO_STYLE,
         setLassoStyle: (patch) =>
             set({ lassoStyle: sanitizeLassoStyle(get().lassoStyle, patch) }, false, 'paint/lasso'),
-        drafterStyle: DEFAULT_DRAFTER_STYLE,
-        setDrafterStyle: (patch) =>
+        geometryStyle: DEFAULT_GEOMETRY_STYLE,
+        setGeometryStyle: (patch) =>
             set(
-                { drafterStyle: sanitizeDrafterStyle(get().drafterStyle, patch) },
+                { geometryStyle: sanitizeGeometryStyle(get().geometryStyle, patch) },
                 false,
-                'paint/drafter',
+                'paint/geometry',
             ),
         sprayStyle: DEFAULT_SPRAY_STYLE,
         setSprayStyle: (patch) => {
@@ -337,18 +338,16 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
             return true;
         },
 
-        drafterLine: (a, b) => {
-            const s = peers();
-            const canvas = s.canvas;
-            if (!canvas || (a.x === b.x && a.y === b.y)) return false;
+        geometryDraw: (points, sweep = 0) => {
+            const { canvas, color = '#000000', unit = 'px' } = peers();
+            const [a, b] = points;
+            if (!canvas || !a || !b || (a.x === b.x && a.y === b.y)) return false;
             try {
-                addAndRecord(
-                    canvas,
-                    drafterObject(a, b, get().drafterStyle, s.color ?? '#000000', s.unit ?? 'px'),
-                );
+                const style = get().geometryStyle;
+                addAndRecord(canvas, geometryObject(points, sweep, style, color, unit));
                 return true;
             } catch (err) {
-                console.error('[paintTools] drafter line failed', err);
+                console.error('[paintTools] geometry draw failed', err);
                 return false;
             }
         },

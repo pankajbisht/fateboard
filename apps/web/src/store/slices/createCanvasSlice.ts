@@ -297,7 +297,7 @@ export const createCanvasSlice = (set: SliceSet, get: SliceGet, _store?: unknown
                 case 'copySpray':
                 case 'bucket':
                 case 'lasso':
-                case 'drafter':
+                case 'geometry':
                 case 'note': {
                     // a tool slice (drawing / paint tools, notes) takes the clicks; nothing is picked
                     canvas.discardActiveObject();

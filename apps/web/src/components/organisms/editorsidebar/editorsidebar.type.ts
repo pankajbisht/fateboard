@@ -14,7 +14,7 @@ export type EditorTool =
     | 'copySpray'
     | 'bucket'
     | 'lasso'
-    | 'drafter';
+    | 'geometry';
 
 export type SidebarActionItem = {
     id: EditorTool;

@@ -56,8 +56,10 @@ describe('Paint tools slice: settings', () => {
         const { h } = setup();
         h.get().setBucketStyle({ tolerance: 999, gap: -4, mode: 'nope' as never });
         expect(h.get().bucketStyle).toMatchObject({ tolerance: 255, gap: 0, mode: 'auto' });
-        h.get().setDrafterStyle({ step: 7 as never, base: 370, penMm: 0.5 });
-        expect(h.get().drafterStyle).toMatchObject({ step: 15, base: 10, penMm: 0.5 });
+        h.get().setGeometryStyle({ step: 7 as never, base: 370, penMm: 0.5 });
+        expect(h.get().geometryStyle).toMatchObject({ step: 15, base: 10, penMm: 0.5 });
+        h.get().setGeometryStyle({ instrument: 'ruler' as never, scaleTickMm: 3 as never });
+        expect(h.get().geometryStyle).toMatchObject({ instrument: 'drafter', scaleTickMm: 1 });
         h.get().setLassoStyle({ match: 'contain' });
         expect(h.get().lassoStyle.match).toBe('contain');
         h.get().setSprayStyle({ size: 9999, flow: 0 });
@@ -188,24 +190,99 @@ describe('Lasso', () => {
     });
 });
 
-describe('Drafter', () => {
+describe('Geometry › Drafter', () => {
     it('draws a technical-pen line, a dashed construction line and a measured dimension', () => {
         const { h, canvas } = setup();
-        expect(h.get().drafterLine({ x: 0, y: 0 }, { x: 100, y: 0 })).toBe(true);
+        expect(
+            h.get().geometryDraw([
+                { x: 0, y: 0 },
+                { x: 100, y: 0 },
+            ]),
+        ).toBe(true);
         const line = canvas.getObjects()[0] as fabric.Path;
         expect(line.strokeWidth).toBeCloseTo((0.35 * 96) / 25.4);
-        h.get().setDrafterStyle({ mode: 'construction' });
-        h.get().drafterLine({ x: 0, y: 0 }, { x: 0, y: 50 });
+        h.get().setGeometryStyle({ mode: 'construction' });
+        h.get().geometryDraw([
+            { x: 0, y: 0 },
+            { x: 0, y: 50 },
+        ]);
         expect((canvas.getObjects()[1] as fabric.Path).strokeDashArray?.length).toBe(2);
-        h.get().setDrafterStyle({ mode: 'dimension' });
-        h.get().drafterLine({ x: 0, y: 0 }, { x: (25.4 * 96) / 25.4, y: 0 }); // 25.4 mm
+        h.get().setGeometryStyle({ mode: 'dimension' });
+        h.get().geometryDraw([
+            { x: 0, y: 0 },
+            { x: (25.4 * 96) / 25.4, y: 0 },
+        ]); // 25.4 mm
         const dim = canvas.getObjects()[2] as fabric.Group;
         expect((dim as unknown as { name: string }).name).toBe('Dimension');
         const label = dim
             .getObjects()
             .find((o) => o instanceof fabric.FabricText) as fabric.FabricText;
         expect(label.text).toBe('25.4 mm');
-        expect(h.get().drafterLine({ x: 1, y: 1 }, { x: 1, y: 1 })).toBe(false);
+        expect(
+            h.get().geometryDraw([
+                { x: 1, y: 1 },
+                { x: 1, y: 1 },
+            ]),
+        ).toBe(false);
+    });
+});
+
+describe('Geometry › Scale, Set square, Protractor, Compass', () => {
+    it('Scale and Set square draw a plain line in the pen width (never a dimension)', () => {
+        const { h, canvas } = setup();
+        h.get().setGeometryStyle({ instrument: 'scale', mode: 'dimension', penMm: 0.5 });
+        h.get().geometryDraw([
+            { x: 0, y: 0 },
+            { x: 100, y: 0 },
+        ]);
+        const line = canvas.getObjects()[0] as fabric.Path;
+        expect((line as unknown as { name: string }).name).toBe('Line');
+        expect(line.strokeWidth).toBeCloseTo((0.5 * 96) / 25.4);
+    });
+
+    it('Protractor: one Angle group with both arms, the arc and the degrees', () => {
+        const { h, canvas } = setup();
+        h.get().setGeometryStyle({ instrument: 'protractor' });
+        const ok = h.get().geometryDraw(
+            [
+                { x: 0, y: 0 },
+                { x: 100, y: 0 },
+                { x: 0, y: 100 },
+            ],
+            90,
+        );
+        expect(ok).toBe(true);
+        const g = canvas.getObjects()[0] as fabric.Group;
+        expect((g as unknown as { name: string }).name).toBe('Angle');
+        const label = g
+            .getObjects()
+            .find((o) => o instanceof fabric.FabricText) as fabric.FabricText;
+        expect(label.text).toBe('90°');
+    });
+
+    it('Compass: a circle around the first point; Arc mode an open arc path', () => {
+        const { h, canvas } = setup();
+        h.get().setGeometryStyle({ instrument: 'compass' });
+        h.get().geometryDraw([
+            { x: 10, y: 10 },
+            { x: 40, y: 50 },
+        ]);
+        const circle = canvas.getObjects()[0] as fabric.Circle;
+        expect(circle).toBeInstanceOf(fabric.Circle);
+        expect(circle.radius).toBeCloseTo(50);
+        expect(circle.getCenterPoint()).toMatchObject({ x: 10, y: 10 });
+        h.get().setGeometryStyle({ compass: 'arc' });
+        h.get().geometryDraw(
+            [
+                { x: 0, y: 0 },
+                { x: 50, y: 0 },
+                { x: 0, y: 50 },
+            ],
+            90,
+        );
+        const arc = canvas.getObjects()[1] as fabric.Path;
+        expect((arc as unknown as { name: string }).name).toBe('Arc');
+        expect(arc.fill).toBeNull();
     });
 });
 

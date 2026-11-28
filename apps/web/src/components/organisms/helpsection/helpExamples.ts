@@ -1071,14 +1071,17 @@ export const HELP_EXAMPLES: Record<string, HelpExample[]> = {
         },
     ],
 
-    drafter: [
+    geometry: [
         {
             id: 'bracket-drawing',
             title: 'Draw a bracket with dimensions',
             brief: 'Square lines at exact angles, then measure them like a technical drawing.',
             icon: 'drafter',
             steps: [
-                s('Press `D`, set Angle step to 90° and Pen width to 0.5 mm', 'Drafter (`D`)'),
+                s(
+                    'Press `D` (Geometry › Drafter), set Angle step to 90° and Pen width to 0.5 mm',
+                    'Drafter (`D`)',
+                ),
                 s(
                     'Drag the base, then start the upright on its end (it snaps there)',
                     'Drag',

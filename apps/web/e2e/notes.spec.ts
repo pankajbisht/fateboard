@@ -17,9 +17,23 @@ async function clientOf(editor: Editor, x: number, y: number) {
     return { x: r!.left + x * k, y: r!.top + y * k };
 }
 
-async function dropNote(editor: Editor, at: { x: number; y: number }, text: string) {
+/**
+ * `where` runs once the Note tool is on and the canvas has settled: picking a tool closes an open panel
+ * (e.g. Shapes after `addShape`), which slides the canvas, so a point measured before would be stale.
+ */
+async function dropNote(
+    editor: Editor,
+    where: (box: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+    }) => Promise<{ x: number; y: number }> | { x: number; y: number },
+    text: string,
+) {
     await editor.page.keyboard.press('n');
     await expect.poll(() => editor.state('activeTool')).toBe('note');
+    const at = await where(await editor.settledCanvasBox());
     await editor.page.mouse.click(at.x, at.y);
     const field = editor.page.getByRole('textbox', { name: 'Note text' });
     await expect(field).toBeFocused();
@@ -34,8 +48,11 @@ test('N drops a note; it survives undo / redo and a reload; the panel finds and 
 }) => {
     await editor.addShape('Rectangle'); // bounds(0) needs an object; the note goes on empty board
     await editor.clickEmptyCanvas();
-    const box = await editor.settledCanvasBox();
-    await dropNote(editor, { x: box.x + 40, y: box.y + box.height - 40 }, 'Check the margin');
+    await dropNote(
+        editor,
+        (box) => ({ x: box.x + 40, y: box.y + box.height - 40 }),
+        'Check the margin',
+    );
 
     const pin = page.getByRole('button', { name: 'Note 1: Check the margin' });
     await expect(pin).toBeVisible();
@@ -68,8 +85,11 @@ test('N drops a note; it survives undo / redo and a reload; the panel finds and 
 test('a note on an object follows it; a free pin can be dragged', async ({ editor, page }) => {
     await editor.addShape('Rectangle');
     const b = await page.evaluate(() => window.__fateboard!.bounds(0));
-    const centre = await clientOf(editor, b.left + b.width / 2, b.top + b.height / 2);
-    await dropNote(editor, centre, 'Make it red');
+    await dropNote(
+        editor,
+        () => clientOf(editor, b.left + b.width / 2, b.top + b.height / 2),
+        'Make it red',
+    );
     const [linked] = await notes(editor);
     expect(linked!.objectId).toBeTruthy();
 
@@ -94,7 +114,7 @@ test('a note on an object follows it; a free pin can be dragged', async ({ edito
 
     // a free note on empty board (the Note tool is still on), dragged 60 px right
     const box = await editor.settledCanvasBox();
-    await dropNote(editor, { x: box.x + 40, y: box.y + box.height - 40 }, 'Free');
+    await dropNote(editor, () => ({ x: box.x + 40, y: box.y + box.height - 40 }), 'Free');
     const free = page.getByRole('button', { name: 'Note 2: Free' });
     // measured with the pointer off the pin: a hovered pin is scaled to 110% about its centre, so its box starts
     // 1.4 px further left (failed on CI Firefox by exactly that when the hover had applied at one measurement only)
@@ -129,8 +149,11 @@ for (const scheme of ['light', 'dark'] as const) {
             await expect(page.locator('html')).toHaveClass(/\bdark\b/);
         }
         await editor.openPanel('Notes');
-        const box = await editor.settledCanvasBox();
-        await dropNote(editor, { x: box.x + box.width / 2, y: box.y + box.height / 2 }, 'Axe me');
+        await dropNote(
+            editor,
+            (box) => ({ x: box.x + box.width / 2, y: box.y + box.height / 2 }),
+            'Axe me',
+        );
         await page.getByRole('button', { name: 'Note 1: Axe me' }).click();
         const dialog = page.getByRole('dialog', { name: 'Note 1' });
         await dialog.getByRole('textbox', { name: 'Add checklist item' }).fill('An item');

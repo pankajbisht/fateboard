@@ -1,34 +1,20 @@
 /**
- * Drafter (D): a drafting machine on the board. Drag from a point: the line snaps to the protractor head's
- * steps (Alt = free), parallel / perpendicular lock to the reference line (the selected line when the tool
- * starts, then the last line drawn), starts snap to line ends nearby, and the head shows the length (document
- * unit) and the angle (counter-clockwise, like a protractor) while you drag. Lines use ISO technical pen
- * widths; "dimension" adds a measured dimension line, "construction" a light dashed guide line.
+ * Geometry tool › Drafter: a drafting machine on the board. Drag from a point: the line snaps to the protractor
+ * head's steps (Alt = free), parallel / perpendicular lock to the reference line (the selected line when the
+ * tool starts, then the last line drawn), starts snap to line ends nearby, and the head shows the length
+ * (document unit) and the angle (counter-clockwise, like a protractor) while you drag. Lines use ISO technical
+ * pen widths; "dimension" adds a measured dimension line, "construction" a light dashed guide line. The pointer
+ * flow (shared by every instrument) is ./geometryTool.ts.
  */
 import * as fabric from 'fabric';
-import {
-    angleOf,
-    dimensionGeometry,
-    drafterEnd,
-    formatLength,
-    mmToPx,
-    protractorAngle,
-} from '@/lib/canvas/drafter';
+import { dimensionGeometry, formatLength, mmToPx, protractorAngle } from '@/lib/canvas/drafter';
 import type { Unit } from '@/lib/units';
-import {
-    isPrimary,
-    keyIsNotOurs,
-    scenePointOf,
-    withSceneContext,
-    type Pointer,
-} from '../drawingTools/shared';
-import { isHelperObject } from './bucketFill';
-import type { DrafterStyle } from './paintToolStyles';
+import { withSceneContext } from '../drawingTools/shared';
+import type { GeometryStyle } from './paintToolStyles';
 
 type Pt = { x: number; y: number };
 type Obj = fabric.FabricObject & Record<string, unknown>;
-const SNAP_PX = 8;
-const CONSTRUCTION = '#0ea5e9';
+export const CONSTRUCTION = '#0ea5e9';
 
 const seg = (p: Pt, q: Pt) => `M ${p.x} ${p.y} L ${q.x} ${q.y}`;
 
@@ -58,7 +44,7 @@ export function lineEnds(o: Obj): [Pt, Pt] | null {
 export function drafterObject(
     a: Pt,
     b: Pt,
-    style: DrafterStyle,
+    style: Pick<GeometryStyle, 'mode' | 'penMm'>,
     color: string,
     unit: Unit,
 ): fabric.FabricObject {
@@ -105,24 +91,22 @@ export function drafterObject(
     return line;
 }
 
-export type DrafterDeps = {
-    style: () => DrafterStyle;
+/** What the overlays read while a stroke is drawn. */
+export type OverlayDeps = {
     color: () => string;
     unit: () => Unit;
     screen: () => number;
-    onLine: (a: Pt, b: Pt) => void;
-    onEscape: () => void;
 };
 
 /** Paints the protractor head, the preview line and the reading on the top canvas. */
-function paintHead(
+export function paintHead(
     canvas: fabric.Canvas,
     a: Pt,
     b: Pt,
     angle: number,
     length: number,
-    style: DrafterStyle,
-    deps: DrafterDeps,
+    style: GeometryStyle,
+    deps: OverlayDeps,
 ) {
     withSceneContext(canvas, (ctx) => {
         const k = 1 / Math.max(deps.screen(), 1e-6);
@@ -179,101 +163,4 @@ function paintHead(
         ctx.fillStyle = '#ffffff';
         ctx.fillText(text, x + 5 * k, y + 13 * k);
     });
-}
-
-/** Listens on the canvas while the Drafter is active; returns the detach function. */
-export function attachDrafter(canvas: fabric.Canvas, deps: DrafterDeps): () => void {
-    let start: Pt | null = null;
-    let ends: Pt[] = [];
-    let reference: number | null = null;
-    // one repaint per animation frame (mouse:move can fire faster)
-    let frame = 0;
-    let pending: (() => void) | null = null;
-    const schedule = (paint: () => void) => {
-        pending = paint;
-        if (!frame)
-            frame = requestAnimationFrame(() => {
-                frame = 0;
-                pending?.();
-                pending = null;
-            });
-    };
-    const active = canvas.getActiveObject() as Obj | undefined;
-    const ref = active && lineEnds(active);
-    if (ref) reference = angleOf(ref[0], ref[1]);
-
-    const snap = (p: Pt) => {
-        const r = SNAP_PX / Math.max(deps.screen(), 1e-6);
-        let best: Pt = p;
-        let bestD = r;
-        for (const e of ends) {
-            const d = Math.hypot(e.x - p.x, e.y - p.y);
-            if (d < bestD) {
-                best = e;
-                bestD = d;
-            }
-        }
-        return best;
-    };
-    const endAt = (from: Pt, raw: Pt, e: Pointer['e']) => {
-        const style = deps.style();
-        const lock =
-            style.mode === 'parallel'
-                ? reference
-                : style.mode === 'perpendicular' && reference !== null
-                  ? reference + 90
-                  : null;
-        return drafterEnd(from, raw, {
-            step: style.step,
-            base: style.base,
-            free: !!e?.altKey,
-            lockAngle: lock,
-        });
-    };
-    const onDown = (opt: Pointer) => {
-        const p = scenePointOf(opt);
-        if (!isPrimary(opt) || !p) return;
-        ends = (canvas.getObjects() as Obj[])
-            .filter((o) => !isHelperObject(o) && o.visible !== false)
-            .flatMap((o) => lineEnds(o) ?? []);
-        start = snap(p);
-    };
-    const onMove = (opt: Pointer) => {
-        const p = scenePointOf(opt);
-        if (!start || !p) return;
-        const from = start;
-        const r = endAt(from, p, opt.e);
-        schedule(() => paintHead(canvas, from, r.end, r.angle, r.length, deps.style(), deps));
-    };
-    const onUp = (opt: Pointer) => {
-        const p = scenePointOf(opt);
-        const a = start;
-        start = null;
-        pending = null;
-        withSceneContext(canvas, () => undefined);
-        if (!a || !p) return;
-        const r = endAt(a, p, opt.e);
-        if (r.length * deps.screen() < 3) return;
-        deps.onLine(a, r.end);
-        reference = r.angle;
-    };
-    const onKey = (e: KeyboardEvent) => {
-        if (e.key !== 'Escape' || keyIsNotOurs(e)) return;
-        start = null;
-        pending = null;
-        withSceneContext(canvas, () => undefined);
-        deps.onEscape();
-    };
-    const offs = [
-        canvas.on('mouse:down', onDown as never),
-        canvas.on('mouse:move', onMove as never),
-        canvas.on('mouse:up', onUp as never),
-    ];
-    window.addEventListener('keydown', onKey);
-    return () => {
-        offs.forEach((off) => off());
-        window.removeEventListener('keydown', onKey);
-        if (frame) cancelAnimationFrame(frame);
-        withSceneContext(canvas, () => undefined);
-    };
 }

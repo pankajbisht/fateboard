@@ -318,3 +318,24 @@ test('Pencil › Smart shape: a rough circle becomes one clean circle path, one 
     await page.keyboard.press('ControlOrMeta+z');
     await expect.poll(() => count(editor)).toBe(0);
 });
+
+test('BUG-286: Geometry and the Shapes panel are never lit together on the rail', async ({
+    editor,
+    page,
+}) => {
+    const rail = page.getByRole('navigation', { name: 'Editor tools and panels' });
+    const btn = (name: string) => rail.getByRole('button', { name, exact: true });
+
+    await page.keyboard.press('d');
+    await expect.poll(() => tool(editor)).toBe('geometry');
+    await btn('Shapes').click(); // opening Shapes leaves Geometry for Select
+    await expect.poll(() => tool(editor)).toBe('select');
+    await expect(btn('Shapes')).toHaveAttribute('aria-pressed', 'true');
+    await expect(btn('Geometry')).toHaveAttribute('aria-pressed', 'false');
+
+    await editor.clickEmptyCanvas(); // keys go to the board, not the panel
+    await page.keyboard.press('d'); // Geometry again closes the panel
+    await expect.poll(() => tool(editor)).toBe('geometry');
+    await expect(btn('Geometry')).toHaveAttribute('aria-pressed', 'true');
+    await expect(btn('Shapes')).toHaveAttribute('aria-pressed', 'false');
+});

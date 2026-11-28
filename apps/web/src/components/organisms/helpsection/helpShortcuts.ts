@@ -90,7 +90,7 @@ const CATEGORY_BY_ID: Record<string, HelpShortcutCategory> = {
     'tool-spray': 'Tools',
     'tool-bucket': 'Tools',
     'tool-lasso': 'Tools',
-    'tool-drafter': 'Tools',
+    'tool-geometry': 'Tools',
     'tool-note': 'Tools',
     'tool-brush': 'Tools',
     newfile: 'File',
