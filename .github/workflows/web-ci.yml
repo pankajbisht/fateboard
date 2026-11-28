@@ -2,11 +2,11 @@
 # Pipelines are separate per app: each app has its own entry workflow (`<app>-ci.yml`) and stages
 # (`_<app>-*.yml`) and only runs for changes to that app or to shared files. GitHub reads workflows only from the
 # repo-root .github/; every `run:` step of this pipeline works inside apps/web (its own package.json + lockfile).
-# Check names read "<Stage> / <Job>", e.g. "Quality / Static analysis", "Test / E2E (firefox, shard 1/2)".
+# Check names read "<Stage> / <Job>", e.g. "Quality / Static analysis", "Test / E2E (firefox, shard 1/3)".
 #
 #   Detect changes ─┬─> Quality / Static analysis ° ─┐
-#                   ├─> Quality / Unit tests ° ───────┤
-#                   ├─> Test / E2E (4 shards) * ──────┤
+#                   ├─> Quality / Unit tests (3) ° ───┤
+#                   ├─> Test / E2E (6 shards) * ──────┤
 #                   ├─> Build / Web bundle ° ─────────┼─> CI passed (required) ─> Deploy / GitHub Pages
 #                   └─> Build / Container image * ────┘                           (push to main only)
 #
