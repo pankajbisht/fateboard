@@ -20,7 +20,21 @@ import { renderScene } from '../render/renderScene';
 import { newScene, parseScene } from '../schema/parse';
 import type { Scene } from '../schema/types';
 
-const body = (r: number) => fromRecipe(RECIPES[r], `r${r}`).body;
+// the solver is deterministic: each body, skeleton and exchange is built once for the whole file (docs/TESTING.md)
+const once = <K, V>(make: (k: K) => V) => {
+    const cache = new Map<K, V>();
+    return (k: K) => {
+        if (!cache.has(k)) cache.set(k, make(k));
+        return cache.get(k)!;
+    };
+};
+const body = once((r: number) => fromRecipe(RECIPES[r], `r${r}`).body);
+const skeleton = once((r: number) => buildSkeleton(body(r)));
+const solved = once((key: string) => {
+    const [id, a, b] = key.split('|');
+    return solveExchange(body(Number(a)), body(Number(b)), id);
+});
+const solve = (id: string, a: number, b: number) => solved(`${id}|${a}|${b}`);
 const actor = (id: string, r: number, x: number) => ({
     id,
     character: fromRecipe(RECIPES[r], id),
@@ -45,8 +59,8 @@ describe('exchanges', () => {
     it('every exchange names real moves and solves for every pair of builds', () => {
         for (const x of EXCHANGES.all)
             for (const [a, b] of [...SIMILAR, [0, 0] as [number, number]])
-                expect(solveExchange(body(a), body(b), x.id), `${x.id} ${a}/${b}`).not.toBeNull();
-    });
+                expect(solve(x.id, a, b), `${x.id} ${a}/${b}`).not.toBeNull();
+    }, 30_000); // every exchange × 5 pairs of builds: about 2.5 s with coverage on a fast machine
 
     // fists 6 cm, knees and kicks 9 cm, elbows 12 cm (an elbow only reaches an upper arm past the shoulder: a
     // taller opponent's jaw is at the edge of it)
@@ -54,16 +68,16 @@ describe('exchanges', () => {
     it('lands the strike on the defender for similar heights, the two never overlapping', () => {
         for (const x of EXCHANGES.all)
             for (const [a, b] of SIMILAR) {
-                const r = solveExchange(body(a), body(b), x.id)!;
+                const r = solve(x.id, a, b)!;
                 const limb = moveById(x.attack)!.strike?.limb ?? 'hand';
                 expect(r.error, `${x.id} ${a}/${b}`).toBeLessThanOrEqual(LIMIT[limb]);
-                const sa = buildSkeleton(body(a));
-                const sb = buildSkeleton(body(b));
+                const sa = skeleton(a);
+                const sb = skeleton(b);
                 expect(r.gap).toBeGreaterThanOrEqual(
                     (sa.size.chestDepth + sb.size.chestDepth) * 0.5,
                 );
             }
-    });
+    }, 30_000); // reuses the solves above; alone it solves them itself
 
     it('a slip or duck takes the head off the line: the punch passes where it was', () => {
         for (const id of ['jab-slip', 'cross-slip', 'hook-duck']) {
