@@ -164,8 +164,8 @@ there). The web app's pipeline:
 | Workflow | Job (check name) |
 |---|---|
 | `web-ci.yml` | entry point: detects changes and wires the stages below; `CI passed` is the required check |
-| `_web-quality.yml` | `Quality / Static analysis` (guardrails, audit, format, lint, type-check), `Quality / Unit tests` |
-| `_web-e2e.yml` | `Test / E2E` (Chromium + Firefox, 2 shards each) |
+| `_web-quality.yml` | `Quality / Static analysis` (guardrails, audit, format, lint, type-check), `Quality / Unit tests` (3 shards, then one coverage merge) |
+| `_web-e2e.yml` | `Test / E2E` (Chromium + Firefox, 3 shards each, then `E2E report`: one merged HTML report) |
 | `_web-build.yml` | `Build / Web bundle` (uploads the GitHub Pages artifact) |
 | `_web-image.yml` | `Build / Container image` (build + smoke test) |
 | `_web-deploy.yml` | `Deploy / GitHub Pages` (push to `main` only, after `CI passed`), then a live smoke test: `/`, `/draw`, `/help`, `/gallery` answer 200, an unknown page 404, and every JS / CSS file `/draw` loads answers 200 (retries for 3 min; red job = check the site, roll back by reverting the merge) |

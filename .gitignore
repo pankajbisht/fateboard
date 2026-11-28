@@ -28,6 +28,8 @@ test-results
 playwright-report
 blob-report
 coverage
+# Vitest shard blob reports (npm run test:shard, merged by npm run test:merge)
+.vitest
 
 # Dead code kept locally for reference, never pushed (see README "Dead code")
 deadcode/
