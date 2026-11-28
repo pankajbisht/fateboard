@@ -1,3 +1,4 @@
+// @vitest-environment node
 import * as fabric from 'fabric';
 import { describe, expect, it } from 'vitest';
 import { finishFreehand } from '../finishFreehand';

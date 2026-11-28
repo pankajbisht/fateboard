@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The manga redraw (feat/character-manga-redraw, skill fate-character §3): the neck's jaw shadow in the face's shade,
  * strapless and sleeveless tops, lapels below the neck opening, the skirt's detail, and the hips contour.

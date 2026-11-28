@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 
 import { createDialogSlice, type DialogSlice } from '@/store/slices/createDialogSlice';

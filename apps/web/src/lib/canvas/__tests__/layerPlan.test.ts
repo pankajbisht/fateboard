@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Render plan for document layers: which layers draw straight, which in a buffer, which are clipped. */
 import { describe, expect, it } from 'vitest';
 import { makeLayer, type DocLayer } from '../docLayers';

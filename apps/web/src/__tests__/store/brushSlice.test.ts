@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest';
 import { createBrushSlice } from '@/store/slices/createBrushSlice';
 import { createHarness } from '@/test/sliceHarness';

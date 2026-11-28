@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Character Studio phase 1: skeleton proportions, FK, two-bone IK, joint limits, mirror, blend, keyframe
  * export and foot contact (docs/CHARACTER_STUDIO.md §5).

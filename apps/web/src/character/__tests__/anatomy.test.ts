@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The manga anatomy table (docs/CHARACTER_STUDIO.md): the numbers were measured from a reference figure drawing of a
  * man and a woman, as a share of the standing height H. Every check allows 15 % either way, so a change that moves the

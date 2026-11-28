@@ -15,8 +15,9 @@ export default defineConfig({
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
     workers: process.env.CI ? 2 : undefined,
+    // CI runs in shards (.github/workflows/_web-e2e.yml): each writes a blob report, merged into one HTML report
     reporter: process.env.CI
-        ? [['github'], ['html', { open: 'never' }]]
+        ? [['github'], ['blob']]
         : [['list'], ['html', { open: 'never' }]],
     timeout: 30_000,
     expect: { timeout: 5_000 },

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The Help page must describe the editor that ships. These guards fail when a new panel has no
  * topic, a link points nowhere, or a claim about something that does not exist comes back.

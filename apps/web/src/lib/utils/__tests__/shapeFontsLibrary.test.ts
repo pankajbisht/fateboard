@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Fonts the app loads in index.html must also be pickable in the font list. */
 import { describe, expect, it } from 'vitest';
 import { FONT_GROUPS } from '../shapeFonts';

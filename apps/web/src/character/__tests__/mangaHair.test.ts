@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Manga hair (docs/CHARACTER_STUDIO.md, reference pass phase 5): pointed locks instead of a smooth cap. The fringe is
  * a row of pointed locks over the forehead, side locks fall before the ears, spikes come to a point; every piece is a

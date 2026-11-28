@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * GIF export (owner request 2026-11-17, from the "Anime Studio" brief): an in-house GIF89a encoder.
  * Every file is read back with an independent decoder (decodeGif.ts), so the bytes are what is tested.

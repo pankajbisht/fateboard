@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * GIF export end to end without a browser canvas: a fake scene (a square that moves with the playhead)
  * goes through the two passes and the real encoder (inline: jsdom has no Worker), and the file is read

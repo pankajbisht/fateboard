@@ -1,3 +1,4 @@
+// @vitest-environment node
 /// <reference types="node" />
 /**
  * Icons are Lucide (`atoms/Icon.tsx`). Font Awesome (CDN + npm) was removed; it must not come back.

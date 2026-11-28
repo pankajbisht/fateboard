@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Brand theme (docs/DESIGN.md). Colors come from the logo (public/fate.svg):
  * gradient #22a7ff -> #0a60d6, tint #e0f0ff, pencil-dot orange #ff7f0e.

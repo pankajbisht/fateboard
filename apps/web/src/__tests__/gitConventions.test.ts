@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Git conventions used by skill `fate-ship` (docs/CONVENTIONS.md "Git: branches and commits"): branch names,
  * Conventional Commit messages, and the staged-files check that runs before every commit. The skill calls

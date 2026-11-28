@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Every form control in the app comes from the shared atoms / molecules (docs/DESIGN.md "Controls"):
  * Input / Textarea / Select / Switch / SegmentedControl / Chip. No second look.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** BUG-065: the editor chrome (top toolbars, header, footer) uses the shared Button / IconButton only. */
 import { describe, expect, it } from 'vitest';
 

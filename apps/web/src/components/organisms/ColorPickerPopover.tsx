@@ -2,7 +2,7 @@ import { placeBeside, sizeOf } from '@/lib/placeBeside';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useStore } from '@store';
-import { hexToRgb, hsvToRgb, normalizeHex, rgbToHex, rgbToHsv, type HSV } from '@/lib/colorMath';
+import { normalizeHex } from '@/lib/colorMath';
 import { Icon } from '../atoms/Icon';
 import { IconButton } from '../atoms/IconButton';
 import { Swatch } from '../atoms/Swatch';
@@ -11,6 +11,8 @@ import { ColorHarmonies } from '../molecules/ColorHarmonies';
 import { SegmentedControl } from '../molecules/SegmentedControl';
 import { HsvSquare } from '../molecules/color/HsvSquare';
 import { HsvWheel } from '../molecules/color/HsvWheel';
+import { useHsvColor } from '../molecules/color/useHsvColor';
+import { DEFAULT_WHEEL_HARMONY, type WheelHarmony } from '../molecules/color/wheelHarmony';
 
 type Props = {
     /** Element the popover opens next to (left of it); null = top right corner. */
@@ -24,8 +26,6 @@ type Props = {
 };
 
 const FALLBACK = '#000000';
-const toHsv = (hex: string): HSV => rgbToHsv(hexToRgb(hex) ?? { r: 0, g: 0, b: 0 });
-const hsvHex = (hsv: HSV) => rgbToHex(hsvToRgb(hsv));
 
 /**
  * In-app color picker (replaces the browser's own dialog, which looked different on every OS):
@@ -35,53 +35,56 @@ const hsvHex = (hsv: HSV) => rgbToHex(hsvToRgb(hsv));
  */
 export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) {
     const recentColors = useStore((s) => s.recentColors) as string[] | undefined;
-    const start = normalizeHex(color) ?? FALLBACK;
-    const [original] = useState(start);
-    const [hsv, setHsv] = useState<HSV>(() => toHsv(start));
+    const placeLater = useRef<(() => void) | null>(null);
+    const { hsv, hex, preview, emit, emitHex, dragging, rootProps } = useHsvColor(
+        color,
+        onChange,
+        FALLBACK,
+        () => {
+            const later = placeLater.current;
+            placeLater.current = null;
+            later?.();
+        },
+    );
+    const [original] = useState(() => normalizeHex(color) ?? FALLBACK);
     const [view, setView] = useState<'square' | 'wheel'>('square');
-    const hex = hsvHex(hsv);
+    const [harmony, setHarmony] = useState<WheelHarmony>(DEFAULT_WHEEL_HARMONY);
 
     const ref = useRef<HTMLDivElement | null>(null);
-    const lastSent = useRef(start);
     const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
-    const emit = (next: HSV) => {
-        setHsv(next);
-        const out = hsvHex(next);
-        if (out !== lastSent.current) {
-            lastSent.current = out;
-            onChange(out);
-        }
-    };
-    const emitHex = (h: string) => {
-        const next = toHsv(h);
-        // gray / black / white have no hue: keep the current one
-        emit(next.s === 0 || next.v === 0 ? { ...next, h: hsv.h } : next);
-    };
-
-    // outside change (palette click while open): follow it, unless it is our own echo
-    useEffect(() => {
-        const n = normalizeHex(color);
-        if (!n || n === lastSent.current) return;
-        lastSent.current = n;
-        setHsv((cur) => {
-            const next = toHsv(n);
-            return next.s === 0 || next.v === 0 ? { ...next, h: cur.h } : next;
-        });
-    }, [color]);
-
-    // beside the anchor (left of the dock; above it on a phone bar), again when its height changes
-    // (harmony rows). Until placed: opacity 0 (not visibility:hidden, which cannot take focus).
+    // beside the anchor (left of the dock; above it on a phone bar). Until placed: opacity 0 (not
+    // visibility:hidden, which cannot take focus). When its height changes (harmony rows, Square / Wheel)
+    // it keeps its place and only moves up if it would now leave the window; never during a drag (the
+    // control would slide under the pointer and the drag would chase it: the flicker).
     useLayoutEffect(() => {
         const el = ref.current;
         if (!el) return;
         if (!anchor) return setPos({ top: 8, left: 8 });
         const place = () => setPos(placeBeside(anchor.getBoundingClientRect(), sizeOf(el)));
+        const fit = () => {
+            if (dragging.current) {
+                placeLater.current = fit;
+                return;
+            }
+            setPos((cur) => {
+                if (!cur) return placeBeside(anchor.getBoundingClientRect(), sizeOf(el));
+                const top = Math.max(
+                    8,
+                    Math.min(cur.top, window.innerHeight - el.offsetHeight - 8),
+                );
+                return top === cur.top ? cur : { ...cur, top };
+            });
+        };
         place();
-        const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(place);
+        const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(fit);
         ro?.observe(el);
-        return () => ro?.disconnect();
-    }, [anchor]);
+        window.addEventListener('resize', place);
+        return () => {
+            ro?.disconnect();
+            window.removeEventListener('resize', place);
+        };
+    }, [anchor, dragging]);
 
     useEffect(() => {
         ref.current?.querySelector<HTMLElement>('[role="slider"]')?.focus();
@@ -130,6 +133,7 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
             ref={ref}
             role="dialog"
             aria-label="Custom color"
+            {...rootProps}
             onKeyDown={(e) => {
                 e.stopPropagation(); // Delete / arrows / letters here must not reach the canvas
                 if (e.key === 'Escape' && !e.defaultPrevented) {
@@ -137,7 +141,7 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
                     onClose(true);
                 }
             }}
-            className="fixed z-[9999] max-h-[calc(100vh-16px)] w-72 overflow-y-auto rounded-lg border border-line bg-surface p-3 shadow-lg"
+            className="fixed z-[9999] max-h-[calc(100vh-16px)] w-80 overflow-y-auto rounded-lg border border-line bg-surface p-3 shadow-lg [scrollbar-gutter:stable]"
             style={pos ?? { top: 8, left: 8, opacity: 0 }}
         >
             <div className="mb-2 flex items-center justify-between">
@@ -165,15 +169,17 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
                 <HsvWheel
                     hsv={hsv}
                     hex={hex}
-                    onPreview={setHsv}
+                    onPreview={preview}
                     onCommit={emit}
                     onPickHex={emitHex}
+                    harmony={harmony}
+                    onHarmony={setHarmony}
                 />
             ) : (
                 <HsvSquare
                     hsv={hsv}
                     hex={hex}
-                    onPreview={setHsv}
+                    onPreview={preview}
                     onCommit={emit}
                     leading={
                         hasEyeDropper && (
@@ -189,17 +195,31 @@ export function ColorPickerPopover({ anchor, color, onChange, onClose }: Props) 
                 />
             )}
 
-            {/* original | new */}
-            <div className="mt-3 flex h-7 overflow-hidden rounded-md border border-line-strong">
+            {/* original -> new: small labelled swatches; Original goes back */}
+            <div className="mt-3 flex items-center gap-2 text-[11px] text-ink-muted">
                 <button
                     type="button"
                     aria-label={`Original color ${original}`}
-                    title="Original (click to go back)"
+                    title="Go back to the original color"
                     onClick={() => emitHex(original)}
-                    className="flex-1 outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary-400"
-                    style={{ backgroundColor: original }}
-                />
-                <span aria-hidden title="New" className="flex-1" style={{ backgroundColor: hex }} />
+                    className="flex items-center gap-1.5 rounded-md px-1 py-0.5 outline-none hover:bg-surface-muted hover:text-ink focus-visible:ring-2 focus-visible:ring-primary-400"
+                >
+                    <span
+                        aria-hidden
+                        className="size-5 rounded border border-line-strong"
+                        style={{ backgroundColor: original }}
+                    />
+                    Original
+                </button>
+                <Icon name="chevron-right" aria-hidden />
+                <span className="flex items-center gap-1.5 px-1 text-ink">
+                    <span
+                        aria-hidden
+                        className="size-5 rounded border border-line-strong"
+                        style={{ backgroundColor: hex }}
+                    />
+                    New
+                </span>
             </div>
 
             <ColorFormatFields hex={hex} hsv={hsv} onHex={emitHex} onHsv={emit} />

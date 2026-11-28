@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-189: the transform panel (X Y W H R) and Flip must not move, resize, rotate or mirror a
  * locked object or a locked multi-selection; the panel shows the object's real values again.

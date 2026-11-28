@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-014 / BUG-101 / BUG-016 + CLAUDE.md never-do: only the canvas, pages and undo slices load a
  * document into the canvas (persist lock, history, autosave), and never with the Fabric 5 callback form

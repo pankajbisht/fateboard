@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** BUG-022: fitting / resetting the whiteboard view never wipes the page colour. */
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { useStore } from '@store';

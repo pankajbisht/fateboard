@@ -684,7 +684,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         summary:
             'The palette strip, custom colors, harmonies, color formats and what gets painted.',
         keywords:
-            'swatch palette eyedropper hex recent fill stroke picker harmony complementary analogous triadic split monochromatic rgb hsl hsb cmyk copy',
+            'swatch palette eyedropper hex recent fill stroke picker harmony complementary analogous triadic triad split square compound shades monochromatic rgb hsl hsb cmyk copy',
         sections: [
             {
                 title: 'Paint an object',
@@ -698,13 +698,13 @@ export const HELP_TOPICS: HelpTopic[] = [
                 items: [
                     'All colors opens the full grid',
                     'Custom color opens the picker: drag in the square, type a hex value, or use its eyedropper to pick a color from anywhere on the screen (in browsers that support it)',
-                    'Wheel switches the picker to a color wheel: turn the hue on the ring, set saturation and brightness in the square inside, and pick a harmony (Complement, Analogous, Triad, Split) to see its colors on the ring; click one to use it',
+                    'Wheel switches the picker to a color wheel: turn the hue on the ring, set saturation and brightness in the square inside, and pick a harmony (Custom, Analogous, Complementary, Split complementary, Triad, Square, Compound, Shades, Monochromatic) to see its colors joined by lines on the ring (Shades and Monochromatic on the square); click one to use it, or drag a point on the ring to make your own Custom harmony',
                     'Recent colors keeps what you just used',
                 ],
             },
             {
                 title: 'Colors that go together',
-                text: 'The custom color picker and the Color harmony section of Fill & Shadow show the harmonies of the current color: Complementary (high contrast), Analogous (calm), Triadic (colorful but balanced), Split-complementary (contrast, less harsh) and Monochromatic (always safe). Click a color to use it.',
+                text: 'The custom color picker and the Color harmony section of Fill & Shadow show the harmonies of the current color: Analogous (calm), Complementary (high contrast), Split complementary (contrast, less harsh), Triad (colorful but balanced), Square (rich, four even hues), Compound (two close pairs, opposite), Shades (one hue, darker steps) and Monochromatic (always safe). Click a color to use it.',
             },
             {
                 title: 'Color formats',
@@ -1160,7 +1160,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         summary:
             'Solid colors, gradients you can drag on the object, color harmonies and soft shadows.',
         keywords:
-            'gradient linear radial color stop shadow drop opacity harmony complementary analogous triadic split monochromatic palette',
+            'gradient linear radial color stop shadow drop opacity harmony complementary analogous triadic triad split square compound shades monochromatic palette',
         open: { tab: 'appearance', label: 'Open Fill & Shadow' },
         sections: [
             {
@@ -1182,7 +1182,8 @@ export const HELP_TOPICS: HelpTopic[] = [
             {
                 title: 'Color harmony',
                 items: [
-                    'Shows the five color schemes of the fill color: Complementary, Analogous, Triadic, Split-complementary and Monochromatic',
+                    'A solid fill gets a color wheel at the top: turn the hue on the ring, set saturation and brightness in the square, pick a harmony from the small icons and click (or drag) its points',
+                    'Shows the eight color schemes of the fill color: Analogous, Complementary, Split complementary, Triad, Square, Compound, Shades and Monochromatic',
                     'Click a swatch to fill the selection with that color; the schemes stay put, so you can try them all',
                     'Gradient turns a scheme into the fill gradient, and the copy button copies its hex values',
                 ],

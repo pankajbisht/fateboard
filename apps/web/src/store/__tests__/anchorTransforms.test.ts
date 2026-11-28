@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Anchor (reference point) transforms - Settings: header origin selector.
  * Rule (Illustrator-style reference point): X/Y show the anchor; typing X/Y moves the anchor there;

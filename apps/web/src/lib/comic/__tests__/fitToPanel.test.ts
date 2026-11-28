@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Fitting a scene or picture into a comic panel (pure geometry). */
 import { describe, expect, it } from 'vitest';
 import { bestPanel, fitInto } from '../fitToPanel';

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Select all, arrow-key nudge and hold-Space pan: the store actions behind the keys. */
 import * as fabric from 'fabric';
 import { describe, expect, it, vi } from 'vitest';

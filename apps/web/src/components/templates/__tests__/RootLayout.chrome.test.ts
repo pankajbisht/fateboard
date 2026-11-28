@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-209: main.tsx no longer imports Fabric, so the editor's selection chrome is applied when the
  * store-backed RootLayout chunk loads, before any editor route can create a Fabric object.

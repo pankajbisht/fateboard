@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** A picture or scene in a comic panel is cut to that panel, in its own coordinates (2026-11-27). */
 import { describe, expect, it } from 'vitest';
 import { panelClipPolygon, type Mat } from '../panelClip';

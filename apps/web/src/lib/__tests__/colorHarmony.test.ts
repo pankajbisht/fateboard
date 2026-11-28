@@ -1,16 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { HARMONIES, harmonyColors, harmonyGradient, hasHue } from '../colorHarmony';
-import { hexToRgb, rgbToHsl } from '../colorMath';
+import { hexToRgb, rgbToHsl, rgbToHsv } from '../colorMath';
 
 const hue = (hex: string) => Math.round(rgbToHsl(hexToRgb(hex)!).h) % 360;
 
 describe('colorHarmony', () => {
-    it('lists the five schemes in order, each with a hint', () => {
+    it('lists the eight schemes in order, each with a hint', () => {
         expect(HARMONIES.map((h) => h.id)).toEqual([
-            'complementary',
             'analogous',
-            'triadic',
+            'complementary',
             'split-complementary',
+            'triadic',
+            'square',
+            'compound',
+            'shades',
             'monochromatic',
         ]);
         for (const h of HARMONIES) expect(h.hint).toBeTruthy();
@@ -22,6 +25,8 @@ describe('colorHarmony', () => {
         expect(harmonyColors(base, 'triadic')).toEqual(['#ff0000', '#00ff00', '#0000ff']);
         expect(harmonyColors(base, 'analogous').map(hue)).toEqual([330, 0, 30]);
         expect(harmonyColors(base, 'split-complementary').map(hue)).toEqual([0, 150, 210]);
+        expect(harmonyColors(base, 'square').map(hue)).toEqual([0, 90, 180, 270]);
+        expect(harmonyColors(base, 'compound').map(hue)).toEqual([0, 30, 180, 210]);
     });
 
     it('monochromatic: five distinct shades of one hue, including the base', () => {
@@ -37,6 +42,19 @@ describe('colorHarmony', () => {
         for (const h of harmonyColors('#2b7fff', 'monochromatic')) {
             expect(Math.abs(hue(h) - 216)).toBeLessThanOrEqual(2); // one hue (RGB rounding aside)
         }
+    });
+
+    it('shades: five brightness steps of one hue and saturation, dark -> light, base included', () => {
+        for (const base of ['#2b7fff', '#000000', '#ffffff', '#336699']) {
+            const shades = harmonyColors(base, 'shades');
+            expect(shades).toHaveLength(5);
+            expect(new Set(shades).size).toBe(5);
+            expect(shades).toContain(base);
+        }
+        const vs = harmonyColors('#ff0000', 'shades').map((h) => rgbToHsv(hexToRgb(h)!).v);
+        expect([...vs].sort((a, b) => a - b)).toEqual(vs);
+        expect(vs[4]).toBe(100); // the pure color itself, nothing lighter (no white added)
+        for (const h of harmonyColors('#ff0000', 'shades')) expect(hue(h)).toBe(0);
     });
 
     it('invalid input gives no colors', () => {

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Ambient presets for scenery (docs/PROPS.md phase 5): wind sway and drift, looped on the timeline. */
 import { describe, expect, it } from 'vitest';
 import { PRESETS, buildPreset, readProps } from '../engine';

@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { dilate, floodFillMask } from '../floodFill';
 import { loopArea, loopsToPath, simplifyLoop, traceContours } from '../traceContours';

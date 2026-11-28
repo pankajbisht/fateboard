@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * fate-reviewer (2026-11-18), P2: the studio's code loads on demand; when that fails (offline, or old chunks
  * gone after a deploy) the actions report it with a toast instead of throwing to React.

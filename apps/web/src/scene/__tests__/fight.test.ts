@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Fight exchanges, combos, effects and clips (docs/COMBAT_PACK.md, Stages 3–5): strikes land on the defender for
  * any similar heights, the defender's answer is timed to the impact, a placed exchange draws its effects, and a

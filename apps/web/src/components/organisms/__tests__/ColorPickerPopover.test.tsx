@@ -202,7 +202,7 @@ describe('ColorPickerPopover', () => {
         expect(screen.getByText('Copied')).toBeTruthy();
     });
 
-    it('harmonies: all five schemes; a click applies the color and keeps the base', () => {
+    it('harmonies: all eight schemes; a click applies the color and keeps the base', () => {
         const onChange = vi.fn();
         const props = { anchor: null, onChange, onClose: () => {} };
         const { rerender } = render(<ColorPickerPopover {...props} color="#ff0000" />);
@@ -210,8 +210,11 @@ describe('ColorPickerPopover', () => {
         for (const name of [
             'Complementary',
             'Analogous',
-            'Triadic',
-            'Split-complementary',
+            'Triad',
+            'Split complementary',
+            'Square',
+            'Compound',
+            'Shades',
             'Monochromatic',
         ]) {
             expect(group.textContent).toContain(name);
@@ -222,7 +225,7 @@ describe('ColorPickerPopover', () => {
         // still the harmonies of red: the picked one is marked, the base is one click away
         const picked = screen.getByRole('button', { name: 'Complementary color #00ffff' });
         expect(picked.getAttribute('aria-pressed')).toBe('true');
-        fireEvent.click(screen.getByRole('button', { name: 'Triadic color #00ff00' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Triad color #00ff00' }));
         expect(onChange).toHaveBeenLastCalledWith('#00ff00');
         // a change from the picker itself makes it the new base
         const hex = screen.getByRole('textbox', { name: 'Hex' });

@@ -5,13 +5,14 @@
 import { describe, expect, it } from 'vitest';
 import { POSES } from '../data/poses';
 import { RECIPES, fromRecipe } from '../data/recipes';
+import { SWEEP_BODIES } from './poseSweep';
 import { renderCharacter, shownHairColor } from '../render/renderCharacter';
 import { characterSvg } from '../render/toSvg';
 import { viewBin } from '../render/camera';
 import { clampPose } from '../rig/limits';
 import { migrateCharacter } from '../schema/migrate';
 import { defaultCharacter, parseCharacter, parsePose } from '../schema/parse';
-import { CHARACTER_SCHEMA_VERSION, PART_GROUPS, type CharacterCamera } from '../schema/types';
+import { CHARACTER_SCHEMA_VERSION, type CharacterCamera } from '../schema/types';
 
 const cam = (yaw: number, extra: Partial<CharacterCamera> = {}): CharacterCamera => ({
     yaw,
@@ -22,38 +23,11 @@ const cam = (yaw: number, extra: Partial<CharacterCamera> = {}): CharacterCamera
 });
 
 describe('rendering', () => {
-    // the geometry checks run in cartoon (no shading layers): the art styles are covered by styles.test.ts and the
-    // BUG-253 face test, and new characters' anime shading would make this 278 × 24 × 3 sweep twice as slow
-    const bodies = [
-        fromRecipe(RECIPES[0], 'kid'),
-        fromRecipe(RECIPES[4], 'adult'),
-        fromRecipe(RECIPES[10], 'elder'),
-    ].map((c) => ({ ...c, style: 'cartoon' as const }));
-
-    // one test per body and half turn (the same sweep, split so each stays well inside the time limit on a loaded
-    // machine: whole turns ran past it on CI once the manga redraw added parts)
-    for (const c of bodies)
-        for (const [from, to] of [
-            [0, 180],
-            [180, 360],
-        ])
-            it(`every pose on the ${c.id}, every 15° from ${from}° to ${to - 15}°: finite, every part drawn`, () => {
-                // failures are collected and asserted once: an expect per part was about 1.5 million calls
-                const bad: string[] = [];
-                for (const pose of POSES)
-                    for (let yaw = from; yaw < to; yaw += 15) {
-                        const m = renderCharacter({ ...c, rig: { pose } }, cam(yaw));
-                        if (!m.viewBox.every(Number.isFinite))
-                            bad.push(`${pose.id} ${yaw} viewBox`);
-                        for (const p of m.parts)
-                            if (/NaN|Infinity/.test(p.d))
-                                bad.push(`${c.id} ${pose.id} ${yaw} ${p.key}`);
-                        const groups = new Set(m.parts.map((p) => p.group));
-                        for (const g of PART_GROUPS)
-                            if (!groups.has(g)) bad.push(`${pose.id} ${yaw} missing ${g}`);
-                    }
-                expect(bad).toEqual([]);
-            }, 30000);
+    // the every-pose × every-angle sweep is in render.sweep.<body>.test.ts (one file per body, run in parallel)
+    const bodies = [SWEEP_BODIES.kid, SWEEP_BODIES.adult, SWEEP_BODIES.elder].map((c) => ({
+        ...c,
+        style: 'cartoon' as const,
+    }));
 
     it('parts are drawn far to near; the face only shows when it faces the camera', () => {
         const c = bodies[1];

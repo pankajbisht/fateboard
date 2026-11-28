@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Pose fixes from the owner's review (docs/CHARACTER_STUDIO.md, pose pass): the boxing guard holds the fists in front
  * of the chin with the elbows down by the ribs, instead of crossing the forearms in front of the chest.

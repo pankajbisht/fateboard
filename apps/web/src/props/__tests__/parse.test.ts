@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { getProp } from '../catalog';
 import { defaultPropData, parsePropData } from '../schema/parse';

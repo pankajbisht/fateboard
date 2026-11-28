@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Settings > Canvas size applied to boards (2026-11-17): the size and, for manga / comic sizes, their page setup
  * (bleed + safe-area margins). New boards get it silently; a size changed in Settings with the editor open is

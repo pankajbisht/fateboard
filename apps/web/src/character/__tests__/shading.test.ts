@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Style packs (S1, docs/CHARACTER_STUDIO.md §7.3): shading drawn as shapes. A part's shadow is the part
  * minus itself shifted toward the light: a crescent that always stays inside the outline (so it survives on the

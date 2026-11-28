@@ -8,8 +8,20 @@ export const THUMB =
 export const SLIDER_FOCUS =
     'touch-none select-none outline-none focus-visible:ring-2 focus-visible:ring-primary-400 focus-visible:ring-offset-2 focus-visible:ring-offset-surface';
 
-/** Where the pointer is inside the element: x / y as 0 … 1 and the offset from its centre in px. */
-export type DragPoint = { x: number; y: number; dx: number; dy: number; w: number; h: number };
+/**
+ * Where the pointer is inside the element: x / y as 0 … 1 and the offset from its centre in px.
+ * `start` is true for the press itself (false while dragging), so a control can accept a press only
+ * on part of itself (the wheel's ring) yet keep following the pointer anywhere once the drag started.
+ */
+export type DragPoint = {
+    x: number;
+    y: number;
+    dx: number;
+    dy: number;
+    w: number;
+    h: number;
+    start: boolean;
+};
 
 /**
  * Pointer drag on a colour control: pointer capture, the preview on every move (`onPreview`, local state)
@@ -25,7 +37,11 @@ export function useHsvDrag(onPreview: (next: HSV) => void, onCommit: (next: HSV)
         [],
     );
 
-    const dragTo = (e: ReactPointerEvent<HTMLElement>, apply: (p: DragPoint) => HSV | null) => {
+    const dragTo = (
+        e: ReactPointerEvent<HTMLElement>,
+        apply: (p: DragPoint) => HSV | null,
+        start: boolean,
+    ) => {
         const r = e.currentTarget.getBoundingClientRect();
         const w = r.width || 1;
         const h = r.height || 1;
@@ -38,6 +54,7 @@ export function useHsvDrag(onPreview: (next: HSV) => void, onCommit: (next: HSV)
             dy: py - h / 2,
             w,
             h,
+            start,
         });
         if (!next) return false;
         onPreview(next);
@@ -52,13 +69,13 @@ export function useHsvDrag(onPreview: (next: HSV) => void, onCommit: (next: HSV)
     return (apply: (p: DragPoint) => HSV | null) => ({
         onPointerDown: (e: ReactPointerEvent<HTMLElement>) => {
             if (e.button !== 0) return;
-            if (!dragTo(e, apply)) return;
+            if (!dragTo(e, apply, true)) return;
             e.stopPropagation();
             e.currentTarget.setPointerCapture?.(e.pointerId);
             e.currentTarget.focus();
         },
         onPointerMove: (e: ReactPointerEvent<HTMLElement>) => {
-            if (e.currentTarget.hasPointerCapture?.(e.pointerId)) dragTo(e, apply);
+            if (e.currentTarget.hasPointerCapture?.(e.pointerId)) dragTo(e, apply, false);
         },
     });
 }

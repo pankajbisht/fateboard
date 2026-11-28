@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Print marks (2026-11-17, InDesign style): crop marks, bleed / slug frames and how far they reach. */
 import { describe, expect, it } from 'vitest';
 import { DEFAULT_PAGE_SETUP, type PageSetup } from '../pageSetup';

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The hairstyles (docs/CHARACTER_STUDIO.md phase 3): 44 styles as data, every one drawn from every side, two-tone
  * tips, the schema step that added them, and which styles suit whom.

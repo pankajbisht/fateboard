@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Who an item is listed for in the studio (2026-11-27, owner: "if male is selected only show the items a male can
  * use, same for female; trans sees everything"; loose tagging: only clearly gendered items are limited).

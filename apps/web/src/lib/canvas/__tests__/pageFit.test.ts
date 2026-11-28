@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Design board fit (2026-11-17, InDesign "Fit Page" / "Fit width"): one formula for CanvasBoard and the Page slice. */
 import { describe, expect, it } from 'vitest';
 import { FIT_GAP, PORTRAIT_OPEN_ZOOM, fitGap, fitStage, openZoom, pageFitScale } from '../pageFit';

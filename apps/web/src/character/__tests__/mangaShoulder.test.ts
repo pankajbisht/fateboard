@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The manga shoulder line (docs/CHARACTER_STUDIO.md, reference pass phase 7). In the reference sheets a man's T-shirt
  * runs from the neck down the slope of the trapezius to the shoulder and then straight down with the sleeve. The torso

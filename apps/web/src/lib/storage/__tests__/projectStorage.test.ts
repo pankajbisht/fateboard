@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Project storage on its real adapters (fake-indexeddb): boards saved by the hand-written IndexedDB
  * code (DB `fateboard`, store `kv`) move into the opendb store once and are never lost or brought

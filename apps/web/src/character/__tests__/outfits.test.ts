@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Outfit presets and dress rules (docs/CHARACTER_STUDIO.md phase 3): 52+ ready looks, each passes the rules
  * unchanged, wearing one changes the dress, and the rules remove what does not go together.

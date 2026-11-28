@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * fate-reviewer (2026-11-18), P0: saving built the library from the in-memory list, so a failed or unfinished
  * read wiped every saved character. Saves are now read-modify-write in storage: a read failure stops the

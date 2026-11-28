@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * `.theme-light` pins the light tokens on light-only pages under a dark editor theme (BUG-196):
  * every value it sets must be the light value from `@theme`, and it must cover every token that

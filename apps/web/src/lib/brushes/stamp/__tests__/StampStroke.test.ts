@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import * as fabric from 'fabric';
 import { StampStroke, packPoints, unpackPoints } from '../StampStroke';

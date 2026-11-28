@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Rulers belong to the board mode: always shown in design (fixed page), never in whiteboard.
  * A saved "rulers off" setting must not hide them in design mode.

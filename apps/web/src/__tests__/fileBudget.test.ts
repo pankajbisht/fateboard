@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * File size budget (docs/CODE_REVIEW.md, R-02). Large files mix responsibilities ("god" components and slices),
  * are hard to review and to test. New files stay under the budget; the files over it today are listed with

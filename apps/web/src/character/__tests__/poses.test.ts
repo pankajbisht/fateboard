@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The pose library (docs/CHARACTER_STUDIO.md phase 3): 278 poses in 13 categories, each findable by search, each
  * different from the others, each standing on the floor (or deliberately in the air) on any body.

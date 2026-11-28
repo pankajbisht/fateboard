@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** V / H / A switch tools, through the one command registry (shortcut table + palette list them). */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useStore } from '@store';

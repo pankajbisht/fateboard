@@ -1,3 +1,4 @@
+// @vitest-environment node
 /// <reference types="node" />
 /**
  * Dark mode (docs/DESIGN.md "Dark mode"): every UI color comes from a token that `.dark` redefines,

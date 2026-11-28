@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The owner's reference sheets (docs/CHARACTER_STUDIO.md, reference pass): a teen boy in 18 everyday poses and 16 hand
  * gestures, drawn as clean line art. Every reference pose renders finite here; with CONTACT_SHEET=<folder> the test

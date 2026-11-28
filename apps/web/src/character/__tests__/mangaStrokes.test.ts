@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Strokes on the manga body (docs/CHARACTER_STUDIO.md, stroke pass): every outline sits at the depth of the shape it
  * outlines, so a limb half behind the torso does not draw its hidden part's outline over the chest; sleeves cover the

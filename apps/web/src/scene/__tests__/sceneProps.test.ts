@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { PROPS } from '@/props/catalog';
 import { sceneHeightOf, sceneReady } from '@/props/sceneSize';

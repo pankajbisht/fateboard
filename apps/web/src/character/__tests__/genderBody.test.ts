@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Male, female and in-between bodies (docs/CHARACTER_STUDIO.md, gender pass). The frame (shoulders, waist, hips,
  * limbs: `body.gender`, 0 male … 1 female) and the bust (`body.bust`) are separate, so any body can be made: a man, a

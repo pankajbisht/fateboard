@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { PROPS } from '../catalog';
 import { compose, parseTransform, propPaths, svgBodyPaths } from '../render/propPaths';

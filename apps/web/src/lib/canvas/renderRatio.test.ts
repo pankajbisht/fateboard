@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** BUG-108: the design canvas renders at the pixel density it is shown at (sharp zoomed in, light zoomed out). */
 import { describe, expect, it } from 'vitest';
 import { MAX_BACKSTORE_PX, designRenderRatio } from './renderRatio';

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The IndexedDB adapter over opendb-store 3 (decision Q5 follow-up). opendb promises never reject:
  * a failed read looks like "nothing saved" and a refused database silently becomes memory. A

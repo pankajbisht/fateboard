@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Clone family in the command registry (shortcuts) and the right-click menu (only when useful). */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useStore } from '@store';

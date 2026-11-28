@@ -25,7 +25,7 @@ fixed with tests (BUG-154 to BUG-158) and BUG-152 was closed. Seven more were fo
 browser.
 
 **Archive (2026-11-13):** fixed bugs moved to [BUGS_ARCHIVE.md](BUGS_ARCHIVE.md) to keep this file short to read. This
-file lists only bugs that are not fixed. Highest ID so far: **BUG-284**; new bugs take the next one. Look up any
+file lists only bugs that are not fixed. Highest ID so far: **BUG-285**; new bugs take the next one. Look up any
 ID with `grep -n "BUG-0xx" docs/BUGS*.md`. When you fix a bug, move its row to the archive with its new status.
 
 ## Summary

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Manga body, phase A (docs/CHARACTER_STUDIO.md): one continuous torso outline with a waist and hips, tapered limbs,
  * a relaxed asymmetric idle, hands in pockets, manga hands. The classic body must draw exactly as before.

@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Page setup (InDesign style, 2026-11-17): margins, columns, bleed, facing pages, page numbers. */
 import { describe, expect, it } from 'vitest';
 import {

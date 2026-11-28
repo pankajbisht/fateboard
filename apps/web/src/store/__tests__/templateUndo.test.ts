@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-009 / decision Q11: applying a template never destroys work. It is ONE undo step, and a
  * toast offers "Undo" right away. Real store + fake canvas + real Fabric objects.

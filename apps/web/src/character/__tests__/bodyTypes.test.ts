@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** Body type presets (2026-11-27): six builds, each in a male and a female version. */
 import { describe, expect, it } from 'vitest';
 import { BODY_TYPES, BODY_TYPE_SHAPES, bodyTypeEdit, bodyTypeOf } from '../data/bodyTypes';

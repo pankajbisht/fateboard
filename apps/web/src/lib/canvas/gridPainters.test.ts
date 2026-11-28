@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Grid painters, with a recording Path2D / context (jsdom has no canvas). Checks what each style
  * draws, not pixels.

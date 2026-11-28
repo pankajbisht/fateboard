@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The store's public keys (state + actions) are an API used by components and other slices. Renaming or removing
  * one needs the owner's approval (CLAUDE.md "Never do"), so the list is recorded in `storeApi.baseline.json`:

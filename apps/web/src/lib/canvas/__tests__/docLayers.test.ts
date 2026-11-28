@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Document layers (2026-11-17): real layers / folders that hold objects, per page. The model is pure data
  * (`canvas.docLayers`, bottom-first); objects point at a leaf layer with `layerId`.

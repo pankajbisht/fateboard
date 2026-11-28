@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * BUG-155: undo snapshots share one copy of every embedded image instead of holding one each.
  */

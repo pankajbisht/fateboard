@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { capsule, circle, ellipse, smoothClosed } from '@/character/render/shapes';
 import { transformPath } from '../render/pathTransform';

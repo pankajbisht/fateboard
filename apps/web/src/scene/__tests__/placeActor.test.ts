@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, expect, it } from 'vitest';
 import { RECIPES, fromRecipe } from '@/character/data/recipes';
 import { buildSkeleton } from '@/character/rig/skeleton';

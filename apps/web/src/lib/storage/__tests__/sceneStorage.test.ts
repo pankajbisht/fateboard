@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * The saved scenes library shares its read-modify-write rules with the saved characters (libraryStorage): a failed
  * read stops the write, unreadable entries are kept, and the draft is separate from the library.

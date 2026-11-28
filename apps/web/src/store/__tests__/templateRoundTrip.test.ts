@@ -1,3 +1,4 @@
+// @vitest-environment node
 /** BUG-059: a saved template puts every object back exactly where it was (centre-origin objects shifted by half). */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it } from 'vitest';
