@@ -7,12 +7,12 @@ import { BucketOptions } from './BucketOptions';
 import { SprayOptions } from './SprayOptions';
 import { CopySprayOptions } from './CopySprayOptions';
 import { LassoOptions } from './LassoOptions';
-import { DrafterOptions } from './DrafterOptions';
+import { GeometryOptions } from './GeometryOptions';
 import { BrushOptions } from './BrushOptions';
 
 /**
  * The property bar under the command bar (Illustrator's control bar): the active tool's options while Pen
- * (P), Pencil (Shift + P), Spray (Shift + B; Copy mode = CopySprayOptions), Paint bucket (G), Lasso (L), Drafter (D), a brush or the
+ * (P), Pencil (Shift + P), Spray (Shift + B; Copy mode = CopySprayOptions), Paint bucket (G), Lasso (L), Geometry (D), a brush or the
  * eraser is active, else the selection's X / Y / W / H. Every bar starts with its icon + label. Colors come
  * from the dock palette (`PaintTargetSwatch`); each change applies to the next path / stroke.
  */
@@ -25,7 +25,7 @@ export function ToolContextBar() {
     if (tool === 'spray') return <SprayOptions />;
     if (tool === 'copySpray') return <CopySprayOptions />;
     if (tool === 'lasso') return <LassoOptions />;
-    if (tool === 'drafter') return <DrafterOptions />;
+    if (tool === 'geometry') return <GeometryOptions />;
     if (tool === 'draw' && brush === 'nib') return <NibOptions />; // Calligraphy pen
     if (tool === 'draw') return <BrushOptions />;
     return <ShapeToolsHeader />;

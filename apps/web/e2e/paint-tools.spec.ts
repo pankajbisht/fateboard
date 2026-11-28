@@ -1,5 +1,5 @@
 /**
- * Paint tools (2026-11-16): layer blur (BUG-220), Paint bucket (G), Lasso (L), Drafter (D), Spray
+ * Paint tools (2026-11-16): layer blur (BUG-220), Paint bucket (G), Lasso (L), Geometry (D: Drafter, Scale, Set square, Protractor, Compass), Spray
  * (Shift + B), the stamp brush library, symmetry + Reflect selection, the colour wheel and deep zoom
  * (BUG-221), with a real mouse and keyboard on the design board.
  */
@@ -48,14 +48,14 @@ test('Layer blur blurs the object itself and exports as an SVG blur filter', asy
     await expect(page.getByRole('slider', { name: 'Shadow blur' })).toBeVisible();
 });
 
-test('Drafter draws snapped lines and a measured dimension; Escape returns to Select', async ({
+test('Geometry › Drafter draws snapped lines and a measured dimension; Escape returns to Select', async ({
     editor,
     page,
 }) => {
     const p = await at(editor);
     await page.keyboard.press('d');
-    await expect.poll(() => tool(editor)).toBe('drafter');
-    await expect(page.getByRole('toolbar', { name: 'Drafter options' })).toBeVisible();
+    await expect.poll(() => tool(editor)).toBe('geometry');
+    await expect(page.getByRole('toolbar', { name: 'Geometry options' })).toBeVisible();
     await drag(editor, p(0.2, 0.3), p(0.6, 0.32)); // snaps to 0°
     await expect.poll(() => count(editor)).toBe(1);
     const line = (await editor.objects())[0];
@@ -69,6 +69,41 @@ test('Drafter draws snapped lines and a measured dimension; Escape returns to Se
 
     await page.keyboard.press('Escape');
     await expect.poll(() => tool(editor)).toBe('select');
+});
+
+test('Geometry › Protractor draws an angle; Compass a circle and an arc; Escape cancels a stroke', async ({
+    editor,
+    page,
+}) => {
+    const p = await at(editor);
+    await page.keyboard.press('d');
+    const mode = page.getByRole('combobox', { name: 'Geometry mode' });
+    await mode.click();
+    await page.getByRole('option', { name: 'Protractor' }).click();
+    await drag(editor, p(0.3, 0.6), p(0.7, 0.6)); // first arm
+    await expect.poll(() => count(editor)).toBe(0); // waits for the second arm
+    await page.mouse.move(...p(0.3, 0.2));
+    await page.mouse.click(...p(0.3, 0.2)); // second arm, straight up
+    await expect.poll(() => count(editor)).toBe(1);
+    const angle = (await editor.objects())[0];
+    expect(angle.type).toBe('group');
+
+    await mode.click();
+    await page.getByRole('option', { name: 'Compass' }).click();
+    await drag(editor, p(0.5, 0.5), p(0.6, 0.5));
+    await expect.poll(() => count(editor)).toBe(2);
+    expect((await editor.objects())[1].type).toBe('circle');
+
+    await page.getByRole('combobox', { name: 'Compass draws' }).click();
+    await page.getByRole('option', { name: 'Arc' }).click();
+    await drag(editor, p(0.5, 0.5), p(0.6, 0.5));
+    await page.keyboard.press('Escape'); // cancels the half-done arc, keeps the tool
+    await expect.poll(() => tool(editor)).toBe('geometry');
+    await drag(editor, p(0.5, 0.5), p(0.6, 0.5));
+    await page.mouse.move(...p(0.5, 0.65));
+    await page.mouse.click(...p(0.5, 0.65));
+    await expect.poll(() => count(editor)).toBe(3);
+    expect((await editor.objects())[2].type).toBe('path');
 });
 
 test('Paint bucket fills the area enclosed by drawn lines, under the lines', async ({
@@ -283,9 +318,6 @@ test('Spray in Copy mode without a selection: click a shape to pick it, then dra
     page,
 }) => {
     await editor.addShape('Rectangle');
-    const box = (await editor.canvas.boundingBox())!;
-    const b = await page.evaluate(() => window.__fateboard!.bounds(0));
-    const k = box.width / b.canvasWidth;
     await editor.clickEmptyCanvas(); // nothing selected
     expect((await editor.selection()).length).toBe(0);
     await page.keyboard.press('Shift+B');
@@ -293,6 +325,10 @@ test('Spray in Copy mode without a selection: click a shape to pick it, then dra
     await bar.getByRole('combobox', { name: 'Spray mode' }).click();
     await page.getByRole('option', { name: /Copy/ }).click();
     await expect(bar.getByRole('status')).toHaveText('Click an object to spray copies of it');
+    // measured after the switch: a tool change closes the Shapes panel, the board moves (BUG-286)
+    const box = await editor.settledCanvasBox();
+    const b = await page.evaluate(() => window.__fateboard!.bounds(0));
+    const k = box.width / b.canvasWidth;
     await page.mouse.click(box.x + (b.left + b.width / 2) * k, box.y + (b.top + b.height / 2) * k);
     await expect(bar.getByRole('status')).toContainText('Spraying');
     expect(await count(editor)).toBe(1); // picking adds nothing

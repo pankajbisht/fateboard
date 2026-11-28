@@ -1,6 +1,6 @@
 /**
- * Settings of the Paint bucket (G), Lasso (L) and Drafter (D) tools: types, defaults and sanitisers (pure).
- * Their option bars write them through `setBucketStyle` / `setLassoStyle` / `setDrafterStyle`.
+ * Settings of the Paint bucket (G), Lasso (L) and Geometry (D) tools: types, defaults and sanitisers (pure).
+ * Their option bars write them through `setBucketStyle` / `setLassoStyle` / `setGeometryStyle`.
  */
 import {
     ANGLE_STEPS,
@@ -8,6 +8,15 @@ import {
     ISO_PEN_WIDTHS_MM,
     type DrafterMode,
 } from '@/lib/canvas/drafter';
+import {
+    COMPASS_MODES,
+    GEOMETRY_INSTRUMENTS,
+    SCALE_TICKS_MM,
+    SET_SQUARE_KINDS,
+    type CompassMode,
+    type GeometryInstrument,
+    type SetSquareKind,
+} from '@/lib/canvas/geometry';
 import type { LassoMode } from '@/lib/canvas/lasso';
 
 export type BucketMode = 'auto' | 'region' | 'shape';
@@ -31,14 +40,21 @@ export type LassoStyle = {
     match: LassoMode;
 };
 
-export type DrafterStyle = {
+export type GeometryStyle = {
+    /** The instrument in use (the tool's Mode): Drafter, Scale, Set square, Protractor or Compass. */
+    instrument: GeometryInstrument;
+    /** Drafter mode. */
     mode: DrafterMode;
-    /** Protractor step in degrees. */
+    /** Angle step in degrees (Drafter head, Protractor, Compass arc; Shift on the Scale). */
     step: (typeof ANGLE_STEPS)[number];
-    /** Head rotation (degrees): snapping starts from here. */
+    /** Instrument rotation (degrees): the Drafter head and the Set square turn by it. */
     base: number;
-    /** Technical pen width, mm (ISO 128). */
+    /** Technical pen width, mm (ISO 128), for every instrument. */
     penMm: (typeof ISO_PEN_WIDTHS_MM)[number];
+    /** Scale: lengths snap to this many mm (0 = any length). */
+    scaleTickMm: (typeof SCALE_TICKS_MM)[number];
+    setSquare: SetSquareKind;
+    compass: CompassMode;
 };
 
 export const DEFAULT_BUCKET_STYLE: BucketStyle = {
@@ -49,7 +65,16 @@ export const DEFAULT_BUCKET_STYLE: BucketStyle = {
     placement: 'behind',
 };
 export const DEFAULT_LASSO_STYLE: LassoStyle = { action: 'select', match: 'touch' };
-export const DEFAULT_DRAFTER_STYLE: DrafterStyle = { mode: 'line', step: 15, base: 0, penMm: 0.35 };
+export const DEFAULT_GEOMETRY_STYLE: GeometryStyle = {
+    instrument: 'drafter',
+    mode: 'line',
+    step: 15,
+    base: 0,
+    penMm: 0.35,
+    scaleTickMm: 1,
+    setSquare: '45',
+    compass: 'circle',
+};
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 const num = (v: unknown, fallback: number, lo: number, hi: number) =>
@@ -80,14 +105,18 @@ export function sanitizeLassoStyle(
     };
 }
 
-export function sanitizeDrafterStyle(
-    base: DrafterStyle,
-    p: Partial<Record<keyof DrafterStyle, unknown>>,
-): DrafterStyle {
+export function sanitizeGeometryStyle(
+    base: GeometryStyle,
+    p: Partial<Record<keyof GeometryStyle, unknown>>,
+): GeometryStyle {
     return {
+        instrument: oneOf(p.instrument, GEOMETRY_INSTRUMENTS, base.instrument),
         mode: oneOf(p.mode, DRAFTER_MODES, base.mode),
         step: oneOf(p.step, ANGLE_STEPS, base.step),
         base: ((num(p.base, base.base, -1e6, 1e6) % 360) + 360) % 360,
         penMm: oneOf(p.penMm, ISO_PEN_WIDTHS_MM, base.penMm),
+        scaleTickMm: oneOf(p.scaleTickMm, SCALE_TICKS_MM, base.scaleTickMm),
+        setSquare: oneOf(p.setSquare, SET_SQUARE_KINDS, base.setSquare),
+        compass: oneOf(p.compass, COMPASS_MODES, base.compass),
     };
 }

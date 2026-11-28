@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import type * as fabric from 'fabric';
 import { TransformInput } from '@/components/molecules/TransformInput';
-import { SelectField } from '@/components/molecules/SelectField';
 import { SegmentedControl } from '@/components/molecules/SegmentedControl';
 import LabeledToggle from '@/components/molecules/LabeledToggle';
 import { Field } from '@/components/molecules/Field';
@@ -11,7 +10,6 @@ import { EffectSection } from './EffectSection';
 import { useActiveObjects } from './useActiveObjects';
 
 type Mode = 'ring' | 'spiral';
-type Anchor = 'TL' | 'TC' | 'TR' | 'CL' | 'CC' | 'CR' | 'BL' | 'BC' | 'BR';
 
 // label = what the user sees, value = what we store (they were swapped before,
 // so the slice received "Ring"/"Spiral" and `mode === 'spiral'` never matched)
@@ -20,24 +18,9 @@ const modeList: { label: string; value: Mode }[] = [
     { label: 'Spiral', value: 'spiral' },
 ];
 
-const anchorList = (['TL', 'TC', 'TR', 'CL', 'CC', 'CR', 'BL', 'BC', 'BR'] as Anchor[]).map(
-    (a) => ({
-        label: a,
-        value: a,
-    }),
-);
-
-const ANCHOR_FACTORS: Record<Anchor, [number, number]> = {
-    TL: [0, 0],
-    TC: [0.5, 0],
-    TR: [1, 0],
-    CL: [0, 0.5],
-    CC: [0.5, 0.5],
-    CR: [1, 0.5],
-    BL: [0, 1],
-    BC: [0.5, 1],
-    BR: [1, 1],
-};
+// The anchor is the one in the top transform bar (store `transform.originX/Y`),
+// so the panel has no anchor picker of its own (owner, 2026-11-28).
+const FACTOR: Record<string, number> = { left: 0, top: 0, center: 0.5, right: 1, bottom: 1 };
 
 /**
  * Pivot = anchor point of the object's bounding box, optionally pushed further
@@ -46,10 +29,11 @@ const ANCHOR_FACTORS: Record<Anchor, [number, number]> = {
  * Without this, a centre pivot puts the pivot on the object itself and every
  * copy lands on the same spot.
  */
-const getPivot = (obj: fabric.Object, anchor: Anchor, distance: number) => {
+const getPivot = (obj: fabric.Object, originX: string, originY: string, distance: number) => {
     obj.setCoords();
     const rect = obj.getBoundingRect();
-    const [fx, fy] = ANCHOR_FACTORS[anchor];
+    const fx = FACTOR[originX] ?? 0.5;
+    const fy = FACTOR[originY] ?? 0.5;
     const anchorPt = { x: rect.left + rect.width * fx, y: rect.top + rect.height * fy };
     const cx = rect.left + rect.width / 2;
     const cy = rect.top + rect.height / 2;
@@ -77,6 +61,8 @@ const num = (raw: string, fallback: number, min: number, max: number) => {
 export const RepeatRadially = () => {
     const canvas = useStore((s: any) => s.canvas);
     const repeatRadially = useStore((s: any) => s.repeatRadially);
+    const originX = useStore((s) => s.transform.originX);
+    const originY = useStore((s) => s.transform.originY);
 
     const activeObjects = useActiveObjects(canvas);
     const multiple = activeObjects.length > 1;
@@ -92,7 +78,6 @@ export const RepeatRadially = () => {
         jitter: '0',
     });
     const [mode, setMode] = useState<Mode>('ring');
-    const [anchor, setAnchor] = useState<Anchor>('CC');
     const [clockwise, setClockwise] = useState(true);
     const [rotateAlongPath, setRotateAlongPath] = useState(false);
     const [opacityFade, setOpacityFade] = useState(false);
@@ -109,7 +94,7 @@ export const RepeatRadially = () => {
         setError(null);
         try {
             // pivot is computed now (not during render) so it always matches the current object position
-            const pivot = getPivot(target, anchor, num(fields.distance, 0, 0, 5000));
+            const pivot = getPivot(target, originX, originY, num(fields.distance, 0, 0, 5000));
             await repeatRadially(target, {
                 count: Math.round(num(fields.count, 6, 2, LIMITS.maxClones + 1)),
                 pivotX: pivot.x,
@@ -182,12 +167,6 @@ export const RepeatRadially = () => {
                     onChange={setMode}
                 />
             </Field>
-            <SelectField<Anchor>
-                label="Anchor"
-                options={anchorList}
-                value={anchor}
-                onChange={setAnchor}
-            />
             <LabeledToggle label="Clockwise" checked={clockwise} onChange={setClockwise} />
             <LabeledToggle
                 label="Rotate copies with the ring"

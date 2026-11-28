@@ -476,32 +476,40 @@ export const HELP_TOPICS: HelpTopic[] = [
         related: ['select', 'bucket'],
     },
     {
-        id: 'drafter',
+        id: 'geometry',
         group: 'Tools',
-        title: 'Drafter',
-        icon: 'drafter',
+        title: 'Geometry',
+        icon: 'geometry',
         summary:
-            'A drafting machine: precise lines at set angles, with length and angle as you draw.',
+            'A geometry box: Drafter, Scale, Set square, Protractor and Compass, with lengths and angles as you draw.',
         keywords:
-            'drafter drafting machine technical drawing protractor angle ruler line parallel perpendicular dimension construction mechanical cad iso pen',
+            'geometry box drafter drafting machine technical drawing scale ruler set square triangle protractor angle compass circle arc radius line parallel perpendicular dimension construction mechanical cad iso pen',
         sections: [
             {
-                title: 'Draw lines',
+                title: 'Pick an instrument',
                 items: [
-                    'Press `D` or pick Drafter in the left rail and drag from a point',
-                    'The line snaps to the protractor steps (1° to 90°); hold `alt` for any angle',
-                    'Head turns the drafting head: steps count from that angle',
-                    'The head shows the length in your units (Settings > Units) and the angle like a protractor',
-                    'Starts snap to the ends of lines nearby; Pen width uses ISO technical pen sizes',
+                    'Press `D` or pick Geometry in the left rail, then choose the Geometry mode in the bar above the board',
+                    'Every instrument shows the length in your units (Settings > Units) and the angle while you draw',
+                    'Pen width uses ISO technical pen sizes; `alt` turns snapping off',
+                    'Press `Escape` once to cancel a stroke, again to go back to Select',
                 ],
             },
             {
-                title: 'Modes',
+                title: 'Drafter',
                 items: [
+                    'Drag from a point: the line snaps to the protractor steps (1° to 90°)',
+                    'Head turns the drafting head: steps count from that angle; starts snap to line ends nearby',
                     'Parallel and Perpendicular follow the selected line (or the last one you drew)',
-                    'Dimension draws a measured dimension line with arrows and the length',
-                    'Construction line draws a light dashed guide line',
-                    'Press `Escape` to go back to Select',
+                    'Dimension draws a measured dimension line; Construction line a light dashed guide',
+                ],
+            },
+            {
+                title: 'Scale, Set square, Protractor, Compass',
+                items: [
+                    'Scale: a ruler with mm and cm ticks; the length snaps to the Scale snap (`shift` = stepped angle)',
+                    'Set square: lines along a 45° or 30° / 60° square; Square turns it',
+                    'Protractor: drag the first arm, then click the second; the angle is drawn with its arc and degrees',
+                    'Compass: drag from the centre for a circle; in Arc mode click again where the arc ends',
                 ],
             },
         ],
@@ -1256,6 +1264,7 @@ export const HELP_TOPICS: HelpTopic[] = [
                     'Ring spaces copies around a circle; Spiral widens with a gap per turn',
                     'Count includes the original',
                     'Pivot distance sets the radius and Start angle where it begins',
+                    'The pivot sits at the anchor picked in the top transform bar',
                 ],
             },
             {

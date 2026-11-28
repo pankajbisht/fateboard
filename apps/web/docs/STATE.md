@@ -511,20 +511,21 @@ no helper objects, nothing in history, autosave or exports.
 `pageHeight` for `creationScale`), NodeEditor (`screenScale`), Brush (`updateBrush`, from `setPencilStyle`). The
 Brush slice reads `pencilStyle` (via `drawingState`) and `screenScale` (auto-close tolerance).
 
-## 29. PaintTools: `createPaintToolsSlice.ts` (+ `paintTools/`, `store/sprayStyle.ts`, `lib/canvas/{floodFill,traceContours,lasso,drafter,symmetry,copySpray}.ts`)
+## 29. PaintTools: `createPaintToolsSlice.ts` (+ `paintTools/`, `store/sprayStyle.ts`, `lib/canvas/{floodFill,traceContours,lasso,drafter,geometry,symmetry,copySpray}.ts`)
 
-**Purpose (2026-11-16):** Paint bucket (G), Spray (Shift + B), Lasso (L), Drafter (D), "Reflect selection" and the
+**Purpose (2026-11-16):** Paint bucket (G), Spray (Shift + B), Lasso (L), Geometry (D), "Reflect selection" and the
 per-brush stamp settings. The tools listen on the canvas only while active (store subscription, like the Pen); the
 symmetry guide (axes while Draw / Spray is active) is a helper object (`excludeFromExport`, `excludeFromLayers`,
 `excludeFromSnap`, `_isHelper`).
 **State:** `bucketStyle` (mode auto / region / shape, tolerance, gap, expand, placement), `lassoStyle` (action select /
-fill, match touch / contain), `drafterStyle` (mode line / parallel / perpendicular / dimension / construction, angle
-step, head angle, ISO pen width), `sprayStyle` (size, flow, particle, softness, opacity), `copySprayStyle` (scale,
+fill, match touch / contain), `geometryStyle` (renamed from `drafterStyle` 2026-11-28: `instrument` drafter / scale / setSquare / protractor /
+compass, Drafter `mode` line / parallel / perpendicular / dimension / construction, angle `step`, `base` (head / square
+angle), ISO `penMm`, `scaleTickMm` 0 / 1 / 5 / 10, `setSquare` 45 / 30-60, `compass` circle / arc; not persisted), `sprayStyle` (size, flow, particle, softness, opacity), `copySprayStyle` (scale,
 spacing, spread, size / rotation / opacity jitter, align; 2026-11-17), `stampOverrides` (per library brush id, valid
 partial settings only).
-**Actions:** `setBucketStyle`, `setLassoStyle`, `setDrafterStyle`, `setSprayStyle`, `setStampOverride(id, patch)`,
+**Actions:** `setBucketStyle`, `setLassoStyle`, `setGeometryStyle`, `setSprayStyle`, `setStampOverride(id, patch)`,
 `resetStampOverride(id)`, `bucketFillAt(point)` → `'shape' | 'region' | 'open' | 'none'`, `lassoSelect(loop, mode)`,
-`lassoFill(loop)`, `drafterLine(a, b)`, `reflectSelection({ mode, angle, count, around })` → copies added,
+`lassoFill(loop)`, `geometryDraw(points, sweep?)` (2 points = line / circle, 3 = angle / arc; was `drafterLine(a, b)`), `reflectSelection({ mode, angle, count, around })` → copies added,
 `setCopySprayStyle`, `sprayCopies(dabs)` → objects added.
 **Copy spray (Spray › Copy mode since 2026-11-27, was Shift + S; `paintTools/copySpray{Actions,Tool}.ts`):** `sprayStyle.mode` (Paint / Mist / Splatter / Copy) picks what Spray (Shift + B) does; `setActiveTool('spray')` opens `copySpray` in Copy mode (`resolveTool`, `store/canvasTools.ts`) and `setSprayStyle({ mode })` swaps the tool while Spray is open. Source: the selection when Copy opens, else a click on an object (`sourceObjectAt`); Alt + click swaps it; `copySpraySource` (label or null) drives the bar. Mist / Splatter tune `sprayState` (rate, ink, drop size jitter). when `activeTool` becomes
 `'copySpray'` the selection is snapshotted (clones in scene coordinates; `setActiveTool` sets the store before it

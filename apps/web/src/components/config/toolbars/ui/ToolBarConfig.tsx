@@ -7,7 +7,7 @@ import type { CanvasTool } from '@/store/canvasTools';
  * Canvas tools as keyboard commands (same letters as Figma / Illustrator): V = Select, H = Hand,
  * A = Node tool, P = Pen, Shift + P = Pencil (Figma), K = Laser pointer (Excalidraw), B = Brush, Shift + B = Spray
  * (modes Paint / Mist / Splatter / Copy; Copy = Illustrator's Symbol Sprayer),
- * G = Paint bucket, L = Lasso (Photoshop), D = Drafter, N = Note. Single letters never fire while typing (the shortcut hook skips inputs and the
+ * G = Paint bucket, L = Lasso (Photoshop), D = Geometry (Drafter, Scale, Set square, Protractor, Compass), N = Note. Single letters never fire while typing (the shortcut hook skips inputs and the
  * text editor's hidden textarea). The left rail shows the same letters in its tooltips.
  */
 const tool = (
@@ -38,6 +38,6 @@ export const ToolBarConfig = [
     tool('tool-spray', 'spray', 'Spray', shortcut('⇧B', 'Shift+B'), 'spray-can'),
     tool('tool-bucket', 'bucket', 'Paint bucket', 'G', 'paint-bucket'), // Photoshop / Krita
     tool('tool-lasso', 'lasso', 'Lasso', 'L', 'lasso'), // Photoshop
-    tool('tool-drafter', 'drafter', 'Drafter', 'D', 'drafter'),
+    tool('tool-geometry', 'geometry', 'Geometry', 'D', 'geometry'),
     tool('tool-note', 'note', 'Note', 'N', 'note'), // note pins (createNotesSlice)
 ];
