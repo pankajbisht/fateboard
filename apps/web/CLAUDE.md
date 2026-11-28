@@ -10,7 +10,7 @@ holds `apps/`, `packages/`, `.github/` (one separate CI/CD pipeline per app; the
 `_web-*.yml`, every step runs in `apps/web`), `.gitignore`, the root README and the git-ignored `deadcode/`.
 `apps/desktop` and `packages/core` are empty placeholders. CI details: root README "CI/CD and deployment".
 
-## Commands (from package.json)
+### Commands (from package.json)
 
 | Task | Command | Notes |
 |---|---|---|
