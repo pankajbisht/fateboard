@@ -132,11 +132,13 @@ test('Paint bucket fills the area enclosed by drawn lines, under the lines', asy
 test('Paint bucket recolours a closed shape', async ({ editor, page }) => {
     await editor.addShape('Rectangle');
     const before = (await editor.objects())[0].fill;
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('g');
+    await expect.poll(() => tool(editor)).toBe('bucket');
+    // measure after the tool switch: its options bar can move the canvas (slow CI Firefox missed the shape)
     const b = await page.evaluate(() => window.__fateboard!.bounds(0));
     const box = await editor.settledCanvasBox();
     const k = box.width / b.canvasWidth;
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('g');
     await page.mouse.click(box.x + (b.left + b.width / 2) * k, box.y + (b.top + b.height / 2) * k);
     await expect.poll(async () => (await editor.objects())[0].fill).not.toEqual(before);
     expect(await count(editor)).toBe(1);
