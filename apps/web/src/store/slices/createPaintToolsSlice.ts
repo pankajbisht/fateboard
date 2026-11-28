@@ -12,7 +12,9 @@
 import * as fabric from 'fabric';
 import type { SliceCreator } from '../types';
 import { screenScale } from '@/lib/canvas/screenScale';
-import { symmetryGuides, symmetryMatrices, type SymmetryMode } from '@/lib/canvas/symmetry';
+import type { SymmetryMode } from '@/lib/canvas/symmetry';
+import type { VariationSettings } from '@/lib/canvas/symmetryVariation';
+import { objectBox, symmetryPlanOf, type SymmetryStateView } from './symmetry/symmetrySetup';
 import { resolveStamp, type StampParams } from '@/lib/brushes/stamp/stampParams';
 import type { Pt } from '@/lib/canvas/lasso';
 import type { Unit } from '@/lib/units';
@@ -22,7 +24,8 @@ import {
     sprayToolFor,
     type SprayStyle,
 } from '../sprayStyle';
-import { symmetryClones } from '../brushes/symmetryCopies';
+import { copiesForPlan, type CopyPlan } from '../brushes/symmetryCopies';
+import { linkCopies } from './symmetry/symmetryLinks';
 import { bucketFill, isHelperObject, type BucketResult } from './paintTools/bucketFill';
 import { attachLasso, lassoTargets, selectObjects } from './paintTools/lassoTool';
 import { attachGeometry } from './paintTools/geometryTool';
@@ -41,13 +44,14 @@ import {
 } from './paintTools/paintToolStyles';
 
 export type ReflectOptions = {
-    mode: Exclude<SymmetryMode, 'none'>;
+    /** Default: the drawing symmetry's mode (left-right when it is off). */
+    mode?: Exclude<SymmetryMode, 'none'>;
     /** Mirror axis angle (degrees) for 'angle' / 'kaleido'. */
     angle?: number;
     /** Copies around the centre for 'radial' / 'kaleido'. */
     count?: number;
-    /** Centre: the selection's centre or the middle of the page / view. */
-    around?: 'selection' | 'page';
+    /** Centre: the selection's centre, the middle of the page / view, or the symmetry source. */
+    around?: 'selection' | 'page' | 'source';
 };
 
 export interface PaintToolsSlice extends CopySprayActions {
@@ -72,11 +76,8 @@ export interface PaintToolsSlice extends CopySprayActions {
     /** Geometry tool: add what the instrument makes from its points (scene); see geometryObject. */
     geometryDraw: (points: Pt[], sweep?: number) => boolean;
     /** Symmetry copies of the selection (one undo step). Returns how many copies were added. */
-    reflectSelection: (options: ReflectOptions) => Promise<number>;
+    reflectSelection: (options?: ReflectOptions) => Promise<number>;
 }
-
-const GUIDE = '__fbSymmetryGuide';
-const DRAW_TOOLS = ['draw', 'spray'];
 
 export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, store) => {
     type Peers = PaintToolsSlice & {
@@ -136,62 +137,6 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
         else if (tool === 'copySpray') detach = copySpray.attach(canvas, screen);
     };
 
-    /* -------------------- symmetry guide (helper object) -------------------- */
-
-    let guideKey = '';
-    const removeGuide = (canvas?: fabric.Canvas | null) => {
-        guideKey = '';
-        if (!canvas) return;
-        const old = canvas
-            .getObjects()
-            .filter((o) => (o as unknown as Record<string, unknown>)[GUIDE]);
-        if (old.length) canvas.remove(...old);
-    };
-    const syncGuide = () => {
-        const s = peers();
-        const canvas = s.canvas;
-        if (!canvas || s.isPageSwitching) return;
-        const mode = s.symmetry ?? 'none';
-        if (!DRAW_TOOLS.includes(s.activeTool ?? '') || mode === 'none') return removeGuide(canvas);
-        const c = s.symmetryCenter ?? canvas.getVpCenter();
-        const k = screen();
-        const key = [mode, c.x, c.y, s.symmetryAngle, s.symmetryCount, k, s.currentPageId].join(
-            '|',
-        );
-        const present = canvas
-            .getObjects()
-            .some((o) => (o as unknown as Record<string, unknown>)[GUIDE]);
-        if (key === guideKey && present) return;
-        removeGuide(canvas);
-        const r = Math.hypot(canvas.getWidth(), canvas.getHeight()) / Math.max(k, 1e-6);
-        const lines = symmetryGuides(mode, c, s.symmetryAngle, s.symmetryCount, r);
-        if (!lines.length) return;
-        const guide = new fabric.Path(
-            lines.map(({ a, b }) => `M ${a.x} ${a.y} L ${b.x} ${b.y}`).join(' '),
-            {
-                originX: 'left',
-                originY: 'top',
-                fill: null,
-                stroke: 'rgba(37, 99, 235, 0.55)',
-                strokeWidth: 1 / k,
-                strokeDashArray: [6 / k, 5 / k],
-                selectable: false,
-                evented: false,
-                excludeFromExport: true,
-                objectCaching: false,
-            },
-        );
-        Object.assign(guide, {
-            [GUIDE]: true,
-            _isHelper: true,
-            excludeFromLayers: true,
-            excludeFromSnap: true,
-        });
-        canvas.add(guide);
-        guideKey = key;
-        canvas.requestRenderAll();
-    };
-
     store?.subscribe?.((state, prevState) => {
         const next = state as unknown as Peers;
         const prev = prevState as unknown as Peers;
@@ -199,25 +144,6 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
             detach?.();
             detach = null;
             if (next.canvas) attach(next.activeTool, next.canvas);
-        }
-        const guideInputs: (keyof Peers)[] = [
-            'activeTool',
-            'canvas',
-            'symmetry',
-            'symmetryCenter',
-            'symmetryAngle',
-            'symmetryCount',
-            'zoom',
-            'isPageSwitching',
-            '_isRestoring', // undo / redo reloads the page and clears the guide with it
-            'currentPageId',
-        ];
-        if (guideInputs.some((key) => next[key] !== prev[key])) {
-            if (next.canvas !== prev.canvas) removeGuide(prev.canvas);
-            syncGuide();
-            // a design zoom resizes the board after this change: redo the guide's line width next frame
-            if (next.zoom !== prev.zoom && typeof requestAnimationFrame === 'function')
-                requestAnimationFrame(syncGuide);
         }
     });
 
@@ -352,7 +278,7 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
             }
         },
 
-        reflectSelection: async ({ mode, angle = 90, count = 6, around = 'selection' }) => {
+        reflectSelection: async (options = {}) => {
             const canvas = peers().canvas;
             if (!canvas) return 0;
             const active = canvas.getActiveObject();
@@ -360,18 +286,59 @@ export const createPaintToolsSlice: SliceCreator<PaintToolsSlice> = (set, get, s
                 .getActiveObjects()
                 .filter((o) => !isHelperObject(o as fabric.FabricObject & Record<string, unknown>));
             if (!active || !objects.length) return 0;
-            const center =
-                around === 'page'
-                    ? peers().boardMode === 'design'
-                        ? { x: canvas.getWidth() / 2, y: canvas.getHeight() / 2 }
-                        : canvas.getVpCenter()
-                    : active.getCenterPoint();
             try {
+                // the whole symmetry setup (newer modes, chain, variation), around the chosen centre
+                const s = get() as unknown as SymmetryStateView & { symmetryCopyPlan?: unknown };
+                const around = options.around ?? 'selection';
+                const current = s.symmetry && s.symmetry !== 'none' ? s.symmetry : 'x';
+                const view: SymmetryStateView = {
+                    ...s,
+                    symmetryAngle: options.angle ?? s.symmetryAngle ?? 90,
+                    symmetryCount: options.count ?? s.symmetryCount ?? 6,
+                    ...(around === 'source'
+                        ? {}
+                        : around === 'page'
+                          ? { symmetrySource: 'page', symmetryEdge: 'center' }
+                          : {
+                                symmetrySource: 'selection',
+                                symmetryEdge: 'center',
+                                symmetryBox: objectBox(active),
+                            }),
+                };
+                const mode = options.mode ?? current;
+                const plan = symmetryPlanOf(view, mode);
+                const copyOptions = {
+                    textMode: s.symmetryOptions?.textMode,
+                    variation: (s as { symmetryVariation?: VariationSettings }).symmetryVariation,
+                };
                 // members of an ActiveSelection are placed relative to it: put them back on the canvas first
                 canvas.discardActiveObject();
-                const matrices = symmetryMatrices(mode, center, angle, count);
+                const matrices = plan?.matrices ?? [];
+                const linked = !!s.symmetryOptions?.linked && !!plan && mode !== 'curve';
+                const copyPlan: CopyPlan =
+                    mode === 'curve'
+                        ? {
+                              matrices: [],
+                              options: copyOptions,
+                              warp: (s.symmetryCopyPlan as (() => CopyPlan | null) | undefined)?.()
+                                  ?.warp,
+                          }
+                        : {
+                              matrices,
+                              options: copyOptions,
+                              onCopies: linked
+                                  ? (src, made) =>
+                                        linkCopies(
+                                            src,
+                                            made,
+                                            matrices,
+                                            copyOptions,
+                                            plan!.frame.center,
+                                        )
+                                  : undefined,
+                          };
                 const copies = (
-                    await Promise.all(objects.map((o) => symmetryClones(o, matrices)))
+                    await Promise.all(objects.map((o) => copiesForPlan(o, copyPlan)))
                 ).flat();
                 // the page may have changed while clones (images) loaded: never add to another page
                 if (peers().canvas !== canvas || peers().isPageSwitching) return 0;

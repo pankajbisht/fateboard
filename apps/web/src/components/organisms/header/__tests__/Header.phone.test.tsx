@@ -1,35 +1,26 @@
 /**
- * Upright phones: the property bar (X / Y / W / H) only takes a row when it has something to show:
- * a selection, or a tool with options. Idle, the board gets the space.
+ * Upright phones: the property bar keeps its row even when it has nothing to show (Select / Hand,
+ * nothing selected). Hiding it on deselect and showing it on select resized the board every time.
  */
-import { afterEach, describe, expect, it } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import { HeaderViewTool } from '@/components/templates/HeaderViewTool.template';
-import { render } from '@testing-library/react';
-import { propertyBarIdle } from '../ui/Header';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { useStore } from '@store';
+import { Header } from '../ui/Header';
+
+// the top toolbar (commands, overflow measuring) is not what this test is about
+vi.mock('../../toolbars/ui/TopToolbar', () => ({ TopToolbar: () => null }));
 
 afterEach(cleanup);
 
 describe('phone property bar', () => {
-    it('is idle with the select or pan (hand) tool and nothing selected', () => {
-        expect(propertyBarIdle('select', false)).toBe(true);
-        expect(propertyBarIdle('pan', false)).toBe(true);
-        expect(propertyBarIdle('select', true)).toBe(false);
-        expect(propertyBarIdle('pen', false)).toBe(false);
-        expect(propertyBarIdle('draw', false)).toBe(false);
-    });
-
-    it('an idle bar hides on phones only', () => {
-        const { getByTestId, rerender } = render(
-            <HeaderViewTool
-                brand={null}
-                toolbar={null}
-                transform={<span />}
-                transformPhoneHidden
-            />,
+    it('keeps its row with nothing selected, so the board does not resize', () => {
+        useStore.setState({ activeTool: 'select', hasSelection: false });
+        const { getByTestId } = render(
+            <MemoryRouter>
+                <Header />
+            </MemoryRouter>,
         );
-        expect(getByTestId('property-bar').className).toContain('max-sm:hidden');
-        rerender(<HeaderViewTool brand={null} toolbar={null} transform={<span />} />);
-        expect(getByTestId('property-bar').className).not.toContain('max-sm:hidden');
+        expect(getByTestId('property-bar').className).not.toContain('hidden');
     });
 });

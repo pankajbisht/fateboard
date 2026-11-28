@@ -36,7 +36,60 @@ const ARROWS = [
     ['nudge-down', 'Nudge down', '↓', 0, 1],
 ] as const;
 
+const hasBoard = () => !!useStore.getState().canvas;
+
+const MODE_NAMES: Record<string, string> = {
+    x: 'left-right',
+    y: 'top-bottom',
+    both: '4-way',
+    angle: 'any axis',
+    radial: 'radial',
+    point: 'point',
+    kaleido: 'kaleidoscope',
+    glide: 'glide',
+    spiral: 'spiral',
+    wallpaper: 'wallpaper',
+    chain: 'mirror chain',
+};
+
+/** Symmetry keys: M on / off, Shift + [ / ] fewer / more copies (plain [ / ] stay the brush size). */
+const symmetryKeys = [
+    {
+        id: 'symmetry-toggle',
+        label: 'Symmetry on / off',
+        title: 'Symmetry on / off',
+        description: 'Turn drawing symmetry on or off (back to the last mode)',
+        shortcut: 'M',
+        enabled: hasBoard,
+        handler: ({ get }: { get: typeof useStore.getState }) => {
+            const mode = get().toggleSymmetry();
+            get().showToast({
+                message:
+                    mode === 'none' ? 'Symmetry off' : `Symmetry on: ${MODE_NAMES[mode] ?? mode}`,
+            });
+        },
+    },
+    ...(
+        [
+            ['symmetry-fewer', 'Fewer symmetry copies', 'Shift+BracketLeft', -1],
+            ['symmetry-more', 'More symmetry copies', 'Shift+BracketRight', 1],
+        ] as const
+    ).map(([id, label, key, delta]) => ({
+        id,
+        label,
+        title: label,
+        description: label,
+        shortcut: key,
+        enabled: () => hasBoard() && useStore.getState().symmetry !== 'none',
+        handler: ({ get }: { get: typeof useStore.getState }) => {
+            const n = get().stepSymmetryCount(delta);
+            get().showToast({ message: `${n} symmetry copies` });
+        },
+    })),
+];
+
 export const CanvasKeysConfig = [
+    ...symmetryKeys,
     {
         id: 'select-all',
         label: 'Select all',

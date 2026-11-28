@@ -344,7 +344,7 @@ function sanitize(p: any) {
     if (p.symmetryCenter !== undefined) o.symmetryCenter = p.symmetryCenter;
     if (p.symmetryAngle !== undefined) o.symmetryAngle = clamp(num(p.symmetryAngle, 90), 0, 180);
     if (p.symmetryCount !== undefined)
-        o.symmetryCount = clamp(Math.round(num(p.symmetryCount, 6)), 2, 24);
+        o.symmetryCount = clamp(Math.round(num(p.symmetryCount, 6)), 2, 64);
     if (p.straightLine !== undefined) o.straightLine = !!p.straightLine;
     return o;
 }

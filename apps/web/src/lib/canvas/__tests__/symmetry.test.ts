@@ -54,7 +54,7 @@ describe('symmetry matrices', () => {
     });
 
     it('clamps the count and has no copies for none', () => {
-        expect(symmetryMatrices('radial', c, 90, 99)).toHaveLength(23);
+        expect(symmetryMatrices('radial', c, 90, 99)).toHaveLength(63);
         expect(symmetryMatrices('radial', c, 90, 0)).toHaveLength(5);
         expect(symmetryMatrices('none', c)).toEqual([]);
     });

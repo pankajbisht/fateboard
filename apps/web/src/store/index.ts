@@ -25,6 +25,7 @@ import { createNotebookSlice } from './slices/createNotebookSlice.ts';
 import { createDialogSlice } from './slices/createDialogSlice.ts';
 import { createDrawingToolsSlice } from './slices/createDrawingToolsSlice.ts';
 import { createPaintToolsSlice } from './slices/createPaintToolsSlice.ts';
+import { createSymmetrySlice } from './slices/createSymmetrySlice.ts';
 import { createGeneratorSlice } from './slices/createGeneratorSlice.ts';
 import { createMacroSlice } from './slices/createMacroSlice.ts';
 import { createPageLayersSlice } from './slices/createPageLayersSlice.ts';
@@ -64,6 +65,7 @@ export const combinedSlice = (set, get, store) => ({
     ...createDialogSlice(set, get, store),
     ...createDrawingToolsSlice(set, get, store),
     ...createPaintToolsSlice(set, get, store),
+    ...createSymmetrySlice(set, get, store),
     ...createGeneratorSlice(set, get, store),
     ...createMacroSlice(set, get, store),
     ...createPageLayersSlice(set, get, store),

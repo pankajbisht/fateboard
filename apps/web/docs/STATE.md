@@ -514,9 +514,8 @@ Brush slice reads `pencilStyle` (via `drawingState`) and `screenScale` (auto-clo
 ## 29. PaintTools: `createPaintToolsSlice.ts` (+ `paintTools/`, `store/sprayStyle.ts`, `lib/canvas/{floodFill,traceContours,lasso,drafter,geometry,symmetry,copySpray}.ts`)
 
 **Purpose (2026-11-16):** Paint bucket (G), Spray (Shift + B), Lasso (L), Geometry (D), "Reflect selection" and the
-per-brush stamp settings. The tools listen on the canvas only while active (store subscription, like the Pen); the
-symmetry guide (axes while Draw / Spray is active) is a helper object (`excludeFromExport`, `excludeFromLayers`,
-`excludeFromSnap`, `_isHelper`).
+per-brush stamp settings. The tools listen on the canvas only while active (store subscription, like the Pen). The
+symmetry guide moved to the Symmetry slice (§40, 2026-11-28).
 **State:** `bucketStyle` (mode auto / region / shape, tolerance, gap, expand, placement), `lassoStyle` (action select /
 fill, match touch / contain), `geometryStyle` (renamed from `drafterStyle` 2026-11-28: `instrument` drafter / scale / setSquare / protractor /
 compass, Drafter `mode` line / parallel / perpendicular / dimension / construction, angle `step`, `base` (head / square
@@ -525,7 +524,7 @@ spacing, spread, size / rotation / opacity jitter, align; 2026-11-17), `stampOve
 partial settings only).
 **Actions:** `setBucketStyle`, `setLassoStyle`, `setGeometryStyle`, `setSprayStyle`, `setStampOverride(id, patch)`,
 `resetStampOverride(id)`, `bucketFillAt(point)` → `'shape' | 'region' | 'open' | 'none'`, `lassoSelect(loop, mode)`,
-`lassoFill(loop)`, `geometryDraw(points, sweep?)` (2 points = line / circle, 3 = angle / arc; was `drafterLine(a, b)`), `reflectSelection({ mode, angle, count, around })` → copies added,
+`lassoFill(loop)`, `geometryDraw(points, sweep?)` (2 points = line / circle, 3 = angle / arc; was `drafterLine(a, b)`), `reflectSelection({ mode?, angle?, count?, around? })` → copies added (2026-11-28: the whole Symmetry setup via `symmetryPlanOf`; `mode` defaults to the drawing mode, else left-right; `around` selection / page / `source`; readable text + variation apply),
 `setCopySprayStyle`, `sprayCopies(dabs)` → objects added.
 **Copy spray (Spray › Copy mode since 2026-11-27, was Shift + S; `paintTools/copySpray{Actions,Tool}.ts`):** `sprayStyle.mode` (Paint / Mist / Splatter / Copy) picks what Spray (Shift + B) does; `setActiveTool('spray')` opens `copySpray` in Copy mode (`resolveTool`, `store/canvasTools.ts`) and `setSprayStyle({ mode })` swaps the tool while Spray is open. Source: the selection when Copy opens, else a click on an object (`sourceObjectAt`); Alt + click swaps it; `copySpraySource` (label or null) drives the bar. Mist / Splatter tune `sprayState` (rate, ink, drop size jitter). when `activeTool` becomes
 `'copySpray'` the selection is snapshotted (clones in scene coordinates; `setActiveTool` sets the store before it
@@ -887,3 +886,68 @@ second, older animation engine (dead).
 ### Transform panel + anchor (createTransformSlice, createCanvasSlice)
 
 `transform` (x y width height rotation flipX flipY originX originY id rx ry) mirrors the active object or multi-selection. Synced by `handleSelectionChange`, `handleTransformSync` (object:moving / scaling / rotating / skewing / resizing / modified) and cleared on `selection:cleared`. Anchor rule: X/Y = anchor position; X/Y edits move the anchor; rotation and W/H keep the anchor fixed; flips reflect across the anchor (the anchor keeps its canvas spot and the selection moves to the mirrored point, so flipping again restores). Guarded by `src/store/__tests__/anchorTransforms.test.ts` and `transformSync.test.ts`.
+
+## 40. Symmetry: `createSymmetrySlice.ts` (+ `slices/symmetry/`, `brushes/symmetry{Copies,Preview}.ts`, `lib/canvas/symmetry{,Math,Groups,Frame,Variation}.ts`)
+
+**Purpose (2026-11-28, Symmetry Pro):** where the symmetry comes from, the newer modes' settings, per-copy variation,
+presets, and the board side (guide + handles, dragging them, live ghosts). The drawing mode / angle / count / free
+centre stay in the Brush slice (`symmetry`, `symmetryAngle`, `symmetryCount` 2–64, `symmetryCenter`, `setSymmetry`).
+Modes (`SymmetryMode`): x, y, both, angle, radial, point, kaleido, **glide** (mirror + slide), **spiral** (turn + scale
+per copy), **wallpaper** (p1 / p2 / pm / p4 / p4m / p3 / p6 / p6m tiling), **chain** (Mirror Chain: steps applied in
+order, each copies everything before it; `chainDepth` repeats it = infinite mirror). Every mode is built about the
+source frame's centre and turned by its rotation (`inFrame`). Max 256 copies (`MAX_COPIES`, nearest kept), "heavy"
+from 96 (`HEAVY_COPIES`).
+**State:** `symmetrySource` free / page / selection / object / pin, `symmetryEdge` center / left / right / top / bottom
+/ diagonal / anchor, `symmetryBox` (selection snapshot; object's last box), `symmetryObjectId` (live object source; the
+object gets an `id` if it had none), `symmetryPins` `{ id, name, x, y, angle }[]`, `symmetryPinId`, `symmetryOptions`
+(glide / spiral / wallpaper / `chainDepth` / `textMode` readable | mirror / `preview`), `symmetryChain`
+(`ChainStep[]`, optional `pinId` per step = several sources at once), `symmetryVariation` (hue / fade / shrink / wobble
+/ seed), `symmetryPanelOpen`, `symmetryPresets` (user presets).
+**Actions:** `setSymmetrySource(kind)` → false + toast without a selection (turns symmetry on when off),
+`setSymmetryEdge` (left / right → left-right, top / bottom → top-bottom while the mode is off / x / y),
+`setSymmetryOptions`, `setSymmetryVariation`, `addSymmetryPin(at?)`, `updateSymmetryPin`, `removeSymmetryPin`,
+`pickSymmetryPin`, `addSymmetryStep(kind)` (switches to chain), `updateSymmetryStep`, `moveSymmetryStep(id, ±1)`,
+`removeSymmetryStep`, `setSymmetryPanelOpen`, `toggleSymmetry` (M), `stepSymmetryCount(±1)` (Shift + [ / ]),
+`symmetryCopyPlan()` (read by `addSymmetryCopies` after `path:created`), `symmetryCopyStats()`,
+`applySymmetryPreset`, `saveSymmetryPreset(name?)`, `deleteSymmetryPreset(id)` (confirm dialog),
+`rollSymmetryDice(seed?)` (seeded).
+**Board:** guide = two helper Paths (dashed axes / spokes / tile grid, solid handles: centre, pins, the active pin's
+axis knob), same screen size at every zoom, shown while Draw / Spray is active or the Symmetry dock is open, rebuilt
+only when an input changes (key) and re-synced on `object:moving / scaling / rotating / modified` for the object source.
+Handles: a capture listener on the board wrapper (`symmetryPointer.ts`) grabs them before Fabric (direct drag outside
+drawing tools, Alt + drag while drawing; Alt + drag away from handles moves the centre / active pin); snaps to page,
+object boxes and pins (8 screen px; knob 15°), Ctrl / ⌘ = free; dragging the centre of a page / selection / object
+source switches to a free centre there. Ghosts (`brushes/symmetryPreview.ts`): on `mouse:down:before` in drawing mode
+the brush's `_render` is wrapped once; after it, the top context is blitted per copy (≤ 64) in device space; brushes
+that draw only the newest segment get full renders while ghosts are on; off for the eraser and Pencil.
+**Persistence:** none in the document (UI state; pins are session-only). User presets: `@/lib/storage` local list
+`symmetry-presets` (validated with `isSymmetryPreset`).
+**Depends on:** Canvas (`canvas`, `activeTool`, `persist`), Brush (`symmetry*`, `setSymmetry`, `updateBrush`,
+`brush` for the eraser check via `drawingState`), Page (`boardMode`, `pageWidth`, `pageHeight`, `zoom`), Pages
+(`currentPageId`, `isPageSwitching`), UndoRedo (`_isRestoring`), Dialog (`showToast`, `confirmDialog`).
+**Phase 2–4 (2026-11-28):** modes add **curve** (`symmetryCurveId`: a path / line as a bendy mirror; strokes are re-built
+point by point, other objects get the local mirror; `symmetryObjects.ts`, `lib/canvas/symmetryCurve.ts`). Options add
+`linked` (default on) and `snap` (default on). New keys: `symmetryCurveId`, `symmetryWandArmed`, `symmetryScore`,
+`symmetryHeatmap`, `symmetryAnim` (effect spin / pulse / swirl, period s, amount), `symmetryAnimating`, `symmetrySound`
+(off / mic / file), `symmetryStamps`, `symmetryStampArmed`, `symmetryTimeStep`, `symmetryLens`, `symmetryChallenge`.
+Actions: `unlinkSymmetryCopies`, `bakeSymmetryCopies`, `mergeSymmetryCopies` (`symmetryLinkActions.ts`);
+`completeSymmetryHalf({ natural })`, `cutAndMirror(±1)`, `armSymmetryWand`, `useSelectionAsSymmetryCurve`
+(`symmetryShapeTools.ts`); `analyzeSymmetryNow`, `setSymmetryHeatmap`, `fixNearSymmetry(tolerance)` (`symmetryCheck.ts`,
+`lib/canvas/symmetryAnalysis.ts`); `setSymmetryAnim`, `playSymmetryAnimation`, `stopSymmetryAnimation`,
+`listenSymmetrySound(kind, file?)`, `exportSymmetryLoop` (`symmetryAnimation.ts`; GIF through `animation/gif/renderGif`);
+`saveSymmetryStamp`, `armSymmetryStamp`, `deleteSymmetryStamp`, `exportSymmetryTile` (`symmetryStamps.ts`);
+`symmetryTimeTotal`, `setSymmetryTimeStep`, `setSymmetryLens`, `startSymmetryChallenge`, `setSymmetryChallengeHint`,
+`checkSymmetryChallenge`, `endSymmetryChallenge` (`symmetryPlay.ts`). Board listeners live in `symmetryBoard.ts`.
+**Linked copies:** saved prop `symmetryLink` (CUSTOM_PROPS) `{ src, m, k, n, text, v, c }`; the source gets an `id`.
+`object:modified` / `text:editing:exited` on a source rebuild its copies in place (same stacking, `layerId`, `id`); a
+copy moved / scaled / turned moves its source by `M⁻¹ · D · M` (D = the copy's change from `transform.original`), a copy
+edited otherwise (nodes, style) becomes the source content through `M⁻¹` unless it has variation / readable text (then
+it is unlinked). Rebuilds are queued per source, skipped while `_isRestoring`, `isPageSwitching` or animating. Node edits
+fire `object:modified`, so a moved point moves the matching point of every linked copy.
+**Animation:** poses are set without events and restored exactly on stop (board click, page switch, panel close);
+every effect is periodic, so one period exports as a seamless loop. Sound: an `AnalyserNode` RMS level (smoothed) adds
+speed / strength; the microphone is asked only when "Use the microphone" is pressed.
+**Persistence:** stamps in the local list `symmetry-stamps` (object JSON via CUSTOM_PROPS, no photos, ≤ 400 kB each,
+24 max). Heatmap boxes, snap line, challenge axis / hint, time machine (top context only) are helpers or overlays, never
+saved. Challenge targets are ordinary paths (removed by "End challenge").
+

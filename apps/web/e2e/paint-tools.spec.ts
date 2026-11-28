@@ -213,10 +213,7 @@ test('Radial symmetry copies each stroke; Reflect selection mirrors a shape', as
     await page.keyboard.press('Delete');
     await expect.poll(() => count(editor)).toBe(0);
     await editor.addShape('Rectangle');
-    await page
-        .getByRole('group', { name: 'Reflection type' })
-        .getByRole('button', { name: 'Left-right' })
-        .click();
+    // symmetry is off: Reflect selection mirrors left-right
     await page.getByRole('button', { name: 'Reflect selection' }).click();
     await expect.poll(() => count(editor)).toBe(2);
     expect((await editor.selection()).length).toBe(2);
