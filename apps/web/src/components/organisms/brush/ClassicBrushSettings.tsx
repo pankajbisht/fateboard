@@ -49,8 +49,6 @@ export function ClassicBrushSettings() {
     const setBrushColor = useStore((s) => s.setBrushColor);
     const commitRecentColor = useStore((s) => s.commitRecentColor);
     const resetBrush = useStore((s) => s.resetBrush);
-    const undo = useStore((s) => s.undo);
-    const redo = useStore((s) => s.redo);
 
     const engine = getEngine(brush);
     if (engine === 'stamp') return null; // BrushSettingsSection covers library brushes
@@ -62,15 +60,7 @@ export function ClassicBrushSettings() {
     return (
         <>
             <PanelSection title={`${preset.label} settings`}>
-                <div className="flex items-center justify-between">
-                    <div className="flex gap-1.5">
-                        <Button variant="secondary" size="sm" icon="undo" onClick={() => undo()}>
-                            Undo
-                        </Button>
-                        <Button variant="secondary" size="sm" icon="redo" onClick={() => redo()}>
-                            Redo
-                        </Button>
-                    </div>
+                <div className="flex items-center justify-end">
                     <Button
                         variant="secondary"
                         size="sm"
